@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 32
+/svnroot/pinoc/!svn/ver/1/common
+END
+global.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svnroot/pinoc/!svn/ver/1/common/global.h
+END
+typedef.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svnroot/pinoc/!svn/ver/1/common/typedef.h
+END
+SEGLS.ls
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svnroot/pinoc/!svn/ver/1/common/SEGLS.ls
+END

@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svnroot/pinoc/!svn/ver/8/test/PINoC/boot
+END
+bootld.ls
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svnroot/pinoc/!svn/ver/8/test/PINoC/boot/bootld.ls
+END
+tmp
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svnroot/pinoc/!svn/ver/1/test/PINoC/boot/tmp
+END
+bootld.s
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svnroot/pinoc/!svn/ver/5/test/PINoC/boot/bootld.s
+END
+bootsct.bin
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svnroot/pinoc/!svn/ver/8/test/PINoC/boot/bootsct.bin
+END
+bootsct.ls
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svnroot/pinoc/!svn/ver/8/test/PINoC/boot/bootsct.ls
+END
+bootsct.o
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svnroot/pinoc/!svn/ver/8/test/PINoC/boot/bootsct.o
+END
+makefile
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svnroot/pinoc/!svn/ver/8/test/PINoC/boot/makefile
+END
+bootsct.s
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svnroot/pinoc/!svn/ver/5/test/PINoC/boot/bootsct.s
+END
