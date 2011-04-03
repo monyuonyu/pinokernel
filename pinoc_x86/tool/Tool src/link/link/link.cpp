@@ -1,8 +1,8 @@
-/* ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡
-	ŠT—v	:	‚±‚ÌƒvƒƒOƒ‰ƒ€‚Í Žw’è‚³‚ê‚½ƒtƒ@ƒCƒ‹‚ðƒŠƒ“ƒN‚µ‚Ü‚·
-	XV	:	2010/05/02 V‹Kì¬ [mk-pino]
-		:	2010/05/03	Linux‚ÅŽÀs‚·‚é‚Æ“ú–{Œê‚ª•¶Žš‰»‚¯‚·‚é–â‘è‚ð‰ðŒˆ [mk-pino]
- ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ */
+/* â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â– 
+	æ¦‚è¦	:	ã“ã®ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã¯ æŒ‡å®šã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒªãƒ³ã‚¯ã—ã¾ã™
+	æ›´æ–°	:	2010/05/02 æ–°è¦ä½œæˆ [mk-pino]
+		:	2010/05/03	Linuxã§å®Ÿè¡Œã™ã‚‹ã¨æ—¥æœ¬èªžãŒæ–‡å­—åŒ–ã‘ã™ã‚‹å•é¡Œã‚’è§£æ±º [mk-pino]
+ â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@ int main(int argv, char* argc[])
 	}
 
 
-	/* ƒtƒ@ƒCƒ‹‚ð‚R‚ÂŠJ‚­ */
+	/* ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ï¼“ã¤é–‹ã */
 	FILE* fp1;
 	fp1 = fopen(argc[1], "r");
 	if(fp1 == NULL)
@@ -46,7 +46,7 @@ int main(int argv, char* argc[])
 	printf("output -> %s\n", argc[3]);
 
 
-	/* fp1‚Æfp2‚Ìƒf[ƒ^‚ðfp3‚Ö‘‚«ž‚ñ‚Å‚¢‚­ */
+	/* fp1ã¨fp2ã®ãƒ‡ãƒ¼ã‚¿ã‚’fp3ã¸æ›¸ãè¾¼ã‚“ã§ã„ã */
 	int data = 0;
 
 	while(EOF != (data = getc(fp1)))

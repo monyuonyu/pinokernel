@@ -1,8 +1,8 @@
-/* ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡
-	ŠT—v	:	‚±‚ÌƒvƒƒOƒ‰ƒ€‚Í Žw’è‚³‚ê‚½ƒtƒ@ƒCƒ‹‚Ì511byte512byte‚Öƒu[ƒg–¼‚µ‚Ü‚·
-	XV	:	2010/05/02 V‹Kì¬ [mk-pino]
-			2010/05/03	Linux‚ÅŽÀs‚·‚é‚Æ“ú–{Œê‚ª•¶Žš‰»‚¯‚·‚é–â‘è‚ð‰ðŒˆ [mk-pino]
- ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ ¡ */
+/* â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â– 
+	æ¦‚è¦	:	ã“ã®ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã¯ æŒ‡å®šã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã®511byte512byteã¸ãƒ–ãƒ¼ãƒˆç½²åã—ã¾ã™
+	æ›´æ–°	:	2010/05/02 æ–°è¦ä½œæˆ [mk-pino]
+			2010/05/03	Linuxã§å®Ÿè¡Œã™ã‚‹ã¨æ—¥æœ¬èªžãŒæ–‡å­—åŒ–ã‘ã™ã‚‹å•é¡Œã‚’è§£æ±º [mk-pino]
+ â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  â–  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +24,7 @@ int main(int argv, char* argc[])
 		exit(1);
 	}
 
-	/* 511byteˆÚ“® */
+	/* 511byteç§»å‹• */
 	fseek(fp, 510, SEEK_SET);
 	putc(0x55, fp);
 	putc(0xaa, fp);
