@@ -26,26 +26,26 @@ void mot_deploy(char* buf)
 	while (1)
 	{
 
-		// §ŒäƒR[ƒh‚È‚çƒ|ƒCƒ“ƒ^‚ği‚ß‚é
+		// åˆ¶å¾¡ã‚³ãƒ¼ãƒ‰ãªã‚‰ãƒã‚¤ãƒ³ã‚¿ã‚’é€²ã‚ã‚‹
 		while (buf[mot_dst] == 0x0A || buf[mot_dst] == 0x0D)
 			mot_dst++;
 
-		// ƒ‚ƒgƒ[ƒ‰SƒR[ƒh‚Å‚È‚¯‚ê‚ÎƒŠƒ^[ƒ“
+		// ãƒ¢ãƒˆãƒ­ãƒ¼ãƒ©Sã‚³ãƒ¼ãƒ‰ã§ãªã‘ã‚Œã°ãƒªã‚¿ãƒ¼ãƒ³
 		if (buf[mot_dst] != 'S')
 			return;
 
-		// ƒoƒCƒgƒJƒEƒ“ƒ^“Ç‚İ‚İ
+		// ãƒã‚¤ãƒˆã‚«ã‚¦ãƒ³ã‚¿èª­ã¿è¾¼ã¿
 		asciitobin(&buf[mot_dst + 2], 2);
 		data_cnt = buf[mot_dst + 2] * 2;
 
 		switch (buf[mot_dst + 1])
 		{
-		case '0': // ƒwƒbƒ_[Œ`®
+		case '0': // ãƒ˜ãƒƒãƒ€ãƒ¼å½¢å¼
 
 			break;
 		case '1':
 			asciitobin(&buf[mot_dst + 4], data_cnt);
-			addr_dst = (char*) *(&((short*) buf)[mot_dst + 2]);			// ¦ ƒGƒ“ƒfƒBƒAƒ“‚É’ˆÓ!!
+			addr_dst = (char*) *(&((short*) buf)[mot_dst + 2]);			// â€» ã‚¨ãƒ³ãƒ‡ã‚£ã‚¢ãƒ³ã«æ³¨æ„!!
 
 			// Deploy
 			for (i = 0; i < (data_cnt / 2) - 2 - 1; i++)
@@ -55,14 +55,14 @@ void mot_deploy(char* buf)
 				addr_dst++;
 			}
 
-			// ƒ`ƒFƒbƒNƒTƒ€”»’è
+			// ãƒã‚§ãƒƒã‚¯ã‚µãƒ åˆ¤å®š
 			checksum += buf[mot_dst + 2];
 			checksum += buf[mot_dst + 4];
 			checksum += buf[mot_dst + 5];
 			checksum ^= buf[(data_cnt / 2) - 2 - 1 + mot_dst + 6];
 			if (checksum != 0xFF)
 			{
-				return; // ¸”s
+				return; // å¤±æ•—
 			}
 
 			mot_dst += data_cnt + 4;
@@ -72,12 +72,12 @@ void mot_deploy(char* buf)
 			break;
 		case '3':
 			break;
-		case '8':	// ƒtƒbƒ^
+		case '8':	// ãƒ•ãƒƒã‚¿
 			break;
 		case '9':
 			return;
 
-		default: // ‘Î‰‚µ‚Ä‚¢‚È‚¯‚ê‚ÎƒŠƒ^[ƒ“
+		default: // å¯¾å¿œã—ã¦ã„ãªã‘ã‚Œã°ãƒªã‚¿ãƒ¼ãƒ³
 			return;
 
 		};
@@ -86,7 +86,7 @@ void mot_deploy(char* buf)
 }
 
 
-// “]‘—‚ªŠ®—¹‚·‚é‚Æ“]‘—‚µ‚½ƒuƒƒbƒN”B ¸”sE’†’f‚·‚é‚Æ‚P‚ğ•Ô‚·
+// è»¢é€ãŒå®Œäº†ã™ã‚‹ã¨è»¢é€ã—ãŸãƒ–ãƒ­ãƒƒã‚¯æ•°ã€‚ å¤±æ•—ãƒ»ä¸­æ–­ã™ã‚‹ã¨ï¼‘ã‚’è¿”ã™
 int load_lod(char* buf)
 {
 	unsigned char block_num_now = 1;
@@ -105,35 +105,35 @@ int load_lod(char* buf)
 
 		switch (c)
 		{
-		case XMODEM_SOH: // ’ÊMŠJnI
+		case XMODEM_SOH: // é€šä¿¡é–‹å§‹ï¼
 			starting = 1;
 			if (xmodem_read_block(block_num_now, buf))
 			{
-				sci_write(SCI1, XMODEM_NAK); // ¸”s‚ğ’Ê’m
+				sci_write(SCI1, XMODEM_NAK); // å¤±æ•—ã‚’é€šçŸ¥
 			}
 			else
 			{
 				/********************************************************************************
-					ƒ‚ƒgƒ[ƒ‰SƒtƒH[ƒ}ƒbƒg‰ğÍ
+					ãƒ¢ãƒˆãƒ­ãƒ¼ãƒ©Sãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆè§£æ
 				********************************************************************************/
 				mot_deploy(buf);
 
-//				if(buf[mot_no] == 'S' && buf[mot_no + 1] == '0')	// ‰ğÍŠJn
+//				if(buf[mot_no] == 'S' && buf[mot_no + 1] == '0')	// è§£æé–‹å§‹
 //				{
 //
 //				}
 
 				block_num_now++;
-//				buf += XMODEM_BLOCK_SIZE; // ƒoƒbƒtƒ@‚Ìƒ|ƒCƒ“ƒ^‚ğ1ƒuƒƒbƒNi‚ß‚é
-				sci_write(SCI1, XMODEM_ACK); // ¬Œ÷‚ğ’Ê’m ¨ Ÿ‚ÌƒuƒƒbƒN‘—MŠJn
+//				buf += XMODEM_BLOCK_SIZE; // ãƒãƒƒãƒ•ã‚¡ã®ãƒã‚¤ãƒ³ã‚¿ã‚’1ãƒ–ãƒ­ãƒƒã‚¯é€²ã‚ã‚‹
+				sci_write(SCI1, XMODEM_ACK); // æˆåŠŸã‚’é€šçŸ¥ â†’ æ¬¡ã®ãƒ–ãƒ­ãƒƒã‚¯é€ä¿¡é–‹å§‹
 			}
 			break;
 
-		case XMODEM_EOT: // “]‘—Š®—¹
+		case XMODEM_EOT: // è»¢é€å®Œäº†
 			sci_write(SCI1, XMODEM_ACK);
 			return block_num_now;
 
-		case XMODEM_CAN: // ’†’f
+		case XMODEM_CAN: // ä¸­æ–­
 			return 0;
 
 		case XMODEM_EOF:

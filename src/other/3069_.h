@@ -1190,112 +1190,112 @@ struct st_ad {              /* struct A/D   */
 #define EI  asm("andc.b #0x3f,ccr")
 
 /*--------------------------------------------------------------*/
-/* Š„‚è‚İŠÖ”ƒvƒƒgƒ^ƒCƒvéŒ¾                                 */
+/* å‰²ã‚Šè¾¼ã¿é–¢æ•°ãƒ—ãƒ­ãƒˆã‚¿ã‚¤ãƒ—å®£è¨€                                 */
 /*--------------------------------------------------------------*/
-// NMIŠ„‚è‚İ
+// NMIå‰²ã‚Šè¾¼ã¿
 void int_nmi (void)     asm ("_int_adi")    __attribute__((interrupt_handler));
 /*
-// ƒgƒ‰ƒbƒv–½—ß
+// ãƒˆãƒ©ãƒƒãƒ—å‘½ä»¤
 void int_trap0 (void) __attribute__((interrupt_handler));
 void int_trap1 (void) __attribute__((interrupt_handler));
 void int_trap2 (void) __attribute__((interrupt_handler));
 void int_trap3 (void) __attribute__((interrupt_handler));
 */
-// IRQ0`5ŠO•”Š„‚è‚İ
+// IRQ0ã€œ5å¤–éƒ¨å‰²ã‚Šè¾¼ã¿
 void int_irq0 (void)    asm ("_int_irq0")   __attribute__((interrupt_handler));
 void int_irq1 (void)    asm ("_int_irq1")   __attribute__((interrupt_handler));
 void int_irq2 (void)    asm ("_int_irq2")   __attribute__((interrupt_handler));
 void int_irq3 (void)    asm ("_int_irq3")   __attribute__((interrupt_handler));
 void int_irq4 (void)    asm ("_int_irq4")   __attribute__((interrupt_handler));
 void int_irq5 (void)    asm ("_int_irq5")   __attribute__((interrupt_handler));
-// ƒEƒHƒbƒ`ƒhƒbƒOƒ^ƒCƒ} (ƒCƒ“ƒ^[ƒoƒ‹ƒ^ƒCƒ})
+// ã‚¦ã‚©ãƒƒãƒãƒ‰ãƒƒã‚°ã‚¿ã‚¤ãƒ (ã‚¤ãƒ³ã‚¿ãƒ¼ãƒãƒ«ã‚¿ã‚¤ãƒ)
 void int_wovi (void)    asm ("_int_wovi")   __attribute__((interrupt_handler));
-// ƒŠƒtƒŒƒbƒVƒ…ƒRƒ“ƒgƒ[ƒ‰ (ƒRƒ“ƒyƒAƒ}ƒbƒ`)
+// ãƒªãƒ•ãƒ¬ãƒƒã‚·ãƒ¥ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ© (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ)
 void int_cmi (void)     asm ("_int_cmi")    __attribute__((interrupt_handler));
 
-// A/D (A/DŠ®—¹)
+// A/D (A/Då®Œäº†)
 void int_adi (void)     asm ("_int_adi")    __attribute__((interrupt_handler));
 
-// ITU0 (ƒRƒ“ƒyƒAƒ}ƒbƒ`/ƒCƒ“ƒvƒbƒgƒLƒƒƒvƒ`ƒƒA0)
+// ITU0 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ/ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã‚­ãƒ£ãƒ—ãƒãƒ£A0)
 void int_imia0 (void)   asm ("_int_imia0")  __attribute__((interrupt_handler));
-// ITU0 (ƒRƒ“ƒyƒAƒ}ƒbƒ`/ƒCƒ“ƒvƒbƒgƒLƒƒƒvƒ`ƒƒB0)
+// ITU0 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ/ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã‚­ãƒ£ãƒ—ãƒãƒ£B0)
 void int_imib0 (void)   asm ("_int_imib0")  __attribute__((interrupt_handler));
-// ITU0 (ƒI[ƒoƒtƒ[0)
+// ITU0 (ã‚ªãƒ¼ãƒãƒ•ãƒ­ãƒ¼0)
 void int_ovi0 (void)    asm ("_int_ovi0")   __attribute__((interrupt_handler));
 
-// ITU1 (ƒRƒ“ƒyƒAƒ}ƒbƒ`/ƒCƒ“ƒvƒbƒgƒLƒƒƒvƒ`ƒƒA1)
+// ITU1 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ/ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã‚­ãƒ£ãƒ—ãƒãƒ£A1)
 void int_imia1 (void)   asm ("_int_imia1")  __attribute__((interrupt_handler));
-// ITU1 (ƒRƒ“ƒyƒAƒ}ƒbƒ`/ƒCƒ“ƒvƒbƒgƒLƒƒƒvƒ`ƒƒB1)
+// ITU1 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ/ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã‚­ãƒ£ãƒ—ãƒãƒ£B1)
 void int_imib1 (void)   asm ("_int_imib1")  __attribute__((interrupt_handler));
-// ITU1 (ƒI[ƒoƒtƒ[1)
+// ITU1 (ã‚ªãƒ¼ãƒãƒ•ãƒ­ãƒ¼1)
 void int_ovi1 (void)    asm ("_int_ovi1")   __attribute__((interrupt_handler));
 
-// ITU2 (ƒRƒ“ƒyƒAƒ}ƒbƒ`/ƒCƒ“ƒvƒbƒgƒLƒƒƒvƒ`ƒƒA2)
+// ITU2 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ/ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã‚­ãƒ£ãƒ—ãƒãƒ£A2)
 void int_imia2 (void)   asm ("_int_imia2")  __attribute__((interrupt_handler));
-// ITU2 (ƒRƒ“ƒyƒAƒ}ƒbƒ`/ƒCƒ“ƒvƒbƒgƒLƒƒƒvƒ`ƒƒB2)
+// ITU2 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒ/ã‚¤ãƒ³ãƒ—ãƒƒãƒˆã‚­ãƒ£ãƒ—ãƒãƒ£B2)
 void int_imib2 (void)   asm ("_int_imib2")  __attribute__((interrupt_handler));
-// ITU2 (ƒI[ƒoƒtƒ[2)
+// ITU2 (ã‚ªãƒ¼ãƒãƒ•ãƒ­ãƒ¼2)
 void int_ovi2 (void)    asm ("_int_ovi2")   __attribute__((interrupt_handler));
 
-// TMR0 (ƒRƒ“ƒyƒAƒ}ƒbƒ`A0)
+// TMR0 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒA0)
 void int_cmia0 (void)   asm ("_int_cmia0")  __attribute__((interrupt_handler));
-// TMR0 (ƒRƒ“ƒyƒAƒ}ƒbƒ`B0)
+// TMR0 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒB0)
 void int_cmib0 (void)   asm ("_int_cmib0")  __attribute__((interrupt_handler));
-// TMR1 (ƒRƒ“ƒyƒAƒ}ƒbƒ`A1/B1)
+// TMR1 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒA1/B1)
 void int_cmiab1 (void)  asm ("_int_cmiab1") __attribute__((interrupt_handler));
-// TMR0,1 (ƒI[ƒoƒtƒ[0/1)
+// TMR0,1 (ã‚ªãƒ¼ãƒãƒ•ãƒ­ãƒ¼0/1)
 void int_tovi01 (void)  asm ("_int_tovi01") __attribute__((interrupt_handler));
 
-// TMR2 (ƒRƒ“ƒyƒAƒ}ƒbƒ`A2)
+// TMR2 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒA2)
 void int_cmia2 (void)   asm ("_int_cmia2")  __attribute__((interrupt_handler));
-// TMR2 (ƒRƒ“ƒyƒAƒ}ƒbƒ`B2)
+// TMR2 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒB2)
 void int_cmib2 (void)   asm ("_int_cmib2")  __attribute__((interrupt_handler));
-// TMR3 (ƒRƒ“ƒyƒAƒ}ƒbƒ`A3/B3)
+// TMR3 (ã‚³ãƒ³ãƒšã‚¢ãƒãƒƒãƒA3/B3)
 void int_cmiab3 (void)  asm ("_int_cmiab3") __attribute__((interrupt_handler));
-// TMR2,3 (ƒI[ƒoƒtƒ[2/3)
+// TMR2,3 (ã‚ªãƒ¼ãƒãƒ•ãƒ­ãƒ¼2/3)
 void int_tovi23 (void)  asm ("_int_tovi23") __attribute__((interrupt_handler));
 
-// DMAC0 (DMAC0/DMAC0A“]‘—Š®—¹)
+// DMAC0 (DMAC0/DMAC0Aè»¢é€å®Œäº†)
 void int_dend0a (void)  asm ("_int_dend0a") __attribute__((interrupt_handler));
-// DMAC0 (DMAC0B“]‘—Š®—¹)
+// DMAC0 (DMAC0Bè»¢é€å®Œäº†)
 void int_dend0b (void)  asm ("_int_dend0b") __attribute__((interrupt_handler));
-// DMAC1 (DMAC1/DMAC1A“]‘—Š®—¹)
+// DMAC1 (DMAC1/DMAC1Aè»¢é€å®Œäº†)
 void int_dend1a (void)  asm ("_int_dend1a") __attribute__((interrupt_handler));
-// DMAC1 (DMAC1B“]‘—Š®—¹)
+// DMAC1 (DMAC1Bè»¢é€å®Œäº†)
 void int_dend1b (void)  asm ("_int_dend1b") __attribute__((interrupt_handler));
 
-// SCI0 (óMƒGƒ‰[0)
+// SCI0 (å—ä¿¡ã‚¨ãƒ©ãƒ¼0)
 void int_eri0 (void)    asm ("_int_eri0")   __attribute__((interrupt_handler));
-// SCI0 (óMƒf[ƒ^ƒtƒ‹0)
+// SCI0 (å—ä¿¡ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ«0)
 void int_rxi0 (void)    asm ("_int_rxi0")   __attribute__((interrupt_handler));
-// SCI0 (‘—Mƒf[ƒ^ƒGƒ“ƒvƒeƒB0)
+// SCI0 (é€ä¿¡ãƒ‡ãƒ¼ã‚¿ã‚¨ãƒ³ãƒ—ãƒ†ã‚£0)
 void int_txi0 (void)    asm ("_int_txi0")   __attribute__((interrupt_handler));
-// SCI0 (‘—MI—¹0)
+// SCI0 (é€ä¿¡çµ‚äº†0)
 void int_tei0 (void)    asm ("_int_tei0")   __attribute__((interrupt_handler));
 
-// SCI1 (óMƒGƒ‰[1)
+// SCI1 (å—ä¿¡ã‚¨ãƒ©ãƒ¼1)
 void int_eri1 (void)    asm ("_int_eri1")   __attribute__((interrupt_handler));
-// SCI1 (óMƒf[ƒ^ƒtƒ‹1)
+// SCI1 (å—ä¿¡ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ«1)
 void int_rxi1 (void)    asm ("_int_rxi1")   __attribute__((interrupt_handler));
-// SCI1 (‘—Mƒf[ƒ^ƒGƒ“ƒvƒeƒB1)
+// SCI1 (é€ä¿¡ãƒ‡ãƒ¼ã‚¿ã‚¨ãƒ³ãƒ—ãƒ†ã‚£1)
 void int_txi1 (void)    asm ("_int_txi1")   __attribute__((interrupt_handler));
-// SCI1 (‘—MI—¹1)
+// SCI1 (é€ä¿¡çµ‚äº†1)
 void int_tei1 (void)    asm ("_int_tei1")   __attribute__((interrupt_handler));
 
-// SCI2 (óMƒGƒ‰[2)
+// SCI2 (å—ä¿¡ã‚¨ãƒ©ãƒ¼2)
 void int_eri2 (void)    asm ("_int_eri2")   __attribute__((interrupt_handler));
-// SCI2 (óMƒf[ƒ^ƒtƒ‹2)
+// SCI2 (å—ä¿¡ãƒ‡ãƒ¼ã‚¿ãƒ•ãƒ«2)
 void int_rxi2 (void)    asm ("_int_rxi2")   __attribute__((interrupt_handler));
-// SCI2 (‘—Mƒf[ƒ^ƒGƒ“ƒvƒeƒB2)
+// SCI2 (é€ä¿¡ãƒ‡ãƒ¼ã‚¿ã‚¨ãƒ³ãƒ—ãƒ†ã‚£2)
 void int_txi2 (void)    asm ("_int_txi2")   __attribute__((interrupt_handler));
-// SCI2 (‘—MI—¹2)
+// SCI2 (é€ä¿¡çµ‚äº†2)
 void int_tei2 (void)    asm ("_int_tei2")   __attribute__((interrupt_handler));
 
 /*--------------------------------------------------------------*/
-/* ƒVƒŠƒAƒ‹’ÊMŠÖ”(FIFOƒoƒbƒtƒ@•t)                             */
+/* ã‚·ãƒªã‚¢ãƒ«é€šä¿¡é–¢æ•°(FIFOãƒãƒƒãƒ•ã‚¡ä»˜)                             */
 /*--------------------------------------------------------------*/
 /*
-typedef enum { // ƒ{[ƒŒ[ƒgİ’èƒŠƒXƒg at 20MHz
+typedef enum { // ãƒœãƒ¼ãƒ¬ãƒ¼ãƒˆè¨­å®šãƒªã‚¹ãƒˆ at 20MHz
   br4800  = 129,
   br9600  = 64,
   br19200 = 32,
@@ -1304,7 +1304,7 @@ typedef enum { // ƒ{[ƒŒ[ƒgİ’èƒŠƒXƒg at 20MHz
 } TBaudRate;
 */
 
-typedef enum { // ƒ{[ƒŒ[ƒgİ’èƒŠƒXƒg at 25MHz
+typedef enum { // ãƒœãƒ¼ãƒ¬ãƒ¼ãƒˆè¨­å®šãƒªã‚¹ãƒˆ at 25MHz
   br4800  = 162,
   br9600  = 80,
   br19200 = 40,
@@ -1313,53 +1313,53 @@ typedef enum { // ƒ{[ƒŒ[ƒgİ’èƒŠƒXƒg at 25MHz
   br115200 = 6
 } TBaudRate;
 
-// SCI‰Šú‰»
+// SCIåˆæœŸåŒ–
 extern void SCI0_INIT (TBaudRate, char *, short, char *, short);
 extern void SCI1_INIT (TBaudRate, char *, short, char *, short);
 extern void SCI2_INIT (TBaudRate, char *, short, char *, short);
-// 1•¶š‘—M
+// 1æ–‡å­—é€ä¿¡
 extern void SCI0_OUT_DATA (char);
 extern void SCI1_OUT_DATA (char);
 extern void SCI2_OUT_DATA (char);
-// •¶š—ñ‘—M
+// æ–‡å­—åˆ—é€ä¿¡
 extern void SCI0_OUT_STRING (char *);
 extern void SCI1_OUT_STRING (char *);
 extern void SCI2_OUT_STRING (char *);
-// ƒoƒCƒiƒŠ—ñ‘—M
+// ãƒã‚¤ãƒŠãƒªåˆ—é€ä¿¡
 extern void SCI0_OUT_STRINGB (char *, short);
 extern void SCI1_OUT_STRINGB (char *, short);
 extern void SCI2_OUT_STRINGB (char *, short);
-// óMƒoƒbƒtƒ@ƒ`ƒFƒbƒN
+// å—ä¿¡ãƒãƒƒãƒ•ã‚¡ãƒã‚§ãƒƒã‚¯
 extern short SCI0_IN_DATA_CHECK (void);
 extern short SCI1_IN_DATA_CHECK (void);
 extern short SCI2_IN_DATA_CHECK (void);
-// ‘—Mƒoƒbƒtƒ@ƒ`ƒFƒbƒN
+// é€ä¿¡ãƒãƒƒãƒ•ã‚¡ãƒã‚§ãƒƒã‚¯
 extern short SCI0_OUT_DATA_CHECK (void);
 extern short SCI1_OUT_DATA_CHECK (void);
 extern short SCI2_OUT_DATA_CHECK (void);
-// óMƒoƒbƒtƒ@ƒNƒŠƒA
+// å—ä¿¡ãƒãƒƒãƒ•ã‚¡ã‚¯ãƒªã‚¢
 extern void SCI0_IN_DATA_CLEAR (void);
 extern void SCI1_IN_DATA_CLEAR (void);
 extern void SCI2_IN_DATA_CLEAR (void);
-// ‘—Mƒoƒbƒtƒ@ƒNƒŠƒA
+// é€ä¿¡ãƒãƒƒãƒ•ã‚¡ã‚¯ãƒªã‚¢
 extern void SCI0_OUT_DATA_CLEAR (void);
 extern void SCI1_OUT_DATA_CLEAR (void);
 extern void SCI2_OUT_DATA_CLEAR (void);
-// 1•¶šóM
+// 1æ–‡å­—å—ä¿¡
 extern char SCI0_IN_DATA (void);
 extern char SCI1_IN_DATA (void);
 extern char SCI2_IN_DATA (void);
-// •¶š—ñ‘—M
+// æ–‡å­—åˆ—é€ä¿¡
 extern short SCI0_IN_STRING (char *, short);
 extern short SCI1_IN_STRING (char *, short);
 extern short SCI2_IN_STRING (char *, short);
-// ŠÈˆÕƒtƒH[ƒ}ƒbƒgo—Í
+// ç°¡æ˜“ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆå‡ºåŠ›
 extern int SCI0_PRINTF (const char *, ...);
 extern int SCI1_PRINTF (const char *, ...);
 extern int SCI2_PRINTF (const char *, ...);
 
 /*--------------------------------------------------------------*/
-/* ƒCƒ“ƒ‰ƒCƒ“–½—ß                                               */
+/* ã‚¤ãƒ³ãƒ©ã‚¤ãƒ³å‘½ä»¤                                               */
 /*--------------------------------------------------------------*/
 extern __inline__ void sleep (void) __attribute__ ((always_inline));
 extern __inline__ void nop (void) __attribute__ ((always_inline));

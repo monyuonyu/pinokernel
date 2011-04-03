@@ -24,7 +24,7 @@ void sci_init(int Sci_No, BitRate b)
 	sci->SMR.BYTE = 0;
 	sci->BRR = b;
 
-	// ‘—ŽóM‹–‰Â
+	// é€å—ä¿¡è¨±å¯
 	sci->SCR.BIT.RE = 1;
 	sci->SCR.BIT.TE = 1;
 
@@ -52,18 +52,18 @@ void sci_write_str(int Sci_No,const char* _Str)
 		sci_write(Sci_No, *_Str++);
 	}
 
-	// ƒoƒbƒtƒ@‚Ì’†g‚ª‘S‚Ä‘—M‚³‚ê‚é‚Ü‚Å‘Ò‹@
+	// ãƒãƒƒãƒ•ã‚¡ã®ä¸­èº«ãŒå…¨ã¦é€ä¿¡ã•ã‚Œã‚‹ã¾ã§å¾…æ©Ÿ
 	while(!sci->SSR.BIT.TEND);
 }
 
 
-// ƒf[ƒ^‚ð1byte‚¾‚¯ŽóM‚·‚é
+// ãƒ‡ãƒ¼ã‚¿ã‚’1byteã ã‘å—ä¿¡ã™ã‚‹
 char sci_read_byte(int Sci_No)
 {
 	volatile struct SCI* sci = regs[Sci_No].sci;
 	char c;
 
-	// ƒf[ƒ^‚ªŠi”[‚³‚ê‚é‚Ü‚Å‘Ò‹@
+	// ãƒ‡ãƒ¼ã‚¿ãŒæ ¼ç´ã•ã‚Œã‚‹ã¾ã§å¾…æ©Ÿ
 	while (1)
 	{
 		if (sci->SSR.BIT.ORER)
@@ -82,7 +82,7 @@ char sci_read_byte(int Sci_No)
 			sci->SSR.BIT.FER_ERS = 0;
 		}
 
-		// ƒf[ƒ^‚ªŠi”[‚³‚ê‚Ä‚¢‚é‚©Šm”F
+		// ãƒ‡ãƒ¼ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹ã‹ç¢ºèª
 		if (sci->SSR.BIT.RDRF)
 			break;
 	}
@@ -93,7 +93,7 @@ char sci_read_byte(int Sci_No)
 	return c;
 }
 
-// ˜A‘±‚µ‚½ƒf[ƒ^‚ðŽóM
+// é€£ç¶šã—ãŸãƒ‡ãƒ¼ã‚¿ã‚’å—ä¿¡
 void sci_read(int Sci_No, char* buff, int size)
 {
 	int i;
@@ -103,9 +103,9 @@ void sci_read(int Sci_No, char* buff, int size)
 	}
 }
 
-// ƒf[ƒ^‚ðŽóM‚µ‚Ä‚¢‚é‚©Šm”F‚·‚éB
-// ƒ|[ƒŠƒ“ƒO‚ÅŠm”F‚·‚é
-// Ši”[‚³‚ê‚Ä‚¢‚ê‚Î1‚ð•Ô‚µAŠi”[‚³‚ê‚Ä‚¢‚È‚¯‚ê‚ÎA0‚ð•Ô‚·
+// ãƒ‡ãƒ¼ã‚¿ã‚’å—ä¿¡ã—ã¦ã„ã‚‹ã‹ç¢ºèªã™ã‚‹ã€‚
+// ãƒãƒ¼ãƒªãƒ³ã‚°ã§ç¢ºèªã™ã‚‹
+// æ ¼ç´ã•ã‚Œã¦ã„ã‚Œã°1ã‚’è¿”ã—ã€æ ¼ç´ã•ã‚Œã¦ã„ãªã‘ã‚Œã°ã€0ã‚’è¿”ã™
 int sci_read_pol(int Sci_No)
 {
 	volatile struct SCI* sci = regs[Sci_No].sci;
@@ -126,7 +126,7 @@ int sci_read_pol(int Sci_No)
 		sci->SSR.BIT.FER_ERS = 0;
 	}
 
-	// ƒf[ƒ^‚ªŠi”[‚³‚ê‚Ä‚¢‚é‚©Šm”F
+	// ãƒ‡ãƒ¼ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹ã‹ç¢ºèª
 	if (sci->SSR.BIT.RDRF)
 		return 1;
 

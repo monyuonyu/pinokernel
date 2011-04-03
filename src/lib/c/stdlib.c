@@ -14,13 +14,13 @@ int atoi(const char* _str)
 	int val = 0;
 	int magnifi = 1;
 
-	// u”š‚Ìv•¶š—ñ‚ÌƒPƒ^‚ğƒJƒEƒ“ƒg‚·‚é
+	// ã€Œæ•°å­—ã®ã€æ–‡å­—åˆ—ã®ã‚±ã‚¿ã‚’ã‚«ã‚¦ãƒ³ãƒˆã™ã‚‹
 	while(1)
 	{
-		if(_str[cnt] == 0x00)	// NULL‚ÅƒJƒEƒ“ƒ^I—¹
+		if(_str[cnt] == 0x00)	// NULLã§ã‚«ã‚¦ãƒ³ã‚¿çµ‚äº†
 			break;
 
-		if(_str[cnt] < 0x30 || _str[cnt] > 0x39)	// ƒAƒXƒL[ƒR[ƒh‚Ì”š‚Å‚È‚©‚Á‚½‚ç
+		if(_str[cnt] < 0x30 || _str[cnt] > 0x39)	// ã‚¢ã‚¹ã‚­ãƒ¼ã‚³ãƒ¼ãƒ‰ã®æ•°å­—ã§ãªã‹ã£ãŸã‚‰
 			return 0;
 
 		cnt++;
@@ -43,13 +43,13 @@ int decto10(char* _str)
 	int val = 0;
 	int magnifi = 1;
 
-	// •¶š—ñ‚ÌƒPƒ^‚ğƒJƒEƒ“ƒg‚·‚é
+	// æ–‡å­—åˆ—ã®ã‚±ã‚¿ã‚’ã‚«ã‚¦ãƒ³ãƒˆã™ã‚‹
 	while(1)
 	{
-		if(_str[cnt] == 0x00)	// NULL‚ÅƒJƒEƒ“ƒ^I—¹
+		if(_str[cnt] == 0x00)	// NULLã§ã‚«ã‚¦ãƒ³ã‚¿çµ‚äº†
 			break;
 
-		if(!((_str[cnt] >= '0' && _str[cnt] <= '9') || (_str[cnt] >= 'A' && _str[cnt] <= 'F'))) // 16i”ƒ`ƒFƒbƒN
+		if(!((_str[cnt] >= '0' && _str[cnt] <= '9') || (_str[cnt] >= 'A' && _str[cnt] <= 'F'))) // 16é€²æ•°ãƒã‚§ãƒƒã‚¯
 			return 0;
 
 		cnt++;
@@ -73,7 +73,7 @@ int decto10(char* _str)
 	return val;
 }
 
-// ASCIIƒR[ƒh‚ğƒoƒCƒiƒŠ‚É•ÏŠ·
+// ASCIIã‚³ãƒ¼ãƒ‰ã‚’ãƒã‚¤ãƒŠãƒªã«å¤‰æ›
 void asciitobin(char* _str, size_t size)
 {
 	char tmp[3] = {0,};

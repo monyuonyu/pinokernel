@@ -9,12 +9,12 @@
 #ifndef __XMODEM_H__
 #define __XMODEM_H__
 
-#define XMODEM_SOH 0x01		// ’ÊMŠJn
+#define XMODEM_SOH 0x01		// é€šä¿¡é–‹å§‹
 #define XMODEM_STX 0x02		//
-#define XMODEM_EOT 0x04		// “]‘—Š®—¹
-#define XMODEM_ACK 0x06		// ‚æ‚ë‚µ‚­‚¨Šè‚¢‚µ‚Ü‚·
-#define XMODEM_NAK 0x15		// ¸”s
-#define XMODEM_CAN 0x18		// ’†’f
+#define XMODEM_EOT 0x04		// è»¢é€å®Œäº†
+#define XMODEM_ACK 0x06		// ã‚ˆã‚ã—ããŠé¡˜ã„ã—ã¾ã™
+#define XMODEM_NAK 0x15		// å¤±æ•—
+#define XMODEM_CAN 0x18		// ä¸­æ–­
 #define XMODEM_EOF 0x1a		// Ctrl-z
 
 #define XMODEM_BLOCK_SIZE 128

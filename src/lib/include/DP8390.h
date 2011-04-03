@@ -12,22 +12,22 @@ unsigned char u1;
 
 #define page0
 
-// DP8390§ŒäƒŒƒWƒXƒ^
+// DP8390åˆ¶å¾¡ãƒ¬ã‚¸ã‚¹ã‚¿
 struct DP8390
 {
 	// 00h
-	union // ƒRƒ}ƒ“ƒhƒŒƒWƒXƒ^ PS=00 PS=01 PS=10
+	union // ã‚³ãƒžãƒ³ãƒ‰ãƒ¬ã‚¸ã‚¹ã‚¿ PS=00 PS=01 PS=10
 	{
 		struct
 		{
-			u1 STP :1; // ‚·‚×‚ÄƒXƒgƒbƒv
-			u1 STA :1; // ŠJŽn
-			u1 TXP :1; // ƒpƒPƒbƒg‘—MŠJŽn
+			u1 STP :1; // ã™ã¹ã¦ã‚¹ãƒˆãƒƒãƒ—
+			u1 STA :1; // é–‹å§‹
+			u1 TXP :1; // ãƒ‘ã‚±ãƒƒãƒˆé€ä¿¡é–‹å§‹
 			u1 RD0 :1; //
-			u1 RD1 :1; // 000=‹ÖŽ~ 001=ƒŠ[ƒh 010=ƒ‰ƒCƒg 011ƒpƒPƒbƒg‘—M 1xx=‹­§’âŽ~
-			u1 RD2 :1; // ƒŠƒ‚[ƒgDMA
-			u1 PS0 :1; // 00=p0 01=p1 10=p2 11=p—\–ñ
-			u1 PS1 :1; // ƒy[ƒW‘I‘ð
+			u1 RD1 :1; // 000=ç¦æ­¢ 001=ãƒªãƒ¼ãƒ‰ 010=ãƒ©ã‚¤ãƒˆ 011ãƒ‘ã‚±ãƒƒãƒˆé€ä¿¡ 1xx=å¼·åˆ¶åœæ­¢
+			u1 RD2 :1; // ãƒªãƒ¢ãƒ¼ãƒˆDMA
+			u1 PS0 :1; // 00=p0 01=p1 10=p2 11=päºˆç´„
+			u1 PS1 :1; // ãƒšãƒ¼ã‚¸é¸æŠž
 		};
 
 		struct
@@ -72,12 +72,12 @@ struct DP8390
 	//04h
 	union
 	{
-		union // ‘—MƒXƒe[ƒ^ƒXEƒŒƒWƒXƒ^ PS=00
+		union // é€ä¿¡ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿ PS=00
 		{
 			struct
 			{
 				u1 PTX :1;
-				u1 :1; // —\–ñ
+				u1 :1; // äºˆç´„
 				u1 COL :1;
 				u1 ABT :1;
 				u1 CSR :1;
@@ -87,7 +87,7 @@ struct DP8390
 			};
 		}TSR;
 
-		u1 TPSR;	// PS=00¨(w) PS=10¨(r)
+		u1 TPSR;	// PS=00â†’(w) PS=10â†’(r)
 		u1 PAR3;	// PS=01(rw)
 
 	};
@@ -111,7 +111,7 @@ struct DP8390
 	};
 
 	// 07h
-	union // Š„‚èž‚ÝƒXƒe[ƒ^ƒXEƒŒƒWƒXƒ^ PS=00(rw)
+	union // å‰²ã‚Šè¾¼ã¿ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿ PS=00(rw)
 	{
 		struct
 		{
@@ -162,7 +162,7 @@ struct DP8390
 	// 0Ch
 	union
 	{
-		union // ŽóMƒXƒe[ƒ^ƒXEƒŒƒWƒXƒ^ PS=00(r)
+		union // å—ä¿¡ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿ PS=00(r)
 		{
 			struct
 			{
@@ -177,7 +177,7 @@ struct DP8390
 			};
 		}RSR;
 
-		// ŽóMƒRƒ“ƒtƒBƒMƒ…ƒŒ[ƒVƒ‡ƒ“EƒŒƒWƒXƒ^
+		// å—ä¿¡ã‚³ãƒ³ãƒ•ã‚£ã‚®ãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿
 		union  	// PS=00(w) PS=10(r)
 		{
 			struct
@@ -188,7 +188,7 @@ struct DP8390
 				u1 AM :1;
 				u1 PRO :1;
 				u1 MON :1;
-				u1 :2; // —\–ñ
+				u1 :2; // äºˆç´„
 			};
 		}RCR;
 
@@ -200,17 +200,17 @@ struct DP8390
 	{
 		u1 CNTR0;	// PS=00(r)
 
-		 // ‘—MƒRƒ“ƒtƒBƒMƒ…ƒŒ[ƒVƒ‡ƒ“EƒŒƒWƒXƒ^
+		 // é€ä¿¡ã‚³ãƒ³ãƒ•ã‚£ã‚®ãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿
 		union	// PS=00(w) PS=10(r)
 		{
 			struct
 			{
-				u1 CRC :1; // CRC§Œä
-				u1 LB0 :1; // ƒ‹[ƒvƒoƒbƒNŽw’è
+				u1 CRC :1; // CRCåˆ¶å¾¡
+				u1 LB0 :1; // ãƒ«ãƒ¼ãƒ—ãƒãƒƒã‚¯æŒ‡å®š
 				u1 LB1 :1; //
 				u1 ATD :1; //
-				u1 OFST :1; // Õ“ËƒIƒtƒZƒbƒg
-				u1 :3; // —\–ñ
+				u1 OFST :1; // è¡çªã‚ªãƒ•ã‚»ãƒƒãƒˆ
+				u1 :3; // äºˆç´„
 
 			};
 
@@ -230,19 +230,19 @@ struct DP8390
 	{
 		u1 CNTR1;	// PS=00(r)
 
-		// ƒf[ƒ^ƒRƒ“ƒtƒBƒMƒ…ƒŒ[ƒVƒ‡ƒ“EƒŒƒWƒXƒ^
+		// ãƒ‡ãƒ¼ã‚¿ã‚³ãƒ³ãƒ•ã‚£ã‚®ãƒ¥ãƒ¬ãƒ¼ã‚·ãƒ§ãƒ³ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿
 		union // PS=00(w) PS=10(r)
 		{
 			struct
 			{
-				u1 WTS :1; // ƒ[ƒh“]‘—Žw’è
-				u1 BOS :1; // ƒoƒCƒg‡”ÔŽw’è
-				u1 LAS :1; // ƒƒ“ƒOƒAƒhƒŒƒXŽw’è
-				u1 LS :1; // ƒ‹[ƒvƒoƒbƒNŽw’è
-				u1 AR :1; // Ž©“®‰Šú‰»ƒŠƒ‚[ƒg
-				u1 FT0 :1; // DMA“]‘—‚ð‹N“®‚·‚éƒ^ƒCƒ~ƒ“ƒO‚ÌŽw’è
-				u1 FT1 :1; // FIFO ƒXƒŒƒbƒVƒ‡ƒ‹ƒhŽw’è
-				u1 :1; // —\–ñ
+				u1 WTS :1; // ãƒ¯ãƒ¼ãƒ‰è»¢é€æŒ‡å®š
+				u1 BOS :1; // ãƒã‚¤ãƒˆé †ç•ªæŒ‡å®š
+				u1 LAS :1; // ãƒ­ãƒ³ã‚°ã‚¢ãƒ‰ãƒ¬ã‚¹æŒ‡å®š
+				u1 LS :1; // ãƒ«ãƒ¼ãƒ—ãƒãƒƒã‚¯æŒ‡å®š
+				u1 AR :1; // è‡ªå‹•åˆæœŸåŒ–ãƒªãƒ¢ãƒ¼ãƒˆ
+				u1 FT0 :1; // DMAè»¢é€ã‚’èµ·å‹•ã™ã‚‹ã‚¿ã‚¤ãƒŸãƒ³ã‚°ã®æŒ‡å®š
+				u1 FT1 :1; // FIFO ã‚¹ãƒ¬ãƒƒã‚·ãƒ§ãƒ«ãƒ‰æŒ‡å®š
+				u1 :1; // äºˆç´„
 			}DCR;
 
 			struct
@@ -261,7 +261,7 @@ struct DP8390
 	{
 		u1 CNTR2;	// PS=00(r)
 
-		// Š„‚èž‚Ýƒ}ƒXƒNEƒŒƒWƒXƒ^ PS=00(w) PS=10(r)
+		// å‰²ã‚Šè¾¼ã¿ãƒžã‚¹ã‚¯ãƒ»ãƒ¬ã‚¸ã‚¹ã‚¿ PS=00(w) PS=10(r)
 		union
 		{
 			struct

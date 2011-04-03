@@ -44,7 +44,7 @@ int main()
 //	static int ii;
 //	const char str[][32] = {{"ok sci\n\r"}, {"ok bootloader\n\r"}, {"ok started!! XMODEM\n\r"}, {"ok finish!! XMODEM\n\r"}, {"ok started!! Deploy\n\r"}, {"ok finish!! Deploy\n\r"}};
 
-	// ƒ|[ƒg4‚ğŒõ‚ç‚·ƒeƒXƒg
+	// ãƒãƒ¼ãƒˆ4ã‚’å…‰ã‚‰ã™ãƒ†ã‚¹ãƒˆ
 //	volatile unsigned char* p4ddr = (volatile unsigned char*) 0xFEE003;
 //	volatile unsigned char* p4 = (volatile unsigned char*) 0xFFFFD3;
 //	*p4ddr = 0x03;
@@ -77,26 +77,26 @@ int main()
 		int i;
 		sci_write_str(SCI1, "pinocld>_ ");
 
-		// ƒGƒ“ƒ^[‚ª“ü—Í‚³‚ê‚é‚Ü‚Åƒ‹[ƒv
+		// ã‚¨ãƒ³ã‚¿ãƒ¼ãŒå…¥åŠ›ã•ã‚Œã‚‹ã¾ã§ãƒ«ãƒ¼ãƒ—
 		getstring(str);
 
 		sci_write(SCI1, '\n');
 
-		// ƒƒCƒ“ƒXƒCƒbƒ`
+		// ãƒ¡ã‚¤ãƒ³ã‚¹ã‚¤ãƒƒãƒ
 		switch (str[0])
 		{
-		// RAM‚Öƒ[ƒh
+		// RAMã¸ãƒ­ãƒ¼ãƒ‰
 		case 'l':
 			sci_write_str(SCI1, "ok started!! XMODEM\n\r");
 			xmodem_start((char*)&buf_start);
 			sci_write_str(SCI1, "ok finish!! XMODEM\n\r");
 			break;
-			// void main(void) ‚ÌŒ`®‚ÅŠÖ”ƒ|ƒCƒ“ƒ^‚©‚çŠJn
+			// void main(void) ã®å½¢å¼ã§é–¢æ•°ãƒã‚¤ãƒ³ã‚¿ã‹ã‚‰é–‹å§‹
 		case 's':
 			start = (void*)&buf_start;
 			start();
 			break;
-			// ƒƒ‚ƒŠƒ_ƒ“ƒv
+			// ãƒ¡ãƒ¢ãƒªãƒ€ãƒ³ãƒ—
 		case 'd':
 			getstring(str);
 			asciitobin(str, 4);
@@ -104,7 +104,7 @@ int main()
 			for (i = 0; i < (int)*((short*)str); i++)
 				sci_write(SCI1, *(((char*)&buf_start) + i));
 			break;
-			// ƒwƒ‹ƒv
+			// ãƒ˜ãƒ«ãƒ—
 		case 'h':
 			break;
 
@@ -119,9 +119,9 @@ void init()
 {
 	extern int bss_start, bss_end, data_start, data_end, rodata_end;
 
-	memset(&bss_start, 0, (long)&bss_end - (long)&bss_start);					// BssƒZƒNƒVƒ‡ƒ“‰Šú‰»
-	memcpy(&data_start, &rodata_end, (long)&data_end - (long)&data_start);		// dataƒZƒNƒVƒ‡ƒ“‰Šú‰»
-	memset(&buf_start, 0, (long*)0x600);												// bufƒZƒNƒVƒ‡ƒ“‰Šú‰»
+	memset(&bss_start, 0, (long)&bss_end - (long)&bss_start);					// Bssã‚»ã‚¯ã‚·ãƒ§ãƒ³åˆæœŸåŒ–
+	memcpy(&data_start, &rodata_end, (long)&data_end - (long)&data_start);		// dataã‚»ã‚¯ã‚·ãƒ§ãƒ³åˆæœŸåŒ–
+	memset(&buf_start, 0, (long*)0x600);												// bufã‚»ã‚¯ã‚·ãƒ§ãƒ³åˆæœŸåŒ–
 
 	sci_init(SCI1, br9600);
 

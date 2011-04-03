@@ -14,7 +14,7 @@ int main()
 {
 		char str[] = "Hello World!!\n\r";
 
-		// ƒ|[ƒg4‚ğŒõ‚ç‚·ƒeƒXƒg
+		// ãƒãƒ¼ãƒˆ4ã‚’å…‰ã‚‰ã™ãƒ†ã‚¹ãƒˆ
 		volatile unsigned char* p4ddr = (volatile unsigned char*) 0xFEE003;
 		volatile unsigned char* p4 = (volatile unsigned char*) 0xFFFFD3;
 		*p4ddr = 0x03;

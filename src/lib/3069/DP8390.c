@@ -55,30 +55,30 @@ void nic_init(void* nic_base)
 	long i;
 
 
-	nic = (struct DP8390*)nic_base;	// ƒx[ƒXƒAƒhƒŒƒXƒZƒbƒg
+	nic = (struct DP8390*)nic_base;	// ãƒ™ãƒ¼ã‚¹ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚»ãƒƒãƒˆ
 
 	u1 buff[16];
 
-	(nic + 0x18) = 0x00;			// ƒŠƒZƒbƒg
-	for(i = 0; i < 400000; i++);	// ƒEƒFƒCƒg
+	(nic + 0x18) = 0x00;			// ãƒªã‚»ãƒƒãƒˆ
+	for(i = 0; i < 400000; i++);	// ã‚¦ã‚§ã‚¤ãƒˆ
 
-	select_page(0);					// page0‘I‘ğ
+	select_page(0);					// page0é¸æŠ
 
-	nic->CR.STP = 1;				// ƒXƒgƒbƒv
-	nic->IMR = 0;					// Š„‚è‚İƒ}ƒXƒNƒNƒŠƒA
-	nic->ISR = 0xFF;				// Š„‚è‚İ—v‹ƒNƒŠƒA
-	nic->RBCR0 = 0;					// ƒŠƒ‚[ƒgƒoƒCƒgƒJƒEƒ“ƒgƒŒƒWƒXƒ^0 ƒNƒŠƒA
-	nic->RBCR1 = 0;					// ƒŠƒ‚[ƒgƒoƒCƒgƒJƒEƒ“ƒgƒŒƒWƒXƒ^1 ƒNƒŠƒA
-	nic->DCR.WTS = 1;				// ƒ[ƒh“]‘—w’è
-	nic->DCR.LS = 1;				// ƒ‹[ƒvƒoƒbƒNİ’è
+	nic->CR.STP = 1;				// ã‚¹ãƒˆãƒƒãƒ—
+	nic->IMR = 0;					// å‰²ã‚Šè¾¼ã¿ãƒã‚¹ã‚¯ã‚¯ãƒªã‚¢
+	nic->ISR = 0xFF;				// å‰²ã‚Šè¾¼ã¿è¦æ±‚ã‚¯ãƒªã‚¢
+	nic->RBCR0 = 0;					// ãƒªãƒ¢ãƒ¼ãƒˆãƒã‚¤ãƒˆã‚«ã‚¦ãƒ³ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿0 ã‚¯ãƒªã‚¢
+	nic->RBCR1 = 0;					// ãƒªãƒ¢ãƒ¼ãƒˆãƒã‚¤ãƒˆã‚«ã‚¦ãƒ³ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿1 ã‚¯ãƒªã‚¢
+	nic->DCR.WTS = 1;				// ãƒ¯ãƒ¼ãƒ‰è»¢é€æŒ‡å®š
+	nic->DCR.LS = 1;				// ãƒ«ãƒ¼ãƒ—ãƒãƒƒã‚¯è¨­å®š
 //	nic->DCR.FT1 = 1;
 
-	nic_send_ON_OFF(0);				// ‘—M•”OFF
-	nic_rec_ON_OFF(0);				// óM•”OFF
+	nic_send_ON_OFF(0);				// é€ä¿¡éƒ¨OFF
+	nic_rec_ON_OFF(0);				// å—ä¿¡éƒ¨OFF
 
 
-	nic->PSTART = (0x4c00 >> 8);	// ƒŠƒ“ƒOƒoƒbƒtƒ@ŠJnˆÊ’u
-	nic->PSTOP = (0x8000 >> 8);		// ƒŠƒ“ƒOƒoƒbƒtƒ@I—¹ˆÊ’u
+	nic->PSTART = (0x4c00 >> 8);	// ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡é–‹å§‹ä½ç½®
+	nic->PSTOP = (0x8000 >> 8);		// ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡çµ‚äº†ä½ç½®
 
 	nic->BNRY = ((0x8000 >> 8) - 1);
 	select_page(1);

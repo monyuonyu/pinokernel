@@ -9,12 +9,12 @@
 
 #define XMODEM_DBG 0
 
-// ’ÊM‚ªŠJn‚³‚ê‚é‚ÆŠÖ”‚ğ”²‚¯‚Ü‚·
+// é€šä¿¡ãŒé–‹å§‹ã•ã‚Œã‚‹ã¨é–¢æ•°ã‚’æŠœã‘ã¾ã™
 int xmodem_start_ack()
 {
 	unsigned long cnt = 0;
 
-	// ‰½‚©’l‚ª“ü‚é‚Ü‚Åˆê’èŠÔŠu‚²‚Æ‚ÉNAK‚ğ‘—M
+	// ä½•ã‹å€¤ãŒå…¥ã‚‹ã¾ã§ä¸€å®šé–“éš”ã”ã¨ã«NAKã‚’é€ä¿¡
 	while (!(sci_read_pol(SCI1)))
 	{
 		if (cnt++ > 200000)
@@ -30,26 +30,26 @@ int xmodem_start_ack()
 }
 
 
-// XMODEM 1ƒuƒƒbƒNóM
+// XMODEM 1ãƒ–ãƒ­ãƒƒã‚¯å—ä¿¡
 int xmodem_read_block(unsigned char block_num_now, char* buff)
 {
 	unsigned char c, block_num_rec, check_sum = 0;
 //	char c;
 	int i;
 
-	// ƒuƒƒbƒN”Ô†Šm”F
+	// ãƒ–ãƒ­ãƒƒã‚¯ç•ªå·ç¢ºèª
 	sci_read(SCI1, (char*)&block_num_rec, 1);
 	if(block_num_now != block_num_rec)
 		return 1;
 
-	// ƒrƒbƒg”½“]‚ÌƒuƒƒbƒN”Ô†Šm”F
+	// ãƒ“ãƒƒãƒˆåè»¢ã®ãƒ–ãƒ­ãƒƒã‚¯ç•ªå·ç¢ºèª
 	c = block_num_rec;
 	sci_read(SCI1, (char*)&block_num_rec, 1);
 	block_num_rec ^= c;
 	if(block_num_rec != 0xFF)
 		return 1;
 
-	// 128byte‚Ìƒf[ƒ^óM
+	// 128byteã®ãƒ‡ãƒ¼ã‚¿å—ä¿¡
 	for(i = 0; i < XMODEM_BLOCK_SIZE; i++)
 	{
 		sci_read(SCI1, (char*)&c, 1);
@@ -57,18 +57,18 @@ int xmodem_read_block(unsigned char block_num_now, char* buff)
 		check_sum += c;
 	}
 
-	// ƒ`ƒFƒbƒNƒTƒ€Šm”F
+	// ãƒã‚§ãƒƒã‚¯ã‚µãƒ ç¢ºèª
 	sci_read(SCI1, (char*)&c, 1);
 	check_sum ^= c;
 	if(check_sum)
 		return 1;
 
-	// ³íI—¹
+	// æ­£å¸¸çµ‚äº†
 	return 0;
 
 }
 
-// “]‘—‚ªŠ®—¹‚·‚é‚Æ“]‘—‚µ‚½ƒuƒƒbƒN”B ¸”sE’†’f‚·‚é‚Æ‚P‚ğ•Ô‚·
+// è»¢é€ãŒå®Œäº†ã™ã‚‹ã¨è»¢é€ã—ãŸãƒ–ãƒ­ãƒƒã‚¯æ•°ã€‚ å¤±æ•—ãƒ»ä¸­æ–­ã™ã‚‹ã¨ï¼‘ã‚’è¿”ã™
 int xmodem_start(char* buf)
 {
 	unsigned char block_num_now = 1;
@@ -90,14 +90,14 @@ int xmodem_start(char* buf)
 
 		switch(c)
 		{
-		case XMODEM_SOH:	// ’ÊMŠJnI
+		case XMODEM_SOH:	// é€šä¿¡é–‹å§‹ï¼
 #if XMODEM_DBG
 			return 10;
 #endif
 			starting = 1;
 			if(xmodem_read_block(block_num_now, buf))
 			{
-				sci_write(SCI1, XMODEM_NAK);	// ¸”s‚ğ’Ê’m
+				sci_write(SCI1, XMODEM_NAK);	// å¤±æ•—ã‚’é€šçŸ¥
 #if XMODEM_DBG
 				return 70;
 #endif
@@ -105,12 +105,12 @@ int xmodem_start(char* buf)
 			else
 			{
 				block_num_now++;
-				buf += XMODEM_BLOCK_SIZE;		// ƒoƒbƒtƒ@‚Ìƒ|ƒCƒ“ƒ^‚ğ1ƒuƒƒbƒNi‚ß‚é
-				sci_write(SCI1, XMODEM_ACK);	// ¬Œ÷‚ğ’Ê’m ¨ Ÿ‚ÌƒuƒƒbƒN‘—MŠJn
+				buf += XMODEM_BLOCK_SIZE;		// ãƒãƒƒãƒ•ã‚¡ã®ãƒã‚¤ãƒ³ã‚¿ã‚’1ãƒ–ãƒ­ãƒƒã‚¯é€²ã‚ã‚‹
+				sci_write(SCI1, XMODEM_ACK);	// æˆåŠŸã‚’é€šçŸ¥ â†’ æ¬¡ã®ãƒ–ãƒ­ãƒƒã‚¯é€ä¿¡é–‹å§‹
 			}
 			break;
 
-		case XMODEM_EOT:	// “]‘—Š®—¹
+		case XMODEM_EOT:	// è»¢é€å®Œäº†
 			sci_write(SCI1, XMODEM_ACK);
 #if !XMODEM_DBG
 			return block_num_now;
@@ -118,7 +118,7 @@ int xmodem_start(char* buf)
 			return 20;
 #endif
 
-		case XMODEM_CAN:	// ’†’f
+		case XMODEM_CAN:	// ä¸­æ–­
 #if !XMODEM_DBG
 			return 0;
 #else
