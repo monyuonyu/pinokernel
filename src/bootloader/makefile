@@ -8,10 +8,11 @@ STRIP	= h8300-elf-strip
 
 PINoC	= pinoc
 
-OBJS	= vectors.o main.o start.o XMODEM.o load_mot.o
+OBJS	= vectors.o main.o start.o XMODEM.o  read_elf.o
 
-CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../lib/include
-LDFLAGS	= -T boot.ls -lc -l3069 -L ../lib
+#CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../lib/include
+CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../../newlib/include -I ../lib/include
+LDFLAGS	= -T boot.ls -L ../../newlib/lib/h8300h -L ../lib -l3069 -lc -lascii
 
 all : $(PINoC).mot
 	# bootld finish!!

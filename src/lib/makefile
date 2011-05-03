@@ -7,14 +7,14 @@ OBJCOPY= h8300-elf-objcopy
 OBJDUMP= h8300-elf-objdump
 STRIP	= h8300-elf-strip
 
-OBJSC	= string.o stdlib.o ctype.o
+#OBJSC	= string.o stdlib.o ctype.o
 
 CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I.
 
 all : libs
 	# libs finish!!
 
-libs : libc.a lib3069.a
+libs : libc.a lib3069.a libascii.a
 
 libc.a :
 	cd ./c; $(MAKE)
@@ -22,7 +22,12 @@ libc.a :
 lib3069.a:
 	cd ./3069; $(MAKE)
 
+libascii.a:
+	cd ./ascii; $(MAKE)
+
 clean :
 	cd ./c; $(MAKE) clean
 	cd ./3069; $(MAKE) clean
+	cd ./ascii; $(MAKE) clean
 	rm -f *.o *.a
+	

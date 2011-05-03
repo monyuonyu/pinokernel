@@ -15,6 +15,8 @@
 #include "stdlib.h"
 #include "dbg.hpp"
 //#include "DP8390.h"
+#include "read_elf.h"
+#include "ascii.h"
 
 extern int buf_start;
 extern int text_start;
@@ -70,12 +72,13 @@ int main()
 
 //	sci_write_str(SCI1, (char*)&text_start);
 
+	char* entry_point;
 	void (*start)(void);
 	char str[32] = {0,};
 	while(1)
 	{
 		int i;
-		sci_write_str(SCI1, "pinocld>_ ");
+		sci_write_str(SCI1, "PINoC Console>_ ");
 
 		// エンターが入力されるまでループ
 		getstring(str);
@@ -91,11 +94,13 @@ int main()
 			xmodem_start((char*)&buf_start);
 			sci_write_str(SCI1, "ok finish!! XMODEM\n\r");
 			break;
+
 			// void main(void) の形式で関数ポインタから開始
 		case 's':
-			start = (void*)&buf_start;
+//			start = (void*)&buf_start;
 			start();
 			break;
+
 			// メモリダンプ
 		case 'd':
 			getstring(str);
@@ -104,6 +109,30 @@ int main()
 			for (i = 0; i < (int)*((short*)str); i++)
 				sci_write(SCI1, *(((char*)&buf_start) + i));
 			break;
+
+			// elfヘッダ情報表示
+		case 'e':
+			if(elf_read((char*)&buf_start))
+			{
+				sci_write_str(SCI1, "it's not elf file...\n\r");
+			}
+			else
+			{
+				sci_write_str(SCI1, "it's elf file!!\n\r");
+			}
+
+			if(elf_analysis((char*)&buf_start))
+			{
+				sci_write_str(SCI1, "it's not load file...\n\r");
+			}
+			else
+			{
+				sci_write_str(SCI1, "it's load file!!\n\r");
+			}
+
+			entry_point = elf_develop((char*)&buf_start);
+			start = (void (*)(void))entry_point;
+
 			// ヘルプ
 		case 'h':
 			break;
