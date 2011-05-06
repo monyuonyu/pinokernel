@@ -19,7 +19,7 @@ void interrupt(softvec_type_t type, unsigned long sp)
 /* 割り込みベクタへハンドラを登録 */
 void softvec_setintr(softvec_type_t type, softvec_handler_t handler)
 {
-	(softvec_handler_t*)SOFTVEC_ADDR[type] = handler;
+	((softvec_handler_t*)SOFTVEC_ADDR)[type] = handler;
 }
 
 
