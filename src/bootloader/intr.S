@@ -6,9 +6,9 @@
 /* mov.l は32bit mov.w は16bitである */
 
 /* GCCにおいて、										 */
-/* er0 er1 er2 は不揮発性レジスタ						 */
+/* er0 er1 er2 は不揮発性レジスタ							 */
 /* er3 er4 er5 er7 は揮発性レジスタ						 */
-/* 他のコンパイラでの安全を考えてすべて退避とする		 */
+/* 他のコンパイラでの安全を考えてすべて退避とする					 */
 
 /* ソフトエラー */
 		.global	_intr_softerr
@@ -25,7 +25,7 @@ _intr_softerr:
 
 	mov.l	er7,er1						/* 第二引数にスタックポインタ	 	 */
 	mov.w	#SOFTVEC_TYPE_SOFTERR,r0	/* 第一引数に割り込みタイプを指定	 */
-	jsr		@_interrupt					/* interrupt() 関数呼び出し			 */
+	jsr		@_interrupt					/* interrupt() 関数呼び出し	 */
 
 										/* 汎用レジスタの復帰 */
 	mov.l	@er7+,er0
