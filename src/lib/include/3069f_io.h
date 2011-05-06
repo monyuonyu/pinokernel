@@ -51,5 +51,6 @@ struct byte
 
 // 3069アセンブラ
 #define as_SLEEP_3069 asm volatile ("sleep");
+#define as_SLEEP_LOOP_3069 while(1){asm volatile ("sleep");}
 
 #endif

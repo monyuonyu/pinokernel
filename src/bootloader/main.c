@@ -44,12 +44,37 @@ void getstring(char* buf)
 }
 
 
-void test_vec(softvec_type_t type, unsigned long sp)
+void main_vec(softvec_type_t type, unsigned long sp)
 {
 	char c;
-//	dbg();
-	c = sci_read_byte_intr(SCI_NO_1);
-	sci_write(SCI_NO_1, c);
+	static char buf[32];
+	static int i;
+	buf[i] = sci_read_byte_intr(SCI_NO_1);
+	sci_write(SCI_NO_1, buf[i]);
+
+	if(buf[i] == 0x0d)
+	{
+		dbg();
+
+		if(strcmp(buf, "dump"))
+		{
+
+		}
+		else if(strcmp(buf, "load"))
+		{
+
+		}
+		else if(strcmp(buf, "devlop"))
+		{
+
+		}
+		else if(strcmp(buf, "start"))
+		{
+
+		}
+	}
+
+	i++;
 }
 
 int main()
@@ -88,7 +113,8 @@ int main()
 	// 割り込みENABLE
 	INTERUUPT_ENABLE
 
-	softvec_setintr(SOFTVEC_TYPE_SERIAL, test_vec);
+	// ソフト・割り込みベクタへ登録
+	softvec_setintr(SOFTVEC_TYPE_SERIAL, main_vec);
 
 //	sci_write_str(SCI_NO_1, (char*)&text_start);
 
@@ -99,6 +125,8 @@ int main()
 	{
 		int i;
 		sci_write_str(SCI_NO_1, "PINoC Console>_ ");
+
+		as_SLEEP_LOOP_3069
 
 		// エンターが入力されるまでループ
 		getstring(str);
