@@ -30,6 +30,6 @@ void softvec_init()
 
 	for(type = 0; type < SOFTVEC_TYPE_NUM; type++)
 	{
-		softvec_setintr(type, NULL);
+		softvec_setintr(type, 0);
 	}
 }

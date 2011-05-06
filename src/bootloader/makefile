@@ -8,7 +8,7 @@ STRIP	= h8300-elf-strip
 
 PINoC	= pinoc
 
-OBJS	= vectors.o main.o start.o XMODEM.o  read_elf.o
+OBJS	= vectors.o main.o start.o XMODEM.o  read_elf.o interrupt.o intr.o
 
 #CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../lib/include
 CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../../newlib/include -I ../lib/include
@@ -29,6 +29,9 @@ $(PINoC).mot : $(PINoC)
 	$(CC) -c -v $< $(CFLAGS)
 	
 .s.o : $<
+	$(CC) -c -v $< $(CFLAGS)
+	
+.S.o : $<
 	$(CC) -c -v $< $(CFLAGS)
 	
 as : 
