@@ -50,6 +50,7 @@ void main_vec(softvec_type_t type, unsigned long sp)
 	static int i = 0;
 	static char* entry_point;
 	static void (*start)(void);
+//	char str[32] = {0,};
 
 	// 受信
 	buf[i] = sci_read_byte_intr(SCI_NO_1);
@@ -58,13 +59,16 @@ void main_vec(softvec_type_t type, unsigned long sp)
 	// スイッチ
 	if(buf[i] == 0x0d)
 	{
-		dbg();
 
 		buf[i] = '\0';
 
 		if(!strncmp(buf, "dump", 4))
 		{
-			dbg();
+//			getstring(str);
+//			asciitobin(str, 4);
+
+			for (i = 0; i < 128; i++)
+				sci_write(SCI_NO_1, *((char*)0xffc520 + i));
 		}
 		else if(!strncmp(buf, "load", 4))
 		{
