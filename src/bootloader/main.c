@@ -46,32 +46,50 @@ void getstring(char* buf)
 
 void main_vec(softvec_type_t type, unsigned long sp)
 {
-	char c;
 	static char buf[32];
-	static int i;
+	static int i = 0;
+	static char* entry_point;
+	static void (*start)(void);
+
+	// 受信
 	buf[i] = sci_read_byte_intr(SCI_NO_1);
 	sci_write(SCI_NO_1, buf[i]);
 
+	// スイッチ
 	if(buf[i] == 0x0d)
 	{
 		dbg();
 
-		if(strcmp(buf, "dump"))
-		{
+		buf[i] = '\0';
 
-		}
-		else if(strcmp(buf, "load"))
+		if(!strncmp(buf, "dump", 4))
 		{
-
+			dbg();
 		}
-		else if(strcmp(buf, "devlop"))
+		else if(!strncmp(buf, "load", 4))
 		{
-
+			sci_write_str(SCI_NO_1, "  started!! XMODEM...\n\r");
+			xmodem_start((char*)&buf_start);
+			sci_write_str(SCI_NO_1, "  finish!! XMODEM\n\r");
+			sci_write_str(SCI_NO_1, "    Transfer is Completed...\n\r");
 		}
-		else if(strcmp(buf, "start"))
+		else if(!strncmp(buf, "devlop", 6))
 		{
-
+			// RAM展開
+			sci_write_str(SCI_NO_1, "  started!! devloping...\n\r");
+			entry_point = elf_develop((char*) &buf_start);
+			start = (void(*)(void)) entry_point;
+			sci_write_str(SCI_NO_1, "  finish!! devloped...\n\r");
 		}
+		else if(!strncmp(buf, "start", 5))
+		{
+			// 開始
+			start();
+		}
+
+		i = 0;
+		sci_write_str(SCI_NO_1, "PINoC Console>_ ");
+		return;
 	}
 
 	i++;
@@ -105,8 +123,6 @@ int main()
 
 //	*p4 = 0x02;
 
-	dbg();
-
 	// シリアル通信割り込みEnable
 	sci_read_intr_enable(SCI_NO_1);
 
@@ -116,51 +132,55 @@ int main()
 	// ソフト・割り込みベクタへ登録
 	softvec_setintr(SOFTVEC_TYPE_SERIAL, main_vec);
 
+	sci_write_str(SCI_NO_1, "PINoC Console>_ \r\n");
+
+	// Sleep
+	as_SLEEP_LOOP_3069
+
 //	sci_write_str(SCI_NO_1, (char*)&text_start);
 
-	char* entry_point;
-	void (*start)(void);
-	char str[32] = {0,};
-	while(1)
-	{
-		int i;
-		sci_write_str(SCI_NO_1, "PINoC Console>_ ");
-
-		as_SLEEP_LOOP_3069
-
-		// エンターが入力されるまでループ
-		getstring(str);
-
-		sci_write(SCI_NO_1, '\n');
-
-		// メインスイッチ
-		switch (str[0])
-		{
-		// RAMへロード
-		case 'l':
-			sci_write_str(SCI_NO_1, "  started!! XMODEM...\n\r");
-			xmodem_start((char*)&buf_start);
-			sci_write_str(SCI_NO_1, "  finish!! XMODEM\n\r");
-			sci_write_str(SCI_NO_1, "    Transfer is Completed...\n\r");
-			break;
-
-			// void main(void) の形式で関数ポインタから開始
-		case 's':
+//	char* entry_point;
+//	void (*start)(void);
+//	char str[32] = {0,};
+//	while(1)
+//	{
+//		int i;
+//		sci_write_str(SCI_NO_1, "PINoC Console>_ ");
+//
+//
+//		// エンターが入力されるまでループ
+//		getstring(str);
+//
+//		sci_write(SCI_NO_1, '\n');
+//
+//		// メインスイッチ
+//		switch (str[0])
+//		{
+//		// RAMへロード
+//		case 'l':
+//			sci_write_str(SCI_NO_1, "  started!! XMODEM...\n\r");
+//			xmodem_start((char*)&buf_start);
+//			sci_write_str(SCI_NO_1, "  finish!! XMODEM\n\r");
+//			sci_write_str(SCI_NO_1, "    Transfer is Completed...\n\r");
+//			break;
+//
+//			// void main(void) の形式で関数ポインタから開始
+//		case 's':
 //			start = (void*)&buf_start;
-			start();
-			break;
-
-			// メモリダンプ
-		case 'd':
-			getstring(str);
-			asciitobin(str, 4);
-
-			for (i = 0; i < (int)*((short*)str); i++)
-				sci_write(SCI_NO_1, *(((char*)&buf_start) + i));
-			break;
-
-			// elfヘッダ情報表示
-		case 'e':
+//			start();
+//			break;
+//
+//			// メモリダンプ
+//		case 'd':
+//			getstring(str);
+//			asciitobin(str, 4);
+//
+//			for (i = 0; i < (int)*((short*)str); i++)
+//				sci_write(SCI_NO_1, *(((char*)&buf_start) + i));
+//			break;
+//
+//			// elfヘッダ情報表示
+//		case 'e':
 //			if(elf_read((char*)&buf_start))
 //			{
 //				sci_write_str(SCI_NO_1, "it's not elf file...\n\r");
@@ -179,23 +199,23 @@ int main()
 //				sci_write_str(SCI_NO_1, "it's load file!!\n\r");
 //			}
 
-			// RAM展開
-			entry_point = elf_develop((char*)&buf_start);
-			start = (void (*)(void))entry_point;
-
-			// ヘルプ
-		case 'h':
-			break;
-
-		case 'q':
-			dbg();
-			as_SLEEP_3069
-			dbg();
-			break;
-
-		}
-
-	}
+//			// RAM展開
+//			entry_point = elf_develop((char*)&buf_start);
+//			start = (void (*)(void))entry_point;
+//
+//			// ヘルプ
+//		case 'h':
+//			break;
+//
+//		case 'q':
+//			dbg();
+//			as_SLEEP_3069
+//			dbg();
+//			break;
+//
+//		}
+//
+//	}
 
 	return 0;
 }

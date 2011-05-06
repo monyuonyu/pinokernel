@@ -8,7 +8,7 @@ STRIP	= h8300-elf-strip
 
 PINoC	= pinoc_kernel
 
-OBJS	= main.o
+OBJS	= start.o pinoc.o
 
 CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../../newlib/include -I ../lib/include
 LDFLAGS	= -T kernel.ls -lc -l3069 -L ../lib -L ../../newlib/lib/h8300h
@@ -34,5 +34,5 @@ as :
 	$(CC) -S -v stack.s main.c vectors.c start.c
 	
 clean :
-	rm -f *.o pinoc*
+	rm -f *.o
 	

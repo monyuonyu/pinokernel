@@ -10,7 +10,7 @@ MEMORY
 	ram(rwx)		: org = 0xffbf20, len = 0x004000	/* TOP of ALLRAM 16384B (16KB) 				*/
 	softvec(rwx)	: org = 0xffbf20, len = 0x000010	/* TOP of RAM Softvectors area 16B (4bevter)*/
 	ramdata(rwx)	: org = 0xffbf30, len = 0x000600	/*  .bss .data area 1516B (1.5KB)			*/
-	bufdata(rwx)	: org = 0xFFC520, len = 0x002800	/*  .buf area 10240B (10KB)	 				*/
+	bufdata(rwx)	: org = 0xffc520, len = 0x002800	/*  .buf area 10240B (10KB)	 				*/
 	stack(rw)		: org = 0xffff00, len = 0x000000	/* 4576B (4.5KB) (1144recovery) END of RAM	*/
 }
 
