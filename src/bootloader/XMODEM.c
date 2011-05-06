@@ -15,11 +15,11 @@ int xmodem_start_ack()
 	unsigned long cnt = 0;
 
 	// 何か値が入るまで一定間隔ごとにNAKを送信
-	while (!(sci_read_pol(SCI1)))
+	while (!(sci_read_pol(SCI_NO_1)))
 	{
 		if (cnt++ > 200000)
 		{
-			sci_write(SCI1, XMODEM_NAK);
+			sci_write(SCI_NO_1, XMODEM_NAK);
 			cnt = 0;
 #if XMODEM_DBG
 //			return 60;
@@ -38,13 +38,13 @@ int xmodem_read_block(unsigned char block_num_now, char* buff)
 	int i;
 
 	// ブロック番号確認
-	sci_read(SCI1, (char*)&block_num_rec, 1);
+	sci_read(SCI_NO_1, (char*)&block_num_rec, 1);
 	if(block_num_now != block_num_rec)
 		return 1;
 
 	// ビット反転のブロック番号確認
 	c = block_num_rec;
-	sci_read(SCI1, (char*)&block_num_rec, 1);
+	sci_read(SCI_NO_1, (char*)&block_num_rec, 1);
 	block_num_rec ^= c;
 	if(block_num_rec != 0xFF)
 		return 1;
@@ -52,13 +52,13 @@ int xmodem_read_block(unsigned char block_num_now, char* buff)
 	// 128byteのデータ受信
 	for(i = 0; i < XMODEM_BLOCK_SIZE; i++)
 	{
-		sci_read(SCI1, (char*)&c, 1);
+		sci_read(SCI_NO_1, (char*)&c, 1);
 		*(buff++) = c;
 		check_sum += c;
 	}
 
 	// チェックサム確認
-	sci_read(SCI1, (char*)&c, 1);
+	sci_read(SCI_NO_1, (char*)&c, 1);
 	check_sum ^= c;
 	if(check_sum)
 		return 1;
@@ -86,7 +86,7 @@ int xmodem_start(char* buf)
 #endif
 		}
 
-		sci_read(SCI1, &c, 1);
+		sci_read(SCI_NO_1, &c, 1);
 
 		switch(c)
 		{
@@ -97,7 +97,7 @@ int xmodem_start(char* buf)
 			starting = 1;
 			if(xmodem_read_block(block_num_now, buf))
 			{
-				sci_write(SCI1, XMODEM_NAK);	// 失敗を通知
+				sci_write(SCI_NO_1, XMODEM_NAK);	// 失敗を通知
 #if XMODEM_DBG
 				return 70;
 #endif
@@ -106,12 +106,12 @@ int xmodem_start(char* buf)
 			{
 				block_num_now++;
 				buf += XMODEM_BLOCK_SIZE;		// バッファのポインタを1ブロック進める
-				sci_write(SCI1, XMODEM_ACK);	// 成功を通知 → 次のブロック送信開始
+				sci_write(SCI_NO_1, XMODEM_ACK);	// 成功を通知 → 次のブロック送信開始
 			}
 			break;
 
 		case XMODEM_EOT:	// 転送完了
-			sci_write(SCI1, XMODEM_ACK);
+			sci_write(SCI_NO_1, XMODEM_ACK);
 #if !XMODEM_DBG
 			return block_num_now;
 #else
@@ -164,7 +164,7 @@ int xmodem_start(char* buf)
 //{
 //  int cnt0 = 0, cnt1 = 0;
 //
-//	while (!sci_read_pol(SCI1))
+//	while (!sci_read_pol(SCI_NO_1))
 //	{
 //		if (++cnt0 >= 200)
 //		{
@@ -172,7 +172,7 @@ int xmodem_start(char* buf)
 //			if (++cnt1 >= 1000)
 //			{
 //				cnt1 = 0;
-//				sci_write(SCI1,XMODEM_NAK);
+//				sci_write(SCI_NO_1,XMODEM_NAK);
 //			}
 //		}
 //	}

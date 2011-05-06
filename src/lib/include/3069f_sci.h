@@ -36,11 +36,11 @@ typedef unsigned int short u2;
 
 #if C20MHZ
 typedef enum {	//内部クロック20MHz
-  br4800  = 129,		// CKS=00
-  br9600  = 64,		// CKS=00
-  br19200 = 32,		// CKS=00
-  br38400 = 15		// CKS=00
-}BitRate;
+	BitRate_type_br4800  = 129,		// CKS=00
+	BitRate_type_br9600  = 64,		// CKS=00
+	BitRate_type_br19200 = 32,		// CKS=00
+	BitRate_type_br38400 = 15		// CKS=00
+}BitRate_type_t;
 #endif
 
 #if C25MHZ
@@ -132,9 +132,16 @@ struct SCI
 	}SCMR;
 };
 
-#define SCI0 0
-#define SCI1 1
-#define SCI2 2
+//typedef int SCI_NO;
+//#define SCI_NO_0 0
+//#define SCI_NO_1 1
+//#define SCI_NO_2 2
+
+typedef enum {
+	SCI_NO_0 = 0,
+	SCI_NO_1,
+	SCI_NO_2
+}SCI_NO;
 
 #define SCI0A ((volatile struct SCI*)0xFFFFB0)
 #define SCI1A ((volatile struct SCI*)0xFFFFB8)
@@ -164,11 +171,23 @@ struct SCI
 #define RDR2	0xFFFFC5
 #define SCMR2	0xFFFFC6
 
-void sci_init(int Sci_No, BitRate bitrate);
-void sci_write(int Sci_No, char c);
-void sci_write_str(int Sci_No,const char* _Str);
-void sci_read(int Sci_No, char* buff, int size);
-char sci_read_byte(int Sci_No);
-int sci_read_pol(int Sci_No);
+/********************************************************************************
+	ポーリング
+********************************************************************************/
+void sci_init(SCI_NO no, BitRate_type_t type);
+void sci_write(SCI_NO no, char c);
+void sci_write_str(SCI_NO no,const char* _Str);
+void sci_read(SCI_NO no, char* buff, int size);
+char sci_read_byte(SCI_NO no);
+int sci_read_pol(SCI_NO no);
+
+/********************************************************************************
+	割り込み
+********************************************************************************/
+char sci_read_byte_intr(SCI_NO no);
+void sci_write_intr_enable(SCI_NO no);
+void sci_write_intr_disable(SCI_NO no);
+void sci_read_intr_enable(SCI_NO no);
+void sci_read_intr_disable(SCI_NO no);
 
 #endif /* SCI_H_ */

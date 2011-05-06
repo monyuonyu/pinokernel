@@ -31,8 +31,8 @@ void getstring(char* buf)
 	int cnt = 0;
 	for (i = 0; i < 30; i++)
 	{
-		buf[cnt] = tolower(sci_read_byte(SCI1));
-		sci_write(SCI1, buf[cnt]);
+		buf[cnt] = tolower(sci_read_byte(SCI_NO_1));
+		sci_write(SCI_NO_1, buf[cnt]);
 
 		if (buf[cnt] == 0x0d)
 		{
@@ -46,7 +46,10 @@ void getstring(char* buf)
 
 void test_vec(softvec_type_t type, unsigned long sp)
 {
-	dbg();
+	char c;
+//	dbg();
+	c = sci_read_byte_intr(SCI_NO_1);
+	sci_write(SCI_NO_1, c);
 }
 
 int main()
@@ -61,29 +64,33 @@ int main()
 //	*p4ddr = 0x03;
 //	*p4 = 0x01;
 
-//	sci_write_str(SCI1, str[0]);
+//	sci_write_str(SCI_NO_1, str[0]);
 //
-//	sci_write_str(SCI1, str[2]);
+//	sci_write_str(SCI_NO_1, str[2]);
 //	ii = xmodem_start(buf_start);
-//	sci_write_str(SCI1, str[3]);
+//	sci_write_str(SCI_NO_1, str[3]);
 //
-//	sci_write_str(SCI1, str[4]);
+//	sci_write_str(SCI_NO_1, str[4]);
 //	mot_deploy(buf_start);
-//	sci_write_str(SCI1, str[5]);
+//	sci_write_str(SCI_NO_1, str[5]);
 
-//	sci_write_str(SCI1, (const char*)buf_start);
+//	sci_write_str(SCI_NO_1, (const char*)buf_start);
 
-//	sci_write_str(SCI1, str[1]);
+//	sci_write_str(SCI_NO_1, str[1]);
 
 //	*p4 = 0x02;
 
 	dbg();
 
+	// シリアル通信割り込みEnable
+	sci_read_intr_enable(SCI_NO_1);
+
+	// 割り込みENABLE
 	INTERUUPT_ENABLE
 
 	softvec_setintr(SOFTVEC_TYPE_SERIAL, test_vec);
 
-//	sci_write_str(SCI1, (char*)&text_start);
+//	sci_write_str(SCI_NO_1, (char*)&text_start);
 
 	char* entry_point;
 	void (*start)(void);
@@ -91,21 +98,22 @@ int main()
 	while(1)
 	{
 		int i;
-		sci_write_str(SCI1, "PINoC Console>_ ");
+		sci_write_str(SCI_NO_1, "PINoC Console>_ ");
 
 		// エンターが入力されるまでループ
 		getstring(str);
 
-		sci_write(SCI1, '\n');
+		sci_write(SCI_NO_1, '\n');
 
 		// メインスイッチ
 		switch (str[0])
 		{
 		// RAMへロード
 		case 'l':
-			sci_write_str(SCI1, "ok started!! XMODEM\n\r");
+			sci_write_str(SCI_NO_1, "  started!! XMODEM...\n\r");
 			xmodem_start((char*)&buf_start);
-			sci_write_str(SCI1, "ok finish!! XMODEM\n\r");
+			sci_write_str(SCI_NO_1, "  finish!! XMODEM\n\r");
+			sci_write_str(SCI_NO_1, "    Transfer is Completed...\n\r");
 			break;
 
 			// void main(void) の形式で関数ポインタから開始
@@ -120,27 +128,27 @@ int main()
 			asciitobin(str, 4);
 
 			for (i = 0; i < (int)*((short*)str); i++)
-				sci_write(SCI1, *(((char*)&buf_start) + i));
+				sci_write(SCI_NO_1, *(((char*)&buf_start) + i));
 			break;
 
 			// elfヘッダ情報表示
 		case 'e':
 //			if(elf_read((char*)&buf_start))
 //			{
-//				sci_write_str(SCI1, "it's not elf file...\n\r");
+//				sci_write_str(SCI_NO_1, "it's not elf file...\n\r");
 //			}
 //			else
 //			{
-//				sci_write_str(SCI1, "it's elf file!!\n\r");
+//				sci_write_str(SCI_NO_1, "it's elf file!!\n\r");
 //			}
 //
 //			if(elf_analysis((char*)&buf_start))
 //			{
-//				sci_write_str(SCI1, "it's not load file...\n\r");
+//				sci_write_str(SCI_NO_1, "it's not load file...\n\r");
 //			}
 //			else
 //			{
-//				sci_write_str(SCI1, "it's load file!!\n\r");
+//				sci_write_str(SCI_NO_1, "it's load file!!\n\r");
 //			}
 
 			// RAM展開
@@ -179,7 +187,7 @@ void init()
 	softvec_init();
 
 	// シリアル通信初期化
-	sci_init(SCI1, br9600);
+	sci_init(SCI_NO_1, BitRate_type_br9600);
 
 	main();
 }

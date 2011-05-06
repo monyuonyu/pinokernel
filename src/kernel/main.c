@@ -20,7 +20,7 @@ int main()
 		*p4ddr = 0x03;
 		*p4 = 0x01;
 
-		sci_write_str(SCI1, str);
+		sci_write_str(SCI_NO_1, str);
 
 		dbg();
 

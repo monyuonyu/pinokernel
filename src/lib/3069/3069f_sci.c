@@ -16,13 +16,13 @@ static struct{
 	{SCI2A},
 };
 
-void sci_init(int Sci_No, BitRate b)
+void sci_init(SCI_NO no, BitRate_type_t type)
 {
-	volatile struct SCI* sci = regs[Sci_No].sci;
+	volatile struct SCI* sci = regs[no].sci;
 
 	sci->SCR.BYTE = 0;
 	sci->SMR.BYTE = 0;
-	sci->BRR = b;
+	sci->BRR = type;
 
 	// 送受信許可
 	sci->SCR.BIT.RE = 1;
@@ -31,9 +31,12 @@ void sci_init(int Sci_No, BitRate b)
 	sci->SSR.BYTE = 0;
 }
 
-void sci_write(int Sci_No, char c)
+/********************************************************************************
+	ポーリング
+********************************************************************************/
+void sci_write(SCI_NO no, char c)
 {
-	volatile struct SCI* sci = regs[Sci_No].sci;
+	volatile struct SCI* sci = regs[no].sci;
 
 	while(!sci->SSR.BIT.TDRE);
 	sci->TDR = c;
@@ -43,24 +46,23 @@ void sci_write(int Sci_No, char c)
 
 }
 
-void sci_write_str(int Sci_No,const char* _Str)
+void sci_write_str(SCI_NO no,const char* _Str)
 {
-	volatile struct SCI* sci = regs[Sci_No].sci;
+	volatile struct SCI* sci = regs[no].sci;
 
 	while(*_Str)
 	{
-		sci_write(Sci_No, *_Str++);
+		sci_write(no, *_Str++);
 	}
 
 	// バッファの中身が全て送信されるまで待機
 	while(!sci->SSR.BIT.TEND);
 }
 
-
 // データを1byteだけ受信する
-char sci_read_byte(int Sci_No)
+char sci_read_byte(SCI_NO no)
 {
-	volatile struct SCI* sci = regs[Sci_No].sci;
+	volatile struct SCI* sci = regs[no].sci;
 	char c;
 
 	// データが格納されるまで待機
@@ -68,17 +70,17 @@ char sci_read_byte(int Sci_No)
 	{
 		if (sci->SSR.BIT.ORER)
 		{
-			sci_write_str(Sci_No, "Error_sci over run");
+			sci_write_str(no, "Error_sci over run");
 			sci->SSR.BIT.ORER = 0;
 		}
 		if (sci->SSR.BIT.PER)
 		{
-			sci_write_str(Sci_No, "Error_sci parity");
+			sci_write_str(no, "Error_sci parity");
 			sci->SSR.BIT.PER = 0;
 		}
 		if (sci->SSR.BIT.FER_ERS)
 		{
-			sci_write_str(Sci_No, "Error_sci flaming");
+			sci_write_str(no, "Error_sci flaming");
 			sci->SSR.BIT.FER_ERS = 0;
 		}
 
@@ -94,35 +96,35 @@ char sci_read_byte(int Sci_No)
 }
 
 // 連続したデータを受信
-void sci_read(int Sci_No, char* buff, int size)
+void sci_read(SCI_NO no, char* buff, int size)
 {
 	int i;
 	for (i = 0; i < size; i++)
 	{
-		*(buff++) = sci_read_byte(Sci_No);
+		*(buff++) = sci_read_byte(no);
 	}
 }
 
 // データを受信しているか確認する。
 // ポーリングで確認する
 // 格納されていれば1を返し、格納されていなければ、0を返す
-int sci_read_pol(int Sci_No)
+int sci_read_pol(SCI_NO no)
 {
-	volatile struct SCI* sci = regs[Sci_No].sci;
+	volatile struct SCI* sci = regs[no].sci;
 
 	if (sci->SSR.BIT.ORER)
 	{
-		sci_write_str(Sci_No, "Error_sci over run");
+		sci_write_str(no, "Error_sci over run");
 		sci->SSR.BIT.ORER = 0;
 	}
 	if (sci->SSR.BIT.PER)
 	{
-		sci_write_str(Sci_No, "Error_sci parity");
+		sci_write_str(no, "Error_sci parity");
 		sci->SSR.BIT.PER = 0;
 	}
 	if (sci->SSR.BIT.FER_ERS)
 	{
-		sci_write_str(Sci_No, "Error_sci flaming");
+		sci_write_str(no, "Error_sci flaming");
 		sci->SSR.BIT.FER_ERS = 0;
 	}
 
@@ -132,4 +134,48 @@ int sci_read_pol(int Sci_No)
 
 	return 0;
 }
+
+
+/********************************************************************************
+	割り込み
+********************************************************************************/
+char sci_read_byte_intr(SCI_NO no)
+{
+	volatile struct SCI* sci = regs[no].sci;
+	char c;
+
+	c = sci->RDR;
+	sci->SSR.BIT.RDRF = 0;
+
+	return c;
+}
+// 送信完了割り込みEnable
+void sci_write_intr_enable(SCI_NO no)
+{
+	volatile struct SCI* sci = regs[no].sci;
+	sci->SCR.BIT.TIE = 1;
+}
+
+// 送信完了割り込みDisable
+void sci_write_intr_disable(SCI_NO no)
+{
+	volatile struct SCI* sci = regs[no].sci;
+	sci->SCR.BIT.TIE = 0;
+}
+
+// 受信完了割り込みEnable
+void sci_read_intr_enable(SCI_NO no)
+{
+	volatile struct SCI* sci = regs[no].sci;
+	sci->SCR.BIT.RIE = 1;
+}
+
+// 受信完了割り込みDisable
+void sci_read_intr_disable(SCI_NO no)
+{
+	volatile struct SCI* sci = regs[no].sci;
+	sci->SCR.BIT.RIE = 1;
+}
+
+
 
