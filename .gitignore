@@ -1,4 +1,9 @@
+
+# global ignore
 *.o
 *.a
 *.mot
 *.elf
+
+# file ignore
+main.s
