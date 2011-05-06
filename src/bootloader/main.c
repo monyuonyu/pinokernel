@@ -5,6 +5,7 @@
  *      Author: pino
  */
 
+//#include "3069s.h"
 #include "3069f_io.h"
 #include "3069f_sci.h"
 #include "XMODEM.h"
@@ -112,29 +113,34 @@ int main()
 
 			// elfヘッダ情報表示
 		case 'e':
-			if(elf_read((char*)&buf_start))
-			{
-				sci_write_str(SCI1, "it's not elf file...\n\r");
-			}
-			else
-			{
-				sci_write_str(SCI1, "it's elf file!!\n\r");
-			}
+//			if(elf_read((char*)&buf_start))
+//			{
+//				sci_write_str(SCI1, "it's not elf file...\n\r");
+//			}
+//			else
+//			{
+//				sci_write_str(SCI1, "it's elf file!!\n\r");
+//			}
+//
+//			if(elf_analysis((char*)&buf_start))
+//			{
+//				sci_write_str(SCI1, "it's not load file...\n\r");
+//			}
+//			else
+//			{
+//				sci_write_str(SCI1, "it's load file!!\n\r");
+//			}
 
-			if(elf_analysis((char*)&buf_start))
-			{
-				sci_write_str(SCI1, "it's not load file...\n\r");
-			}
-			else
-			{
-				sci_write_str(SCI1, "it's load file!!\n\r");
-			}
-
+			// RAM展開
 			entry_point = elf_develop((char*)&buf_start);
 			start = (void (*)(void))entry_point;
 
 			// ヘルプ
 		case 'h':
+			break;
+
+		case 'q':
+			as_SLEEP_3069
 			break;
 
 		}

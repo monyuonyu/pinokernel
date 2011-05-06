@@ -48,4 +48,8 @@ struct byte
 #define P4DR (*(volatile unsigned char*)_P4DR)
 #define P5DR (*(volatile unsigned char*)_P5DR)
 
+
+// 3069アセンブラ
+#define as_SLEEP_3069 asm volatile ("sleep");
+
 #endif

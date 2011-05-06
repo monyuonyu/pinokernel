@@ -9,6 +9,8 @@
 #include "3069f_sci.h"
 #include "string.h"
 
+
+// elfをRAMへ展開する
 char* elf_develop(char* p)
 {
 	struct elf_header* header;

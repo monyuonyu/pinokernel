@@ -32,7 +32,7 @@ $(PINoC).mot : $(PINoC)
 	$(CC) -c -v $< $(CFLAGS)
 	
 as : 
-	$(CC) -S -v stack.s main.c vectors.c start.c
+	$(CC) -S -v $(CFLAGS) main.c vectors.c
 	
 clean :
 	rm -f *.o pinoc*
