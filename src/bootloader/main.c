@@ -92,7 +92,7 @@ void main_vec(softvec_type_t type, unsigned long sp)
 		}
 
 		i = 0;
-		sci_write_str(SCI_NO_1, "PINoC Console>_ ");
+		sci_write_str(SCI_NO_1, "\n\rPINoC Console>_ ");
 		return;
 	}
 
