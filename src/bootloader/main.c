@@ -18,6 +18,8 @@
 //#include "DP8390.h"
 #include "read_elf.h"
 #include "ascii.h"
+#include "interrupt.h"
+#include "intr.h"
 
 extern int buf_start;
 extern int text_start;
@@ -39,6 +41,12 @@ void getstring(char* buf)
 		}
 		cnt++;
 	}
+}
+
+
+void test_vec(softvec_type_t type, unsigned long sp)
+{
+	dbg();
 }
 
 int main()
@@ -70,6 +78,10 @@ int main()
 //	*p4 = 0x02;
 
 	dbg();
+
+	INTERUUPT_ENABLE
+
+	softvec_setintr(SOFTVEC_TYPE_SERIAL, test_vec);
 
 //	sci_write_str(SCI1, (char*)&text_start);
 
@@ -140,7 +152,9 @@ int main()
 			break;
 
 		case 'q':
+			dbg();
 			as_SLEEP_3069
+			dbg();
 			break;
 
 		}
@@ -156,8 +170,15 @@ void init()
 
 	memset(&bss_start, 0, (long)&bss_end - (long)&bss_start);					// Bssセクション初期化
 	memcpy(&data_start, &rodata_end, (long)&data_end - (long)&data_start);		// dataセクション初期化
-	memset(&buf_start, 0, (long*)0x600);												// bufセクション初期化
+	memset(&buf_start, 0, (long*)0x600);										// bufセクション初期化
 
+	// 割り込みDISABLE
+	INTERUUPT_DISABLE
+
+	// ソフト割り込み初期化
+	softvec_init();
+
+	// シリアル通信初期化
 	sci_init(SCI1, br9600);
 
 	main();
