@@ -14,8 +14,7 @@
 		.global	_intr_softerr
 		.type 	_intr_softerr,@function
 _intr_softerr:
-										/* 汎用レジスタの退避 */
-	mov.l	er6,@-er7
+	mov.l	er6,@-er7					/* 汎用レジスタの退避 */
 	mov.l	er5,@-er7
 	mov.l	er4,@-er7
 	mov.l	er3,@-er7
@@ -24,11 +23,14 @@ _intr_softerr:
 	mov.l	er0,@-er7
 
 	mov.l	er7,er1						/* 第二引数にスタックポインタ	 	 */
+	mov.l	#_i_stack,sp				/* 割り込みスタック 				 */
+	mov.l	er1,@-er7					/* 古いスタックポインタを積む		 */
 	mov.w	#SOFTVEC_TYPE_SOFTERR,r0	/* 第一引数に割り込みタイプを指定	 */
 	jsr		@_interrupt					/* interrupt() 関数呼び出し	 */
+	mov.l	@er7+,er1					/* 古いスタックポインタを復元		 */
+	mov.l	er1,er7
 
-										/* 汎用レジスタの復帰 */
-	mov.l	@er7+,er0
+	mov.l	@er7+,er0					/* 汎用レジスタの復帰 */
 	mov.l	@er7+,er1
 	mov.l	@er7+,er2
 	mov.l	@er7+,er3
@@ -50,8 +52,12 @@ _intr_syscall:
 	mov.l	er0,@-er7
 
 	mov.l	er7,er1
+	mov.l	#_i_stack,sp
+	mov.l	er1,@-er7
 	mov.w	#SOFTVEC_TYPE_SYSTEM,r0
 	jsr		@_interrupt
+	mov.l	@er7+,er1
+	mov.l	er1,er7
 
 	mov.l	@er7+,er0
 	mov.l	@er7+,er1
@@ -75,8 +81,12 @@ _intr_serial:
 	mov.l	er0,@-er7
 
 	mov.l	er7,er1
+	mov.l	#_i_stack,sp
+	mov.l	er1,@-er7
 	mov.w	#SOFTVEC_TYPE_SERIAL,r0
 	jsr		@_interrupt
+	mov.l	@er7+,er1
+	mov.l	er1,er7
 
 	mov.l	@er7+,er0
 	mov.l	@er7+,er1

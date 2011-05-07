@@ -4,5 +4,5 @@
 .type _start,@function
 
 _start:
-	mov.l	#_k_stack, sp
+	mov.l	#_u_stack, sp
 	jsr		@_main

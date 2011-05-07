@@ -12,8 +12,9 @@ MEMORY
 	ramdata(rwx)	: org = 0xffbf30, len = 0x000600	/*  .bss .data area 1516B (1.5KB)			*/
 	bufdata(rwx)	: org = 0xffc520, len = 0x001400	/*  .buf area 5120B (5KB)	 				*/
 	pinoc(rwx)		: org = 0xffd920, len = 0x001400	/*  pinoc kernel area 5120B (5KB)	 		*/
-	k_stack(rw)		: org = 0xfff610, len = 0x000000	/* 2288B (2.2KB) (572recovery) END of RAM	*/
+	u_stack(rw)		: org = 0xfff610, len = 0x000000	/* 2288B (2.2KB) (572recovery) END of RAM	*/
 	b_stack(rw)		: org = 0xffff00, len = 0x000000	/* 2288B (2.2KB) (572recovery) END of RAM	*/
+	i_stack(rw)		: org = 0xffff00, len = 0x000000	/* 2288B (2.2KB) (572recovery) END of RAM	*/
 }
 
 SECTIONS
@@ -37,8 +38,8 @@ SECTIONS
 		*(.data)
 	} > pinoc
 
-	.stack : {
-		_k_stack = .;
-	} > k_stack
+	.u_stack : {
+		_u_stack = .;
+	} > u_stack
 
 }
