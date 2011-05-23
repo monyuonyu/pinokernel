@@ -21,4 +21,6 @@ void pinoc_syscall(pinoc_syscall_type_t type, pinoc_syscall_param_t* param);
 // ユーザー・スレッド
 int test08_1_main(int argc, char* argv[]);
 
+static pinoc_handler_t handlers[softvec];
+
 #endif /* PINOC_H_ */
