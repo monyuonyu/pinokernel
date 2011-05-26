@@ -161,10 +161,10 @@ static int thread_exit()
 	return 0;
 }
 
-void setintr(softvec_type_t type, )
-{
-
-}
+//void setintr(softvec_type_t type, )
+//{
+//
+//}
 
 
 
@@ -182,7 +182,7 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	memset(handlers, sizeof(handlers));
 
 	//割り込みハンドラの初期化
-
+	softvec_setintr()
 
 
 

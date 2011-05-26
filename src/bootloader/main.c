@@ -127,14 +127,15 @@ int main()
 
 //	*p4 = 0x02;
 
+	// ソフト・割り込みベクタへ登録
+	softvec_setintr(SOFTVEC_TYPE_SERIAL, main_vec);
+
 	// シリアル通信割り込みEnable
 	sci_read_intr_enable(SCI_NO_1);
 
 	// 割り込みENABLE
 	INTERUUPT_ENABLE
 
-	// ソフト・割り込みベクタへ登録
-	softvec_setintr(SOFTVEC_TYPE_SERIAL, main_vec);
 
 	sci_write_str(SCI_NO_1, "PINoC Console>_ \r\n");
 

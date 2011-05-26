@@ -13,7 +13,14 @@ extern char softvec;	/* ソフトウェア・ベクタ */
 
 #define SOFTVEC_TYPE_NUM 2
 
-typedef short softvec_type_t;	/* int でもok */
+//typedef short softvec_type_t;	/* int でもok */
+enum
+{
+	softvec_type_syscall = 0,
+	softvec_type_syserror,
+}softvec_type_t;
+
+
 typedef void (*softvec_handler_t)(softvec_type_t type, unsigned long sp);	/* ユーザー定義の割り込みハンドラの定義 */
 
 #define INTERUUPT_ENABLE	asm volatile("andc.b #0x3f,ccr");				/* 割り込み有効 */
@@ -24,6 +31,9 @@ void softvec_init();
 
 /* 割り込みベクタへ関数を登録 */
 void softvec_setintr(softvec_type_t type, softvec_handler_t handler);
+
+
+
 
 /* 共通ハンドラ */
 void interrupt(softvec_type_t type, unsigned long sp);
