@@ -10,7 +10,7 @@
 #include "dbg.hpp"
 #include "pinoc.h"
 #include "interrupt.h"
-
+#include "intr.h"
 
 #define THREAD_NUM 6
 #define THREAD_NAME_SIZE 15
@@ -161,6 +161,21 @@ static int thread_exit()
 	return 0;
 }
 
+static void thread_intr(softvec_type_t type, unsigned long sp)
+{
+	current->context.sp = sp;
+
+	// handlerに登録してあれば、実行
+	if(handlers[type])
+		handlers[type]();
+
+	// スレッドのスケジューリング		ラウンドロビン方式
+	// schedule();
+
+	// ディスパッチ
+	dispatch(&current->context);
+}
+
 //void setintr(softvec_type_t type, )
 //{
 //
@@ -181,9 +196,9 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	memset(threads, sizeof(threads));
 	memset(handlers, sizeof(handlers));
 
-	//割り込みハンドラの初期化
-	softvec_setintr()
-
+	//割り込みハンドラの初期化		※
+	softvec_setintr(SOFTVEC_TYPE_SYSTEM, thread);
+	softvec_setintr(SOFTVEC_TYPE_SOFTERR, thread_init);
 
 
 

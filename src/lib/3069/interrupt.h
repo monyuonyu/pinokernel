@@ -11,14 +11,14 @@
 extern char softvec;	/* ソフトウェア・ベクタ */
 #define SOFTVEC_ADDR (&softvec)
 
-#define SOFTVEC_TYPE_NUM 2
+//#define SOFTVEC_TYPE_NUM 2
 
 //typedef short softvec_type_t;	/* int でもok */
-enum
-{
-	softvec_type_syscall = 0,
-	softvec_type_syserror,
-}softvec_type_t;
+//enum
+//{
+//	softvec_type_syscall = 0,
+//	softvec_type_syserror,
+//}softvec_type_t;
 
 
 typedef void (*softvec_handler_t)(softvec_type_t type, unsigned long sp);	/* ユーザー定義の割り込みハンドラの定義 */
