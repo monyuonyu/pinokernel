@@ -21,7 +21,9 @@ typedef struct _pinoc_context
 	long int sp;
 }pinoc_context;
 
-//
+/*
+ * スレッドの型
+ */
 typedef struct _pinoc_thread
 {
 	struct _pinoc_thread* next;			// レディーキュー
@@ -51,13 +53,21 @@ static struct
 	pinoc_thread* tail;
 }readyque;
 
-static pinoc_thread* current;
-static pinoc_thread threads[THREAD_NUM];
-static pinoc_handler_t handlers[SOFTVEC_TYPE_NUM];
+/*
+ * グローバル変数
+ */
+static pinoc_thread* current;						// 使用中のスレッド情報が格納される
+static pinoc_thread threads[THREAD_NUM];			// スレッドの数だけ領域確保
+static pinoc_handler_t handlers[SOFTVEC_TYPE_NUM];	// ハンドラの数だけ領域確保
 
+/*
+ * ディスパッチの内容は外部ファイルにアセンブラで記述してある
+ */
 void dispatch(pinoc_context* context);
 
-
+/*
+ * レディースキュー操作
+ */
 static int getcurrent(void)
 {
 	if(current == NULL)
@@ -98,6 +108,9 @@ static void thread_init(pinoc_thread* the)
 	thread_end();
 }
 
+/*
+ * スレッド生成
+ */
 static pinoc_thread_id_t thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
 {
 	int i;
@@ -181,8 +194,53 @@ static void thread_intr(softvec_type_t type, unsigned long sp)
 //
 //}
 
+// 二重の割り込みベクターから呼び出される
+/*
+ * システムコール呼び出し
+ */
+void syscall_intr()		// 未実装
+{
 
+}
 
+/*
+ * システムエラー呼び出し
+ */
+void syserror_intr()	// 未実装
+{
+
+}
+
+/*
+ * OSのスレッド関連の割り込みベクター ※ 二十構造
+ */
+void thread_intr(softvec_type_t type, unsigned long sp)
+{
+	switch(typy)
+	{
+	case SOFTVEC_TYPE_SYSTEM:
+		handlers[type]();
+		break;
+	case SOFTVEC_TYPE_SOFTERR:
+		handlers[type]();
+		break;
+
+	}
+
+}
+
+// Threadとして起動	テスト用関数
+int test08_1_main(int argc, char* argv[])
+{
+	static char str1[] = "Hello test_tsk!!\n\r";
+	sci_write_str(SCI_NO_1, str1);
+	while(1);
+
+}
+
+/*
+ * 手動でスレッドの生成
+ */
 void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
 {
 	// コンテキストを初期化
@@ -192,31 +250,48 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	readyque.head = NULL;
 	readyque.tail = NULL;
 
-	// スレッドと、ハンドラーの初期化
+	// スレッドと、ハンドラ領域の初期化
 	memset(threads, sizeof(threads));
 	memset(handlers, sizeof(handlers));
 
-	//割り込みハンドラの初期化		※
-	softvec_setintr(SOFTVEC_TYPE_SYSTEM, thread);
-	softvec_setintr(SOFTVEC_TYPE_SOFTERR, thread_init);
+	/*
+	 * スレッド用割り込みハンドラの初期化
+	 * ※ 二重構造に注意
+	 */
+	softvec_setintr(SOFTVEC_TYPE_SYSTEM, thread_intr);
+	softvec_setintr(SOFTVEC_TYPE_SOFTERR, thread_intr);
 
+	/*
+	 * threadVectorへ登録
+	 * RomVector -> SoftVector -> Handlers(threadVector)
+	 */
+	handlers[SOFTVEC_TYPE_SYSTEM] = syscall_intr;
+	handlers[SOFTVEC_TYPE_SOFTERR] = syserror_intr;
 
+	/*
+	 * スレッドの生成してスレッドIDを返却
+	 * スレッドを生成するだけで処理は帰ってくる
+	 */
+	current = (pinoc_thread*)thread_run(func, name, stack_size, argc, argv);
 
+	/*
+	 * ディスパッチ
+	 * 現在のレディースキューに格納されているスタック情報(IPも含め)元通りに復元する
+	 */
+	dispatch(&current->context);
 
+	// ここへは帰ってこない
 }
 
+/*
+ * スレッド起動
+ */
 int start_thread()
 {
-
+	pinoc_run(test08_1_main);
+	return 0;
 }
 
-// Threadとして起動	テスト用関数
-int test08_1_main(int argc, char* argv[])
-{
-	static char str1[] = "Hello test_tsk!!\n\r";
-	sci_write_str(SCI_NO_1, str1);
-
-}
 
 // ここからカーネルのプログラムが始まる。
 int main()
@@ -238,8 +313,8 @@ int main()
 
 //	pinoc_start()
 
-	// 初期スレッド開始 	※中でディスパッチが行われるのでこの関数へわ帰ってこない
-	pinoc_start(start_thread(), "test_tsk", 0x100, NULL, NULL);
+	// 初期スレッド開始 	※中でディスパッチが行われるのでこの関数へ帰ってこない
+	pinoc_start(start_thread, "test_tsk", 0x100, NULL, NULL);
 
 	return 0;
 }
