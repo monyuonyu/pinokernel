@@ -12,63 +12,18 @@
 #include "interrupt.h"
 #include "intr.h"
 
-#define THREAD_NUM 6
-#define THREAD_NAME_SIZE 15
-
-// ユーザー毎のコンテキストが保存されたスタックポインタ
-typedef struct _pinoc_context
-{
-	long int sp;
-}pinoc_context;
-
-/*
- * スレッドの型
- */
-typedef struct _pinoc_thread
-{
-	struct _pinoc_thread* next;			// レディーキュー
-	char name[THREAD_NAME_SIZE + 1];	// スレッド名
-	char* stack;						//
-
-	struct
-	{
-		pinoc_func_t func;				// 関数名
-		int argc;						// 引数1
-		char** argv;					// 引数2
-	}init;
-
-	struct
-	{
-		pinoc_syscall_type_t type;		// システムコールの種類
-		pinoc_syscall_param_t param;	// システみコールの引数
-	}syscall;
-
-	pinoc_context context;				// このスレッドのコンテキスト情報
-}pinoc_thread;
-
-// レディースキュー
-static struct
-{
-	pinoc_thread* head;
-	pinoc_thread* tail;
-}readyque;
-
-/*
- * グローバル変数
- */
+/********************************************************************************
+ * 		グローバル宣言
+********************************************************************************/
 static pinoc_thread* current;						// 使用中のスレッド情報が格納される
 static pinoc_thread threads[THREAD_NUM];			// スレッドの数だけ領域確保
 static pinoc_handler_t handlers[SOFTVEC_TYPE_NUM];	// ハンドラの数だけ領域確保
 
-/*
- * ディスパッチの内容は外部ファイルにアセンブラで記述してある
- */
-void dispatch(pinoc_context* context);
 
-/*
- * レディースキュー操作
- */
-static int getcurrent(void)
+/********************************************************************************
+ * 		レディースキュー操作
+********************************************************************************/
+static int getcurrent()
 {
 	if(current == NULL)
 		return -1;
@@ -97,6 +52,9 @@ static int putcurrent()
 	return 0;
 }
 
+/********************************************************************************
+ * 		スレッド操作
+********************************************************************************/
 static void thread_end()
 {
 	pinoc_exit();
@@ -108,62 +66,6 @@ static void thread_init(pinoc_thread* the)
 	thread_end();
 }
 
-/*
- * スレッド生成
- */
-static pinoc_thread_id_t thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
-{
-	int i;
-	pinoc_thread* the;
-	long int* sp;
-	extern char u_stack;
-	static char* thread_stack = &u_stack;
-
-	for(i = 0; i < THREAD_NUM; i++)
-	{
-		the = &threads[i];
-		if (!the->init.func)
-			break;
-	}
-	if(i = THREAD_NUM)
-		return -1;
-
-	memset(the, 0, sizeof *the);
-
-	strcpy(the->name, name);
-	the->next = NULL;
-
-	the->init.func = func;
-	the->init.argc = argc;
-	the->init.argv = argv;
-
-	memset(thread_stack, 0, stack_size);
-	thread_stack += stack_size;
-
-	the->stack = thread_stack;
-
-	sp = (long int)the->stack;
-	*(--sp) = (long int)thread_end;
-
-
-	*(--sp) = 0;
-	*(--sp) = 0;
-	*(--sp) = 0;
-	*(--sp) = 0;
-	*(--sp) = 0;
-	*(--sp) = 0;
-
-	*(--sp) = (long int)the;
-
-	the->context.sp = (long int)sp;
-
-	putcurrent();
-
-	current = the;
-	putcurrent();
-
-	return (pinoc_thread_id_t)current;
-}
 
 
 static int thread_exit()
@@ -188,11 +90,6 @@ static void thread_intr(softvec_type_t type, unsigned long sp)
 	// ディスパッチ
 	dispatch(&current->context);
 }
-
-//void setintr(softvec_type_t type, )
-//{
-//
-//}
 
 // 二重の割り込みベクターから呼び出される
 /*
@@ -226,16 +123,103 @@ void thread_intr(softvec_type_t type, unsigned long sp)
 		break;
 
 	}
+}
+
+void pinoc_syscall(pinoc_syscall_type_t type, pinoc_syscall_param_t* param)
+{
 
 }
 
-// Threadとして起動	テスト用関数
-int test08_1_main(int argc, char* argv[])
+// API (システムコールを利用してスレッド生成)
+void pinoc_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
 {
-	static char str1[] = "Hello test_tsk!!\n\r";
-	sci_write_str(SCI_NO_1, str1);
-	while(1);
+	pinoc_syscall_param_t param;
+	param.un.run.func = func;
+	param.un.run.name = name;
+	param.un.run.stacksize = stack_size;
+	param.un.run.argc = argc;
+	param.un.run.argv = argv;
 
+	// システムコール
+	pinoc_syscall(PINOC_SYSCALL_RUN, param);
+
+	return param.un.run.ret;
+}
+
+/*
+ * ユーザースレッド起動
+ */
+int start_thread()
+{
+	pinoc_run(test08_1_main);
+	return 0;
+}
+
+// スレッド生成
+static pinoc_thread_id_t thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
+{
+	int i;
+	pinoc_thread* the;
+	long int* sp;
+	extern char u_stack;
+	static char* thread_stack = &u_stack;
+
+	// スレッド情報格納領域確保
+	for(i = 0; i < THREAD_NUM; i++)
+	{
+		the = &threads[i];
+		if (!the->init.func)
+			break;
+	}
+	if(i = THREAD_NUM)
+		return -1;
+
+	memset(the, 0, sizeof *the);
+
+	// スレッド容器に新規スレッド情報を格納
+	strcpy(the->name, name);		// 名前
+	the->next = NULL;				// ネクスト
+	the->init.func = func;			// 関数ポインタ
+	the->init.argc = argc;			// 引数1
+	the->init.argv = argv;			// 引数2
+
+	// スレッドスタックの初期化
+	memset(thread_stack, 0, stack_size);
+
+	// スタック確保開始ポインタを進める
+	thread_stack += stack_size;
+
+	// このスレッドへスタックポインタを設定する（常にスタックの先頭を示す）
+	the->stack = thread_stack;
+
+	// 新規スタックの初期化
+	sp = (long int)the->stack;
+
+	// スタックの最初にend関数を設置することで、最終的にreturnされたときend関数が呼び出される
+	*(--sp) = (long int)thread_end;
+
+	// スタックの２番目にinit関数を設置することで、Dispachしたときに、init関数が呼び出される
+	// Dispachの処理に関してはアセンブラ参照
+	*(--sp) = (long int)thread_init;
+	*(--sp) = 0;				// ER6
+	*(--sp) = 0;				// ER5
+	*(--sp) = 0;				// ER4
+	*(--sp) = 0;				// ER3
+	*(--sp) = 0;				// ER2
+	*(--sp) = 0;				// ER1
+	*(--sp) = (long int)the;	// ER0 (引数1)
+
+	// 現在のスタックポインタを格納
+	the->context.sp = (long int)sp;
+
+	// currentをレディースキューへ戻す(最初はcurrent==NULL)
+	putcurrent();
+
+	// 新規作成したスレッドをレディースキューへ接続
+	current = the;
+	putcurrent();
+
+	return current;
 }
 
 /*
@@ -243,7 +227,7 @@ int test08_1_main(int argc, char* argv[])
  */
 void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
 {
-	// コンテキストを初期化
+	// スレッドコンテキストを初期化
 	current = NULL;
 
 	// レディースキューを初期化
@@ -283,16 +267,6 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	// ここへは帰ってこない
 }
 
-/*
- * スレッド起動
- */
-int start_thread()
-{
-	pinoc_run(test08_1_main);
-	return 0;
-}
-
-
 // ここからカーネルのプログラムが始まる。
 int main()
 {
@@ -319,4 +293,15 @@ int main()
 	return 0;
 }
 
+/********************************************************************************
+ * 		ユーザー関数
+********************************************************************************/
 
+// Threadとして起動	テスト用関数
+int test08_1_main(int argc, char* argv[])
+{
+	static char str1[] = "Hello test_tsk!!\n\r";
+	sci_write_str(SCI_NO_1, str1);
+	while(1);
+
+}
