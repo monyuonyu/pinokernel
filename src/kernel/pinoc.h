@@ -11,6 +11,38 @@
 #include "dbg.hpp"
 #include "interrupt.h"
 
+typedef int (*pinoc_func_t)(void);
+typedef void (*pinoc_handler_t)(void);
+
+// システムコールタイプ
+typedef enum
+{
+	PINOC_SYSCALL_RUN = 0,
+	PINOC_SYSCALL_EXIT
+}pinoc_syacall_t;
+
+// システムコールパラメータ
+typedef struct
+{
+	union
+	{
+		struct
+		{
+			pinoc_func_t func;
+			char* name;
+			int stacksize;
+			int argc;
+			char** argv;
+//			pinoc_thread_id_t ret;
+		}run;
+		struct
+		{
+			int dummy;
+		}exit;
+
+	}un;
+}pinoc_syscall_param_t;
+
 /********************************************************************************
  *		カーネル構造体定義
  ********************************************************************************/
@@ -34,15 +66,15 @@ typedef struct _pinoc_thread
 
 	struct
 	{
-//		pinoc_func_t func;				// 関数名
+		pinoc_func_t func;				// 関数名
 		int argc;						// 引数1
 		char** argv;					// 引数2
 	}init;
 
 	struct
 	{
-//		pinoc_syscall_type_t type;		// システムコールの種類
-//		pinoc_syscall_param_t param;	// システみコールの引数
+		pinoc_syacall_t type;			// システムコールの種類
+		pinoc_syscall_param_t param;	// システみコールの引数
 	}syscall;
 
 	pinoc_context context;				// このスレッドのコンテキスト情報
@@ -55,34 +87,8 @@ static struct
 	pinoc_thread* tail;
 }readyque;
 
-// システムコールパラメータ
-//typedef struct
-//{
-//	union
-//	{
-//		struct
-//		{
-//			pinoc_func_t func;
-//			char* name;
-//			int stacksize;
-//			int argc;
-//			char** argv;
-//			pinoc_thread_id_t ret;
-//		}run;
-//		struct
-//		{
-//			int dummy;
-//		}exit;
-//
-//	}un;
-//}pinoc_syscall_param_t;
 
-// システムコールタイプ
-typedef enum
-{
-	PINOC_SYSCALL_RUN = 0,
-	PINOC_SYSCALL_EXIT
-}pinoc_syacall_t;
+
 
 /********************************************************************************
  * 		プロトタイプ宣言
@@ -90,9 +96,6 @@ typedef enum
 // システム・コール
 //void pinoc_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[]);
 //void pinoc_exit();
-
-typedef int (*pinoc_func_t)(void);
-typedef void (*pinoc_handler_t)(void);
 
 // ライブラリ関数
 void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[]);

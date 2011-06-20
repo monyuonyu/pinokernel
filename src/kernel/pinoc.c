@@ -18,13 +18,15 @@
 static pinoc_thread* current;						// 使用中のスレッド情報が格納される
 static pinoc_thread threads[THREAD_NUM];			// スレッドの数だけ領域確保
 static pinoc_handler_t handlers[SOFTVEC_TYPE_NUM];	// ハンドラの数だけ領域確保
-//
-//
-///********************************************************************************
-// * 		レディースキュー操作
-//********************************************************************************/
-//static int getcurrent()
-//{
+
+
+static pinoc_thread* thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[]);
+
+/********************************************************************************
+ * 		レディースキュー操作
+********************************************************************************/
+static int getcurrent()
+{
 //	if(current == 0)
 //		return -1;
 //
@@ -33,12 +35,12 @@ static pinoc_handler_t handlers[SOFTVEC_TYPE_NUM];	// ハンドラの数だけ�
 //		readyque->tail = 0;
 //
 //	current->next = 0;
-//
-//	return 0;
-//}
-//
-//static int putcurrent()
-//{
+
+	return 0;
+}
+
+static int putcurrent()
+{
 //	if(current == 0)
 //		return -1;
 //
@@ -48,26 +50,26 @@ static pinoc_handler_t handlers[SOFTVEC_TYPE_NUM];	// ハンドラの数だけ�
 //		readyque.head = current;
 //
 //	readyque.tail = current;
-//
-//	return 0;
-//}
-//
-///********************************************************************************
-// * 		スレッド操作
-//********************************************************************************/
-//static void thread_end()
-//{
+
+	return 0;
+}
+
+/********************************************************************************
+ * 		スレッド操作
+********************************************************************************/
+static void thread_end()
+{
 //	pinoc_exit();
-//}
-//
-//static void thread_init(pinoc_thread* the)
-//{
+}
+
+static void thread_init(pinoc_thread* the)
+{
 //	the->init.func(the->init.argc, the->init.argv);
 //	thread_end();
-//}
-//
-//
-//
+}
+
+
+
 //static int thread_exit()
 //{
 //	sci_write_str(SCI_NO_1, current->name);
@@ -155,76 +157,79 @@ int start_thread()
 	return 0;
 }
 
-//// スレッド生成
-//static pinoc_thread_id_t thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
-//{
-//	int i;
-//	pinoc_thread* the;
-//	long int* sp;
-//	extern char u_stack;
-//	static char* thread_stack = &u_stack;
-//
-//	// スレッド情報格納領域確保
-//	for(i = 0; i < THREAD_NUM; i++)
-//	{
-//		the = &threads[i];
-//		if (!the->init.func)
-//			break;
-//	}
-//	if(i = THREAD_NUM)
-//		return -1;
-//
-//	memset(the, 0, sizeof *the);
-//
-//	// スレッド容器に新規スレッド情報を格納
-//	strcpy(the->name, name);		// 名前
-//	the->next = 0;				// ネクスト
-//	the->init.func = func;			// 関数ポインタ
-//	the->init.argc = argc;			// 引数1
-//	the->init.argv = argv;			// 引数2
-//
-//	// スレッドスタックの初期化
-//	memset(thread_stack, 0, stack_size);
-//
-//	// スタック確保開始ポインタを進める
-//	thread_stack += stack_size;
-//
-//	// このスレッドへスタックポインタを設定する（常にスタックの先頭を示す）
-//	the->stack = thread_stack;
-//
-//	// 新規スタックの初期化
-//	sp = (long int)the->stack;
-//
-//	// スタックの最初にend関数を設置することで、最終的にreturnされたときend関数が呼び出される
-//	*(--sp) = (long int)thread_end;
-//
-//	// スタックの２番目にinit関数を設置することで、Dispachしたときに、init関数が呼び出される
-//	// Dispachの処理に関してはアセンブラ参照
-//	*(--sp) = (long int)thread_init;
-//	*(--sp) = 0;				// ER6
-//	*(--sp) = 0;				// ER5
-//	*(--sp) = 0;				// ER4
-//	*(--sp) = 0;				// ER3
-//	*(--sp) = 0;				// ER2
-//	*(--sp) = 0;				// ER1
-//	*(--sp) = (long int)the;	// ER0 (引数1)
-//
-//	// 現在のスタックポインタを格納
-//	the->context.sp = (long int)sp;
-//
-//	// currentをレディースキューへ戻す(最初はcurrent==0)
-//	putcurrent();
-//
-//	// 新規作成したスレッドをレディースキューへ接続
-//	current = the;
-//	putcurrent();
-//
-//	return current;
-//}
-//
-///*
-// * 手動でスレッドの生成
-// */
+// スレッド生成
+static pinoc_thread* thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
+{
+	dbg();
+	as_SLEEP_LOOP_3069
+
+	int i;
+	pinoc_thread* the;
+	long int* sp;
+	extern char u_stack;
+	static char* thread_stack = &u_stack;
+
+	// スレッド情報格納領域確保
+	for(i = 0; i < THREAD_NUM; i++)
+	{
+		the = &threads[i];
+		if (!the->init.func)
+			break;
+	}
+	if(i == THREAD_NUM)
+		return (pinoc_thread*)-1;
+
+	memset(the, 0, sizeof *the);
+
+	// スレッド容器に新規スレッド情報を格納
+	strcpy(the->name, name);		// 名前
+	the->next = 0;				// ネクスト
+	the->init.func = func;			// 関数ポインタ
+	the->init.argc = argc;			// 引数1
+	the->init.argv = argv;			// 引数2
+
+	// スレッドスタックの初期化
+	memset(thread_stack, 0, stack_size);
+
+	// スタック確保開始ポインタを進める
+	thread_stack += stack_size;
+
+	// このスレッドへスタックポインタを設定する（常にスタックの先頭を示す）
+	the->stack = thread_stack;
+
+	// 新規スタックの初期化
+	sp = (long int)the->stack;
+
+	// スタックの最初にend関数を設置することで、最終的にreturnされたときend関数が呼び出される
+	*(--sp) = (long int)thread_end;
+
+	// スタックの２番目にinit関数を設置することで、Dispachしたときに、init関数が呼び出される
+	// Dispachの処理に関してはアセンブラ参照
+	*(--sp) = (long int)thread_init;
+	*(--sp) = 0;				// ER6
+	*(--sp) = 0;				// ER5
+	*(--sp) = 0;				// ER4
+	*(--sp) = 0;				// ER3
+	*(--sp) = 0;				// ER2
+	*(--sp) = 0;				// ER1
+	*(--sp) = (long int)the;	// ER0 (引数1)
+
+	// 現在のスタックポインタを格納
+	the->context.sp = (long int)sp;
+
+	// currentをレディースキューへ戻す(最初はcurrent==0)
+	putcurrent();
+
+	// 新規作成したスレッドをレディースキューへ接続
+	current = the;
+	putcurrent();
+
+	return current;
+}
+
+/*
+ * 手動でスレッドの生成
+ */
 void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
 {
 	// スレッドコンテキストを初期化
@@ -239,7 +244,7 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	memset(handlers, sizeof(handlers));
 
 	dbg();
-	as_SLEEP_LOOP_3069
+//	as_SLEEP_LOOP_3069
 
 	/*
 	 * スレッド用割り込みハンドラの初期化
@@ -259,7 +264,7 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	 * スレッドの生成してスレッドIDを返却
 	 * スレッドを生成するだけで処理は帰ってくる
 	 */
-//	current = (pinoc_thread*)thread_run(func, name, stack_size, argc, argv);
+	current = (pinoc_thread*)thread_run(func, name, stack_size, argc, argv);
 
 	/*
 	 * ディスパッチ
