@@ -8,13 +8,13 @@
 #ifndef INTR_H_
 #define INTR_H_
 
-#define SOFTVEC_TYPE_NUM		3
+//#define SOFTVEC_TYPE_NUM		3
 
 #define SOFTVEC_TYPE_SOFTERR	0
 #define SOFTVEC_TYPE_SYSTEM		1
 #define SOFTVEC_TYPE_SERIAL		2
 
-void interrupt(softvec_type_t type, unsigned long sp);
+//void interrupt(softvec_type_t type, unsigned long sp);
 
 //typedef enum
 //{

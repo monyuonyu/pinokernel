@@ -8,6 +8,9 @@
 #ifndef PINOC_H_
 #define PINOC_H_
 
+#include "dbg.hpp"
+#include "interrupt.h"
+
 /********************************************************************************
  *		カーネル構造体定義
  ********************************************************************************/
@@ -23,34 +26,34 @@ typedef struct _pinoc_context
 /*
  * スレッドの型
  */
-//typedef struct _pinoc_thread
-//{
-//	struct _pinoc_thread* next;			// レディーキュー
-//	char name[THREAD_NAME_SIZE + 1];	// スレッド名
-//	char* stack;						//
-//
-//	struct
-//	{
+typedef struct _pinoc_thread
+{
+	struct _pinoc_thread* next;			// レディーキュー
+	char name[THREAD_NAME_SIZE + 1];	// スレッド名
+	char* stack;						//
+
+	struct
+	{
 //		pinoc_func_t func;				// 関数名
-//		int argc;						// 引数1
-//		char** argv;					// 引数2
-//	}init;
-//
-//	struct
-//	{
+		int argc;						// 引数1
+		char** argv;					// 引数2
+	}init;
+
+	struct
+	{
 //		pinoc_syscall_type_t type;		// システムコールの種類
 //		pinoc_syscall_param_t param;	// システみコールの引数
-//	}syscall;
-//
-//	pinoc_context context;				// このスレッドのコンテキスト情報
-//}pinoc_thread;
+	}syscall;
+
+	pinoc_context context;				// このスレッドのコンテキスト情報
+}pinoc_thread;
 
 // レディースキュー
-//static struct
-//{
-//	pinoc_thread* head;
-//	pinoc_thread* tail;
-//}readyque;
+static struct
+{
+	pinoc_thread* head;
+	pinoc_thread* tail;
+}readyque;
 
 // システムコールパラメータ
 //typedef struct
@@ -88,8 +91,11 @@ typedef enum
 //void pinoc_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[]);
 //void pinoc_exit();
 
+typedef int (*pinoc_func_t)(void);
+typedef void (*pinoc_handler_t)(void);
+
 // ライブラリ関数
-//void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[]);
+void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[]);
 //void pinoc_syserr();
 //void pinoc_syscall(pinoc_syscall_type_t type, pinoc_syscall_param_t* param);
 

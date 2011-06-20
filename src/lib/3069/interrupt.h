@@ -11,7 +11,7 @@
 extern char softvec;	/* ソフトウェア・ベクタ */
 #define SOFTVEC_ADDR (&softvec)
 
-#define SOFTVEC_TYPE_NUM 2
+#define SOFTVEC_TYPE_NUM 3
 
 // ※ アセンブラから参照するのでココではenum禁止
 //typedef short softvec_type_t;	/* int でもok */
