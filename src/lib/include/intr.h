@@ -10,16 +10,18 @@
 
 #define SOFTVEC_TYPE_NUM		3
 
-//#define SOFTVEC_TYPE_SOFTERR	0
-//#define SOFTVEC_TYPE_SYSTEM		1
-//#define SOFTVEC_TYPE_SERIAL		2
+#define SOFTVEC_TYPE_SOFTERR	0
+#define SOFTVEC_TYPE_SYSTEM		1
+#define SOFTVEC_TYPE_SERIAL		2
 
-typedef enum
-{
-	SOFTVEC_TYPE_SOFTERR = 0,
-	SOFTVEC_TYPE_SYSTEM,
-	SOFTVEC_TYPE_SERIAL
-}softvec_type_t;
+void interrupt(softvec_type_t type, unsigned long sp);
+
+//typedef enum
+//{
+//	SOFTVEC_TYPE_SOFTERR = 0,
+//	SOFTVEC_TYPE_SYSTEM,
+//	SOFTVEC_TYPE_SERIAL
+//}softvec_type_t;
 
 
 #endif /* INTR_H_ */

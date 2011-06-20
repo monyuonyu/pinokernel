@@ -128,7 +128,7 @@ int main()
 //	*p4 = 0x02;
 
 	// ソフト・割り込みベクタへ登録
-	softvec_setintr(SOFTVEC_TYPE_SERIAL, main_vec);
+	softvec_setintr(softvec_type_serial, main_vec);
 
 	// シリアル通信割り込みEnable
 	sci_read_intr_enable(SCI_NO_1);

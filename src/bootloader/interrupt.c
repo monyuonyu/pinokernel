@@ -23,7 +23,7 @@ void softvec_setintr(softvec_type_t type, softvec_handler_t handler)
 }
 
 
-/* 割り込みベクタの初期化 */
+///* 割り込みベクタの初期化 */
 void softvec_init()
 {
 	int type;
