@@ -11,8 +11,8 @@ PINoC	= pinoc
 OBJS	= vectors.o main.o start.o XMODEM.o  read_elf.o interrupt.o intr.o
 
 #CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../lib/include
-CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../../newlib/include -I ../lib/include -I ../lib/3069
-LDFLAGS	= -T boot.ls -L ../../newlib/lib/h8300h -L ../lib -l3069 -lc -lascii
+CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall  -I ../lib/include -I ../lib/3069
+LDFLAGS	= -T boot.ls  -L ../lib -l3069 -lc -lascii
 
 all : $(PINoC).mot
 	# bootld finish!!
