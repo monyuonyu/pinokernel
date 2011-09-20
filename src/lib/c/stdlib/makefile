@@ -11,12 +11,10 @@ OBJS	= atoi.o atol.o atoll.o
 
 CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -Os -Wall -I ../../include
 
-all : stdlib.o
-	# stdlib.o finish!!
+all :  $(OBJS)
+	mv *.o ../
+	# stdlib finish!!
 
-stdlib.o : $(OBJS)
-	$(AR) rv $@  $(OBJS)
-	mv stdlib.o ../stdlib.o
 	
 .c.o : $<
 	$(CC) -c -v $< $(CFLAGS)

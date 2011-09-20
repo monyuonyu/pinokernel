@@ -7,16 +7,14 @@ OBJCOPY= h8300-elf-objcopy
 OBJDUMP= h8300-elf-objdump
 STRIP	= h8300-elf-strip
 
-OBJS	= memcmp.o memccpy.o
+OBJS	= memcmp.o memccpy.o strncmp.o memset.o memcpy.o
 
 CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -Os -Wall -I ../../include
 
-all : string.o
-	# string.o finish!!
+all :  $(OBJS)
+	mv *.o ../
+	# string finish!!
 
-string.o : $(OBJS)
-	$(AR) rv $@  $(OBJS)
-	mv string.o ../string.o
 	
 .c.o : $<
 	$(CC) -c -v $< $(CFLAGS)

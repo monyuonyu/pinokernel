@@ -2,6 +2,8 @@
  * stddef.h
 */
 
+#include "_ansi.h"
+
 #ifndef _STDDEF_H_
 #define _STDDEF_H_
 

@@ -7,16 +7,14 @@ OBJCOPY= h8300-elf-objcopy
 OBJDUMP= h8300-elf-objdump
 STRIP	= h8300-elf-strip
 
-OBJS	= tolower.o
+OBJS	= tolower.o isupper.o ctype_.o
 
 CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -Os -Wall -I ../../include
 
-all : ctype.o
-	# ctype.o finish!!
+all :  $(OBJS)
+	mv *.o ../
+	# ctype finish!!
 
-ctype.o : $(OBJS)
-	$(AR) rv $@  $(OBJS)
-	mv ctype.o ../ctype.o
 	
 .c.o : $<
 	$(CC) -c -v $< $(CFLAGS)

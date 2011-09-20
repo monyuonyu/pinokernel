@@ -15,7 +15,9 @@ all : libc.a
 	# libc.a finish!!
 
 libc.a : OBJS
-	$(AR) rv $@  $(OBJS)
+	$(AR) rv $@  *.o
+	##HAHAHA##
+	$(AR) t libc.a
 	mv libc.a ../libc.a
 	
 OBJS :
