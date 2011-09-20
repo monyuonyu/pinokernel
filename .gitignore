@@ -9,3 +9,4 @@
 main.s
 pinoc
 pinoc_kernel
+.cproject
