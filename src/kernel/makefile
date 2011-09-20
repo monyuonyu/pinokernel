@@ -10,8 +10,8 @@ PINoC	= pinoc_kernel
 
 OBJS	= start.o pinoc.o dispatch.o
 
-CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../../newlib/include -I ../lib/include -I ../lib/3069
-LDFLAGS	= -T kernel.ls -lc -l3069 -lgcc -L ../../newlib/lib/h8300h -L ../lib -static
+CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../lib/include -I ../lib/3069
+LDFLAGS	= -T kernel.ls -lc -l3069 -L ../lib -static
 
 all : $(PINoC).mot
 	# bootld finish!!
