@@ -27,29 +27,29 @@ static pinoc_thread* thread_run(pinoc_func_t func, char *name, int stack_size, i
 ********************************************************************************/
 static int getcurrent()
 {
-//	if(current == 0)
-//		return -1;
-//
-//	readyque.head = current->next;
-//	if(readyque->head = 0)
-//		readyque->tail = 0;
-//
-//	current->next = 0;
+	if(current == 0)
+		return -1;
+
+	readyque.head = current->next;
+	if(readyque.head == 0)
+		readyque.tail = 0;
+
+	current->next = 0;
 
 	return 0;
 }
 
 static int putcurrent()
 {
-//	if(current == 0)
-//		return -1;
-//
-//	if(readyque.tail)
-//		readyque.tail->next = current;
-//	else
-//		readyque.head = current;
-//
-//	readyque.tail = current;
+	if(current == 0)
+		return -1;
+
+	if(readyque.tail)
+		readyque.tail->next = current;
+	else
+		readyque.head = current;
+
+	readyque.tail = current;
 
 	return 0;
 }
@@ -154,6 +154,7 @@ void syserror_intr()	// 未実装
 int start_thread()
 {
 //	pinoc_run(test08_1_main);
+	dbg();
 	return 0;
 }
 
@@ -161,13 +162,13 @@ int start_thread()
 static pinoc_thread* thread_run(pinoc_func_t func, char *name, int stack_size, int argc, char* argv[])
 {
 	dbg();
-	as_SLEEP_LOOP_3069
+//	as_SLEEP_LOOP_3069
 
 	int i;
 	pinoc_thread* the;
-	long int* sp;
-	extern char u_stack;
-	static char* thread_stack = &u_stack;
+	volatile long int* sp;
+	volatile extern char u_stack;
+	volatile static char* thread_stack = &u_stack;
 
 	// スレッド情報格納領域確保
 	for(i = 0; i < THREAD_NUM; i++)
@@ -224,6 +225,7 @@ static pinoc_thread* thread_run(pinoc_func_t func, char *name, int stack_size, i
 	current = the;
 	putcurrent();
 
+	dbg();
 	return current;
 }
 
@@ -261,14 +263,16 @@ void pinoc_start(pinoc_func_t func, char *name, int stack_size, int argc, char* 
 	handlers[SOFTVEC_TYPE_SOFTERR] = syserror_intr;
 
 	/*
-	 * スレッドの生成してスレッドIDを返却
+	 * スレッドを生成してスレッドIDを返却
 	 * スレッドを生成するだけで処理は帰ってくる
 	 */
 	current = (pinoc_thread*)thread_run(func, name, stack_size, argc, argv);
 
+	dbg();
+
 	/*
 	 * ディスパッチ
-	 * 現在のレディースキューに格納されているスタック情報(IPも含め)元通りに復元する
+	 * 現在のレディースキューに格納されているスタック情報(IPも含め)を元通りに復元する
 	 */
 	dispatch(&current->context);
 

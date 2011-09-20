@@ -7,9 +7,9 @@
 
 #include "3069f_sci.h"
 
-static struct{
+volatile static struct{
 	volatile struct SCI *sci;
-}regs[3] =
+}volatile regs[3] =
 {
 	{SCI0A},
 	{SCI1A},
@@ -63,7 +63,7 @@ void sci_write_str(SCI_NO no,const char* _Str)
 char sci_read_byte(SCI_NO no)
 {
 	volatile struct SCI* sci = regs[no].sci;
-	char c;
+	volatile char c;
 
 	// データが格納されるまで待機
 	while (1)
@@ -98,7 +98,7 @@ char sci_read_byte(SCI_NO no)
 // 連続したデータを受信
 void sci_read(SCI_NO no, char* buff, int size)
 {
-	int i;
+	volatile int i;
 	for (i = 0; i < size; i++)
 	{
 		*(buff++) = sci_read_byte(no);
@@ -142,7 +142,7 @@ int sci_read_pol(SCI_NO no)
 char sci_read_byte_intr(SCI_NO no)
 {
 	volatile struct SCI* sci = regs[no].sci;
-	char c;
+	volatile char c;
 
 	c = sci->RDR;
 	sci->SSR.BIT.RDRF = 0;
@@ -176,6 +176,4 @@ void sci_read_intr_disable(SCI_NO no)
 	volatile struct SCI* sci = regs[no].sci;
 	sci->SCR.BIT.RIE = 1;
 }
-
-
 

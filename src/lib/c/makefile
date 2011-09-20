@@ -9,7 +9,7 @@ STRIP	= h8300-elf-strip
 
 OBJS	= string.o stdlib.o ctype.o
 
-CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../include
+CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -Os -Wall -I ../include
 
 all : libc.a
 	# libc.a finish!!

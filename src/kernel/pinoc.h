@@ -78,6 +78,7 @@ typedef struct _pinoc_thread
 	}syscall;
 
 	pinoc_context context;				// このスレッドのコンテキスト情報
+
 }pinoc_thread;
 
 // レディースキュー

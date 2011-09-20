@@ -9,7 +9,7 @@ STRIP	= h8300-elf-strip
 
 OBJS	= ascii.o
 
-CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I ../../newlib/include -I ../include
+CFLAGS	= -mh -nostdinc -nostdlib -fno-builtin -Os -Wall -I ../../newlib/include -I ../include
 
 all : libascii.a
 	# libascii.a finish!!
