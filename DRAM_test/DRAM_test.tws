@@ -1,0 +1,19 @@
+[HIMDBVersion]
+2.0
+[DATABASE_VERSION]
+"1.2" 
+[CURRENT_PROJECT]
+"DRAM_test" 
+[GENERAL_DATA]
+[BREAKPOINTS]
+[OPEN_WORKSPACE_FILES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\3069f_sci.c" 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\3069f_sci.h" 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\DRAM_test.c" 
+[WORKSPACE_FILE_STATES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\3069f_sci.c" -4 -23 1076 330 1 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\3069f_sci.h" 22 22 980 215 0 1 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\DRAM_test.c" 0 0 976 211 0 0 
+[LOADED_PROJECTS]
+"DRAM_test" 
+[END]

@@ -1,0 +1,134 @@
+#include "../../common/typedef.h"
+#include "../../common/global.h"
+#include "protectmode.h"
+
+void test();
+void init_pic();
+
+vo io_sd32(SD* _sd, ui base, ui limit, u1 a, u1 type, u1 s, u1 dpl, u1 p, u1 avl, u1 db, u1 g);
+vo io_write32(si xsize, si ysize, si xSrc, si ySrc, s1 color);
+vo io_hlt32();
+void io_out8(int port, int data);
+
+#define PIC0_ICW1               0x0020
+#define PIC0_OCW2               0x0020
+#define PIC0_IMR                0x0021
+#define PIC0_ICW2               0x0021
+#define PIC0_ICW3               0x0021
+#define PIC0_ICW4               0x0021
+#define PIC1_ICW1               0x00a0
+#define PIC1_OCW2               0x00a0
+#define PIC1_IMR                0x00a1
+#define PIC1_ICW2               0x00a1
+#define PIC1_ICW3               0x00a1
+#define PIC1_ICW4               0x00a1
+
+struct GATE_DIS
+{
+	short offset_low;
+	short selecta;
+	struct
+	{
+		short reserve : 8;
+		short type : 4;
+		short s : 1;
+		short dpl : 2;
+		short p : 1;
+	};
+	short offset_high;
+};
+
+//	簡易カーネル
+vo main()
+{
+	int i;
+
+//	while(1);
+
+	// データセグメントの反映
+	__asm__(
+			"movw	$0x10,		%ax		\n\t"
+			"movw	%ax,		%ds		\n\t"
+	);
+
+	// プロテクトモードでVGA出力
+	*(u1*)0xb8004 = 'C';
+	*(u1*)0xb8005 = 0x04;
+
+	// ジャンプ先にHLTLOOPを設定
+	*(u1*)0x9500 = (u1)0xf4;
+	*(u2*)0x9501 = (u2)0xfdeb;
+
+
+
+	__asm__("cli");
+
+	// IDTをひとつ設置 (0x21) (testを設置)
+	struct GATE_DIS *gd = (struct GATE_DIS*)(0x8500);
+//	gd->offset_low	= (int)test & 0xffff;			// 下位2byte
+//	gd->selecta		= 0x18;							// 3セグメント目
+//	gd->reserve		= 0;
+//	gd->type			= 0x0e;							// 32bit割り込みゲート
+//	gd->s				= 0;								// システムディスクリプタ
+//	gd->dpl			= 0;								// 特権レベル（最高）
+//	gd->p				= 1;								// セグメントはメモリ上に存在する
+//	gd->offset_high	= ((int)test >> 16) & 0xffff;	// 上位2byte
+
+//	*(u8*)0x8500 = (u8)0x00009e0000189500;
+
+//	for(i = 0; i < 64; i++)
+//	{
+		gd[0x21].offset_low	= (u2)test;			// 下位2byte
+		gd[0x21].selecta		= 0x08;							// 3セグメント目
+		gd[0x21].reserve		= 0;
+		gd[0x21].type			= 0x0e;							// 32bit割り込みゲート
+		gd[0x21].s			= 0;								// セグメントディスクリプタ
+		gd[0x21].dpl			= 0;								// 特権レベル（最高）
+		gd[0x21].p			= 1;								// セグメントはメモリ上に存在する
+		gd[0x21].offset_high	= ((u4)test >> 16) & 0xFFFF;			// 上位2byte
+//	}
+
+
+
+	// PICの初期化
+	init_pic();
+	__asm__("sti");
+
+	// 関数呼び出しテスト
+//	test();
+
+
+	// hlt roop
+	io_hlt32();
+}
+
+void test()
+{
+	*(u1*)0xb8006 = 'D';
+	*(u1*)0xb8007 = 0x04;
+
+	while(1);
+}
+
+void init_pic()
+{
+
+	io_out8(PIC0_IMR, 0xff);
+	io_out8(PIC1_IMR, 0xff);
+
+	io_out8(PIC0_ICW1, 0x11);
+	io_out8(PIC0_ICW2, 0x20);
+	io_out8(PIC0_ICW3, 1 << 2);
+	io_out8(PIC0_ICW4, 0x01);
+
+	io_out8(PIC1_ICW1, 0x11);
+	io_out8(PIC1_ICW2, 0x28);
+	io_out8(PIC1_ICW3, 0x2);
+	io_out8(PIC1_ICW4, 0x01);
+
+	io_out8(PIC0_IMR, 0xfd);
+	io_out8(PIC1_IMR, 0xff);
+}
+
+
+#include "lowCall32.h"

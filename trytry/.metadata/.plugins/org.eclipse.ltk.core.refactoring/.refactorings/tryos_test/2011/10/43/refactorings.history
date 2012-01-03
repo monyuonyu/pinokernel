@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="リソース名 &apos;tryos_test/pinoc_x86/PINoC/Kernel/SEGLS.ls&apos; を &apos;kernel.ls&apos; に変更します" description="リソース &apos;SEGLS.ls&apos; の名前変更" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="pinoc_x86/PINoC/Kernel/SEGLS.ls" name="kernel.ls" stamp="1318766222592" updateReferences="true"/>
+</session>

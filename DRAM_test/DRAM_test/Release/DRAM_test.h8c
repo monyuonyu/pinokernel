@@ -1,0 +1,8 @@
+-cpu=300HA:24
+-lang=c
+-object="C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\Release\DRAM_test.obj"
+-outcode=sjis
+-nolist
+-chgincpath
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\DRAM_test.c"
+-nologo

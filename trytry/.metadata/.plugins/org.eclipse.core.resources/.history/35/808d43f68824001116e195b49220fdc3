@@ -1,0 +1,12 @@
+MAINSRC		=	main
+LS		=	kernel.ls
+OBJS	= main.o lowCall32.o
+
+.c.o:
+	gcc -c $< -nostdlib -nostdinc
+
+img: $(OBJS)
+	#メインカーネル 573->1024byte
+#	gcc $(MAINSRC).c -nostdlib -nostdinc -c -o $(MAINSRC).o
+	ld main.o lowCall32.o -T $(LS) -o main.bin
+	../../tool/FillNop 512 $(MAINSRC).bin

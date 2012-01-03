@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svnroot/pinoc/!svn/ver/3/test/lib
+END
+stdio.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svnroot/pinoc/!svn/ver/3/test/lib/stdio.h
+END
+typedef_c.h
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svnroot/pinoc/!svn/ver/3/test/lib/typedef_c.h
+END
+string.h
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svnroot/pinoc/!svn/ver/3/test/lib/string.h
+END

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="8 個のリソースを削除" deleteContents="false" description="8 個のリソースを削除" element1="/tryos_test/32mode.h" element2="/tryos_test/biosCall16.h" element3="/tryos_test/bootld.c" element4="/tryos_test/bootsct.c" element5="/tryos_test/lowCall16.h" element6="/tryos_test/realmode.h" element7="/tryos_test/makefile" element8="/tryos_test/tmp" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="8" stamp="1318762946567"/>
+</session>
