@@ -1,4 +1,3 @@
-
 # global ignore
 *.o
 *.a
@@ -11,7 +10,6 @@
 .metadata/
 
 # file ignore
-main.s
 pinoc
 pinoc_kernel
 .cproject
