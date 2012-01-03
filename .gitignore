@@ -4,9 +4,15 @@
 *.a
 *.mot
 *.elf
+*.bin
+
+#directory
+.settings/
+.metadata/
 
 # file ignore
 main.s
 pinoc
 pinoc_kernel
 .cproject
+.project
