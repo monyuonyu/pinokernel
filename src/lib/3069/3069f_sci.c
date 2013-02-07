@@ -18,11 +18,15 @@ volatile static struct{
 
 void sci_init(SCI_NO no, BitRate_type_t type)
 {
+	int i = 0;
 	volatile struct SCI* sci = regs[no].sci;
 
 	sci->SCR.BYTE = 0;
 	sci->SMR.BYTE = 0;
 	sci->BRR = type;
+
+	// wait
+	for(i = 0; i < 30;i++);
 
 	// 送受信許可
 	sci->SCR.BIT.RE = 1;
@@ -42,7 +46,7 @@ void sci_write(SCI_NO no, char c)
 	sci->TDR = c;
 	sci->SSR.BIT.TDRE = 0;
 
-//	while(sci->SSR.BIT.TEND);
+	while(sci->SSR.BIT.TEND);
 
 }
 
