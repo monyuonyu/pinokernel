@@ -1,0 +1,21 @@
+/*
+ * start.c
+ *
+ *  Created on: 2010/11/28
+ *      Author: pino
+ */
+__asm_(".global _start");
+
+#include "string.h"
+
+extern int main();
+extern data_start
+
+__asm__(
+		"_start:				\n\t"
+		"mov.l	#_stack, sp	\n\t"
+);
+
+memset(&bss_start, 0, (long)&bss_end - (long)&bss_start);
+
+main();

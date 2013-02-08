@@ -1,17 +1,14 @@
-# global ignore
+# ignore
 *.o
 *.a
 *.mot
 *.elf
 *.bin
 
-#directory
 .settings/
 .metadata/
 Debug/
 
-# file ignore
-pinoc
 pinoc_kernel
 .cproject
 .project

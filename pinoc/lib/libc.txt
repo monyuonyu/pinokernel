@@ -1,0 +1,711 @@
+
+File: libc.a(atoi.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          192 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 000032 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002f4 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000066 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000066 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000066 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 000083 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000228 0000a0 10      8   6  4
+  [ 8] .strtab           STRTAB          00000000 0002c8 00002a 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2f4 contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000d  0000073e R_H8_DIR24R8      00000000   _strtol + 0
+00000027  0000093e R_H8_DIR24R8      00000000   __strtol_r + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 10 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS atoi.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     6: 00000000    22 NOTYPE  GLOBAL DEFAULT    1 _atoi
+     7: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND _strtol
+     8: 00000016    28 NOTYPE  GLOBAL DEFAULT    1 __atoi_r
+     9: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND __strtol_r
+
+No version information found in this file.
+
+File: libc.a(atol.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          192 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 000034 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002f4 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000068 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000068 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000068 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 000085 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000228 0000a0 10      8   6  4
+  [ 8] .strtab           STRTAB          00000000 0002c8 00002a 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2f4 contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000d  0000073e R_H8_DIR24R8      00000000   _strtol + 0
+00000027  0000093e R_H8_DIR24R8      00000000   __strtol_r + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 10 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS atol.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     6: 00000000    22 NOTYPE  GLOBAL DEFAULT    1 _atol
+     7: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND _strtol
+     8: 00000016    30 NOTYPE  GLOBAL DEFAULT    1 __atol_r
+     9: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND __strtol_r
+
+No version information found in this file.
+
+File: libc.a(atoll.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          220 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 00004e 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 000314 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000082 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000082 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000082 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 00009f 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000244 0000a0 10      8   6  4
+  [ 8] .strtab           STRTAB          00000000 0002e4 00002f 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x314 contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000d  0000073e R_H8_DIR24R8      00000000   _strtoll + 0
+00000035  0000093e R_H8_DIR24R8      00000000   __strtoll_r + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 10 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS atoll.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     6: 00000000    36 NOTYPE  GLOBAL DEFAULT    1 _atoll
+     7: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND _strtoll
+     8: 00000024    42 NOTYPE  GLOBAL DEFAULT    1 __atoll_r
+     9: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND __strtoll_r
+
+No version information found in this file.
+
+File: libc.a(ctype_.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          432 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         11
+  Section header string table index: 8
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 000000 00  AX  0   0  1
+  [ 2] .data             PROGBITS        00000000 000034 000000 00  WA  0   0  1
+  [ 3] .bss              NOBITS          00000000 000034 000000 00  WA  0   0  1
+  [ 4] .rodata.align1    PROGBITS        00000000 000034 000101 00   A  0   0  1
+  [ 5] .data.align4      PROGBITS        00000000 000138 000004 00  WA  0   0  4
+  [ 6] .rela.data.align4 RELA            00000000 00042c 00000c 0c      9   5  4
+  [ 7] .comment          PROGBITS        00000000 00013c 00001d 01  MS  0   0  1
+  [ 8] .shstrtab         STRTAB          00000000 000159 000056 00      0   0  1
+  [ 9] .symtab           SYMTAB          00000000 000368 0000a0 10     10   8  4
+  [10] .strtab           STRTAB          00000000 000408 000022 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.data.align4' at offset 0x42c contains 1 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+00000000  00000801 R_H8_DIR32        00000000   __ctype_ + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 10 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS ctype_.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    2 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     5: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     6: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     7: 00000000     0 SECTION LOCAL  DEFAULT    7 
+     8: 00000000   257 OBJECT  GLOBAL DEFAULT    4 __ctype_
+     9: 00000000     4 OBJECT  GLOBAL DEFAULT    5 ___ctype_ptr__
+
+No version information found in this file.
+
+File: libc.a(isupper.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          184 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 00002a 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002d8 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 00005e 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 00005e 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 00005e 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 00007b 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000220 000090 10      8   7  4
+  [ 8] .strtab           STRTAB          00000000 0002b0 000027 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2d8 contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000c  0000083f R_H8_DIR32A16     00000000   ___ctype_ptr__ + 0
+00000021  00000520 R_H8_PCREL8       00000024   .L2 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 9 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS isupper.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000024     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+     6: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     7: 00000000    42 NOTYPE  GLOBAL DEFAULT    1 _isupper
+     8: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND ___ctype_ptr__
+
+No version information found in this file.
+
+File: libc.a(memccpy.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          188 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 000030 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002e4 000024 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000064 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000064 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000064 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 000081 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000224 0000a0 10      8   9  4
+  [ 8] .strtab           STRTAB          00000000 0002c4 000020 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2e4 contains 3 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+00000011  00000520 R_H8_PCREL8       00000020   .L2 + 0
+0000001d  00000620 R_H8_PCREL8       00000026   .L3 + 0
+00000023  00000720 R_H8_PCREL8       00000012   .L4 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 10 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS memccpy.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000020     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+     6: 00000026     0 NOTYPE  LOCAL  DEFAULT    1 .L3
+     7: 00000012     0 NOTYPE  LOCAL  DEFAULT    1 .L4
+     8: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     9: 00000000    48 NOTYPE  GLOBAL DEFAULT    1 _memccpy
+
+No version information found in this file.
+
+File: libc.a(memcmp.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          192 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 000034 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002fc 000030 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000068 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000068 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000068 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 000085 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000228 0000b0 10      8  10  4
+  [ 8] .strtab           STRTAB          00000000 0002d8 000022 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2fc contains 4 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000b  00000520 R_H8_PCREL8       00000024   .L2 + 0
+00000015  00000620 R_H8_PCREL8       00000020   .L3 + 0
+0000001f  00000720 R_H8_PCREL8       0000002a   .L4 + 0
+00000027  00000820 R_H8_PCREL8       0000000c   .L5 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 11 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS memcmp.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000024     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+     6: 00000020     0 NOTYPE  LOCAL  DEFAULT    1 .L3
+     7: 0000002a     0 NOTYPE  LOCAL  DEFAULT    1 .L4
+     8: 0000000c     0 NOTYPE  LOCAL  DEFAULT    1 .L5
+     9: 00000000     0 SECTION LOCAL  DEFAULT    5 
+    10: 00000000    52 NOTYPE  GLOBAL DEFAULT    1 _memcmp
+
+No version information found in this file.
+
+File: libc.a(memcpy.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          176 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 000024 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002c4 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000058 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000058 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000058 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 000075 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000218 000090 10      8   8  4
+  [ 8] .strtab           STRTAB          00000000 0002a8 00001a 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2c4 contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000d  00000520 R_H8_PCREL8       00000016   .L2 + 0
+00000019  00000620 R_H8_PCREL8       0000000e   .L3 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 9 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS memcpy.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000016     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+     6: 0000000e     0 NOTYPE  LOCAL  DEFAULT    1 .L3
+     7: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     8: 00000000    36 NOTYPE  GLOBAL DEFAULT    1 _memcpy
+
+No version information found in this file.
+
+File: libc.a(memset.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          168 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 00001a 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002bc 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 00004e 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 00004e 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 00004e 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 00006b 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000210 000090 10      8   8  4
+  [ 8] .strtab           STRTAB          00000000 0002a0 00001a 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2bc contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+00000009  00000520 R_H8_PCREL8       00000010   .L2 + 0
+00000013  00000620 R_H8_PCREL8       0000000a   .L3 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 9 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS memset.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000010     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+     6: 0000000a     0 NOTYPE  LOCAL  DEFAULT    1 .L3
+     7: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     8: 00000000    26 NOTYPE  GLOBAL DEFAULT    1 _memset
+
+No version information found in this file.
+
+File: libc.a(strncmp.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          200 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 00003c 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 000318 000048 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 000070 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 000070 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 000070 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 00008d 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000230 0000c0 10      8  11  4
+  [ 8] .strtab           STRTAB          00000000 0002f0 000028 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x318 contains 6 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000d  00000520 R_H8_PCREL8       0000001c   .L7 + 0
+0000000f  00000620 R_H8_PCREL8       00000030   .L8 + 0
+00000013  00000720 R_H8_PCREL8       00000024   .L4 + 0
+00000017  00000720 R_H8_PCREL8       00000024   .L4 + 0
+00000023  00000820 R_H8_PCREL8       00000010   .L5 + 0
+0000002f  00000920 R_H8_PCREL8       00000032   .L2 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 12 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS strncmp.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 0000001c     0 NOTYPE  LOCAL  DEFAULT    1 .L7
+     6: 00000030     0 NOTYPE  LOCAL  DEFAULT    1 .L8
+     7: 00000024     0 NOTYPE  LOCAL  DEFAULT    1 .L4
+     8: 00000010     0 NOTYPE  LOCAL  DEFAULT    1 .L5
+     9: 00000032     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+    10: 00000000     0 SECTION LOCAL  DEFAULT    5 
+    11: 00000000    60 NOTYPE  GLOBAL DEFAULT    1 _strncmp
+
+No version information found in this file.
+
+File: libc.a(tolower.o)
+ELF Header:
+  Magic:   7f 45 4c 46 01 02 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, big endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              REL (Relocatable file)
+  Machine:                           Renesas H8/300
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          0 (bytes into file)
+  Start of section headers:          184 (bytes into file)
+  Flags:                             0x810000
+  Size of this header:               52 (bytes)
+  Size of program headers:           0 (bytes)
+  Number of program headers:         0
+  Size of section headers:           40 (bytes)
+  Number of section headers:         9
+  Section header string table index: 6
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .text             PROGBITS        00000000 000034 00002a 00  AX  0   0  2
+  [ 2] .rela.text        RELA            00000000 0002d8 000018 0c      7   1  4
+  [ 3] .data             PROGBITS        00000000 00005e 000000 00  WA  0   0  1
+  [ 4] .bss              NOBITS          00000000 00005e 000000 00  WA  0   0  1
+  [ 5] .comment          PROGBITS        00000000 00005e 00001d 01  MS  0   0  1
+  [ 6] .shstrtab         STRTAB          00000000 00007b 00003a 00      0   0  1
+  [ 7] .symtab           SYMTAB          00000000 000220 000090 10      8   7  4
+  [ 8] .strtab           STRTAB          00000000 0002b0 000027 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings)
+  I (info), L (link order), G (group), x (unknown)
+  O (extra OS processing required) o (OS specific), p (processor specific)
+
+There are no section groups in this file.
+
+There are no program headers in this file.
+
+Relocation section '.rela.text' at offset 0x2d8 contains 2 entries:
+ Offset     Info    Type            Sym.Value  Sym. Name + Addend
+0000000e  0000083f R_H8_DIR32A16     00000000   ___ctype_ptr__ + 0
+0000001f  00000520 R_H8_PCREL8       00000024   .L2 + 0
+
+There are no unwind sections in this file.
+
+Symbol table '.symtab' contains 9 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FILE    LOCAL  DEFAULT  ABS tolower.c
+     2: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 00000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000024     0 NOTYPE  LOCAL  DEFAULT    1 .L2
+     6: 00000000     0 SECTION LOCAL  DEFAULT    5 
+     7: 00000000    42 NOTYPE  GLOBAL DEFAULT    1 _tolower
+     8: 00000000     0 NOTYPE  GLOBAL DEFAULT  UND ___ctype_ptr__
+
+No version information found in this file.
