@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="リソース &apos;tryos_test/pinoc_x86/PINoC/pinoc.img&apos; を削除" deleteContents="false" description="リソース &apos;tryos_test/pinoc_x86/PINoC/pinoc.img&apos; を削除" element1="/tryos_test/pinoc_x86/PINoC/pinoc.img" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1319944492317"/>
-</session>
