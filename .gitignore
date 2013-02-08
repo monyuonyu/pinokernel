@@ -8,6 +8,7 @@
 #directory
 .settings/
 .metadata/
+Debug/
 
 # file ignore
 pinoc
