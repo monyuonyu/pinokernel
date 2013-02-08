@@ -1,4 +1,0 @@
--cpu=300HA:24
--output="C:\Users\mizu\Dropbox\OS-ROBO\PINoC\DRAM_test\DRAM_test\Release\DRAM_test.lib"
--head=runtime,new,stdio,stdlib
--lang=c
