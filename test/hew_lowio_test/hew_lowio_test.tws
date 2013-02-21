@@ -1,0 +1,22 @@
+[HIMDBVersion]
+2.0
+[DATABASE_VERSION]
+"1.2" 
+[CURRENT_PROJECT]
+"hew_lowio_test" 
+[GENERAL_DATA]
+"ECXLABEL_LAST_FINDS_DATA" "" 
+[BREAKPOINTS]
+[OPEN_WORKSPACE_FILES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\3069f_sci.c" 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\hew_lowio_test.c" 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowlvl.src" 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowsrc.c" 
+[WORKSPACE_FILE_STATES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\3069f_sci.c" -4 -23 641 211 1 3 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\hew_lowio_test.c" 132 132 936 320 0 1 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowlvl.src" 110 110 932 316 0 0 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowsrc.c" 0 0 936 320 0 2 
+[LOADED_PROJECTS]
+"hew_lowio_test" 
+[END]
