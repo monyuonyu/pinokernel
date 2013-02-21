@@ -122,9 +122,7 @@
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\3069f_sci.h" "User" "C header file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\dbsct.c" "User" "C source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\hew_lowio_test.c" "User" "C source file" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\intprg.c" "User" "C source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowsrc.c" "User" "C source file" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\resetprg.c" "User" "C source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "User" "C source file" 2 
 [FOLDER]
 "Assembly source file" "Assembly source file" 
@@ -148,14 +146,12 @@
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\3069f_sci.c" "0e9f7426d201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\dbsct.c" "080bdfc9c201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\hew_lowio_test.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\intprg.c" "080bdfc9c201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowsrc.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\resetprg.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "080bdfc9c201ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "050a53f96401ec10" 2 
 [OPTIONS_Debug_Renesas H8S,H8/300 C/C++ Library Generator]
 "Single Shot" "080bdfc9c201ec10" 1 
 [OPTIONS_Debug_Renesas OptLinker]
-"Single Shot" "0b8f2877b301ec10" 5 
+"Single Shot" "0886d3f96401ec10" 5 
 [OPTIONS_Debug]
 "" 0 
 "[S|OUTPUTPATH|^"$(CONFIGDIR)\$(PROJECTNAME).lib^"] [V|VERSION|1] [B|RUNTIME|1] [B|NEW|1] [B|CTYPE|0] [B|MATH|0] [B|MATHF|0] [B|STDARG|0] [B|STDIO|1] [B|STDLIB|1] [B|STRING|1] [B|IOS|0] [B|COMPLEX|0] [B|CPPSTRING|0] [B|C99_COMPLEX|0] [B|INTTYPES|0] [B|WCHAR|0] [B|WCTYPE|0] [S|LANG|C] [B|SPEED|0] [S|MODE|BUILD/CHANGED] [S|CPU|300HA:24] [S|STACK|MEDIUM] [I|REGPARAM|2] [B|LONGREG|0] [B|STRUCTREG|0] [B|RTTI|0] [S|BIT_ORDER|LEFT] [B|PACK|0] [B|C89STDIO|0] [B|EXCEPTION|0]" 1 
@@ -177,14 +173,12 @@
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\3069f_sci.c" "0e9f7426d201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\dbsct.c" "080bdfc9c201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\hew_lowio_test.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\intprg.c" "080bdfc9c201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowsrc.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\resetprg.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "080bdfc9c201ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "050a53f96401ec10" 2 
 [OPTIONS_Release_Renesas H8S,H8/300 C/C++ Library Generator]
 "Single Shot" "080bdfc9c201ec10" 1 
 [OPTIONS_Release_Renesas OptLinker]
-"Single Shot" "0ef0ce2b1301ec10" 5 
+"Single Shot" "0886d3f96401ec10" 5 
 [OPTIONS_Release]
 "" 0 
 "[S|OUTPUTPATH|^"$(CONFIGDIR)\$(PROJECTNAME).lib^"] [V|VERSION|1] [B|RUNTIME|1] [B|NEW|1] [B|CTYPE|0] [B|MATH|0] [B|MATHF|0] [B|STDARG|0] [B|STDIO|1] [B|STDLIB|1] [B|STRING|1] [B|IOS|0] [B|COMPLEX|0] [B|CPPSTRING|0] [B|C99_COMPLEX|0] [B|INTTYPES|0] [B|WCHAR|0] [B|WCTYPE|0] [S|LANG|C] [B|SPEED|0] [S|MODE|BUILD/CHANGED] [S|CPU|300HA:24] [S|STACK|MEDIUM] [I|REGPARAM|2] [B|LONGREG|0] [B|STRUCTREG|0] [B|RTTI|0] [S|BIT_ORDER|LEFT] [B|PACK|0] [B|C89STDIO|0] [B|EXCEPTION|0]" 1 
@@ -205,14 +199,12 @@
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\3069f_sci.c" "0e9f7426d201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\dbsct.c" "080bdfc9c201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\hew_lowio_test.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\intprg.c" "080bdfc9c201ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\lowsrc.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\resetprg.c" "080bdfc9c201ec10" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "080bdfc9c201ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\test\hew_lowio_test\hew_lowio_test\sbrk.c" "050a53f96401ec10" 2 
 [OPTIONS_SimDebug_H8-300HA_Renesas H8S,H8/300 C/C++ Library Generator]
 "Single Shot" "080bdfc9c201ec10" 1 
 [OPTIONS_SimDebug_H8-300HA_Renesas OptLinker]
-"Single Shot" "0ef0ce2b1301ec10" 5 
+"Single Shot" "0886d3f96401ec10" 5 
 [OPTIONS_SimDebug_H8-300HA]
 "" 0 
 "[S|OUTPUTPATH|^"$(CONFIGDIR)\$(PROJECTNAME).lib^"] [V|VERSION|1] [B|RUNTIME|1] [B|NEW|1] [B|CTYPE|0] [B|MATH|0] [B|MATHF|0] [B|STDARG|0] [B|STDIO|1] [B|STDLIB|1] [B|STRING|1] [B|IOS|0] [B|COMPLEX|0] [B|CPPSTRING|0] [B|C99_COMPLEX|0] [B|INTTYPES|0] [B|WCHAR|0] [B|WCTYPE|0] [S|LANG|C] [B|SPEED|0] [S|MODE|BUILD/CHANGED] [S|CPU|300HA:24] [S|STACK|MEDIUM] [I|REGPARAM|2] [B|LONGREG|0] [B|STRUCTREG|0] [B|RTTI|0] [S|BIT_ORDER|LEFT] [B|PACK|0] [B|C89STDIO|0] [B|EXCEPTION|0]" 1 
