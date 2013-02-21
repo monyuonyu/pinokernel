@@ -13,6 +13,7 @@
 
 
 #include "iodefine.h"
+#include "3069f_sci.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,16 +26,6 @@ extern void HardwareSetup(void);
 void HardwareSetup(void)
 {
 // Initialize routine
-/*
-  P1DDR = 0;
-  P1DR.BYTE = 0;
-  P1DR.BIT.B7 = 1;
-  P1DR.BIT.B6 = 1;
-  P1DR.BIT.B5 = 1;
-  P1DR.BIT.B4 = 1;
-  P1DR.BIT.B3 = 1;
-  P1DR.BIT.B2 = 1;
-  P1DR.BIT.B1 = 1;
-  P1DR.BIT.B0 = 1;
-*/
+	sci_init(SCI_NO_1, BitRate_type_br19200);
+
 }

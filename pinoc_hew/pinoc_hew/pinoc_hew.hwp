@@ -118,16 +118,24 @@
 "Object file" "Renesas OptLinker" "Renesas H8S,H8/300 Assembler" 
 "Object file" "Renesas OptLinker" "Renesas H8S,H8/300 C/C++ Compiler" 
 [PROJECT_FILES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\3069f_sci.c" "User" "C source file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\3069f_sci.h" "User" "C header file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\XMODEM.h" "User" "C header file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dbsct.c" "User" "C source file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dram.c" "User" "C source file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dram.h" "User" "C header file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\hwsetup.c" "User" "C source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\intprg.c" "User" "C source file" 2 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowlvl.src" "User" "Assembly source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowsrc.c" "User" "C source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.c" "User" "C source file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.c" "User" "C source file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.h" "User" "C header file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\resetprg.c" "User" "C source file" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\sbrk.c" "User" "C source file" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\xmodem.c" "User" "C source file" 2 
 [FOLDER]
 "Assembly source file" "Assembly source file" 
+"C header file" "C header file" 
 "C source file" "C source file" 
 [GENERAL_DATA_PROJECT]
 "USE_CUSTOM_LINKAGE_ORDER" "0" 
@@ -140,22 +148,25 @@
 [GENERAL_DATA_SESSION_SimSessionH8-300HA]
 [OPTIONS_Debug_Renesas H8S,H8/300 Assembler]
 "Assembly source file" "06bfaadcc301ec10" 3 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowlvl.src" "06bfaadcc301ec10" 3 
 "Linkage symbol file" "06bfaadcc301ec10" 3 
 [OPTIONS_Debug_Renesas H8S,H8/300 C/C++ Compiler]
 "C source file" "06bfaadcc301ec10" 2 
 "C++ source file" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\3069f_sci.c" "02843b39e301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dbsct.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dram.c" "06121ffb2401ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\hwsetup.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\intprg.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowsrc.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.c" "07caeed12401ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\resetprg.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\sbrk.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\xmodem.c" "016b05500401ec10" 2 
 [OPTIONS_Debug_Renesas H8S,H8/300 C/C++ Library Generator]
 "Single Shot" "06bfaadcc301ec10" 1 
 [OPTIONS_Debug_Renesas OptLinker]
-"Single Shot" "06bfaadcc301ec10" 4 
+"Single Shot" "0479affb2401ec10" 4 
 [OPTIONS_Debug]
 "" 0 
 "[S|OUTPUTPATH|^"$(CONFIGDIR)\$(PROJECTNAME).lib^"] [V|VERSION|1] [B|RUNTIME|1] [B|NEW|1] [B|CTYPE|0] [B|MATH|0] [B|MATHF|0] [B|STDARG|0] [B|STDIO|1] [B|STDLIB|1] [B|STRING|1] [B|IOS|0] [B|COMPLEX|0] [B|CPPSTRING|0] [B|C99_COMPLEX|0] [B|INTTYPES|0] [B|WCHAR|0] [B|WCTYPE|0] [S|LANG|C] [B|SPEED|0] [S|MODE|BUILD/CHANGED] [S|CPU|300HA:24] [S|STACK|MEDIUM] [I|REGPARAM|2] [B|LONGREG|0] [B|STRUCTREG|0] [B|RTTI|0] [S|BIT_ORDER|LEFT] [B|PACK|0] [B|C89STDIO|0] [B|EXCEPTION|0]" 1 
@@ -167,22 +178,25 @@
 [GENERAL_DATA_CONFIGURATION_Debug]
 [OPTIONS_Release_Renesas H8S,H8/300 Assembler]
 "Assembly source file" "06bfaadcc301ec10" 3 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowlvl.src" "06bfaadcc301ec10" 3 
 "Linkage symbol file" "06bfaadcc301ec10" 3 
 [OPTIONS_Release_Renesas H8S,H8/300 C/C++ Compiler]
 "C source file" "06bfaadcc301ec10" 2 
 "C++ source file" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\3069f_sci.c" "02843b39e301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dbsct.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dram.c" "06121ffb2401ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\hwsetup.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\intprg.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowsrc.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.c" "07caeed12401ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\resetprg.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\sbrk.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\xmodem.c" "016b05500401ec10" 2 
 [OPTIONS_Release_Renesas H8S,H8/300 C/C++ Library Generator]
 "Single Shot" "06bfaadcc301ec10" 1 
 [OPTIONS_Release_Renesas OptLinker]
-"Single Shot" "06bfaadcc301ec10" 4 
+"Single Shot" "0479affb2401ec10" 4 
 [OPTIONS_Release]
 "" 0 
 "[S|OUTPUTPATH|^"$(CONFIGDIR)\$(PROJECTNAME).lib^"] [V|VERSION|1] [B|RUNTIME|1] [B|NEW|1] [B|CTYPE|0] [B|MATH|0] [B|MATHF|0] [B|STDARG|0] [B|STDIO|1] [B|STDLIB|1] [B|STRING|1] [B|IOS|0] [B|COMPLEX|0] [B|CPPSTRING|0] [B|C99_COMPLEX|0] [B|INTTYPES|0] [B|WCHAR|0] [B|WCTYPE|0] [S|LANG|C] [B|SPEED|0] [S|MODE|BUILD/CHANGED] [S|CPU|300HA:24] [S|STACK|MEDIUM] [I|REGPARAM|2] [B|LONGREG|0] [B|STRUCTREG|0] [B|RTTI|0] [S|BIT_ORDER|LEFT] [B|PACK|0] [B|C89STDIO|0] [B|EXCEPTION|0]" 1 
@@ -194,22 +208,25 @@
 [GENERAL_DATA_CONFIGURATION_Release]
 [OPTIONS_SimDebug_H8-300HA_Renesas H8S,H8/300 Assembler]
 "Assembly source file" "06bfaadcc301ec10" 3 
-"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowlvl.src" "06bfaadcc301ec10" 3 
 "Linkage symbol file" "06bfaadcc301ec10" 3 
 [OPTIONS_SimDebug_H8-300HA_Renesas H8S,H8/300 C/C++ Compiler]
 "C source file" "06bfaadcc301ec10" 2 
 "C++ source file" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\3069f_sci.c" "02843b39e301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dbsct.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\dram.c" "06121ffb2401ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\hwsetup.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\intprg.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\lowsrc.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.c" "07caeed12401ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\resetprg.c" "06bfaadcc301ec10" 2 
 "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\sbrk.c" "06bfaadcc301ec10" 2 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\xmodem.c" "016b05500401ec10" 2 
 [OPTIONS_SimDebug_H8-300HA_Renesas H8S,H8/300 C/C++ Library Generator]
 "Single Shot" "06bfaadcc301ec10" 1 
 [OPTIONS_SimDebug_H8-300HA_Renesas OptLinker]
-"Single Shot" "06bfaadcc301ec10" 4 
+"Single Shot" "0479affb2401ec10" 4 
 [OPTIONS_SimDebug_H8-300HA]
 "" 0 
 "[S|OUTPUTPATH|^"$(CONFIGDIR)\$(PROJECTNAME).lib^"] [V|VERSION|1] [B|RUNTIME|1] [B|NEW|1] [B|CTYPE|0] [B|MATH|0] [B|MATHF|0] [B|STDARG|0] [B|STDIO|1] [B|STDLIB|1] [B|STRING|1] [B|IOS|0] [B|COMPLEX|0] [B|CPPSTRING|0] [B|C99_COMPLEX|0] [B|INTTYPES|0] [B|WCHAR|0] [B|WCTYPE|0] [S|LANG|C] [B|SPEED|0] [S|MODE|BUILD/CHANGED] [S|CPU|300HA:24] [S|STACK|MEDIUM] [I|REGPARAM|2] [B|LONGREG|0] [B|STRUCTREG|0] [B|RTTI|0] [S|BIT_ORDER|LEFT] [B|PACK|0] [B|C89STDIO|0] [B|EXCEPTION|0]" 1 

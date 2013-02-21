@@ -7,7 +7,11 @@
 [GENERAL_DATA]
 [BREAKPOINTS]
 [OPEN_WORKSPACE_FILES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.c" 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.c" 
 [WORKSPACE_FILE_STATES]
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.c" 0 0 538 136 0 0 
+"C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\read_elf.c" -4 -23 594 211 1 1 
 [LOADED_PROJECTS]
 "pinoc_hew" 
 [END]

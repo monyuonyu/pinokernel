@@ -9,7 +9,10 @@
 /*                                                                     */
 /***********************************************************************/
                   
-
+#include "stdio.h"
+#include "3069f_sci.h"
+#include "read_elf.h"
+#include "dram.h"
 
 void main(void);
 #ifdef __cplusplus
@@ -18,10 +21,74 @@ void abort(void);
 }
 #endif
 
+
+void test_write(char c)
+{
+	sci_write(SCI_NO_1, c);
+}
+
+char test_read()
+{
+	char c;
+	c = sci_read_byte(SCI_NO_1);
+	return c;
+}
+
+char test_read_pol()
+{
+	char c = 0x00;
+	c = sci_read_pol(SCI_NO_1);
+	return c;
+}
+
+
 void main(void)
 {
+	/********************************************************************************
+	 *
+	********************************************************************************/
+	char* buff1 = (char*)(0x400000);
+	char* buff2 = (char*)(0x450000);
+	int i;
+	char* entory_point;
+	void (*start)(void);
+
+	/********************************************************************************
+	 * 		hello!!
+	 ********************************************************************************/
+	printf("-------- H83069 --------\n");
+	printf("pointer size : %dbyte\n", sizeof(int*));
+	printf("int size : %dbyte\n", sizeof(int));
+	printf("char size : %dbyte\n", sizeof(char));
+	printf("long int size : %dbyte\n", sizeof(long int));
+//	printf("long long int size : %dbyte\n", sizeof(long long int));
+
+	/********************************************************************************
+	 *		èâä˙âª
+	********************************************************************************/
+	xmodem_init(test_write, test_read, test_read_pol);
+	exp_memory_init();
+//	memory_main();
+
+	printf("-------- xmodem start --------\n");
+	xmodem_start(buff1);
+
+	printf("-------- received 500byte only test --------\n");
+	// ééÇµÇ…500yteï\é¶
+	for(i = 0; i < 512; i++)
+	{
+		printf("%2x", buff1[i]);
+	}
+
+	printf("-------- read_elf --------\n");
+	entory_point = elf_develop(buff1);
+	start = (void(*)(void))entory_point;
+
+	start();
+
 
 }
+
 
 #ifdef __cplusplus
 void abort(void)
