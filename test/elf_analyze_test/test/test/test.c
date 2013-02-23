@@ -18,9 +18,18 @@ void abort(void);
 }
 #endif
 
+const char test_const_data[8] = "aiueo";
+static char test_data_data = 1;
+char test_bss_data;
+
+void func()
+{
+	char test[32];
+}
+
 void main(void)
 {
-
+	func();
 }
 
 #ifdef __cplusplus

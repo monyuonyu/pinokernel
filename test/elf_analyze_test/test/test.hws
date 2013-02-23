@@ -3,12 +3,12 @@
 [DATABASE_VERSION]
 "11.0" 
 [WORKSPACE_DETAILS]
-"test" "C:\Users\mizu\Desktop\test2\test" "C:\Users\mizu\Desktop\test2\test\test.hws" "H8S,H8/300" "Renesas H8S,H8/300 Standard" 
+"test" "I:\Dropbox\OS-ROBO\PINoC\test\elf_analyze_test\test" "I:\Dropbox\OS-ROBO\PINoC\test\elf_analyze_test\test\test.hws" "H8S,H8/300" "Renesas H8S,H8/300 Standard" 
 [SHARED_WORKSPACE_CONTROL_STATUS]
 "" "" "" 
 "" "" "" 
 [PROJECTS]
-"test" "C:\Users\mizu\Desktop\test2\test\test" "C:\Users\mizu\Desktop\test2\test\test\test.hwp" 0 
+"test" "I:\Dropbox\OS-ROBO\PINoC\test\elf_analyze_test\test\test" "I:\Dropbox\OS-ROBO\PINoC\test\elf_analyze_test\test\test\test.hwp" 0 
 [INFORMATION]
 "ワークスペース情報がありません" 
 [SCRAP]
