@@ -35,7 +35,7 @@ typedef unsigned int short u2;
 #endif
 
 #if C20MHZ
-typedef enum {	//å†…éƒ¨ã‚¯ãƒ­ãƒƒã‚¯20MHz
+typedef enum {	//“à•”ƒNƒƒbƒN20MHz
 	BitRate_type_br4800  = 129,		// CKS=00
 	BitRate_type_br9600  = 64,		// CKS=00
 	BitRate_type_br19200 = 32,		// CKS=00
@@ -44,7 +44,7 @@ typedef enum {	//å†…éƒ¨ã‚¯ãƒ­ãƒƒã‚¯20MHz
 #endif
 
 #if C25MHZ
-typedef enum { 	//å†…éƒ¨ã‚¯ãƒ­ãƒƒã‚¯25MHz
+typedef enum { 	//“à•”ƒNƒƒbƒN25MHz
 	BitRate_type_br4800  = 162,		// CKS=00
 	BitRate_type_br9600  = 80,		// CKS=00
 	BitRate_type_br19200 = 40,		// CKS=00
@@ -59,14 +59,14 @@ struct SCI
 		u1 BYTE;
 		struct
 		{
-			u1 CA		:1;		// 0=èª¿æ­©åŒæœŸ 1=ã‚¯ãƒ­ãƒƒã‚¯åŒæœŸ
+			u1 CA		:1;		// 0=’²•à“¯Šú 1=ƒNƒƒbƒN“¯Šú
 			u1 CHR		:1;		// 0=8bit data 1=7bit data
-			u1 PE		:1;		// 0=ãƒ‘ãƒªãƒ†ã‚£ãªã— 1=ãƒ‘ãƒªãƒ†ã‚£ã‚ã‚Š
-			u1 OE		:1;		// 0=å¶æ•°ãƒ‘ãƒªãƒ†ã‚£ 1=å¥‡æ•°ãƒ‘ãƒªãƒ†ã‚£
-			u1 STOP		:1;		// 0=ã‚¹ãƒˆãƒƒãƒ—ãƒ“ãƒƒãƒˆé•·1bit 1=ã‚¹ãƒˆãƒƒãƒ—ãƒ“ãƒƒãƒˆé•·2bit
-			u1 MP		:1;		// 0=ã‚·ãƒ³ã‚°ãƒ«ãƒ—ãƒ­ã‚»ãƒƒã‚µ 1=ãƒžãƒ«ãƒãƒ—ãƒ­ã‚»ãƒƒã‚µ
-			u1 CKS1		:1;		// ã‚¯ãƒ­ãƒƒã‚¯ã‚»ãƒ¬ã‚¯ãƒˆ
-			u1 CKS0		:1;		// ã‚¯ãƒ­ãƒƒã‚¯ã‚»ãƒ¬ã‚¯ãƒˆ
+			u1 PE		:1;		// 0=ƒpƒŠƒeƒB‚È‚µ 1=ƒpƒŠƒeƒB‚ ‚è
+			u1 OE		:1;		// 0=‹ô”ƒpƒŠƒeƒB 1=Šï”ƒpƒŠƒeƒB
+			u1 STOP		:1;		// 0=ƒXƒgƒbƒvƒrƒbƒg’·1bit 1=ƒXƒgƒbƒvƒrƒbƒg’·2bit
+			u1 MP		:1;		// 0=ƒVƒ“ƒOƒ‹ƒvƒƒZƒbƒT 1=ƒ}ƒ‹ƒ`ƒvƒƒZƒbƒT
+			u1 CKS1		:1;		// ƒNƒƒbƒNƒZƒŒƒNƒg
+			u1 CKS0		:1;		// ƒNƒƒbƒNƒZƒŒƒNƒg
 		}BIT;
 
 		struct
@@ -83,14 +83,14 @@ struct SCI
 		u1 BYTE;
 		struct
 		{
-			u1 TIE		:1;		// é€ä¿¡å®Œäº†æ™‚å‰²ã‚Šè¾¼ã¿ 0=TXIç¦æ­¢ 1=TXIè¨±å¯
-			u1 RIE		:1;		// å—ä¿¡å®Œäº†æ™‚å‰²ã‚Šè¾¼ã¿ 0=RXIç¦æ­¢ 1=RXIè¨±å¯
-			u1 TE		:1;		// 0=é€ä¿¡ç¦æ­¢ 1=é€ä¿¡è¨±å¯
-			u1 RE		:1;		// 0=å—ä¿¡ç¦æ­¢ 1=å—ä¿¡è¨±å¯
-			u1 MPIE		:1;		// ãƒžãƒ«ãƒãƒ—ãƒ­ã‚»ãƒƒã‚µå‰²ã‚Šè¾¼ã¿ 0=ç¦æ­¢ 1=è¨±å¯
-			u1 TEIE		:1;		// é€ä¿¡çµ‚äº†å‰²ã‚Šè¾¼ã¿ 0=ç¦æ­¢ 1=è¨±å¯
-			u1 CKE1		:1;		// 0=å†…éƒ¨ã‚¯ãƒ­ãƒƒã‚¯(èª¿æ­©åŒæœŸ) 1=å¤–éƒ¨ã‚¯ãƒ­ãƒƒã‚¯(ã‚¯ãƒ­ãƒƒã‚¯åŒæœŸå¼)
-			u1 CKE0		:1;		// CKE1=0,0=SCI ã¯ã€SCK ç«¯å­ã‚’ä½¿ç”¨ã—ã¾ã›ã‚“ CKE1=1,0=ãƒ“ãƒƒãƒˆãƒ¬ãƒ¼ãƒˆã¨åŒã˜å‘¨æ³¢æ•°ã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’å‡ºåŠ›
+			u1 TIE		:1;		// ‘—MŠ®—¹ŽžŠ„‚èž‚Ý 0=TXI‹ÖŽ~ 1=TXI‹–‰Â
+			u1 RIE		:1;		// ŽóMŠ®—¹ŽžŠ„‚èž‚Ý 0=RXI‹ÖŽ~ 1=RXI‹–‰Â
+			u1 TE		:1;		// 0=‘—M‹ÖŽ~ 1=‘—M‹–‰Â
+			u1 RE		:1;		// 0=ŽóM‹ÖŽ~ 1=ŽóM‹–‰Â
+			u1 MPIE		:1;		// ƒ}ƒ‹ƒ`ƒvƒƒZƒbƒTŠ„‚èž‚Ý 0=‹ÖŽ~ 1=‹–‰Â
+			u1 TEIE		:1;		// ‘—MI—¹Š„‚èž‚Ý 0=‹ÖŽ~ 1=‹–‰Â
+			u1 CKE1		:1;		// 0=“à•”ƒNƒƒbƒN(’²•à“¯Šú) 1=ŠO•”ƒNƒƒbƒN(ƒNƒƒbƒN“¯ŠúŽ®)
+			u1 CKE0		:1;		// CKE1=0,0=SCI ‚ÍASCK ’[Žq‚ðŽg—p‚µ‚Ü‚¹‚ñ CKE1=1,0=ƒrƒbƒgƒŒ[ƒg‚Æ“¯‚¶Žü”g”‚ÌƒNƒƒbƒN‚ðo—Í
 		}BIT;
 	}SCR;
 
@@ -101,17 +101,17 @@ struct SCI
 		u1 BYTE;
 		struct
 		{
-			u1 TDRE		:1;		// 0=TDRã«æœ‰åŠ¹ãªé€ä¿¡ãƒ‡ãƒ¼ã‚¿ãŒãƒ©ã‚¤ãƒˆã•ã‚Œã¦ã„ã‚‹ 1=TDRã«æœ‰åŠ¹ãªé€ä¿¡ãƒ‡ãƒ¼ã‚¿ãŒãªã„
-								// ï¼»ã‚¯ãƒªã‚¢æ¡ä»¶ï¼½TDRE=1 ã®çŠ¶æ…‹ã‚’ãƒªãƒ¼ãƒ‰ã—ãŸå¾Œã€0 ã‚’ãƒ©ã‚¤ãƒˆã—ãŸã¨ã, DMAC ã§TDR ã¸ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ©ã‚¤ãƒˆã—ãŸã¨ã
-								// ï¼»ã‚»ãƒƒãƒˆæ¡ä»¶ï¼½TDR ã‹ã‚‰TSR ã«ãƒ‡ãƒ¼ã‚¿è»¢é€ãŒè¡Œã‚ã‚Œã¦TDR ã«ãƒ‡ãƒ¼ã‚¿ãƒ©ã‚¤ãƒˆãŒå¯èƒ½ã«ãªã£ãŸã¨ã, SCR ã®TE ãƒ“ãƒƒãƒˆãŒ0 ã®ã¨ã, ãƒªã‚»ãƒƒãƒˆã€ã¾ãŸã¯ã‚¹ã‚¿ãƒ³ãƒã‚¤ãƒ¢ãƒ¼ãƒ‰æ™‚
-			u1 RDRF		:1;		// 0=RDRã«å—ä¿¡ãƒ‡ãƒ¼ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ãªã„ 1=RDRã«å—ä¿¡ãƒ‡ãƒ¼ã‚¿ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹
-								// ï¼»ã‚¯ãƒªã‚¢æ¡ä»¶ï¼½DMACã§RDR ã®ãƒ‡ãƒ¼ã‚¿ã‚’ãƒªãƒ¼ãƒ‰ã—ãŸã¨ã, RDRF=1 ã®çŠ¶æ…‹ã‚’ãƒªãƒ¼ãƒ‰ã—ãŸå¾Œã€0 ã‚’ãƒ©ã‚¤ãƒˆã—ãŸã¨ã, ãƒªã‚»ãƒƒãƒˆã€ã¾ãŸã¯ã‚¹ã‚¿ãƒ³ãƒã‚¤ãƒ¢ãƒ¼ãƒ‰æ™‚
-								// ï¼»ã‚»ãƒƒãƒˆæ¡ä»¶ï¼½ã‚·ãƒªã‚¢ãƒ«å—ä¿¡ãŒæ­£å¸¸çµ‚äº†ã—ã€RSR ã‹ã‚‰RDR ã¸å—ä¿¡ãƒ‡ãƒ¼ã‚¿ãŒè»¢é€ã•ã‚ŒãŸã¨ã
-			u1 ORER		:1;		// 0=å—ä¿¡ä¸­ã€ã¾ãŸã¯æ­£å¸¸ã«å—ä¿¡ã‚’å®Œäº†ã—ãŸ 1=å—ä¿¡æ™‚ã«ã‚ªãƒ¼ãƒãƒ©ãƒ³ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸ
-			u1 FER_ERS	:1;		// 0=å—ä¿¡ä¸­ã€ã¾ãŸã¯æ­£å¸¸ã«å—ä¿¡ã‚’å®Œäº†ã—ãŸ 1=å—ä¿¡æ™‚ã«ãƒ•ãƒ¬ãƒ¼ãƒŸãƒ³ã‚°ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸ
-			u1 PER		:1;		// 0=å—ä¿¡ä¸­ã€ã¾ãŸã¯æ­£å¸¸ã«å—ä¿¡ã‚’å®Œäº†ã—ãŸ 1=å—ä¿¡æ™‚ã«ãƒ‘ãƒªãƒ†ã‚£ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸ
-			u1 TEND		:1;		// 0=é€ä¿¡ä¸­ã§ã‚ã‚‹ 1=é€ä¿¡ã‚’çµ‚äº†ã—ãŸ
-			u1 MPB		:1;		// ãƒžãƒ«ãƒãƒ—ãƒ­ã‚»ãƒƒã‚µé–¢é€£
+			u1 TDRE		:1;		// 0=TDR‚É—LŒø‚È‘—Mƒf[ƒ^‚ªƒ‰ƒCƒg‚³‚ê‚Ä‚¢‚é 1=TDR‚É—LŒø‚È‘—Mƒf[ƒ^‚ª‚È‚¢
+								// mƒNƒŠƒAðŒnTDRE=1 ‚Ìó‘Ô‚ðƒŠ[ƒh‚µ‚½ŒãA0 ‚ðƒ‰ƒCƒg‚µ‚½‚Æ‚«, DMAC ‚ÅTDR ‚Öƒf[ƒ^‚ðƒ‰ƒCƒg‚µ‚½‚Æ‚«
+								// mƒZƒbƒgðŒnTDR ‚©‚çTSR ‚Éƒf[ƒ^“]‘—‚ªs‚í‚ê‚ÄTDR ‚Éƒf[ƒ^ƒ‰ƒCƒg‚ª‰Â”\‚É‚È‚Á‚½‚Æ‚«, SCR ‚ÌTE ƒrƒbƒg‚ª0 ‚Ì‚Æ‚«, ƒŠƒZƒbƒgA‚Ü‚½‚ÍƒXƒ^ƒ“ƒoƒCƒ‚[ƒhŽž
+			u1 RDRF		:1;		// 0=RDR‚ÉŽóMƒf[ƒ^‚ªŠi”[‚³‚ê‚Ä‚¢‚È‚¢ 1=RDR‚ÉŽóMƒf[ƒ^‚ªŠi”[‚³‚ê‚Ä‚¢‚é
+								// mƒNƒŠƒAðŒnDMAC‚ÅRDR ‚Ìƒf[ƒ^‚ðƒŠ[ƒh‚µ‚½‚Æ‚«, RDRF=1 ‚Ìó‘Ô‚ðƒŠ[ƒh‚µ‚½ŒãA0 ‚ðƒ‰ƒCƒg‚µ‚½‚Æ‚«, ƒŠƒZƒbƒgA‚Ü‚½‚ÍƒXƒ^ƒ“ƒoƒCƒ‚[ƒhŽž
+								// mƒZƒbƒgðŒnƒVƒŠƒAƒ‹ŽóM‚ª³íI—¹‚µARSR ‚©‚çRDR ‚ÖŽóMƒf[ƒ^‚ª“]‘—‚³‚ê‚½‚Æ‚«
+			u1 ORER		:1;		// 0=ŽóM’†A‚Ü‚½‚Í³í‚ÉŽóM‚ðŠ®—¹‚µ‚½ 1=ŽóMŽž‚ÉƒI[ƒoƒ‰ƒ“ƒGƒ‰[‚ª”­¶‚µ‚½
+			u1 FER_ERS	:1;		// 0=ŽóM’†A‚Ü‚½‚Í³í‚ÉŽóM‚ðŠ®—¹‚µ‚½ 1=ŽóMŽž‚ÉƒtƒŒ[ƒ~ƒ“ƒOƒGƒ‰[‚ª”­¶‚µ‚½
+			u1 PER		:1;		// 0=ŽóM’†A‚Ü‚½‚Í³í‚ÉŽóM‚ðŠ®—¹‚µ‚½ 1=ŽóMŽž‚ÉƒpƒŠƒeƒBƒGƒ‰[‚ª”­¶‚µ‚½
+			u1 TEND		:1;		// 0=‘—M’†‚Å‚ ‚é 1=‘—M‚ðI—¹‚µ‚½
+			u1 MPB		:1;		// ƒ}ƒ‹ƒ`ƒvƒƒZƒbƒTŠÖ˜A
 			u1 MPBT		:1;		//	"
 		}BIT;
 	}SSR;
@@ -147,13 +147,13 @@ typedef enum {
 #define SCI1A ((volatile struct SCI*)0xFFFFB8)
 #define SCI2A ((volatile struct SCI*)0xFFFFC0)
 
-#define SMR0	0xFFFFB0 // ã‚·ãƒªã‚¢ãƒ«ãƒ¢ãƒ¼ãƒ‰ãƒ¬ã‚¸ã‚¹ã‚¿ï¼ˆSMR)
-#define BRR0	0xFFFFB1 // ãƒ“ãƒƒãƒˆãƒ¬ãƒ¼ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿ï¼ˆBRRï¼‰
-#define SCR0	0xFFFFB2 // ã‚·ãƒªã‚¢ãƒ«ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ãƒ¬ã‚¸ã‚¹ã‚¿ï¼ˆSCRï¼‰
-#define TDR0	0xFFFFB3 // ãƒˆãƒ©ãƒ³ã‚¹ãƒŸãƒƒãƒˆãƒ‡ãƒ¼ã‚¿ãƒ¬ã‚¸ã‚¹ã‚¿ï¼ˆTDR)		é€ä¿¡ãƒ‡ãƒ¼ã‚¿
-#define SSR0	0xFFFFB4 // ã‚·ãƒªã‚¢ãƒ«ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒ¬ã‚¸ã‚¹ã‚¿ï¼ˆSSRï¼‰
-#define RDR0	0xFFFFB5 // ãƒ¬ã‚·ãƒ¼ãƒ–ã‚·ãƒ•ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿ï¼ˆRSRï¼‰			å—ä¿¡ãƒ‡ãƒ¼ã‚¿
-#define SCMR0	0xFFFFB6 // ã‚¹ãƒžãƒ¼ãƒˆã‚«ãƒ¼ãƒ‰ãƒ¢ãƒ¼ãƒ‰ãƒ¬ã‚¸ã‚¹ã‚¿(SCMR)
+#define SMR0	0xFFFFB0 // ƒVƒŠƒAƒ‹ƒ‚[ƒhƒŒƒWƒXƒ^iSMR)
+#define BRR0	0xFFFFB1 // ƒrƒbƒgƒŒ[ƒgƒŒƒWƒXƒ^iBRRj
+#define SCR0	0xFFFFB2 // ƒVƒŠƒAƒ‹ƒRƒ“ƒgƒ[ƒ‹ƒŒƒWƒXƒ^iSCRj
+#define TDR0	0xFFFFB3 // ƒgƒ‰ƒ“ƒXƒ~ƒbƒgƒf[ƒ^ƒŒƒWƒXƒ^iTDR)		‘—Mƒf[ƒ^
+#define SSR0	0xFFFFB4 // ƒVƒŠƒAƒ‹ƒXƒe[ƒ^ƒXƒŒƒWƒXƒ^iSSRj
+#define RDR0	0xFFFFB5 // ƒŒƒV[ƒuƒVƒtƒgƒŒƒWƒXƒ^iRSRj			ŽóMƒf[ƒ^
+#define SCMR0	0xFFFFB6 // ƒXƒ}[ƒgƒJ[ƒhƒ‚[ƒhƒŒƒWƒXƒ^(SCMR)
 
 #define SMR1	0xFFFFB8
 #define BRR1	0xFFFFB9
@@ -176,7 +176,7 @@ extern "C"{
 #endif
 
 /********************************************************************************
-	ãƒãƒ¼ãƒªãƒ³ã‚°
+	ƒ|[ƒŠƒ“ƒO
 ********************************************************************************/
 void sci_init(SCI_NO no, BitRate_type_t type);
 void sci_write(SCI_NO no, char c);
@@ -186,7 +186,7 @@ char sci_read_byte(SCI_NO no);
 int sci_read_pol(SCI_NO no);
 
 /********************************************************************************
-	å‰²ã‚Šè¾¼ã¿
+	Š„‚èž‚Ý
 ********************************************************************************/
 char sci_read_byte_intr(SCI_NO no);
 void sci_write_intr_enable(SCI_NO no);
