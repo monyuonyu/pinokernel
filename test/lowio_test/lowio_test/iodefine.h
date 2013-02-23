@@ -1,7 +1,7 @@
 /***********************************************************************/
 /*                                                                     */
 /*  FILE        :iodefine.h                                            */
-/*  DATE        :Thu, Feb 21, 2013                                     */
+/*  DATE        :Sun, Feb 24, 2013                                     */
 /*  DESCRIPTION :Definition of I/O Register                            */
 /*  CPU TYPE    :H8/3069R                                              */
 /*                                                                     */

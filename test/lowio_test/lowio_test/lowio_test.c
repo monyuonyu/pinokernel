@@ -1,7 +1,7 @@
 /***********************************************************************/
 /*                                                                     */
-/*  FILE        :hew_lowio_test.c                                      */
-/*  DATE        :Thu, Feb 21, 2013                                     */
+/*  FILE        :lowio_test.c                                          */
+/*  DATE        :Sun, Feb 24, 2013                                     */
 /*  DESCRIPTION :Main Program                                          */
 /*  CPU TYPE    :H8/3069R                                              */
 /*                                                                     */
@@ -9,8 +9,7 @@
 /*                                                                     */
 /***********************************************************************/
                   
-#include "stdio.h"
-#include "3069f_sci.h"
+
 
 void main(void);
 #ifdef __cplusplus
@@ -21,16 +20,7 @@ void abort(void);
 
 void main(void)
 {
-	char c;
-	sci_init(SCI_NO_1, BitRate_type_br19200);
 
-	printf("hello world!!\n");
-
-	while(1)
-	{
-		c = getchar();
-		printf("%x", c);
-	}
 }
 
 #ifdef __cplusplus

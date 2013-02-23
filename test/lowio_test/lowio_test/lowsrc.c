@@ -1,7 +1,7 @@
 /***********************************************************************/
 /*                                                                     */
 /*  FILE        :lowsrc.c                                              */
-/*  DATE        :Thu, Feb 21, 2013                                     */
+/*  DATE        :Sun, Feb 24, 2013                                     */
 /*  DESCRIPTION :Program of I/O Stream                                 */
 /*  CPU TYPE    :H8/3069R                                              */
 /*                                                                     */

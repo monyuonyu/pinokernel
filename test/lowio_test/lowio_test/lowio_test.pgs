@@ -18,7 +18,7 @@ Multiple=Not Support
 Divide=Not Support
 
 [Project]
-Project Name=hew_lowio_test
+Project Name=lowio_test
 Project Type=Application
 
 [Stack Settings]

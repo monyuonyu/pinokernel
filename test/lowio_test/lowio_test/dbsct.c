@@ -1,7 +1,7 @@
 /***********************************************************************/
 /*                                                                     */
 /*  FILE        :dbsct.c                                               */
-/*  DATE        :Thu, Feb 21, 2013                                     */
+/*  DATE        :Sun, Feb 24, 2013                                     */
 /*  DESCRIPTION :Setting of B,R Section                                */
 /*  CPU TYPE    :H8/3069R                                              */
 /*                                                                     */

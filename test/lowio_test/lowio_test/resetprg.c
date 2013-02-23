@@ -1,7 +1,7 @@
 /***********************************************************************/
 /*                                                                     */
 /*  FILE        :resetprg.c                                            */
-/*  DATE        :Thu, Feb 21, 2013                                     */
+/*  DATE        :Sun, Feb 24, 2013                                     */
 /*  DESCRIPTION :Reset Program                                         */
 /*  CPU TYPE    :H8/3069R                                              */
 /*                                                                     */
@@ -34,14 +34,14 @@ extern void _CLOSEALL(void);
 //extern void srand(_UINT);		// Remove the comment when you use rand()
 //extern _SBYTE *_s1ptr;				// Remove the comment when you use strtok()
 		
-//#ifdef __cplusplus				// Remove the comment when you use Hardware Setup
-//extern "C" {
-//#endif
-//extern void HardwareSetup(void);
-//#ifdef __cplusplus
-//}
-//#endif
-
+#ifdef __cplusplus				// Use Hardware Setup
+extern "C" {
+#endif
+extern void HardwareSetup(void);
+#ifdef __cplusplus
+}
+#endif
+	
 //#ifdef __cplusplus			// Remove the comment when you use global class object
 //extern "C" {					// Sections C$INIT and C$END will be generated
 //#endif
@@ -50,7 +50,7 @@ extern void _CLOSEALL(void);
 //#ifdef __cplusplus
 //}
 //#endif
-	
+
 #pragma section ResetPRG
 
 __entry(vect=0) void PowerON_Reset(void)
@@ -66,7 +66,7 @@ __entry(vect=0) void PowerON_Reset(void)
 //	srand((_UINT)1);					// Remove the comment when you use rand()
 //	_s1ptr=NULL;					// Remove the comment when you use strtok()
 		
-//	HardwareSetup();				// Remove the comment when you use Hardware Setup
+	HardwareSetup();				// Use Hardware Setup
 	set_imask_ccr((_UBYTE)0);
 
 	main();
