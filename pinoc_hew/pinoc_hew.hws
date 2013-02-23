@@ -3,19 +3,20 @@
 [DATABASE_VERSION]
 "11.0" 
 [WORKSPACE_DETAILS]
-"pinoc_hew" "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew" "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew.hws" "H8S,H8/300" "Renesas H8S,H8/300 Standard" 
+"pinoc_hew" "I:\Dropbox\OS-ROBO\PINoC\pinoc_hew" "I:\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew.hws" "H8S,H8/300" "Renesas H8S,H8/300 Standard" 
 [SHARED_WORKSPACE_CONTROL_STATUS]
 "" "" "" 
 "" "" "" 
 [PROJECTS]
-"pinoc_hew" "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew" "C:\Users\mizu\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.hwp" 0 
+"pinoc_hew" "I:\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew" "I:\Dropbox\OS-ROBO\PINoC\pinoc_hew\pinoc_hew\pinoc_hew.hwp" 0 
 [INFORMATION]
 "ワークスペース情報がありません" 
 [SCRAP]
 [PROJECT_DEPENDENCY]
 [WORKSPACE_PROPERTIES]
 [HELP_FILES]
-"c:\program files\renesas\hew_001\tools\renesas\h8\7_0_0\hew\Stdlib.chm" "C/C++ Standard Library Help" 1 
+"c:\program files (x86)\renesas\hew\tools\renesas\h8\7_0_0\hew\Stdlib.chm" "C/C++ Standard Library Help" 1 
+"c:\program files\renesas\hew_001\tools\renesas\h8\7_0_0\hew\Stdlib.chm" "C/C++ Standard Library Help" 0 
 [GENERAL_DATA_PROJECT]
 [USERMENUTOOLS]
 [CUSTOMPLACEHOLDERS]
