@@ -21,7 +21,18 @@ void abort(void);
 
 void main(void)
 {
+	char c;
+
 	printf("Hello world!!\n");
+
+	malloc(32);
+
+	while(1)
+	{
+		c = getchar();
+		printf("%c", c);
+	}
+
 }
 
 #ifdef __cplusplus
