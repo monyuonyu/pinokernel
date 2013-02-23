@@ -7,6 +7,7 @@
 
 #include "3069f_sci.h"
 #include "XMODEM.h"
+#include "stdio.h"
 
 void main(void);
 #ifdef __cplusplus
@@ -35,6 +36,7 @@ static int xmodem_start_ack()
 	{
 		if (cnt++ > 200000)
 		{
+			printf("snd nak\n");
 			xwrite(XMODEM_NAK);
 			cnt = 0;
 
@@ -89,6 +91,7 @@ int xmodem_start(char* buf)
 	char c;
 	int starting = 0;
 
+	printf("-------- xmodem_start --------\n");
 	while(1)
 	{
 		if(!starting)
@@ -96,11 +99,14 @@ int xmodem_start(char* buf)
 			xmodem_start_ack();
 		}
 
+		printf("recv header\n");
 		c = xread(); // ヘッダ受信
 
 		switch(c)
 		{
 		case XMODEM_SOH:	// 通信開始！
+			printf("XMODEM_SOH\n");
+			while(1);
 			starting = 1;
 			if(xmodem_read_block(block_num_now, buf))
 			{
@@ -115,6 +121,7 @@ int xmodem_start(char* buf)
 			break;
 
 		case XMODEM_EOT:	// 転送完了
+			printf("XMODEM_EOT\n");
 			xwrite(XMODEM_ACK);
 			return block_num_now;
 
