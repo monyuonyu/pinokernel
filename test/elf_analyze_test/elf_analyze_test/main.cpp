@@ -306,9 +306,48 @@ int elf_init(char* buff)
 	return 0;
 }
 
+void* elf_devlop(char* buff)
+{
+	int i;
+	long virtual_space_cnt;
+	void* entry_point;
+	struct Elf32_Phdr* ent;
+
+	int test_buff = (int)(char*)malloc(1000);	// テストバッファ「visual studio上でのみ必要」
+
+	// elf_ヘッダーにエントリポイントが書いてあった場合は優先的に適応
+	if(m_e_entry)
+	{
+		entry_point = (void*)m_e_entry;
+	}
+	else // プログラムヘッダの開始番地を適応
+	{
+		entry_point = (void*)m_program_hed->p_vaddr;
+	}
+
+	ent = m_program_hed;
+
+	// プログラムヘッダの要素を全て展開する
+	for(i = 0; i < m_e_phnum; i++)
+	{
+		virtual_space_cnt = ent->p_memsz - ent->p_filesz;
+		memcpy((void*)(test_buff+(ent->p_vaddr)), &buff[ent->p_offset], ent->p_filesz);
+		memset((void*)(test_buff+(ent->p_vaddr) + ent->p_filesz), 0x00, virtual_space_cnt);
+		//memcpy((void*)((ent->p_vaddr)), &buff[ent->p_offset], ent->p_filesz);
+		//memset((void*)((ent->p_vaddr) + ent->p_filesz), 0x00, virtual_space_cnt);
+		ent = ent->next;
+	}
+
+	
+
+	return entry_point;
+}
+
 int main()
 {
-	char* buff = (char*)malloc(1048);
+	char* buff = (char*)malloc(0xFFFFFFF);
+	char* test_buff = (char*)malloc(0xFFFFFFF);
+	void (*start)(void);
 
 	printf("-------- sizeof --------\n");
 	printf("pointer : %t%dbyte\n", sizeof(void*));
@@ -320,12 +359,16 @@ int main()
 
 
 	// elfサンプル読み込み
-	ifstream ifile("sample1.abs", ios::binary);
-	ifile.read(buff, 1048);
+	ifstream ifile("sample2.abs", ios::binary);
+	ifile.read(buff, 0xFFFFFFF);
 	ifile.close();
 
 	elf_init(buff);
 	elf_status();
+	start = (void(*)(void))elf_devlop(buff);
+
+	start();
+
 
 	return 0;
 }
