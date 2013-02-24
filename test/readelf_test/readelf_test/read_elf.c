@@ -5,6 +5,8 @@
  *      Author: mizu
  */
 
+// 古いソースコードです。
+
 #include "read_elf.h"
 #include "3069f_sci.h"
 #include "string.h"
@@ -116,6 +118,7 @@ char* elf_develop(char* p)
 
 	}
 
+	// ヘッダーのエントリーポイントが必ず存在するわけではないので、このプログラムはNG
 	return (char*)header->entry_point;
 }
 
