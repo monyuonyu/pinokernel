@@ -45,7 +45,10 @@ extern _SBYTE *sbrk(size_t size)              /* 割り付ける領域のサイズ */
     }
 
     printf("called sbrk\n");
-    printf("size -> %d\n", size);
+    printf("size:%lu\n", size);
+    printf("brk:%p\n", brk);
+    printf("org heap_area:%p\n", &heap_area);
+	printf("p:%p\n", p);
 
     return p;
 }

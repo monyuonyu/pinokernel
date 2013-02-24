@@ -20,9 +20,19 @@ void abort(void);
 
 void main(void)
 {
+	char* aaa = 0;
+	char* bbb = 0;
+
 	printf("Hello world\n");
 
-	malloc(100);
+	aaa = (char*)malloc((size_t)20);
+	bbb = (char*)malloc((size_t)40);
+	
+	aaa[0] = 'A';
+
+	free(aaa);
+	free(bbb);
+//	sbrk(test);
 }
 
 #ifdef __cplusplus
