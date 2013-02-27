@@ -214,12 +214,12 @@ int elf_init(char* buff)
 
 void* elf_devlop(char* buff)
 {
-	int i;
+	long i, ii;
 	long virtual_space_cnt;
 	void* entry_point;
 	struct Elf32_Phdr* ent;
 
-	int test_buff = (int)(char*)malloc(1000);	// テストバッファ「visual studio上でのみ必要」
+//	int test_buff = (int)(char*)malloc(1000);	// テストバッファ「visual studio上でのみ必要」
 
 	// elf_ヘッダーにエントリポイントが書いてあった場合は優先的に適応
 	entry_point = (void*)m_e_entry;
@@ -229,12 +229,21 @@ void* elf_devlop(char* buff)
 	// プログラムヘッダの要素を全て展開する
 	for(i = 0; i < m_e_phnum; i++)
 	{
+		printf("program header %ld developint...\n", i);
 		virtual_space_cnt = ent->p_memsz - ent->p_filesz;
-		memcpy((void*)(test_buff+(ent->p_vaddr)), &buff[ent->p_offset], ent->p_filesz);
-		memset((void*)(test_buff+(ent->p_vaddr) + ent->p_filesz), 0x00, virtual_space_cnt);
-		//memcpy((void*)((ent->p_vaddr)), &buff[ent->p_offset], ent->p_filesz);
-		//memset((void*)((ent->p_vaddr) + ent->p_filesz), 0x00, virtual_space_cnt);
+//		memcpy((void*)(test_buff+(ent->p_vaddr)), &buff[ent->p_offset], ent->p_filesz);
+//		memset((void*)(test_buff+(ent->p_vaddr) + ent->p_filesz), 0x00, virtual_space_cnt);
+		memcpy((void*)((ent->p_vaddr)), &buff[ent->p_offset], ent->p_filesz);
+		memset((void*)((ent->p_vaddr) + ent->p_filesz), 0x00, virtual_space_cnt);
+
+		// 展開できたか確認する
+		printf("p_vaddr 0x%lx\n", ent->p_vaddr);
+		for(ii = 0; ii < ent->p_memsz; ii++)
+			printf("%x", ((char*)ent->p_vaddr)[ii]);
+		printf("\n");
+
 		ent = ent->next;
+
 	}
 
 
