@@ -47,7 +47,7 @@ void main(void)
 	 *
 	********************************************************************************/
 	char* buff1 = (char*)(0x400000);
-	char* buff2 = (char*)(0x450000);
+//	char* buff2 = (char*)(0x450000);
 	int i, ii;
 	char* entory_point;
 	void (*start)(void);
@@ -79,10 +79,14 @@ void main(void)
 	printf("-------- read_elf --------\n");
 	elf_init(buff1);
 	elf_status();
-//	entory_point = elf_develop(buff1);
-//	start = (void(*)(void))entory_point;
+	entory_point = elf_devlop(buff1);
+	start = (void(*)(void))entory_point;
 
-//	start();
+	printf("entory point 0x%lx\n", entory_point);
+
+	// PC‚ð“n‚·
+	printf("-------- start!! --------\n");
+	start();
 
 
 }

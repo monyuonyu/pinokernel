@@ -20,7 +20,7 @@ int main()
 
 
 	// elfƒTƒ“ƒvƒ‹“Ç‚İ‚İ
-	ifstream ifile("sample2.abs", ios::binary);
+	ifstream ifile("sample1.abs", ios::binary);
 	ifile.read(buff, 0xFFFFFFF);
 	ifile.close();
 
