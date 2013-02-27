@@ -222,14 +222,7 @@ void* elf_devlop(char* buff)
 	int test_buff = (int)(char*)malloc(1000);	// テストバッファ「visual studio上でのみ必要」
 
 	// elf_ヘッダーにエントリポイントが書いてあった場合は優先的に適応
-	if(m_e_entry)
-	{
-		entry_point = (void*)m_e_entry;
-	}
-	else // プログラムヘッダの開始番地を適応
-	{
-		entry_point = (void*)m_program_hed->p_vaddr;
-	}
+	entry_point = (void*)m_e_entry;
 
 	ent = m_program_hed;
 
