@@ -56,10 +56,10 @@ void main(void)
 	 * 		hello!!
 	 ********************************************************************************/
 	printf("-------- H83069 --------\n");
-	printf("pointer size : %dbyte\n", sizeof(int*));
-	printf("int size : %dbyte\n", sizeof(int));
-	printf("char size : %dbyte\n", sizeof(char));
-	printf("long int size : %dbyte\n", sizeof(long int));
+	printf("pointer size : %ldbyte\n", sizeof(int*));
+	printf("int size : %ldbyte\n", sizeof(int));
+	printf("char size : %ldbyte\n", sizeof(char));
+	printf("long int size : %ldbyte\n", sizeof(long int));
 //	printf("long long int size : %dbyte\n", sizeof(long long int));
 
 	/********************************************************************************
