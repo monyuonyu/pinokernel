@@ -11,7 +11,7 @@
 
 #include "stdio.h"
 #include "3069f_sci.h"
-#include "read_elf.h"
+#include "elf.h"
 
 void main(void);
 #ifdef __cplusplus
@@ -48,7 +48,7 @@ void main(void)
 	********************************************************************************/
 	char* buff1 = (char*)(0x400000);
 	char* buff2 = (char*)(0x450000);
-	int i;
+	int i, ii;
 	char* entory_point;
 	void (*start)(void);
 
@@ -68,20 +68,21 @@ void main(void)
 	xmodem_init(test_write, test_read, test_read_pol);
 //	memory_main();
 
-	xmodem_start(buff1);
+	ii = xmodem_start(buff1);
 
-	printf("-------- received 500byte only test --------\n");
-	// ŽŽ‚µ‚É500yte•\Ž¦
-	for(i = 0; i < 512; i++)
+	printf("-------- received data --------\n");
+	for(i = 0; i < 128 * ii; i++)
 	{
 		printf("%2x", buff1[i]);
 	}
 
 	printf("-------- read_elf --------\n");
-	entory_point = elf_develop(buff1);
-	start = (void(*)(void))entory_point;
+	elf_init(buff1);
+	elf_status();
+//	entory_point = elf_develop(buff1);
+//	start = (void(*)(void))entory_point;
 
-	start();
+//	start();
 
 
 }
