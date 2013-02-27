@@ -26,12 +26,14 @@ static unsigned short m_e_shstrndx;
 static struct Elf32_Phdr* m_program_hed;
 
 // 32bitまで
+// PCではビッグエンディアンのバイナリをリトルエンディアンとして扱う
+// H8マイコンはビッグエンディアンのバイナリをビッグエンディアンとして扱う
 static long littletobig(unsigned char* buff, char size)
 {
 	unsigned long tmp = 0;
 	unsigned long scale = 1;
 	int i;
-	
+
 	for(i = size - 1; i >= 0; i--)
 	{
 		tmp += buff[i] * scale;
@@ -66,11 +68,11 @@ void elf_status()
 	// e_ident[9...15]	未使用
 	printf("再配置可能や実行可能等のELFの形式を表す。 : 0x%x\n", m_e_type);
 	printf("ファイルで要求されるアーキテクチャ : 0x%x\n", m_e_machine);
-	printf("ELFフォーマットのバージョンで現在は1 : 0x%x\n", m_e_version);
-	printf("プログラムのエントリポイント。指定無しなら0 : 0x%x\n", m_e_entry);
-	printf("プログラムヘッダテーブルのファイル先頭からのオフセット : %dbyte\n", m_e_phoff);
-	printf("実行時には使われない : 0x%x\n", m_e_shoff);
-	printf("プロセッサ固有のフラグ : 0x%x\n", m_e_flags);
+	printf("ELFフォーマットのバージョンで現在は1 : 0x%lx\n", m_e_version);
+	printf("プログラムのエントリポイント。指定無しなら0 : 0x%lx\n", m_e_entry);
+	printf("プログラムヘッダテーブルのファイル先頭からのオフセット : %ldbyte\n", m_e_phoff);
+	printf("実行時には使われない : 0x%lx\n", m_e_shoff);
+	printf("プロセッサ固有のフラグ : 0x%lx\n", m_e_flags);
 	printf("ELFヘッダのサイズ : %dbyte\n", m_e_ehsize);
 	printf("プログラムヘッダテーブルの1要素あたりのサイズ : %dbyte\n", m_e_phentsize);
 	printf("プログラムヘッダテーブルの要素数 : %d個\n", m_e_phnum);
@@ -84,15 +86,15 @@ void elf_status()
 	for(i = 0; i < m_e_phnum; i++)
 	{
 		printf("■ Program Header %d\n", i+1);
-		
-		printf("1.エントリのタイプ : 0x%x\n", elf_program_ent->p_type);
-		printf("2.対応するセグメントのファイル先頭からのオフセット : %dbyte\n", elf_program_ent->p_offset);
-		printf("3.メモリ上でのセグメントの第一バイトの仮想アドレス : 0x%x\n", elf_program_ent->p_vaddr);
-		printf("4.物理番地指定が適切なシステムの為に予約 : 0x%x\n", elf_program_ent->p_paddr);
-		printf("5.対応するセグメントのファイルでのサイズ。0も可 : %dbyte\n", elf_program_ent->p_filesz);
-		printf("6.対応するセグメントのメモリ上に展開された時のサイズ。0も可 : %dbyte\n", elf_program_ent->p_memsz);
-		printf("7.対応するセグメントに適切なフラグ : 0x%x\n", elf_program_ent->p_flags);
-		printf("8.p_offset「2.」とp_vaddr「3.」をこの値で割った余りは等しい : 0x%x\n", elf_program_ent->p_align);
+
+		printf("1.エントリのタイプ : 0x%lx\n", elf_program_ent->p_type);
+		printf("2.対応するセグメントのファイル先頭からのオフセット : %ldbyte\n", elf_program_ent->p_offset);
+		printf("3.メモリ上でのセグメントの第一バイトの仮想アドレス : 0x%lx\n", elf_program_ent->p_vaddr);
+		printf("4.物理番地指定が適切なシステムの為に予約 : 0x%lx\n", elf_program_ent->p_paddr);
+		printf("5.対応するセグメントのファイルでのサイズ。0も可 : %ldbyte\n", elf_program_ent->p_filesz);
+		printf("6.対応するセグメントのメモリ上に展開された時のサイズ。0も可 : %ldbyte\n", elf_program_ent->p_memsz);
+		printf("7.対応するセグメントに適切なフラグ : 0x%lx\n", elf_program_ent->p_flags);
+		printf("8.p_offset「2.」とp_vaddr「3.」をこの値で割った余りは等しい : 0x%lx\n", elf_program_ent->p_align);
 
 		elf_program_ent = elf_program_ent->next;
 	}
@@ -107,14 +109,14 @@ int elf_check(struct Elf32_Ehdr* buff)
 	//e_ident[4]	ファイルのクラス	0=invalid, 1=32bit, 2=64bit
 	//e_ident[5]	データの符号化方式（エンディアン等）	0=invalid, 1=LSB, 2=MSB
 	//e_ident[6]	ELFヘッダのバージョン	現在は1
-	//e_ident[7]	ファイルが対象とするOSとABI	
-	//e_ident[8]	ファイルが対象とするABIのバージョン	
+	//e_ident[7]	ファイルが対象とするOSとABI
+	//e_ident[8]	ファイルが対象とするABIのバージョン
 	//e_ident[9...15]	未使用
-	
+
 	int check_flg = 0;
-	
+
 	printf("-------- elf_check --------\n");
-	
+
 	// magicコードが間違っていればELFファイルではないと判断
 	if(buff->chare_ident[0] != 0x7F) check_flg = 1;
 	if(buff->chare_ident[1] != 'E') check_flg = 1;
@@ -132,6 +134,7 @@ int elf_check(struct Elf32_Ehdr* buff)
 
 
 // elfファイルを解析して初期化する
+// 戻り値1がエラー
 int elf_init(char* buff)
 {
 	int i;
@@ -154,19 +157,29 @@ int elf_init(char* buff)
 	m_os_abi = elf_header->chare_ident[7];
 	m_abi_version = elf_header->chare_ident[8];
 	// e_ident[9...15]	未使用
-	m_e_type = littletobig((unsigned char*)&elf_header->e_type, 2);
-	m_e_machine = littletobig((unsigned char*)&elf_header->e_machine, 2);
-	m_e_version = littletobig((unsigned char*)&elf_header->e_version, 4);
-	m_e_entry = littletobig((unsigned char*)&elf_header->e_entry, 4);
-	m_e_phoff = littletobig((unsigned char*)&elf_header->e_phoff, 4);
-	m_e_shoff = littletobig((unsigned char*)&elf_header->e_shoff, 4);
-	m_e_flags = littletobig((unsigned char*)&elf_header->e_flags, 4);
-	m_e_ehsize =  littletobig((unsigned char*)&elf_header->e_ehsize, 2);
-	m_e_phentsize = littletobig((unsigned char*)&elf_header->e_phentsize, 2);
-	m_e_phnum =  littletobig((unsigned char*)&elf_header->e_phnum, 2);
-	m_e_shentsize = littletobig((unsigned char*)&elf_header->e_shentsize, 2);
-	m_e_shnum = littletobig((unsigned char*)&elf_header->e_shnum, 2);
-	m_e_shstrndx = littletobig((unsigned char*)&elf_header->e_shstrndx, 2);
+	m_e_type = elf_header->e_type;
+	m_e_machine = elf_header->e_machine;
+	m_e_version = elf_header->e_version;
+//	printf("elf_header->e_version:%x\n", elf_header->e_version);
+//	printf("elf_header->e_version:%u\n", elf_header->e_version);
+//	printf("elf_header->e_version:%d\n", elf_header->e_version);
+//	printf("elf_header->e_version:%ld\n", elf_header->e_version);
+//	printf("elf_header->e_version:m_e_version:%ld\n", m_e_version);
+//	printf("elf_header->e_version[0]:%x\n", ((char*)&(elf_header->e_version))[0]);
+//	printf("elf_header->e_version[1]:%x\n", ((char*)&(elf_header->e_version))[1]);
+//	printf("elf_header->e_version[2]:%x\n", ((char*)&(elf_header->e_version))[2]);
+//	printf("elf_header->e_version[3]:%x\n", ((char*)&(elf_header->e_version))[3]);
+
+	m_e_entry = elf_header->e_entry;
+	m_e_phoff = elf_header->e_phoff;
+	m_e_shoff = elf_header->e_shoff;
+	m_e_flags = elf_header->e_flags;
+	m_e_ehsize =  elf_header->e_ehsize;
+	m_e_phentsize = elf_header->e_phentsize;
+	m_e_phnum =  elf_header->e_phnum;
+	m_e_shentsize = elf_header->e_shentsize;
+	m_e_shnum = elf_header->e_shnum;
+	m_e_shstrndx = elf_header->e_shstrndx;
 
 	// プログラムヘッダの数は不定なのでリスト構造で保持する
 	ent = (struct Elf32_Phdr*)malloc(sizeof(struct Elf32_Phdr));
@@ -177,16 +190,16 @@ int elf_init(char* buff)
 	{
 		// プログラムヘッダの開始番地取得
 		elf_program = (struct Elf32_Phdr*)&buff[ m_e_phoff + m_e_phentsize * i ];
-		
+
 		// ヘッダの内容を保存
-		ent->p_type = littletobig((unsigned char*)&elf_program->p_type, 4);
-		ent->p_offset = littletobig((unsigned char*)&elf_program->p_offset, 4);
-		ent->p_vaddr = littletobig((unsigned char*)&elf_program->p_vaddr, 4);
-		ent->p_paddr = littletobig((unsigned char*)&elf_program->p_paddr, 4);
-		ent->p_filesz = littletobig((unsigned char*)&elf_program->p_filesz, 4);
-		ent->p_memsz = littletobig((unsigned char*)&elf_program->p_memsz, 4);
-		ent->p_flags = littletobig((unsigned char*)&elf_program->p_flags, 4);
-		ent->p_align = littletobig((unsigned char*)&elf_program->p_align, 4);
+		ent->p_type = elf_program->p_type;
+		ent->p_offset = elf_program->p_offset;
+		ent->p_vaddr = elf_program->p_vaddr;
+		ent->p_paddr = elf_program->p_paddr;
+		ent->p_filesz = elf_program->p_filesz;
+		ent->p_memsz = elf_program->p_memsz;
+		ent->p_flags = elf_program->p_flags;
+		ent->p_align = elf_program->p_align;
 		ent->next = 0x00; // リストの終端コード 0x00
 
 		// リスト構造で保存する
@@ -231,7 +244,7 @@ void* elf_devlop(char* buff)
 		ent = ent->next;
 	}
 
-	
+
 
 	return entry_point;
 }
