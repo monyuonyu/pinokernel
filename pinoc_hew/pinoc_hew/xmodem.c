@@ -101,6 +101,8 @@ int xmodem_start(char* buf)
 				buf[i] = sci_read_byte(SCI_NO_1);
 //				i++;
 			}
+			buf += 128;
+			block_num_now++;
 			sci_read_byte(SCI_NO_1); // チェックサム
 			sci_write(SCI_NO_1, XMODEM_ACK);
 		}
@@ -108,10 +110,13 @@ int xmodem_start(char* buf)
 		if(c == XMODEM_EOT)
 		{
 			sci_write(SCI_NO_1, XMODEM_ACK);
+			break;
 		}
 	}
 
+	return block_num_now;
 
+}
 
 
 
@@ -156,7 +161,7 @@ int xmodem_start(char* buf)
 //		}
 //
 //	}
-}
+//}
 
 
 void xmodem_init(void (*io_write)(char c), char (*io_read)(void), char (*io_read_pol)(void))
