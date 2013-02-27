@@ -48,7 +48,7 @@ void sci_write(SCI_NO no, char c)
 	sci->TDR = c;
 	sci->SSR.BIT.TDRE = 0;
 
-//	while(sci->SSR.BIT.TEND);
+	while(sci->SSR.BIT.TEND);
 
 }
 
