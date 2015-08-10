@@ -1,0 +1,270 @@
+Archive member included because of file (symbol)
+
+W:/pinokernel/prj_build/apl/libapl.a(free_main.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(interrupt.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(intr.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(load_mot.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(main.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(read_elf.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(start.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(vectors.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(3069f_sci.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/kernel/pinok/libkernel.a(dispatch.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/kernel/pinok/libkernel.a(pinoc.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/kernel/pinok/libkernel.a(start.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(atoi.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(memccpy.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(memcmp.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(memset.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(strcmp.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(strncmp.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(tolower.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libc/libc.a(toupper.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libfunc/libfunc.a(asciitobin.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/lib/libfunc/libfunc.a(decto10.o)
+                              (--whole-archive)
+W:/pinokernel/prj_build/protocol/libprotocol.a(XMODEM.o)
+                              (--whole-archive)
+
+Allocating common symbols
+Common symbol       size              file
+
+nic                 0x4               W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+rom              0x00000000         0x00080000         xr
+vectors          0x00000000         0x00000100         xr
+romdata          0x00000100         0x0007ff00         xr
+ram              0x00ffbf20         0x00004000         xrw
+softvec          0x00ffbf20         0x00000010         xrw
+ramdata          0x00ffbf30         0x00000600         xrw
+bufdata          0x00ffc520         0x00001400         xrw
+pinoc            0x00ffd920         0x00001400         xrw
+u_stack          0x00fff610         0x00000000         rw
+b_stack          0x00ffff00         0x00000000         rw
+i_stack          0x00ffff00         0x00000000         rw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+
+.text           0x00000100     0x1eb4
+                0x00000100                _text_start = .
+ *(.text)
+ .text          0x00000100        0x8 W:/pinokernel/prj_build/apl/libapl.a(free_main.o)
+                0x00000100                free_main
+ .text          0x00000108       0xce W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(interrupt.o)
+                0x00000108                interrupt
+                0x00000164                softvec_setintr
+                0x0000019e                softvec_init
+ .text          0x000001d6       0xfc W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(intr.o)
+                0x000001d6                intr_softerr
+                0x0000022a                intr_syscall
+                0x0000027e                intr_serial
+ .text          0x000002d2      0x372 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(load_mot.o)
+                0x000002d2                mot_deploy
+                0x00000548                load_lod
+ .text          0x00000644      0x338 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(main.o)
+                0x00000644                getstring
+                0x00000700                main_vec
+                0x000008da                boot_main
+                0x0000090a                init
+ .text          0x0000097c      0x5b8 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(read_elf.o)
+                0x0000097c                gen_xval
+                0x00000b1e                elf_develop
+                0x00000e54                elf_analysis
+                0x00000ef0                elf_read
+ .text          0x00000f34        0xa W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(start.o)
+                0x00000f34                start
+ .text          0x00000f3e        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(vectors.o)
+ .text          0x00000f3e      0x556 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(3069f_sci.o)
+                0x00000f3e                sci_init
+                0x00000fec                sci_write
+                0x00001066                sci_write_str
+                0x000010e4                sci_read_byte
+                0x000011e6                sci_read
+                0x0000124c                sci_read_pol
+                0x0000132a                sci_read_byte_intr
+                0x00001384                sci_write_intr_enable
+                0x000013c8                sci_write_intr_disable
+                0x0000140c                sci_read_intr_enable
+                0x00001450                sci_read_intr_disable
+ .text          0x00001494      0x1f6 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+                0x00001494                nic_mac_set
+                0x000014a0                nic_send_ON_OFF
+                0x000014e2                nic_rec_ON_OFF
+                0x00001524                select_page
+                0x00001578                nic_init
+ .text          0x0000168a       0x22 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(dispatch.o)
+                0x0000168a                dispatch
+ .text          0x000016ac       0x1e W:/pinokernel/prj_build/kernel/pinok/libkernel.a(pinoc.o)
+                0x000016ac                main
+ .text          0x000016ca        0xa W:/pinokernel/prj_build/kernel/pinok/libkernel.a(start.o)
+ .text          0x000016d4       0xd8 W:/pinokernel/prj_build/lib/libc/libc.a(atoi.o)
+                0x000016d4                atoi
+ .text          0x000017ac       0x72 W:/pinokernel/prj_build/lib/libc/libc.a(memccpy.o)
+                0x000017ac                memcpy
+ .text          0x0000181e       0xae W:/pinokernel/prj_build/lib/libc/libc.a(memcmp.o)
+                0x0000181e                memcmp
+ .text          0x000018cc       0x6c W:/pinokernel/prj_build/lib/libc/libc.a(memset.o)
+                0x000018cc                memset
+ .text          0x00001938       0x7e W:/pinokernel/prj_build/lib/libc/libc.a(strcmp.o)
+                0x00001938                strcmp
+ .text          0x000019b6       0xb6 W:/pinokernel/prj_build/lib/libc/libc.a(strncmp.o)
+                0x000019b6                strncmp
+ .text          0x00001a6c       0x38 W:/pinokernel/prj_build/lib/libc/libc.a(tolower.o)
+                0x00001a6c                tolower
+ .text          0x00001aa4       0x38 W:/pinokernel/prj_build/lib/libc/libc.a(toupper.o)
+                0x00001aa4                toupper
+ .text          0x00001adc       0xd4 W:/pinokernel/prj_build/lib/libfunc/libfunc.a(asciitobin.o)
+                0x00001adc                asciitobin
+ .text          0x00001bb0      0x18a W:/pinokernel/prj_build/lib/libfunc/libfunc.a(decto10.o)
+                0x00001bb0                decto10
+ .text          0x00001d3a      0x27a W:/pinokernel/prj_build/protocol/libprotocol.a(XMODEM.o)
+                0x00001d3a                xmodem_start_ack
+                0x00001d9c                xmodem_read_block
+                0x00001eb2                xmodem_start
+
+.rodata         0x00001fb4      0x269
+                0x00001fb4                _rodata_start = .
+ *(.strings)
+ *(.rodata)
+ .rodata        0x00001fb4       0x28 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(load_mot.o)
+ .rodata        0x00001fdc       0xbc W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(main.o)
+ .rodata        0x00002098      0x14f W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(read_elf.o)
+ .rodata        0x000021e7       0x36 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(3069f_sci.o)
+ *(.rodata.*)
+                0x0000221d                _rodata_end = .
+
+.bss            0x00ffbf30      0x1c0 load address 0x00002220
+                0x00ffbf30                _bss_start = .
+ *(.bss)
+ .bss           0x00ffbf30        0x0 W:/pinokernel/prj_build/apl/libapl.a(free_main.o)
+ .bss           0x00ffbf30        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(interrupt.o)
+ .bss           0x00ffbf30        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(intr.o)
+ .bss           0x00ffbf30        0x4 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(load_mot.o)
+ .bss           0x00ffbf34       0x2c W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(main.o)
+ .bss           0x00ffbf60        0x9 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(read_elf.o)
+ .bss           0x00ffbf69        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(start.o)
+ .bss           0x00ffbf69        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(vectors.o)
+ .bss           0x00ffbf69        0x0 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(3069f_sci.o)
+ .bss           0x00ffbf69        0x0 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+ .bss           0x00ffbf69        0x0 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(dispatch.o)
+ *fill*         0x00ffbf69        0x3 00
+ .bss           0x00ffbf6c      0x180 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(pinoc.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(start.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(atoi.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(memccpy.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(memcmp.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(memset.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(strcmp.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(strncmp.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(tolower.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(toupper.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libfunc/libfunc.a(asciitobin.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/lib/libfunc/libfunc.a(decto10.o)
+ .bss           0x00ffc0ec        0x0 W:/pinokernel/prj_build/protocol/libprotocol.a(XMODEM.o)
+                0x00ffc0ec                _bss_end = .
+ COMMON         0x00ffc0ec        0x4 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+                0x00ffc0ec                nic
+
+.data           0x00ffc0f0      0x125 load address 0x00002220
+                0x00ffc0f0                _data_start = .
+ *(.data)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/apl/libapl.a(free_main.o)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(interrupt.o)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(intr.o)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(load_mot.o)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(main.o)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(read_elf.o)
+ .data          0x00ffc0f0        0x0 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(start.o)
+ .data          0x00ffc0f0      0x100 W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(vectors.o)
+                0x00ffc0f0                vectors
+ .data          0x00ffc1f0        0xc W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(3069f_sci.o)
+ .data          0x00ffc1fc        0x0 W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+ .data          0x00ffc1fc        0x0 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(dispatch.o)
+ .data          0x00ffc1fc       0x19 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(pinoc.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/kernel/pinok/libkernel.a(start.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(atoi.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(memccpy.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(memcmp.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(memset.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(strcmp.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(strncmp.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(tolower.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libc/libc.a(toupper.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libfunc/libfunc.a(asciitobin.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/lib/libfunc/libfunc.a(decto10.o)
+ .data          0x00ffc215        0x0 W:/pinokernel/prj_build/protocol/libprotocol.a(XMODEM.o)
+                0x00ffc215                _data_end = .
+
+.buf            0x00ffc520        0x0
+                0x00ffc520                _buf_start = .
+
+.u_stack        0x00fff610        0x0
+                0x00fff610                _u_stack = .
+
+.b_stack        0x00ffff00        0x0
+                0x00ffff00                _b_stack = .
+
+.i_stack        0x00ffff00        0x0
+                0x00ffff00                _i_stack = .
+
+.softvec        0x00ffbf20        0x0
+                0x00ffbf20                _softvec = .
+LOAD W:/pinokernel/prj_build/apl/libapl.a
+LOAD W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a
+LOAD W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a
+LOAD W:/pinokernel/prj_build/kernel/pinok/libkernel.a
+LOAD W:/pinokernel/prj_build/lib/libc/libc.a
+LOAD W:/pinokernel/prj_build/lib/libfunc/libfunc.a
+LOAD W:/pinokernel/prj_build/protocol/libprotocol.a
+OUTPUT(pinok.elf elf32-h8300)
+
+.comment        0x00000000       0x1c
+ .comment       0x00000000       0x1c W:/pinokernel/prj_build/apl/libapl.a(free_main.o)
+                                 0x1d (size before relaxing)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(interrupt.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(load_mot.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(main.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(read_elf.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/bootloader/h8300-hms/libboot.a(vectors.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(3069f_sci.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/iodriver/h8300-hms/libiod.a(DP8390.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/kernel/pinok/libkernel.a(pinoc.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(atoi.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(memccpy.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(memcmp.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(memset.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(strcmp.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(strncmp.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(tolower.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libc/libc.a(toupper.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libfunc/libfunc.a(asciitobin.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/lib/libfunc/libfunc.a(decto10.o)
+ .comment       0x00000000       0x1d W:/pinokernel/prj_build/protocol/libprotocol.a(XMODEM.o)
