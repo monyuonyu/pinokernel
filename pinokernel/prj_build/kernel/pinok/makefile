@@ -7,9 +7,9 @@ $(BD)/src/kernel/pinok/pinoc.c \
 $(BD)/src/kernel/pinok/start.S \
 # $(BD)/src/kernel/pinok/cvector.c \
 
-#all : libkernel.a $(PINoC).mot
-all : libkernel.a
+#all : relkernel.rel $(PINoC).mot
+all : relkernel.rel
 	# ALL SYSTEM BUILD finish!!
 
-libkernel.a : $(OBJ)
-	$(AR) rv $@  *.o
+relkernel.rel : $(OBJ)
+	$(LD) -r -o $@ $(wildcard *.o)

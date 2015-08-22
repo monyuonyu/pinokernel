@@ -10,8 +10,8 @@ $(BD)/src/bootloader/h8300-hms/read_elf.c \
 $(BD)/src/bootloader/h8300-hms/start.S \
 $(BD)/src/bootloader/h8300-hms/vectors.c \
 
-all : libboot.a
-	# libboot.a finish!!
+all : relboot.rel
+	# relboot.rel finish!!
 
-libboot.a : $(OBJ)
-	$(AR) rv $@  *.o
+relboot.rel : $(OBJ)
+	$(LD) -r -o $@ $(wildcard *.o)

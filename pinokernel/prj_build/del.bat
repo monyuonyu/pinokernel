@@ -1,1 +1,1 @@
-DEL /F /S *.o *.a *.map
+DEL /F /S *.o *.a *.rel *.lib *.map

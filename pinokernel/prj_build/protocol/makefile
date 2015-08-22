@@ -4,8 +4,8 @@ include ../../config/CommonMakefile
 SRC = \
 $(BD)/src/protocol/XMODEM/XMODEM.c \
 
-all : libprotocol.a
-	# libprotocol.a finish!!
+all : relprotocol.rel
+	# relprotocol.rel finish!!
 
-libprotocol.a : $(OBJ)
-	$(AR) rv $@  *.o
+relprotocol.rel : $(OBJ)
+	$(LD) -r -o $@ $(wildcard *.o)

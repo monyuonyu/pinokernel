@@ -29,7 +29,7 @@ SECTIONS
 	} > vectors
 
 	.vectors : {
-		libboot.a(.data) ライブリの指定方法が不明
+		relboot.rel(.data) ライブリの指定方法が不明
 	} > vectors
 */
 	.text : {

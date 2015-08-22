@@ -4,8 +4,8 @@ include ../../config/CommonMakefile
 SRC = \
 $(BD)/src/apl/FREE/free_main.c \
 
-all : libapl.a
-	# libapl.a finish!!
+all : relapl.rel
+	# relapl.rel finish!!
 
-libapl.a : $(OBJ)
-	$(AR) rv $@  *.o
+relapl.rel : $(OBJ)
+	$(LD) -r -o $@ $(wildcard *.o)

@@ -11,8 +11,9 @@ $(BD)/src/lib/libc/string/strcmp.c \
 $(BD)/src/lib/libc/string/strncmp.c \
 $(BD)/src/lib/libc/string/memcmp.c \
 
-all : libc.a
-	# libc.a finish!!
+all : relc.rel
+	# relc.rel finish!!
 
-libc.a : $(OBJ)
-	$(AR) rv $@  *.o
+relc.rel : $(OBJ)
+	#暫定 リロケイタブルですべてリンクする
+	$(LD) -r -o $@ $(wildcard *.o)

@@ -18,15 +18,12 @@ OBJCOPY = h8300-elf-objcopy
 OBJDUMP = h8300-elf-objdump
 STRIP   = h8300-elf-strip
 
-
 #Compile Option
-CFLAGS  = -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I $(BD)/include
-#CFLAGS  = -v -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I $(BD)/include
-#CFLAGS  = -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall  -I ../lib/include -I ../lib/3069
-#LDFLAGS = -T boot.ls  -L ../lib -l3069 -lc -lascii
-#LDFLAGS = -T kernel.ls -lc -l3069 -L ../lib -static
-#LDFLAGS = -T general.ls -static -M
-LDFLAGS = -T $(BD)/config/general.ls -whole-archive -Map=$(KERNEL).map
+CFLAGS  = -nostdinc -nostdlib -fno-builtin -O0 -Wall -I $(BD)/include
+#CFLAGS  = -mh -nostdinc -nostdlib -fno-builtin -O0 -Wall -I $(BD)/include
+#※-mh オプションが有効だと LDコマンドの リロケイタブル作成時にエラーが発生する
+#※アセンブラファイルを -mh 結果(32bit拡張)で作成しているため現状LDが通らない
+LDFLAGS = -T $(BD)/config/$(TARGET)/general.ls -Map=$(KERNEL).map
 
 #Suffix Rule
 .SUFFIXES:

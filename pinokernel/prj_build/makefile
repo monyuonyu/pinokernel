@@ -28,17 +28,13 @@ apl: libs iodriver protocol bootloader kernel
 
 bin: libs iodriver protocol bootloader kernel apl
 	$(LD) -o $(KERNEL).elf $(LDFLAGS) \
-	$(BD)/prj_build/apl/libapl.a \
-	$(BD)/prj_build/bootloader/$(TARGET)/libboot.a \
-	$(BD)/prj_build/iodriver/$(TARGET)/libiod.a \
-	$(BD)/prj_build/kernel/pinok/libkernel.a \
-	$(BD)/prj_build/lib/libc/libc.a \
-	$(BD)/prj_build/lib/libfunc/libfunc.a \
-	$(BD)/prj_build/protocol/libprotocol.a
-
-	cp $(KERNEL).elf $(KERNEL).bin
-	$(STRIP) $(KERNEL).bin
-	$(OBJCOPY) -O srec $(KERNEL).elf $(KERNEL).mot
+	$(BD)/prj_build/apl/relapl.rel \
+	$(BD)/prj_build/bootloader/$(TARGET)/relboot.rel \
+	$(BD)/prj_build/iodriver/$(TARGET)/reliod.rel \
+	$(BD)/prj_build/kernel/pinok/relkernel.rel \
+	$(BD)/prj_build/lib/libc/relc.rel \
+	$(BD)/prj_build/lib/libfunc/relfunc.rel \
+	$(BD)/prj_build/protocol/relprotocol.rel
 
 	mv $(KERNEL).elf ../release/
 	mv $(KERNEL).mot ../release/

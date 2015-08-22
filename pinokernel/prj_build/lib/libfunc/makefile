@@ -5,8 +5,8 @@ SRC = \
 $(BD)/src/lib/libfunc/asciitobin.c \
 $(BD)/src/lib/libfunc/decto10.c \
 
-all : libfunc.a
-	# libfunc.a finish!!
+all : relfunc.rel
+	# relfunc.rel finish!!
 
-libfunc.a : $(OBJ)
-	$(AR) rv $@  *.o
+relfunc.rel : $(OBJ)
+	$(LD) -r -o $@ $(wildcard *.o)
