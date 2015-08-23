@@ -2,13 +2,13 @@
 include ../../../config/CommonMakefile
 
 SRC = \
-$(BD)/src/bootloader/h8300-hms/interrupt.c \
-$(BD)/src/bootloader/h8300-hms/intr.S \
-$(BD)/src/bootloader/h8300-hms/load_mot.c \
-$(BD)/src/bootloader/h8300-hms/main.c \
-$(BD)/src/bootloader/h8300-hms/read_elf.c \
-$(BD)/src/bootloader/h8300-hms/start.S \
-$(BD)/src/bootloader/h8300-hms/vectors.c \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/interrupt.c \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/intr.S \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/load_mot.c \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/main.c \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/read_elf.c \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/start.S \
+$(BD)/src/bootloader/$(TARGET_DETAIL)/vectors.c \
 
 all : relboot.rel
 	# relboot.rel finish!!
