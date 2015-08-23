@@ -2,10 +2,10 @@
 include ../../../config/CommonMakefile
 
 SRC = \
-$(BD)/src/kernel/pinok/dispatch.S \
-$(BD)/src/kernel/pinok/pinoc.c \
-$(BD)/src/kernel/pinok/start.S \
-# $(BD)/src/kernel/pinok/cvector.c \
+$(BD)/src/kernel/$(KERNEL)/dispatch.S \
+$(BD)/src/kernel/$(KERNEL)/pinoc.c \
+$(BD)/src/kernel/$(KERNEL)/start.S \
+# $(BD)/src/kernel/$(KERNEL)/cvector.c \
 
 #all : relkernel.rel $(PINoC).mot
 all : relkernel.rel

@@ -7,7 +7,7 @@
 
 #include "read_elf.h"
 #include "iodriver/h8300h/3069f_sci.h"
-#include "lib/libc/string.h"
+#include <string.h>
 
 char* gen_xval(unsigned long val, int column)
 {

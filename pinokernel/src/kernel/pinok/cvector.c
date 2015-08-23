@@ -1,6 +1,6 @@
 #include "cvector.h"
-#include <lib/libc/stdlib.h>
-#include <lib/libc/string.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* 静的プロトタイプ宣言 */
 static VECLIST* Search(si _Dst);

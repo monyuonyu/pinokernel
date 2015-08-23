@@ -18,7 +18,7 @@ protocol: libs iodriver
 	cd $(BD)/prj_build/protocol; $(MAKE) all
 
 bootloader: libs iodriver protocol
-	cd $(BD)/prj_build/bootloader/$(TARGET_WIDE); $(MAKE) all
+	cd $(BD)/prj_build/bootloader/$(TARGET_DETAIL); $(MAKE) all
 
 kernel: libs iodriver protocol bootloader
 	cd $(BD)/prj_build/kernel/$(KERNEL); $(MAKE) all
@@ -31,7 +31,7 @@ bin: libs iodriver protocol bootloader kernel apl
 	$(BD)/prj_build/apl/relapl.rel \
 	$(BD)/prj_build/bootloader/$(TARGET_DETAIL)/relboot.rel \
 	$(BD)/prj_build/iodriver/$(TARGET_WIDE)/reliod.rel \
-	$(BD)/prj_build/kernel/pinok/relkernel.rel \
+	$(BD)/prj_build/kernel/$(KERNEL)/relkernel.rel \
 	$(BD)/prj_build/lib/libc/relc.rel \
 	$(BD)/prj_build/lib/libfunc/relfunc.rel \
 	$(BD)/prj_build/protocol/relprotocol.rel
