@@ -12,8 +12,8 @@
 #include "load_mot.h"
 #include "kernel/ctype.h"
 
-#include "lib/libc/string.h"
-#include "lib/libc/stdlib.h"
+#include <string.h>
+#include <stdlib.h>
 // #include "dbg.hpp"
 // #include "DP8390.h"
 #include "read_elf.h"

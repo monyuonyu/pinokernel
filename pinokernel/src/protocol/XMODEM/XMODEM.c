@@ -9,6 +9,8 @@
 
 #define XMODEM_DBG 0
 
+#if 0 /* 現状 H8 に依存するコードのため コンパイル対象外とする */
+
 // 通信が開始されると関数を抜けます
 int xmodem_start_ack()
 {
@@ -144,6 +146,7 @@ int xmodem_start(char* buf)
 	}
 }
 
+#endif /* 現状 H8 に依存するコードのため コンパイル対象外とする */
 
 //#include "lib.h"
 //#include "string.h"

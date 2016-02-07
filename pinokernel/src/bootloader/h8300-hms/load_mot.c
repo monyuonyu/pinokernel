@@ -8,8 +8,8 @@
 #include "load_mot.h"
 #include "iodriver/h8300h/3069f_sci.h"
 #include "protocol/XMODEM.h"
-#include "lib/libc/stdlib.h"
-#include "lib/libc/string.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define XMODEM_DBG 0
 
