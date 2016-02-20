@@ -16,10 +16,8 @@
  *	micro T-Kernel Device-Dependent Initialization/Finalization
  */
 
-#include "kernel.h"
-#include <tk/sysdef.h>
-#include <tk/syslib.h>
-#include <tm/tmonitor.h>
+#include <tk/tk_typedef.h>
+#include <tk/errno.h>
 
 /*
  * Target system-dependent initialization

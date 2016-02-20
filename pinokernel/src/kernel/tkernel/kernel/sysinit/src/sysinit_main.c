@@ -16,13 +16,10 @@
  *	Initialize System
  */
 
-#include "kernel.h"
-#include "sysinit.h"
-#include "patch.h"
-#include <tk/util.h>
-#include <sys/debug.h>
-
-#include "utk_config.h"
+#include <tk/tk_typedef.h>
+#include <tk/errno.h>
+#include <typedef.h>
+#include <tk/syscall.h>
 
 /*
  * Initialize sequence before micro T-Kernel starts

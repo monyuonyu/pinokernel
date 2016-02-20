@@ -2001,14 +2001,17 @@
       <COptionIgnoreFilesMisra-DefaultValue />
       <COptionCheckLanguageExtension-DefaultValue>False</COptionCheckLanguageExtension-DefaultValue>
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456416895678774</TimeTagModified--0>
+      <TimeTagModified--0>-8587456165021035056</TimeTagModified--0>
       <COptionAnsi-0>False</COptionAnsi-0>
       <COptionAsmPath-0>False</COptionAsmPath-0>
       <COptionCharacterSet-0>Auto</COptionCharacterSet-0>
       <COptionConvertCc-0>None</COptionConvertCc-0>
       <COptionDblSize-0>True</COptionDblSize-0>
       <COptionG-0>True</COptionG-0>
-      <COptionI-0 />
+      <COptionI-0>W:\include
+W:\src\kernel\tkernel\include
+W:\src\kernel\tkernel\config
+</COptionI-0>
       <COptionMemoryModel-0>Auto</COptionMemoryModel-0>
       <COptionMisra-0>Misra2012</COptionMisra-0>
       <COptionOenhance-0>False</COptionOenhance-0>

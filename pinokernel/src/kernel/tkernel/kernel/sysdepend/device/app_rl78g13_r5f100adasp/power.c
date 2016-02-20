@@ -16,7 +16,7 @@
  *	Power-Saving Function
  */
 
-#include "sysmgr.h"
+#include <tk/tk_typedef.h>
 
 /*
  * Switch to power-saving mode

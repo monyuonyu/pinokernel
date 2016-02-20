@@ -11,16 +11,9 @@
  *----------------------------------------------------------------------
  */
 
-/*
- *	cpu_init.c (FM3)
- *	CPU-Dependent Initialization/Finalization
- */
-
-#include "kernel.h"
-#include "task.h"
-#include "cpu_insn.h"
-#include "tkdev_conf.h"
-
+#include <tk/tk_typedef.h>
+#include <tk/errno.h>
+#include <typedef.h>
 
 /*
  * CPU-dependent initialization

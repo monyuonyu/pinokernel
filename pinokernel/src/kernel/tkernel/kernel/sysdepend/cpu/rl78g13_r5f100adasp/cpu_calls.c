@@ -11,23 +11,6 @@
  *----------------------------------------------------------------------
  */
 
-/*
- *	cpu_calls.c (FM3)
- *	CPU-Dependent System Call
- */
-
-/** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "check.h"
-#include "cpu_task.h"
-
-#include <sys/sysinfo.h>
-#include <tk/sysdef.h>
-#include "cpu_insn.h"
-#include "cpu_calls.h"
-/** [END Common Definitions] */
-
 #ifdef USE_FUNC_TK_DIS_DSP
 /*
  * Dispatch enable/disable

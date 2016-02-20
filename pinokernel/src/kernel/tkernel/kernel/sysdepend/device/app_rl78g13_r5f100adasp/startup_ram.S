@@ -15,12 +15,6 @@
  ;    Start up module
  ;
 
-#include "hwconfig.h"
-#include "utk_config.h"
-
-#include <machine.h>
-#include <tk/asm.h>
-
 ;	.code 16
 ;	.syntax unified
 ;	.thumb

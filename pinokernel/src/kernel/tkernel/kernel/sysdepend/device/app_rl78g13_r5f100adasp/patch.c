@@ -16,12 +16,6 @@
  *	System-dependent initialize process
  */
 
-#include <basic.h>
-#include <tk/tkernel.h>
-#include <tk/sysdef.h>
-#include "patch.h"
-
-
 #if USE_SYSDEPEND_PATCH1
 /*
  * System-dependent processes (before start_system)

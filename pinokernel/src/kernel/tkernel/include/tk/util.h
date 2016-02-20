@@ -21,7 +21,7 @@
 #define __TK_UTIL_H__
 
 #include <basic.h>
-#include <tk/typedef.h>
+#include <tk/tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {

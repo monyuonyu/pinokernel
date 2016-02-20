@@ -21,7 +21,7 @@
 #define __TK_DBGSPT_H__
 
 #include <basic.h>
-#include <tk/typedef.h>
+#include <tk/tk_typedef.h>
 #include <tk/syscall.h>
 
 #include <tk/sysdepend/dbgspt_common.h>

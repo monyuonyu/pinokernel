@@ -18,14 +18,6 @@
 
 #define	_in_asm_source_
 
-#include "utk_config.h"
-
-#include <machine.h>
-#include <tk/errno.h>
-#include <tk/sysdef.h>
-#include <tk/asm.h>
-#include <sys/sysinfo.h>
-
 #if USE_TRAP | (USE_DBGSPT & USE_HOOK_TRACE)
 #include "isysconf.h"
 #endif

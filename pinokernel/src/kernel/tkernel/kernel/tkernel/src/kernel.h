@@ -20,7 +20,7 @@
 #define _KERNEL_
 
 #include <basic.h>
-#include <tk/typedef.h>
+#include <tk/tk_typedef.h>
 #include <tk/errno.h>
 #include <tk/syscall.h>
 #include <tk/dbgspt.h>

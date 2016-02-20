@@ -24,7 +24,7 @@
  *		Depending on available stack size, define OUTBUF_SZ by
  *		appropriate value.
  */
-#include <stdarg.h>
+#include <lib/libc/stdarg.h>
 #include <basic.h>
 
 /* Output Buffer size in stack */

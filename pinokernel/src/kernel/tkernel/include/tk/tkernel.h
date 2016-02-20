@@ -21,7 +21,7 @@
 #define __TK_TKERNEL_H__
 
 #include <basic.h>
-#include <tk/typedef.h>
+#include <tk/tk_typedef.h>
 #include <tk/errno.h>
 
 #include <tk/syscall.h>

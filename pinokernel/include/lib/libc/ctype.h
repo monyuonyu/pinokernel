@@ -12,12 +12,8 @@ int ispunct(int);
 int isspace(int);
 int isupper(int);
 int isxdigit(int);
-int tolower(int);
-int toupper(int);
-
-int isblank(int);
-
-int isascii(int);
-int toascii(int);
+int toascii(int c);
+int tolower(int c);
+int toupper(int c);
 
 #endif /* _CTYPE_H_ */

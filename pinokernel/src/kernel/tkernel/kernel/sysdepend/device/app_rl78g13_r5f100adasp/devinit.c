@@ -11,16 +11,9 @@
  *----------------------------------------------------------------------
  */
 
-/*
- *	devinit.c (FM3)
- *	Device-Dependent Initialization
- */
-
-#include "sysinit.h"
-#include "kernel.h"
-#include <tk/sysdef.h>
-#include <sys/sysinfo.h>
-#include <libstr.h>
+#include <tk/tk_typedef.h>
+#include <tk/errno.h>
+#include <typedef.h>
 
 EXPORT	W	knl_taskindp = 0;
 Noinit(EXPORT	UW	knl_taskmode);

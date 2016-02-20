@@ -4987,7 +4987,11 @@
           <Path>DefaultBuild\tm_putstring.obj</Path>
           <Path>DefaultBuild\sio.obj</Path>
         </LinkOrder>
-        <CommonOptions />
+        <CommonOptions>
+          <IncludePathForC>W:\include</IncludePathForC>
+          <IncludePathForC>W:\src\kernel\tkernel\include</IncludePathForC>
+          <IncludePathForC>W:\src\kernel\tkernel\config</IncludePathForC>
+        </CommonOptions>
         <GeneralOptions>
           <SimultaneouslyBuild>True</SimultaneouslyBuild>
         </GeneralOptions>
@@ -4997,6 +5001,9 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I W:\include</Option>
+          <Option>-I W:\src\kernel\tkernel\include</Option>
+          <Option>-I W:\src\kernel\tkernel\config</Option>
         </CompileOptions>
         <AssembleOptions>
           <Option>-cpu=S2</Option>

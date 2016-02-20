@@ -23,7 +23,7 @@
 #include <config.h>
 
 #include <basic.h>
-#include <tk/typedef.h>
+#include <tk/tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {
