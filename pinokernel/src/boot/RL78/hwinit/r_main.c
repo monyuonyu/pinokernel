@@ -75,8 +75,8 @@ void bootmain(void)
 void R_MAIN_UserInit(void)
 {
     /* Start user code. Do not edit comment generated here */
-	R_TAU0_Channel0_Start();    /* フリーランタイマー開始 */
-	EI();                       /* 割り込み許可       */
+	R_TAU0_Channel0_Start();    /* フリーランタイマー開始          */
+	__enable_interrupt();       /* 割り込み許可（コンパイラマクロ）*/
     /* End user code. Do not edit comment generated here */
 }
 
