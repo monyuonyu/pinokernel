@@ -1,6 +1,4 @@
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/string.h"
 
 void *memset(void *s, int c, size_t n)
 {

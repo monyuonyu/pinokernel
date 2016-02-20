@@ -1,29 +1,23 @@
-/*
- * stdlib.h
-*/
-
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
 
-#include "kernel/stddef.h"     /*For size_t and wchar_t*/
+#include "cmn/stddef.h"
 
 typedef struct
 {
-  int   quot;
-  int   rem;
+  int quot;
+  int rem;
 } div_t;
 
 typedef struct
 {
-  long int      quot;
-  long int      rem;
+  long int quot;
+  long int rem;
 } ldiv_t;
 
 #define RAND_MAX        32767
-
 #define EXIT_SUCCESS    0
 #define EXIT_FAILURE    1
-
 #define MB_CUR_MAX      1
 
 void *            malloc(size_t);

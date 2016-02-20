@@ -1,12 +1,4 @@
-/*
- * ascii.cpp
- *
- *  Created on: 2011/05/03
- *      Author: mizu
- */
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libfunc/func.h"
 
 int decto10(char* _str)
 {

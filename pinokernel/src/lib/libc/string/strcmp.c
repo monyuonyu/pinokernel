@@ -1,6 +1,4 @@
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/string.h"
 
 int strcmp(const char *s1, const char *s2)
 { 

@@ -1181,6 +1181,7 @@
         </GeneralOptions>
         <CompileOptions>
           <Option>-cpu=S2</Option>
+          <Option>-cref=%BuildModeName%</Option>
           <Option>-obj_path=%BuildModeName%</Option>
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
@@ -1192,13 +1193,16 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-asmopt=-prn_path=%BuildModeName%</Option>
         </AssembleOptions>
         <LinkOptions>
           <Option>-DEVICE=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
-          <Option>-FOrm=Library=U</Option>
-          <Option>-OUtput=%BuildModeName%\%ProjectName%.lib</Option>
+          <Option>-DEBug</Option>
+          <Option>-FOrm=Relocate</Option>
+          <Option>-OUtput=%BuildModeName%\%ProjectName%.rel</Option>
+          <Option>-LISt</Option>
+          <Option>-SHow=ALL</Option>
           <Option>-NOMessage</Option>
-          <Option>-MEMory=High</Option>
           <Option>-NOLOgo</Option>
           <Option>-EXIt</Option>
         </LinkOptions>
@@ -2298,7 +2302,6 @@
     <BaseDirectory>prj_build\boot</BaseDirectory>
     <Files>
       <Path>..\..\src\boot\RL78\CpuStartUp\cstart.asm</Path>
-      <Path>..\..\src\boot\RL78\CpuStartUp\hdwinit.asm</Path>
       <Path>..\..\src\boot\RL78\CpuStartUp\stkinit.asm</Path>
       <Path>..\..\src\boot\RL78\hwinit\r_cg_cgc.c</Path>
       <Path>..\..\src\boot\RL78\hwinit\r_cg_cgc_user.c</Path>
@@ -2314,7 +2317,6 @@
       <BuildMode Name="DefaultBuild" Active="True">
         <LinkOrder>
           <Path>DefaultBuild\cstart.obj</Path>
-          <Path>DefaultBuild\hdwinit.obj</Path>
           <Path>DefaultBuild\stkinit.obj</Path>
           <Path>DefaultBuild\r_cg_cgc.obj</Path>
           <Path>DefaultBuild\r_cg_cgc_user.obj</Path>
@@ -2325,16 +2327,20 @@
           <Path>DefaultBuild\r_main.obj</Path>
           <Path>DefaultBuild\r_systeminit.obj</Path>
         </LinkOrder>
-        <CommonOptions />
+        <CommonOptions>
+          <IncludePathForC>W:\include\iodriver\RL78</IncludePathForC>
+        </CommonOptions>
         <GeneralOptions>
           <SimultaneouslyBuild>True</SimultaneouslyBuild>
         </GeneralOptions>
         <CompileOptions>
           <Option>-cpu=S2</Option>
+          <Option>-cref=%BuildModeName%</Option>
           <Option>-obj_path=%BuildModeName%</Option>
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I W:\include\iodriver\RL78</Option>
         </CompileOptions>
         <AssembleOptions>
           <Option>-cpu=S2</Option>
@@ -2342,13 +2348,16 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-asmopt=-prn_path=%BuildModeName%</Option>
         </AssembleOptions>
         <LinkOptions>
           <Option>-DEVICE=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
-          <Option>-FOrm=Library=U</Option>
-          <Option>-OUtput=%BuildModeName%\%ProjectName%.lib</Option>
+          <Option>-DEBug</Option>
+          <Option>-FOrm=Relocate</Option>
+          <Option>-OUtput=%BuildModeName%\%ProjectName%.rel</Option>
+          <Option>-LISt</Option>
+          <Option>-SHow=ALL</Option>
           <Option>-NOMessage</Option>
-          <Option>-MEMory=High</Option>
           <Option>-NOLOgo</Option>
           <Option>-EXIt</Option>
         </LinkOptions>
@@ -6126,16 +6135,20 @@
           <Path>DefaultBuild\asciitobin.obj</Path>
           <Path>DefaultBuild\decto10.obj</Path>
         </LinkOrder>
-        <CommonOptions />
+        <CommonOptions>
+          <IncludePathForC>W:\include</IncludePathForC>
+        </CommonOptions>
         <GeneralOptions>
           <SimultaneouslyBuild>True</SimultaneouslyBuild>
         </GeneralOptions>
         <CompileOptions>
           <Option>-cpu=S2</Option>
+          <Option>-cref=%BuildModeName%</Option>
           <Option>-obj_path=%BuildModeName%</Option>
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I W:\include</Option>
         </CompileOptions>
         <AssembleOptions>
           <Option>-cpu=S2</Option>
@@ -6148,6 +6161,8 @@
           <Option>-DEVICE=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-FOrm=Library=U</Option>
           <Option>-OUtput=%BuildModeName%\%ProjectName%.lib</Option>
+          <Option>-LISt</Option>
+          <Option>-SHow=ALL</Option>
           <Option>-NOMessage</Option>
           <Option>-MEMory=High</Option>
           <Option>-NOLOgo</Option>

@@ -1,6 +1,4 @@
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/string.h"
 
 void *memcpy(void * s1, const void * s2, size_t n)
 {

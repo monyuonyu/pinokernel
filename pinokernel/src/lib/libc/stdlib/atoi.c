@@ -1,6 +1,4 @@
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/stdlib.h"
 
 int atoi(const char* _str)
 {

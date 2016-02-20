@@ -1,11 +1,7 @@
-/* 
- * string.h
-*/
-
 #ifndef _STRING_H_
 #define _STRING_H_
 
-#include "kernel/stddef.h"     /*For size_t*/
+#include "cmn/stddef.h"
 
 void * memcpy(void *, const void *, size_t);
 void * memmove(void *, const void *, size_t);
@@ -31,4 +27,3 @@ char * strtok(char *, const char *);
 size_t strxfrm(char *, const char *, size_t);
 
 #endif /* _STRING_H_ */
-

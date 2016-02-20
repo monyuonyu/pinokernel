@@ -118,7 +118,7 @@
       <PostBuildCommands-DefaultValue />
       <GeneralOptionOtherAdditionalOptions-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456418040472993</TimeTagModified--0>
+      <TimeTagModified--0>-8587456405682144449</TimeTagModified--0>
       <BuildMode-0>DefaultBuild</BuildMode-0>
       <Memo-0 />
       <OutputMessageFormat-0>%TargetFiles%</OutputMessageFormat-0>
@@ -135,7 +135,7 @@
       <CompilerVersion-0>
 
 0</CompilerVersion-0>
-      <GeneralOptionCref-0>False</GeneralOptionCref-0>
+      <GeneralOptionCref-0>True</GeneralOptionCref-0>
       <GeneralOptionEnableParallelBuilding-0>False</GeneralOptionEnableParallelBuilding-0>
       <GeneralOptionErrorFolder-0>%BuildModeName%</GeneralOptionErrorFolder-0>
       <GeneralOptionUseMda-0>mda</GeneralOptionUseMda-0>
@@ -210,7 +210,7 @@
       <COptionIgnoreFilesMisra-DefaultValue />
       <COptionCheckLanguageExtension-DefaultValue>False</COptionCheckLanguageExtension-DefaultValue>
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456418040467995</TimeTagModified--0>
+      <TimeTagModified--0>-8587456404035368953</TimeTagModified--0>
       <COptionAnsi-0>False</COptionAnsi-0>
       <COptionAsmPath-0>False</COptionAsmPath-0>
       <COptionCharacterSet-0>Auto</COptionCharacterSet-0>
@@ -288,13 +288,13 @@
       <AsmOptionOtherAdditionalOptions-DefaultValue />
       <AsmOptionUndefine-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456418040457990</TimeTagModified--0>
+      <TimeTagModified--0>-8587456399901884964</TimeTagModified--0>
       <AsmOptionCharacterSet-0>Auto</AsmOptionCharacterSet-0>
       <AsmOptionConvertAsm-0>False</AsmOptionConvertAsm-0>
       <AsmOptionG-0>True</AsmOptionG-0>
       <AsmOptionGoptimize-0>False</AsmOptionGoptimize-0>
       <AsmOptionI-0 />
-      <AsmOptionPrnPath-0>False</AsmOptionPrnPath-0>
+      <AsmOptionPrnPath-0>True</AsmOptionPrnPath-0>
       <AsmOptionBaseNumber-0>Prefix</AsmOptionBaseNumber-0>
       <AsmOptionISystem-0 />
       <AsmOptionPreAssembleCommands-0 />
@@ -544,12 +544,12 @@
       <LibOptionChangeMessageError-DefaultValue>None</LibOptionChangeMessageError-DefaultValue>
       <LibOptionChangeMessageErrorNumber-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456407934000915</TimeTagModified--0>
+      <TimeTagModified--0>-8587456402876830480</TimeTagModified--0>
       <LibOptionDebug-0>Debug</LibOptionDebug-0>
-      <LibOptionForm-0>LibraryU</LibOptionForm-0>
+      <LibOptionForm-0>Relocate</LibOptionForm-0>
       <LibOptionInput-0 />
       <LibOptionLibrary-0 />
-      <LibOptionListShow-0>None</LibOptionListShow-0>
+      <LibOptionListShow-0>ListShowAll</LibOptionListShow-0>
       <LibOptionMemory-0>False</LibOptionMemory-0>
       <LibOptionMessage-0>False</LibOptionMessage-0>
       <LibOptionBinary-0 />
@@ -562,7 +562,7 @@
       <LibOptionChangeMessageInformation-0>None</LibOptionChangeMessageInformation-0>
       <LibOptionLibraryStandard-0>False</LibOptionLibraryStandard-0>
       <LibOptionLogo-0>False</LibOptionLogo-0>
-      <LibOptionOutputFileName-0>%ProjectName%.lib</LibOptionOutputFileName-0>
+      <LibOptionOutputFileName-0>%ProjectName%.rel</LibOptionOutputFileName-0>
       <LibOptionShowSection-0>False</LibOptionShowSection-0>
       <LibOptionChangeMessageInformationNumber-0 />
       <LibOptionLibraryRuntime-0>False</LibOptionLibraryRuntime-0>

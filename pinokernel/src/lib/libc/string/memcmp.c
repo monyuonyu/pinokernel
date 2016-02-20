@@ -1,6 +1,4 @@
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/string.h"
 
 int memcmp(const void *m1, const void *m2, size_t n)
 {

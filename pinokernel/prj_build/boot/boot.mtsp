@@ -16,13 +16,6 @@
       <TreeImageGuid>f654126d-e7ad-426d-be34-8455271d959b</TreeImageGuid>
       <ParentItem>9dafe52d-e8a7-4a3a-b057-67045913aa24</ParentItem>
     </Instance>
-    <Instance Guid="07b6e679-e04d-485f-9d2a-2eb555bf8e74">
-      <Name>hdwinit.asm</Name>
-      <Type>File</Type>
-      <RelativePath>..\..\src\boot\RL78\CpuStartUp\hdwinit.asm</RelativePath>
-      <TreeImageGuid>f654126d-e7ad-426d-be34-8455271d959b</TreeImageGuid>
-      <ParentItem>9dafe52d-e8a7-4a3a-b057-67045913aa24</ParentItem>
-    </Instance>
     <Instance Guid="951a065d-6a96-4fc7-ba52-59aa51699148">
       <Name>stkinit.asm</Name>
       <Type>File</Type>
@@ -133,27 +126,25 @@
       <CurrentBuildMode>DefaultBuild</CurrentBuildMode>
       <SourceItemGuid0>7ee3bb0b-afd0-421a-b1d4-a40cfd3af555</SourceItemGuid0>
       <SourceItemType0>AsmSource</SourceItemType0>
-      <SourceItemGuid1>07b6e679-e04d-485f-9d2a-2eb555bf8e74</SourceItemGuid1>
+      <SourceItemGuid1>951a065d-6a96-4fc7-ba52-59aa51699148</SourceItemGuid1>
       <SourceItemType1>AsmSource</SourceItemType1>
-      <SourceItemGuid2>951a065d-6a96-4fc7-ba52-59aa51699148</SourceItemGuid2>
-      <SourceItemType2>AsmSource</SourceItemType2>
-      <SourceItemGuid3>c992e5d0-8de2-4621-9bf1-6f192a7fd5c6</SourceItemGuid3>
+      <SourceItemGuid2>c992e5d0-8de2-4621-9bf1-6f192a7fd5c6</SourceItemGuid2>
+      <SourceItemType2>CSource</SourceItemType2>
+      <SourceItemGuid3>42316c47-cac2-41dc-9b9c-97b0a06dd194</SourceItemGuid3>
       <SourceItemType3>CSource</SourceItemType3>
-      <SourceItemGuid4>42316c47-cac2-41dc-9b9c-97b0a06dd194</SourceItemGuid4>
+      <SourceItemGuid4>471d5fa3-c13f-401c-b294-07ae387c61af</SourceItemGuid4>
       <SourceItemType4>CSource</SourceItemType4>
-      <SourceItemGuid5>471d5fa3-c13f-401c-b294-07ae387c61af</SourceItemGuid5>
+      <SourceItemGuid5>a54f7315-fbac-4115-87ff-cc7d8a954179</SourceItemGuid5>
       <SourceItemType5>CSource</SourceItemType5>
-      <SourceItemGuid6>a54f7315-fbac-4115-87ff-cc7d8a954179</SourceItemGuid6>
+      <SourceItemGuid6>907d5091-dbc4-446e-bb26-2da229ddad44</SourceItemGuid6>
       <SourceItemType6>CSource</SourceItemType6>
-      <SourceItemGuid7>907d5091-dbc4-446e-bb26-2da229ddad44</SourceItemGuid7>
+      <SourceItemGuid7>cc48b17f-549d-485b-9da2-71b156f3e45e</SourceItemGuid7>
       <SourceItemType7>CSource</SourceItemType7>
-      <SourceItemGuid8>cc48b17f-549d-485b-9da2-71b156f3e45e</SourceItemGuid8>
+      <SourceItemGuid8>7e26d15b-fa7e-48dd-9e09-250a71a75049</SourceItemGuid8>
       <SourceItemType8>CSource</SourceItemType8>
-      <SourceItemGuid9>7e26d15b-fa7e-48dd-9e09-250a71a75049</SourceItemGuid9>
+      <SourceItemGuid9>43ee5800-5fa7-471a-bb58-eaf9dfdedfed</SourceItemGuid9>
       <SourceItemType9>CSource</SourceItemType9>
-      <SourceItemGuid10>43ee5800-5fa7-471a-bb58-eaf9dfdedfed</SourceItemGuid10>
-      <SourceItemType10>CSource</SourceItemType10>
-      <SourceItemCount>11</SourceItemCount>
+      <SourceItemCount>10</SourceItemCount>
       <LastDeviceChangedCounter>0</LastDeviceChangedCounter>
     </Instance>
     <Instance Guid="6bb7060d-7e24-4135-bd9b-7db166417523">
@@ -208,7 +199,7 @@
       <PostBuildCommands-DefaultValue />
       <GeneralOptionOtherAdditionalOptions-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456417286618409</TimeTagModified--0>
+      <TimeTagModified--0>-8587456400998098978</TimeTagModified--0>
       <BuildMode-0>DefaultBuild</BuildMode-0>
       <Memo-0 />
       <OutputMessageFormat-0>%TargetFiles%</OutputMessageFormat-0>
@@ -225,7 +216,7 @@
       <CompilerVersion-0>
 
 0</CompilerVersion-0>
-      <GeneralOptionCref-0>False</GeneralOptionCref-0>
+      <GeneralOptionCref-0>True</GeneralOptionCref-0>
       <GeneralOptionEnableParallelBuilding-0>False</GeneralOptionEnableParallelBuilding-0>
       <GeneralOptionErrorFolder-0>%BuildModeName%</GeneralOptionErrorFolder-0>
       <GeneralOptionUseMda-0>mda</GeneralOptionUseMda-0>
@@ -300,14 +291,15 @@
       <COptionIgnoreFilesMisra-DefaultValue />
       <COptionCheckLanguageExtension-DefaultValue>False</COptionCheckLanguageExtension-DefaultValue>
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456417286613414</TimeTagModified--0>
+      <TimeTagModified--0>-8587456399140886950</TimeTagModified--0>
       <COptionAnsi-0>False</COptionAnsi-0>
       <COptionAsmPath-0>False</COptionAsmPath-0>
       <COptionCharacterSet-0>Auto</COptionCharacterSet-0>
       <COptionConvertCc-0>None</COptionConvertCc-0>
       <COptionDblSize-0>True</COptionDblSize-0>
       <COptionG-0>True</COptionG-0>
-      <COptionI-0 />
+      <COptionI-0>W:\include\iodriver\RL78
+</COptionI-0>
       <COptionMemoryModel-0>Auto</COptionMemoryModel-0>
       <COptionMisra-0>Misra2012</COptionMisra-0>
       <COptionOenhance-0>False</COptionOenhance-0>
@@ -378,13 +370,13 @@
       <AsmOptionOtherAdditionalOptions-DefaultValue />
       <AsmOptionUndefine-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456417286603413</TimeTagModified--0>
+      <TimeTagModified--0>-8587456399978687418</TimeTagModified--0>
       <AsmOptionCharacterSet-0>Auto</AsmOptionCharacterSet-0>
       <AsmOptionConvertAsm-0>False</AsmOptionConvertAsm-0>
       <AsmOptionG-0>True</AsmOptionG-0>
       <AsmOptionGoptimize-0>False</AsmOptionGoptimize-0>
       <AsmOptionI-0 />
-      <AsmOptionPrnPath-0>False</AsmOptionPrnPath-0>
+      <AsmOptionPrnPath-0>True</AsmOptionPrnPath-0>
       <AsmOptionBaseNumber-0>Prefix</AsmOptionBaseNumber-0>
       <AsmOptionISystem-0 />
       <AsmOptionPreAssembleCommands-0 />
@@ -468,7 +460,7 @@
       <LinkOptionRrm-DefaultValue>False</LinkOptionRrm-DefaultValue>
       <LinkOptionRrmValue-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456417286603413</TimeTagModified--0>
+      <TimeTagModified--0>-8587456397120089657</TimeTagModified--0>
       <LinkOptionAutoSectionLayout-0>True</LinkOptionAutoSectionLayout-0>
       <LinkOptionCpu-0>False</LinkOptionCpu-0>
       <LinkOptionDebug-0>Debug</LinkOptionDebug-0>
@@ -634,12 +626,12 @@
       <LibOptionChangeMessageError-DefaultValue>None</LibOptionChangeMessageError-DefaultValue>
       <LibOptionChangeMessageErrorNumber-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587456417286593405</TimeTagModified--0>
+      <TimeTagModified--0>-8587456397120089657</TimeTagModified--0>
       <LibOptionDebug-0>Debug</LibOptionDebug-0>
-      <LibOptionForm-0>LibraryU</LibOptionForm-0>
+      <LibOptionForm-0>Relocate</LibOptionForm-0>
       <LibOptionInput-0 />
       <LibOptionLibrary-0 />
-      <LibOptionListShow-0>None</LibOptionListShow-0>
+      <LibOptionListShow-0>ListShowAll</LibOptionListShow-0>
       <LibOptionMemory-0>False</LibOptionMemory-0>
       <LibOptionMessage-0>False</LibOptionMessage-0>
       <LibOptionBinary-0 />
@@ -652,7 +644,7 @@
       <LibOptionChangeMessageInformation-0>None</LibOptionChangeMessageInformation-0>
       <LibOptionLibraryStandard-0>False</LibOptionLibraryStandard-0>
       <LibOptionLogo-0>False</LibOptionLogo-0>
-      <LibOptionOutputFileName-0>%ProjectName%.lib</LibOptionOutputFileName-0>
+      <LibOptionOutputFileName-0>%ProjectName%.rel</LibOptionOutputFileName-0>
       <LibOptionShowSection-0>False</LibOptionShowSection-0>
       <LibOptionChangeMessageInformationNumber-0 />
       <LibOptionLibraryRuntime-0>False</LibOptionLibraryRuntime-0>
@@ -685,10 +677,6 @@
     <Instance Guid="7ee3bb0b-afd0-421a-b1d4-a40cfd3af555">
       <ItemAddTime>635915946187890127</ItemAddTime>
       <ItemAddTimeCount>0</ItemAddTimeCount>
-    </Instance>
-    <Instance Guid="07b6e679-e04d-485f-9d2a-2eb555bf8e74">
-      <ItemAddTime>635915946187890127</ItemAddTime>
-      <ItemAddTimeCount>1</ItemAddTimeCount>
     </Instance>
     <Instance Guid="951a065d-6a96-4fc7-ba52-59aa51699148">
       <ItemAddTime>635915946187890127</ItemAddTime>
@@ -735,12 +723,12 @@
       <SourceItem1-IsLockedByUser>False</SourceItem1-IsLockedByUser>
       <SourceItem1-BuildingTarget-0>True</SourceItem1-BuildingTarget-0>
       <SourceItem1-IndividualAssembleOption-0>False</SourceItem1-IndividualAssembleOption-0>
-      <TimeTagModified-SourceItem2--0>-8587456414666855679</TimeTagModified-SourceItem2--0>
-      <SourceItem2-IsLockedByUser>False</SourceItem2-IsLockedByUser>
-      <SourceItem2-BuildingTarget-0>True</SourceItem2-BuildingTarget-0>
-      <SourceItem2-IndividualAssembleOption-0>False</SourceItem2-IndividualAssembleOption-0>
     </Instance>
     <Instance Guid="f782db2c-1c42-4ca1-af6a-53a3a5067217">
+      <TimeTagModified-SourceItem2--0>-8587456414438939062</TimeTagModified-SourceItem2--0>
+      <SourceItem2-IsLockedByUser>False</SourceItem2-IsLockedByUser>
+      <SourceItem2-BuildingTarget-0>True</SourceItem2-BuildingTarget-0>
+      <SourceItem2-IndividualCompileOption-0>False</SourceItem2-IndividualCompileOption-0>
       <TimeTagModified-SourceItem3--0>-8587456414438939062</TimeTagModified-SourceItem3--0>
       <SourceItem3-IsLockedByUser>False</SourceItem3-IsLockedByUser>
       <SourceItem3-BuildingTarget-0>True</SourceItem3-BuildingTarget-0>
@@ -765,14 +753,10 @@
       <SourceItem8-IsLockedByUser>False</SourceItem8-IsLockedByUser>
       <SourceItem8-BuildingTarget-0>True</SourceItem8-BuildingTarget-0>
       <SourceItem8-IndividualCompileOption-0>False</SourceItem8-IndividualCompileOption-0>
-      <TimeTagModified-SourceItem9--0>-8587456414438939062</TimeTagModified-SourceItem9--0>
+      <TimeTagModified-SourceItem9--0>-8587456414438934063</TimeTagModified-SourceItem9--0>
       <SourceItem9-IsLockedByUser>False</SourceItem9-IsLockedByUser>
       <SourceItem9-BuildingTarget-0>True</SourceItem9-BuildingTarget-0>
       <SourceItem9-IndividualCompileOption-0>False</SourceItem9-IndividualCompileOption-0>
-      <TimeTagModified-SourceItem10--0>-8587456414438934063</TimeTagModified-SourceItem10--0>
-      <SourceItem10-IsLockedByUser>False</SourceItem10-IsLockedByUser>
-      <SourceItem10-BuildingTarget-0>True</SourceItem10-BuildingTarget-0>
-      <SourceItem10-IndividualCompileOption-0>False</SourceItem10-IndividualCompileOption-0>
     </Instance>
   </Class>
   <Class Guid="44fa27c9-0aa0-4297-bd3b-2c5c5bdb8881">
