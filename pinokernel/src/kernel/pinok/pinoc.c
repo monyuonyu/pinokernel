@@ -280,7 +280,7 @@ static pinoc_thread* thread_run(pinoc_func_t func, char *name, int stack_size, i
 //}
 
 // ここからカーネルのプログラムが始まる。
-int main()
+int pinokernel_main()
 {
 
 	static char str2[] = "Welcome PINoC Kernel!!\n\r";

@@ -102,7 +102,7 @@ EXPORT void sio_recv_frame( UB* buf, INT size )
 
 EXPORT void sio_init(void)
 {
-	UW	r;
+//	UW	r;
 
 // #if TERM_PORT == 0
 	// r = *GPIO_ADE;

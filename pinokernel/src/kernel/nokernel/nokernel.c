@@ -6,7 +6,7 @@ void SystemInit()
 
 }
 /* Call the application's entry point.*/
-void main()
+void nokernel_main()
 {
 	while(1);
 }
