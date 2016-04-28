@@ -132,9 +132,6 @@
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\startup_rom.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\startup_ram.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\icrt0.S</Path>
-      <Path>src\boot\STM32F401\startup_stm32f401xx.S</Path>
-      <Path>src\boot\h8300-hms\start.S</Path>
-      <Path>src\boot\h8300-hms\intr.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\disint.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\svc\tk_swri_dev.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\svc\tk_ter_tsk.S</Path>
@@ -282,10 +279,173 @@
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\svc\td_acp_que.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\svc\td_cal_que.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\svc\callsvc.S</Path>
-      <Path>src\kernel\pinok\start.S</Path>
-      <Path>src\kernel\pinok\dispatch.S</Path>
       <Path>src\boot\RL78\CpuStartUp\cstart.asm</Path>
       <Path>src\boot\RL78\CpuStartUp\stkinit.asm</Path>
+      <Path>src\boot\RL78\hwinit\r_cg_cgc.h</Path>
+      <Path>src\boot\RL78\hwinit\r_cg_macrodriver.h</Path>
+      <Path>src\boot\RL78\hwinit\r_cg_port.h</Path>
+      <Path>src\boot\RL78\hwinit\r_cg_timer.h</Path>
+      <Path>src\boot\RL78\hwinit\r_cg_userdefine.h</Path>
+      <Path>include\iodriver\RL78\iodefine.h</Path>
+      <Path>src\kernel\pinok\pinoc.h</Path>
+      <Path>include\kernel\pinok\intr.h</Path>
+      <Path>src\mdl\XMODEM\XMODEM.h</Path>
+      <Path>include\kernel\pinok\interrupt.h</Path>
+      <Path>include\lib\libc\stddef.h</Path>
+      <Path>include\cmn\typedef.h</Path>
+      <Path>src\iodriver\h8300-hms\NIC\DP8390.h</Path>
+      <Path>include\lib\libfunc\func.h</Path>
+      <Path>include\kernel\tkernel\machine_common.h</Path>
+      <Path>include\kernel\tkernel\machine.h</Path>
+      <Path>include\iodriver\h8300h\3069f_sci.h</Path>
+      <Path>src\kernel\pinok\cvector.h</Path>
+      <Path>include\kernel\tkernel\bitop.h</Path>
+      <Path>include\kernel\tkernel\libtk_config.h</Path>
+      <Path>include\kernel\tkernel\libstr_config.h</Path>
+      <Path>include\kernel\tkernel\tkdev_timer.h</Path>
+      <Path>include\kernel\tkernel\tkdev_conf.h</Path>
+      <Path>include\kernel\tkernel\patch.h</Path>
+      <Path>include\kernel\tkernel\offset.h</Path>
+      <Path>include\kernel\tkernel\hwconfig.h</Path>
+      <Path>include\kernel\tkernel\cpu_task.h</Path>
+      <Path>include\kernel\tkernel\cpu_status.h</Path>
+      <Path>include\kernel\tkernel\cpu_insn.h</Path>
+      <Path>include\kernel\tkernel\cpu_conf.h</Path>
+      <Path>include\kernel\tkernel\cpu_calls.h</Path>
+      <Path>include\kernel\tkernel\inittask_def.h</Path>
+      <Path>include\kernel\tkernel\sysmain.h</Path>
+      <Path>include\kernel\tkernel\sysinit.h</Path>
+      <Path>include\kernel\tkernel\winfo.h</Path>
+      <Path>include\kernel\tkernel\timer.h</Path>
+      <Path>include\kernel\tkernel\wait.h</Path>
+      <Path>include\kernel\tkernel\time_calls.h</Path>
+      <Path>include\kernel\tkernel\task.h</Path>
+      <Path>include\kernel\tkernel\task_sync.h</Path>
+      <Path>include\kernel\tkernel\sysmgr.h</Path>
+      <Path>include\kernel\tkernel\subsystem.h</Path>
+      <Path>include\kernel\tkernel\semaphore.h</Path>
+      <Path>include\kernel\tkernel\rendezvous.h</Path>
+      <Path>include\kernel\tkernel\mutex.h</Path>
+      <Path>include\kernel\tkernel\ready_queue.h</Path>
+      <Path>include\kernel\tkernel\misc_calls.h</Path>
+      <Path>include\kernel\tkernel\mempool.h</Path>
+      <Path>include\kernel\tkernel\messagebuf.h</Path>
+      <Path>include\kernel\tkernel\mempfix.h</Path>
+      <Path>include\kernel\tkernel\mailbox.h</Path>
+      <Path>include\kernel\tkernel\memory.h</Path>
+      <Path>include\kernel\tkernel\longlong.h</Path>
+      <Path>include\kernel\tkernel\kernel.h</Path>
+      <Path>include\kernel\tkernel\limits.h</Path>
+      <Path>include\kernel\tkernel\isysconf.h</Path>
+      <Path>include\kernel\tkernel\isyscall.h</Path>
+      <Path>include\kernel\tkernel\device.h</Path>
+      <Path>include\kernel\tkernel\eventflag.h</Path>
+      <Path>include\kernel\tkernel\check.h</Path>
+      <Path>include\kernel\tkernel\tmonitor.h</Path>
+      <Path>include\kernel\tkernel\util.h</Path>
+      <Path>include\kernel\tkernel\tk_typedef.h</Path>
+      <Path>include\kernel\tkernel\tkernel.h</Path>
+      <Path>include\kernel\tkernel\syslib.h</Path>
+      <Path>include\kernel\tkernel\sysdef_common.h</Path>
+      <Path>include\kernel\tkernel\syslib_common.h</Path>
+      <Path>include\kernel\tkernel\syscall_common.h</Path>
+      <Path>include\kernel\tkernel\asm_common.h</Path>
+      <Path>include\kernel\tkernel\dbgspt_common.h</Path>
+      <Path>include\kernel\tkernel\syslib_depend.h</Path>
+      <Path>include\kernel\tkernel\sysdef_depend.h</Path>
+      <Path>include\kernel\tkernel\dbgspt_depend.h</Path>
+      <Path>include\kernel\tkernel\cpuattr.h</Path>
+      <Path>include\kernel\tkernel\cpudef.h</Path>
+      <Path>include\kernel\tkernel\asm_depend.h</Path>
+      <Path>include\kernel\tkernel\sysdef.h</Path>
+      <Path>include\kernel\tkernel\syscall.h</Path>
+      <Path>include\kernel\tkernel\errno.h</Path>
+      <Path>include\kernel\tkernel\dbgspt.h</Path>
+      <Path>include\kernel\tkernel\asm.h</Path>
+      <Path>include\kernel\tkernel\sysinfo.h</Path>
+      <Path>include\kernel\tkernel\sysinfo_common.h</Path>
+      <Path>include\kernel\tkernel\str_align_common.h</Path>
+      <Path>include\kernel\tkernel\profile_common.h</Path>
+      <Path>include\kernel\tkernel\sysinfo_depend.h</Path>
+      <Path>include\kernel\tkernel\str_align_depend.h</Path>
+      <Path>include\kernel\tkernel\machine_depend.h</Path>
+      <Path>include\kernel\tkernel\profile_depend.h</Path>
+      <Path>include\kernel\tkernel\tksvctbl.h</Path>
+      <Path>include\kernel\tkernel\tkfncd32.h</Path>
+      <Path>include\kernel\tkernel\tkfncd16.h</Path>
+      <Path>include\kernel\tkernel\tdsvctbl.h</Path>
+      <Path>include\kernel\tkernel\tkfncd.h</Path>
+      <Path>include\kernel\tkernel\tdfncd32.h</Path>
+      <Path>include\kernel\tkernel\tdfncd16.h</Path>
+      <Path>include\kernel\tkernel\tdfncd.h</Path>
+      <Path>include\kernel\tkernel\queue.h</Path>
+      <Path>include\kernel\tkernel\str_align.h</Path>
+      <Path>include\kernel\tkernel\imalloc.h</Path>
+      <Path>include\kernel\tkernel\profile.h</Path>
+      <Path>include\kernel\tkernel\debug.h</Path>
+      <Path>include\kernel\tkernel\stdtype.h</Path>
+      <Path>include\kernel\tkernel\basic.h</Path>
+      <Path>include\kernel\tkernel\libstr.h</Path>
+      <Path>include\kernel\tkernel\utk_config_func.h</Path>
+      <Path>include\kernel\tkernel\utk_config.h</Path>
+      <Path>include\kernel\tkernel\tdsvcproxy.h</Path>
+      <Path>include\kernel\tkernel\tksvcproxy.h</Path>
+      <Path>include\kernel\tkernel\config.h</Path>
+      <Path>include\kernel\tkernel\utk_config_depend.h</Path>
+      <Path>include\lib\libc\string.h</Path>
+      <Path>include\lib\libc\stdlib.h</Path>
+      <Path>include\lib\libc\stdarg.h</Path>
+      <Path>include\lib\libc\stdio.h</Path>
+      <Path>include\lib\libc\math.h</Path>
+      <Path>include\lib\libc\ctype.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_usart.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_wwdg.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_tim.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_syscfg.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_spdifrx.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_spi.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_sai.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_sdio.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_rtc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_rcc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_rng.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_pwr.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_qspi.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_ltdc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_iwdg.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_i2c.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_gpio.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_hash.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_fmpi2c.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_fsmc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_fmc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_flash.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_flash_ramfunc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_dma2d.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_exti.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_dcmi.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_dma.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_dac.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_dbgmcu.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_crc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_cryp.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_cec.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_adc.h</Path>
+      <Path>include\iodriver\STM32F4XX\stm32f4xx_can.h</Path>
+      <Path>include\iodriver\STM32F4XX\misc.h</Path>
+      <Path>config\STM32F401\system_stm32f4xx.h</Path>
+      <Path>config\STM32F401\stm32f4xx.h</Path>
+      <Path>config\STM32F401\stm32f4xx_conf.h</Path>
+      <Path>config\STM32F401\stdint.h</Path>
+      <Path>config\STM32F401\stdint-gcc.h</Path>
+      <Path>config\STM32F401\core_cmSimd.h</Path>
+      <Path>config\STM32F401\core_cmFunc.h</Path>
+      <Path>config\STM32F401\core_cmInstr.h</Path>
+      <Path>config\STM32F401\core_cm4.h</Path>
+      <Path>include\iodriver\h8300h\3069s.h</Path>
+      <Path>include\iodriver\h8300h\3069f_io.h</Path>
+      <Path>src\boot\h8300-hms\read_elf.h</Path>
+      <Path>src\boot\h8300-hms\load_mot.h</Path>
     </Files>
     <Device Series="RL78">R5F100AD</Device>
     <BuildOptions Name="CC-RL" Version="V1.02.00">
@@ -416,9 +576,6 @@
           <Path>DefaultBuild\startup_rom.obj</Path>
           <Path>DefaultBuild\startup_ram.obj</Path>
           <Path>DefaultBuild\icrt0.obj</Path>
-          <Path>DefaultBuild\startup_stm32f401xx.obj</Path>
-          <Path>DefaultBuild\start.obj</Path>
-          <Path>DefaultBuild\intr.obj</Path>
           <Path>DefaultBuild\disint.obj</Path>
           <Path>DefaultBuild\tk_swri_dev.obj</Path>
           <Path>DefaultBuild\tk_ter_tsk.obj</Path>
@@ -566,12 +723,24 @@
           <Path>DefaultBuild\td_acp_que.obj</Path>
           <Path>DefaultBuild\td_cal_que.obj</Path>
           <Path>DefaultBuild\callsvc.obj</Path>
-          <Path>DefaultBuild\start.obj</Path>
-          <Path>DefaultBuild\dispatch.obj</Path>
           <Path>DefaultBuild\cstart.obj</Path>
           <Path>DefaultBuild\stkinit.obj</Path>
         </LinkOrder>
         <CommonOptions>
+          <IncludePathForC>src\boot\h8300-hms</IncludePathForC>
+          <IncludePathForC>config\STM32F401</IncludePathForC>
+          <IncludePathForC>include\iodriver\STM32F4XX</IncludePathForC>
+          <IncludePathForC>include\iodriver\h8300h</IncludePathForC>
+          <IncludePathForC>include\kernel\tkernel</IncludePathForC>
+          <IncludePathForC>include\lib\libfunc</IncludePathForC>
+          <IncludePathForC>src\iodriver\h8300-hms\NIC</IncludePathForC>
+          <IncludePathForC>include\cmn</IncludePathForC>
+          <IncludePathForC>include\lib\libc</IncludePathForC>
+          <IncludePathForC>src\mdl\XMODEM</IncludePathForC>
+          <IncludePathForC>include\kernel\pinok</IncludePathForC>
+          <IncludePathForC>src\kernel\pinok</IncludePathForC>
+          <IncludePathForC>include\iodriver\RL78</IncludePathForC>
+          <IncludePathForC>src\boot\RL78\hwinit</IncludePathForC>
           <IncludePathForC>W:/include</IncludePathForC>
           <IncludePathForAsm>W:\include</IncludePathForAsm>
         </CommonOptions>
@@ -584,6 +753,20 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I src\boot\h8300-hms</Option>
+          <Option>-I config\STM32F401</Option>
+          <Option>-I include\iodriver\STM32F4XX</Option>
+          <Option>-I include\iodriver\h8300h</Option>
+          <Option>-I include\kernel\tkernel</Option>
+          <Option>-I include\lib\libfunc</Option>
+          <Option>-I src\iodriver\h8300-hms\NIC</Option>
+          <Option>-I include\cmn</Option>
+          <Option>-I include\lib\libc</Option>
+          <Option>-I src\mdl\XMODEM</Option>
+          <Option>-I include\kernel\pinok</Option>
+          <Option>-I src\kernel\pinok</Option>
+          <Option>-I include\iodriver\RL78</Option>
+          <Option>-I src\boot\RL78\hwinit</Option>
           <Option>-I W:/include</Option>
         </CompileOptions>
         <AssembleOptions>
@@ -1580,16 +1763,16 @@
         &lt;cg_security0 Name="cg_security0" Value="00" /&gt;
         &lt;cg_security1 Name="cg_security1" Value="00" /&gt;
         &lt;clock_option Name="clock_option" Value="E8" /&gt;
-        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;pior_value Name="pior_value" Value="00" /&gt;
         &lt;cg_option Name="cg_option" Value="04" /&gt;
         &lt;cg_security8 Name="cg_security8" Value="00" /&gt;
         &lt;cg_security6 Name="cg_security6" Value="00" /&gt;
         &lt;ocdstart Name="ocdstart" Value="0BE00" /&gt;
-        &lt;cg_security4 Name="cg_security4" Value="00" /&gt;
+        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;cg_iawctl_value Name="cg_iawctl_value" Value="00" /&gt;
         &lt;lvi_option Name="lvi_option" Value="FF" /&gt;
         &lt;wdt_option Name="wdt_option" Value="FF" /&gt;
+        &lt;cg_security4 Name="cg_security4" Value="00" /&gt;
       &lt;/GlobleUserTag&gt;
     &lt;/TAG&gt;
   &lt;/DIR&gt;
