@@ -1,4 +1,4 @@
-﻿/* スタートアップからコールされる */
+/* スタートアップからコールされる */
 
 /* Call the clock system intitialization function.*/
 void SystemInit()
