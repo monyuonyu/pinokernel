@@ -134,13 +134,13 @@ int boot_main()
 	sci_read_intr_enable(SCI_NO_1);
 
 	// 割り込みENABLE
-	INTERUUPT_ENABLE
+//	INTERUUPT_ENABLE
 
 
 	sci_write_str(SCI_NO_1, "PINoC Console>_ \r\n");
 
 	// Sleep
-	as_SLEEP_LOOP_3069
+//	as_SLEEP_LOOP_3069
 
 //	sci_write_str(SCI_NO_1, (char*)&text_start);
 
@@ -234,7 +234,7 @@ void init()
 	memset(&buf_start, 0, (long*)0x600);										// bufセクション初期化
 
 	// 割り込みDISABLE
-	INTERUUPT_DISABLE
+//	INTERUUPT_DISABLE
 
 	// ソフト割り込み初期化
 	softvec_init();
