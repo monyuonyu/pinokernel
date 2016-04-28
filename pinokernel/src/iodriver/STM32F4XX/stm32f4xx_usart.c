@@ -89,8 +89,8 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include "iodriver\STM32F4XX\stm32f4xx_usart.h"
-#include "iodriver\STM32F4XX\stm32f4xx_rcc.h"
+#include "stm32f4xx_usart.h"
+#include "stm32f4xx_rcc.h"
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{

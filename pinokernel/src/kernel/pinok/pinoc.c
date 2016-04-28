@@ -5,12 +5,12 @@
  *      Author: mizu
  */
 
-#include "iodriver/h8300h/3069f_io.h"
-#include "iodriver/h8300h/3069f_sci.h"
+#include "3069f_io.h"
+#include "3069f_sci.h"
 // #include "dbg.hpp"
 #include "pinoc.h"
-#include "kernel/pinok/interrupt.h"
-#include "kernel/pinok/intr.h"
+#include "interrupt.h"
+#include "intr.h"
 
 ///********************************************************************************
 // * 		グローバル宣言

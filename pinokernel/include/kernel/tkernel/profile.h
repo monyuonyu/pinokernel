@@ -20,7 +20,7 @@
 #ifndef __SYS_PROFILE_H__
 #define __SYS_PROFILE_H__
 
-#include <sys/sysdepend/profile_common.h>
+#include <profile_common.h>
 
 #if !(TK_SUPPORT_USERBUF || TK_SUPPORT_AUTOBUF)
 # error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."

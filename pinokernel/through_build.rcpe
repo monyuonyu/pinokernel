@@ -727,21 +727,21 @@
           <Path>DefaultBuild\stkinit.obj</Path>
         </LinkOrder>
         <CommonOptions>
-          <IncludePathForC>src\boot\h8300-hms</IncludePathForC>
-          <IncludePathForC>config\STM32F401</IncludePathForC>
-          <IncludePathForC>include\iodriver\STM32F4XX</IncludePathForC>
-          <IncludePathForC>include\iodriver\h8300h</IncludePathForC>
-          <IncludePathForC>include\kernel\tkernel</IncludePathForC>
-          <IncludePathForC>include\lib\libfunc</IncludePathForC>
-          <IncludePathForC>src\iodriver\h8300-hms\NIC</IncludePathForC>
-          <IncludePathForC>include\cmn</IncludePathForC>
-          <IncludePathForC>include\lib\libc</IncludePathForC>
-          <IncludePathForC>src\mdl\XMODEM</IncludePathForC>
-          <IncludePathForC>include\kernel\pinok</IncludePathForC>
-          <IncludePathForC>src\kernel\pinok</IncludePathForC>
-          <IncludePathForC>include\iodriver\RL78</IncludePathForC>
-          <IncludePathForC>src\boot\RL78\hwinit</IncludePathForC>
-          <IncludePathForC>W:/include</IncludePathForC>
+          <IncludePathForC>W:\config\h8300-hms</IncludePathForC>
+          <IncludePathForC>W:\config\RL78</IncludePathForC>
+          <IncludePathForC>W:\config\STM32F401</IncludePathForC>
+          <IncludePathForC>W:\include\cmn</IncludePathForC>
+          <IncludePathForC>W:\include\iodriver</IncludePathForC>
+          <IncludePathForC>W:\include\kernel</IncludePathForC>
+          <IncludePathForC>W:\include\lib</IncludePathForC>
+          <IncludePathForC>W:\include\mdl</IncludePathForC>
+          <IncludePathForC>W:\include\iodriver\h8300h</IncludePathForC>
+          <IncludePathForC>W:\include\iodriver\RL78</IncludePathForC>
+          <IncludePathForC>W:\include\iodriver\STM32F4XX</IncludePathForC>
+          <IncludePathForC>W:\include\kernel\pinok</IncludePathForC>
+          <IncludePathForC>W:\include\kernel\tkernel</IncludePathForC>
+          <IncludePathForC>W:\include\lib\libc</IncludePathForC>
+          <IncludePathForC>W:\include\lib\libfunc</IncludePathForC>
           <IncludePathForAsm>W:\include</IncludePathForAsm>
         </CommonOptions>
         <GeneralOptions>
@@ -753,21 +753,21 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
-          <Option>-I src\boot\h8300-hms</Option>
-          <Option>-I config\STM32F401</Option>
-          <Option>-I include\iodriver\STM32F4XX</Option>
-          <Option>-I include\iodriver\h8300h</Option>
-          <Option>-I include\kernel\tkernel</Option>
-          <Option>-I include\lib\libfunc</Option>
-          <Option>-I src\iodriver\h8300-hms\NIC</Option>
-          <Option>-I include\cmn</Option>
-          <Option>-I include\lib\libc</Option>
-          <Option>-I src\mdl\XMODEM</Option>
-          <Option>-I include\kernel\pinok</Option>
-          <Option>-I src\kernel\pinok</Option>
-          <Option>-I include\iodriver\RL78</Option>
-          <Option>-I src\boot\RL78\hwinit</Option>
-          <Option>-I W:/include</Option>
+          <Option>-I W:\config\h8300-hms</Option>
+          <Option>-I W:\config\RL78</Option>
+          <Option>-I W:\config\STM32F401</Option>
+          <Option>-I W:\include\cmn</Option>
+          <Option>-I W:\include\iodriver</Option>
+          <Option>-I W:\include\kernel</Option>
+          <Option>-I W:\include\lib</Option>
+          <Option>-I W:\include\mdl</Option>
+          <Option>-I W:\include\iodriver\h8300h</Option>
+          <Option>-I W:\include\iodriver\RL78</Option>
+          <Option>-I W:\include\iodriver\STM32F4XX</Option>
+          <Option>-I W:\include\kernel\pinok</Option>
+          <Option>-I W:\include\kernel\tkernel</Option>
+          <Option>-I W:\include\lib\libc</Option>
+          <Option>-I W:\include\lib\libfunc</Option>
         </CompileOptions>
         <AssembleOptions>
           <Option>-cpu=S2</Option>

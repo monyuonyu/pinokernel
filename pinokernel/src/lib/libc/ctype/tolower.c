@@ -1,4 +1,4 @@
-#include "lib/libc/ctype.h"
+#include "ctype.h"
 
 int tolower(int c)
 {

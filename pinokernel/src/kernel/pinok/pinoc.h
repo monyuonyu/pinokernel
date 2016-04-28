@@ -9,7 +9,7 @@
 #define PINOC_H_
 
 // #include "dbg.hpp"
-#include "kernel/pinok/interrupt.h"
+#include "interrupt.h"
 
 typedef int (*pinoc_func_t)(void);
 typedef void (*pinoc_handler_t)(void);

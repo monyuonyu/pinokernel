@@ -18,11 +18,11 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include <kernel/tkernel/basic.h>
-#include <kernel/tkernel/tkernel.h>
-#include <kernel/tkernel/util.h>
-#include <kernel/tkernel/libstr.h>
-#include "kernel/tkernel/libtk_config.h"
+#include <basic.h>
+#include <tkernel.h>
+#include <util.h>
+#include <libstr.h>
+#include "libtk_config.h"
 
 /* ------------------------------------------------------------------------ */
 /*

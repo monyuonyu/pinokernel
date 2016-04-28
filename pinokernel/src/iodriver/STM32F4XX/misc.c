@@ -73,7 +73,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "iodriver\STM32F4XX\misc.h"
+#include "misc.h"
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{

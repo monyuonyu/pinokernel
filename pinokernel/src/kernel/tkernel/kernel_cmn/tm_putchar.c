@@ -11,8 +11,8 @@
  *----------------------------------------------------------------------
  */
 
-#include <cmn/typedef.h>
-#include <lib/libc/stddef.h>
+#include <typedef.h>
+#include <stddef.h>
 
 IMPORT void sio_send_frame( const UB* buf, INT size );
 

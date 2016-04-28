@@ -24,7 +24,7 @@
 #define __SYS_IMALLOC_H__
 
 #include <basic.h>
-#include <tk/tk_typedef.h>
+#include <tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {

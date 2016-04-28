@@ -17,9 +17,9 @@
  *	Interrupt controller
  */
 
-#include <kernel/tkernel/basic.h>
-#include <kernel/tkernel/syslib.h>
-#include <kernel/tkernel/sysdef.h>
+#include <basic.h>
+#include <syslib.h>
+#include <sysdef.h>
 
 #define INTPRI_MIN_UNIT	(0x100 >> INTPRI_BITWIDTH)
 #define INTPRI_MASK	(0x100 - INTPRI_MIN_UNIT)

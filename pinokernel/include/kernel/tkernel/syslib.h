@@ -21,8 +21,8 @@
 #define __TK_SYSLIB_H__
 
 #include <basic.h>
-#include <tk/tk_typedef.h>
+#include <tk_typedef.h>
 
-#include <tk/sysdepend/syslib_common.h>
+#include <syslib_common.h>
 
 #endif /* __TK_SYSLIB_H__ */

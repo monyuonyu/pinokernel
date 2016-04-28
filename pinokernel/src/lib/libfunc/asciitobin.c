@@ -1,5 +1,5 @@
-#include "lib/libfunc/func.h"
-#include "lib/libc/string.h"
+#include "func.h"
+#include "string.h"
 
 void asciitobin(char* _str, size_t size)
 {

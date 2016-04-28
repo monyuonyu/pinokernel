@@ -23,7 +23,7 @@
 #include <config.h>
 
 #include <basic.h>
-#include <tk/tk_typedef.h>
+#include <tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -188,7 +188,7 @@ extern "C" {
 #endif
 
 /* System dependencies */
-#include <tk/sysdepend/syscall_common.h>
+#include <syscall_common.h>
 
 #ifdef __cplusplus
 extern "C" {

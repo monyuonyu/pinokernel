@@ -16,7 +16,7 @@
  *	Initial task definition
  */
 
-#include "kernel/tkernel/inittask_def.h"
+#include "inittask_def.h"
 
 IMPORT void knl_init_task(void);
 

@@ -1,4 +1,4 @@
-#include "lib/libc/stdlib.h"
+#include "stdlib.h"
 
 int atoi(const char* _str)
 {

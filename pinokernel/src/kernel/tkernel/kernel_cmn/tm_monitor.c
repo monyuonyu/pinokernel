@@ -11,8 +11,8 @@
  *----------------------------------------------------------------------
  */
 
-#include <cmn/typedef.h>
-#include <lib/libc/stddef.h>
+#include <typedef.h>
+#include <stddef.h>
 
 EXPORT void tm_monitor( void )
 {

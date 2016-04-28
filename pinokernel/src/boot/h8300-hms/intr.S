@@ -1,4 +1,4 @@
-#include "kernel/pinok/intr.h"
+#include "intr.h"
 
 	.h8300h
 		.section .text

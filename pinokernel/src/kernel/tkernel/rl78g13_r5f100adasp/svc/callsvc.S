@@ -8,7 +8,7 @@
 
 #include <machine.h>
 
-#include <tk/asm.h>
+#include <asm.h>
 #include "utk_config.h"
 
 ;	.code 16

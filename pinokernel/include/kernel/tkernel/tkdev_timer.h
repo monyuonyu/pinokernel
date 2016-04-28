@@ -19,8 +19,8 @@
 #ifndef _TKDEV_TIMER_
 #define _TKDEV_TIMER_
 
-#include <tk/syslib.h>
-#include <sys/sysinfo.h>
+#include <syslib.h>
+#include <sysinfo.h>
 #include "tkdev_conf.h"
 
 #define ENAINT	Asm("ldr	r0, =0 \n" \

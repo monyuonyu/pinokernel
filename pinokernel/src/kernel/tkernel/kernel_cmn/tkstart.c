@@ -16,10 +16,10 @@
  *	micro T-Kernel Startup / Finalization
  */
 
-#include "kernel/tkernel/kernel.h"
-#include "kernel/tkernel/timer.h"
-#include "kernel/tkernel/task.h"
-#include <kernel/tkernel/tmonitor.h>
+#include "kernel.h"
+#include "timer.h"
+#include "task.h"
+#include <tmonitor.h>
 
 /*
  * Start initial task

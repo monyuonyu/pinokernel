@@ -17,11 +17,11 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel/tkernel/kernel.h"
-#include "kernel/tkernel/task.h"
-#include "kernel/tkernel/check.h"
-#include "kernel/tkernel/bitop.h"
-#include "kernel/tkernel/subsystem.h"
+#include "kernel.h"
+#include "task.h"
+#include "check.h"
+#include "bitop.h"
+#include "subsystem.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_SSYID > 0

@@ -16,7 +16,7 @@
  *	Power-Saving Function
  */
 
-#include <kernel/tkernel/tk_typedef.h>
+#include <tk_typedef.h>
 
 /*
  * Switch to power-saving mode

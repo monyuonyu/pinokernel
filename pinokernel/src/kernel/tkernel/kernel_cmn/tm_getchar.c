@@ -11,9 +11,9 @@
  *----------------------------------------------------------------------
  */
 
-#include <cmn/typedef.h>
-#include <lib/libc/stddef.h>
-#include <kernel/tkernel/syslib.h>
+#include <typedef.h>
+#include <stddef.h>
+#include <syslib.h>
 
 IMPORT void sio_recv_frame( UB* buf, INT size );
 

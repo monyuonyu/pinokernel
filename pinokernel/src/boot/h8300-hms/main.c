@@ -6,11 +6,11 @@
  */
 
 //#include "3069s.h"
-#include "iodriver/h8300h/3069f_io.h"
-#include "iodriver/h8300h/3069f_sci.h"
-#include "protocol/XMODEM.h"
+#include "3069f_io.h"
+#include "3069f_sci.h"
+#include "XMODEM.h"
 #include "load_mot.h"
-#include "kernel/ctype.h"
+#include "ctype.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -18,8 +18,8 @@
 // #include "DP8390.h"
 #include "read_elf.h"
 // #include "ascii.h"
-#include "kernel/pinok/interrupt.h"
-#include "kernel/pinok/intr.h"
+#include "interrupt.h"
+#include "intr.h"
 
 extern int buf_start;
 extern int text_start;

@@ -20,8 +20,8 @@
 #ifndef __TK_SYSLIB_DEPEND_H__
 #define __TK_SYSLIB_DEPEND_H__
 
-#include <tk/errno.h>
-#include <tk/sysdef.h>
+#include <errno.h>
+#include <sysdef.h>
 
 #ifdef __cplusplus
 extern "C" {

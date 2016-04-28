@@ -17,13 +17,13 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel/tkernel/kernel.h"
-#include "kernel/tkernel/task.h"
-#include "kernel/tkernel/ready_queue.h"
-#include "kernel/tkernel/wait.h"
-#include "kernel/tkernel/cpu_task.h"
-#include "kernel/tkernel/tkdev_timer.h"
-#include "kernel/tkernel/check.h"
+#include "kernel.h"
+#include "task.h"
+#include "ready_queue.h"
+#include "wait.h"
+#include "cpu_task.h"
+#include "tkdev_timer.h"
+#include "check.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_CTXTSK

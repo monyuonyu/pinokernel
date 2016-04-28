@@ -20,12 +20,12 @@
 #define _KERNEL_
 
 #include <basic.h>
-#include <tk/tk_typedef.h>
-#include <tk/errno.h>
-#include <tk/syscall.h>
-#include <tk/dbgspt.h>
-#include <sys/imalloc.h>
-#include <sys/queue.h>
+#include <tk_typedef.h>
+#include <errno.h>
+#include <syscall.h>
+#include <dbgspt.h>
+#include <imalloc.h>
+#include <queue.h>
 #include <libstr.h>
 
 #include "utk_config.h"

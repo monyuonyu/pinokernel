@@ -20,7 +20,7 @@
 #define _INITTASK_DEF_
 
 #include <basic.h>
-#include <tk/tkernel.h>
+#include <tkernel.h>
 #include "utk_config.h"
 
 /*

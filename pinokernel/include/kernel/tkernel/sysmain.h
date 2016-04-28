@@ -20,8 +20,8 @@
 #define _SYSMAIN_
 
 #include <basic.h>
-#include <tk/tkernel.h>
-#include <tm/tmonitor.h>
+#include <tkernel.h>
+#include <tmonitor.h>
 
 /* Boot message */
 #define BOOT_MESSAGE \

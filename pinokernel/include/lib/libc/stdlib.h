@@ -1,7 +1,7 @@
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
 
-#include "cmn/stddef.h"
+#include "stddef.h"
 
 typedef struct
 {

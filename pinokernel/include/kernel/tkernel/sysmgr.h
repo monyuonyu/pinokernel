@@ -21,13 +21,13 @@
 #include "utk_config.h"
 
 #include <basic.h>
-#include <tk/tkernel.h>
+#include <tkernel.h>
 #include <libstr.h>
-#include <sys/queue.h>
-#include <tk/util.h>
-#include <sys/debug.h>
+#include <queue.h>
+#include <util.h>
+#include <debug.h>
 
-#include <sys/imalloc.h>
+#include <imalloc.h>
 
 /* ------------------------------------------------------------------------ */
 /*

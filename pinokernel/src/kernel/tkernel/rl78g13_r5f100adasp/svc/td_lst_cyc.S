@@ -5,8 +5,8 @@
  ;
 
 #include <machine.h>
-#include <tk/sysdef.h>
-#include <sys/svc/tdfncd.h>
+#include <sysdef.h>
+#include <tdfncd.h>
 #include "utk_config.h"
 
 ;	.code 16

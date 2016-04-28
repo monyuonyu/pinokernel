@@ -17,9 +17,9 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include <kernel/tkernel/basic.h>
-#include <kernel/tkernel/tkernel.h>
-#include "kernel/tkernel/utk_config.h"
+#include <basic.h>
+#include <tkernel.h>
+#include "utk_config.h"
 
 /*** macros ***/
 /* bit operation macro */

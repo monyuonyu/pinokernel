@@ -23,7 +23,7 @@
 #include <basic.h>
 
 #ifdef DEBUG
-#include <tm/tmonitor.h>
+#include <tmonitor.h>
 #endif
 
 #ifdef __cplusplus

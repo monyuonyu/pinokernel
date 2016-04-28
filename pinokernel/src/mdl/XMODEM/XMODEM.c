@@ -5,7 +5,7 @@
  *      Author: mizu
  */
 #include "XMODEM.h"
-#include "iodriver/h8300h/3069f_sci.h"
+#include "3069f_sci.h"
 
 #define XMODEM_DBG 0
 

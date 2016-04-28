@@ -17,11 +17,11 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel/tkernel/kernel.h"
-#include "kernel/tkernel/task.h"
-#include "kernel/tkernel/wait.h"
-#include "kernel/tkernel/check.h"
-#include "kernel/tkernel/mempfix.h"
+#include "kernel.h"
+#include "task.h"
+#include "wait.h"
+#include "check.h"
+#include "mempfix.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_MPFID > 0

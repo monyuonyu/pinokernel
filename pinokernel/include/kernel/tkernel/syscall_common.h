@@ -21,23 +21,23 @@
 #define __TK_SYSCALL_COMMON_H__
 
 // #if APP_AT91
-// #  include <tk/sysdepend/app_at91/cpuattr.h>
-// #  include <tk/sysdepend/app_at91/cpudef.h>
+// #include <cpuattr.h>
+// #include <cpudef.h>
 // #endif
 
 // #if APP_H8S2212
-// #  include <tk/sysdepend/app_h8s2212/cpuattr.h>
-// #  include <tk/sysdepend/app_h8s2212/cpudef.h>
+// #include <cpuattr.h>
+// #include <cpudef.h>
 // #endif
 
 // #if APP_MB9AF312K
-// #  include <tk/sysdepend/app_mb9af312k/cpuattr.h>
-// #  include <tk/sysdepend/app_mb9af312k/cpudef.h>
+// #include <cpuattr.h>
+// #include <cpudef.h>
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/cpuattr.h>
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/cpudef.h>
+#include <cpuattr.h>
+#include <cpudef.h>
 #endif
 
 #endif /* __TK_SYSCALL_COMMON_H__ */

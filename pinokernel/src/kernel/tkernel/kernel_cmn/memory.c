@@ -12,9 +12,9 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel/tkernel/kernel.h"
-#include <kernel/tkernel/imalloc.h>
-#include "kernel/tkernel/memory.h"
+#include "kernel.h"
+#include <imalloc.h>
+#include "memory.h"
 /** [END Common Definitions] */
 
 

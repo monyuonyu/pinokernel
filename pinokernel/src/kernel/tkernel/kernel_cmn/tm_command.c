@@ -11,7 +11,7 @@
  *----------------------------------------------------------------------
  */
 
-#include <cmn/typedef.h>
+#include <typedef.h>
 
 INT tm_command ( UB *buff )
 {

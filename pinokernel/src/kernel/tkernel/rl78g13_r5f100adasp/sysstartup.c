@@ -16,8 +16,8 @@
  *	Start/Stop System
  */
 
-#include "kernel/tkernel/sysinit.h"
-#include "kernel/tkernel/kernel.h"
+#include "sysinit.h"
+#include "kernel.h"
 
 /*
  * Manager/Driver

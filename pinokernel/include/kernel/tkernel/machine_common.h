@@ -21,17 +21,17 @@
 #define __SYS_MACHINE_COMMON_H__
 
 //#ifdef _APP_AT91_
-//#  include <sys/sysdepend/app_at91/machine_depend.h>
+//#include <machine_depend.h>
 //#endif
 
 //#ifdef _APP_H8S2212_
-//#  include <sys/sysdepend/app_h8s2212/machine_depend.h>
+//#include <machine_depend.h>
 //#endif
 
 //#ifdef _APP_MB9AF312K_
-//#  include <sys/sysdepend/app_mb9af312k/machine_depend.h>
+//#include <machine_depend.h>
 //#endif
 
-#include <sys/sysdepend/app_rl78g13_r5f100adasp/machine_depend.h>
+#include <machine_depend.h>
 
 #endif /* __SYS_MACHINE_COMMON_H__ */

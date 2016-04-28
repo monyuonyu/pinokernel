@@ -1,4 +1,4 @@
-/* # include_next <stdint.h> */
+/* #include_next <stdint.h> */
 #ifndef _USER_STDINT_H_
 #define _USER_STDINT_H_
 

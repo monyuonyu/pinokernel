@@ -16,9 +16,9 @@
  *	Initial Task
  */
 
-#include "kernel/tkernel/sysmain.h"
-#include "kernel/tkernel/kernel.h"
-#include <kernel/tkernel/debug.h>
+#include "sysmain.h"
+#include "kernel.h"
+#include <debug.h>
 
 typedef INT	(*MAIN_FP)(INT, UB **);
 

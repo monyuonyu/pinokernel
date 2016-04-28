@@ -1,4 +1,4 @@
-#include "lib/libfunc/func.h"
+#include "func.h"
 
 int decto10(char* _str)
 {

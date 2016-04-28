@@ -5,7 +5,7 @@
  *      Author: pino
  */
 
-#include "iodriver/h8300h/3069f_sci.h"
+#include "3069f_sci.h"
 
 volatile static struct{
 	volatile struct SCI *sci;

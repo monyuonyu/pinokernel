@@ -21,19 +21,19 @@
 #define __SYS_STR_ALIGN_COMMON_H__
 
 // #ifdef APP_AT91
-// #  include <sys/sysdepend/app_at91/str_align_depend.h>
+// #include <str_align_depend.h>
 // #endif
 
 // #ifdef APP_H8S2212
-// #  include <sys/sysdepend/app_h8s2212/str_align_depend.h>
+// #include <str_align_depend.h>
 // #endif
 
 // #ifdef _APP_MB9AF312K_
-// #  include <sys/sysdepend/app_mb9af312k/str_align_depend.h>
+// #include <str_align_depend.h>
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#  include <sys/sysdepend/app_rl78g13_r5f100adasp/str_align_depend.h>
+#include <str_align_depend.h>
 #endif
 
 #endif /* __SYS_STR_ALIGN_COMMON_H__ */

@@ -21,15 +21,15 @@
 #define __TK_ASM_COMMON_H__
 
 // #if APP_AT91
-// #  include <tk/sysdepend/app_at91/asm_depend.h>
+// #include <asm_depend.h>
 // #endif
 
 // #if APP_H8S2212
-// #  include <tk/sysdepend/app_h8s2212/asm_depend.h>
+// #include <asm_depend.h>
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/asm_depend.h>
+#include <asm_depend.h>
 #endif
 
 #endif /* __TK_ASM_COMMON_H__ */

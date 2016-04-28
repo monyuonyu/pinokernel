@@ -22,19 +22,19 @@
 #include "config.h"
 
 // #ifdef _APP_H8S2212_
-// #include "sysdepend/app_h8s2212/utk_config_depend.h"
+// #include "utk_config_depend.h"
 // #endif
 
 // #ifdef _APP_AT91_
-// #include "sysdepend/app_at91/utk_config_depend.h"
+// #include "utk_config_depend.h"
 // #endif
 
 // #ifdef _APP_MB9AF312K_
-// #include "sysdepend/app_mb9af312k/utk_config_depend.h"
+// #include "utk_config_depend.h"
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#include "sysdepend/app_rl78g13_r5f100adasp/utk_config_depend.h"
+#include "utk_config_depend.h"
 #endif
 
 #include "utk_config_func.h"

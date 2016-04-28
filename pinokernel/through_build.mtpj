@@ -3824,28 +3824,28 @@
       <COptionIgnoreFilesMisra-DefaultValue />
       <COptionCheckLanguageExtension-DefaultValue>False</COptionCheckLanguageExtension-DefaultValue>
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587397540198361501</TimeTagModified--0>
+      <TimeTagModified--0>-8587397494933621355</TimeTagModified--0>
       <COptionAnsi-0>False</COptionAnsi-0>
       <COptionAsmPath-0>False</COptionAsmPath-0>
       <COptionCharacterSet-0>Auto</COptionCharacterSet-0>
       <COptionConvertCc-0>None</COptionConvertCc-0>
       <COptionDblSize-0>True</COptionDblSize-0>
       <COptionG-0>True</COptionG-0>
-      <COptionI-0>src\boot\h8300-hms
-config\STM32F401
-include\iodriver\STM32F4XX
-include\iodriver\h8300h
-include\kernel\tkernel
-include\lib\libfunc
-src\iodriver\h8300-hms\NIC
-include\cmn
-include\lib\libc
-src\mdl\XMODEM
-include\kernel\pinok
-src\kernel\pinok
-include\iodriver\RL78
-src\boot\RL78\hwinit
-W:/include
+      <COptionI-0>W:\config\h8300-hms
+W:\config\RL78
+W:\config\STM32F401
+W:\include\cmn
+W:\include\iodriver
+W:\include\kernel
+W:\include\lib
+W:\include\mdl
+W:\include\iodriver\h8300h
+W:\include\iodriver\RL78
+W:\include\iodriver\STM32F4XX
+W:\include\kernel\pinok
+W:\include\kernel\tkernel
+W:\include\lib\libc
+W:\include\lib\libfunc
 </COptionI-0>
       <COptionMemoryModel-0>Auto</COptionMemoryModel-0>
       <COptionMisra-0>Misra2012</COptionMisra-0>

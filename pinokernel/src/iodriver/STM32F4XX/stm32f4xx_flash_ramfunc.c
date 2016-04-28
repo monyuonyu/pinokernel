@@ -55,7 +55,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "iodriver\STM32F4XX\stm32f4xx_flash_ramfunc.h"
+#include "stm32f4xx_flash_ramfunc.h"
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{

@@ -1,5 +1,5 @@
-#include "kernel/pinok/interrupt.h"
-#include "kernel/pinok/intr.h"
+#include "interrupt.h"
+#include "intr.h"
 
 
 /* 共通ハンドラ */

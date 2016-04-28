@@ -21,12 +21,12 @@
 #define __TK_TKERNEL_H__
 
 #include <basic.h>
-#include <tk/tk_typedef.h>
-#include <tk/errno.h>
+#include <tk_typedef.h>
+#include <errno.h>
 
-#include <tk/syscall.h>
-#include <tk/syslib.h>
+#include <syscall.h>
+#include <syslib.h>
 
-#include <sys/profile.h>
+#include <profile.h>
 
 #endif /* __TK_TKERNEL_H__ */

@@ -11,9 +11,9 @@
  *----------------------------------------------------------------------
  */
 
-#include <kernel/tkernel/tk_typedef.h>
-#include <kernel/tkernel/errno.h>
-#include <cmn/typedef.h>
+#include <tk_typedef.h>
+#include <errno.h>
+#include <typedef.h>
 
 EXPORT	W	knl_taskindp = 0;
 Noinit(EXPORT	UW	knl_taskmode);
