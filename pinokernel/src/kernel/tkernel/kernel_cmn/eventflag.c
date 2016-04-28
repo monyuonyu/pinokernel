@@ -17,11 +17,11 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "eventflag.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/wait.h"
+#include "kernel/tkernel/check.h"
+#include "kernel/tkernel/eventflag.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_FLGID > 0

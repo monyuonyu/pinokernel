@@ -4,7 +4,7 @@
  *  Created on: 2011/02/27
  *      Author: mizu
  */
-#include "protocol/XMODEM.h"
+#include "XMODEM.h"
 #include "iodriver/h8300h/3069f_sci.h"
 
 #define XMODEM_DBG 0

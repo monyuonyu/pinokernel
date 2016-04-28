@@ -17,9 +17,9 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "sysmgr.h"
-#include "device.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/sysmgr.h"
+#include "kernel/tkernel/device.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_REGDEV

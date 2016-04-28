@@ -17,8 +17,8 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include <libstr.h>
+#include "kernel/tkernel/kernel.h"
+#include <kernel/tkernel/libstr.h>
 /** [END Common Definitions] */
 
 #if USE_DBGSPT

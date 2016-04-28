@@ -17,9 +17,9 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/wait.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_WAIT_RELEASE_OK

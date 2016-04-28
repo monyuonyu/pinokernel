@@ -17,10 +17,10 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "check.h"
-#include "misc_calls.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/check.h"
+#include "kernel/tkernel/misc_calls.h"
 /** [END Common Definitions] */
 
 

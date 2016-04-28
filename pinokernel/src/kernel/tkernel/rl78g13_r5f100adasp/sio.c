@@ -11,7 +11,7 @@
  *----------------------------------------------------------------------
  */
 
-#include <typedef.h>
+#include <kernel/tkernel/typedef.h>
 
 // #define	TERM_PORT		0
 

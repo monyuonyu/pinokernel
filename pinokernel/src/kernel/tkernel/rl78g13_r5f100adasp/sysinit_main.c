@@ -16,10 +16,10 @@
  *	Initialize System
  */
 
-#include <tk/tk_typedef.h>
-#include <tk/errno.h>
-#include <typedef.h>
-#include <tk/syscall.h>
+#include <kernel/tkernel/tk_typedef.h>
+#include <kernel/tkernel/errno.h>
+#include <kernel/tkernel/typedef.h>
+#include <kernel/tkernel/syscall.h>
 
 /*
  * Initialize sequence before micro T-Kernel starts

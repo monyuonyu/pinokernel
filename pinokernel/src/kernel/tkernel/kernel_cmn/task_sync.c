@@ -17,12 +17,12 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "limits.h"
-#include "task_sync.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/wait.h"
+#include "kernel/tkernel/check.h"
+#include "kernel/tkernel/limits.h"
+#include "kernel/tkernel/task_sync.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_TK_SUS_TSK

@@ -16,10 +16,10 @@
  *	Timer Control
  */
 
-#include "kernel.h"
-#include "timer.h"
-#include "task.h"
-#include "tkdev_timer.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/timer.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/tkdev_timer.h"
 
 /*
  * Current time (Software clock)

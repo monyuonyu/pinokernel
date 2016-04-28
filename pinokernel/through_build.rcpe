@@ -571,7 +571,10 @@
           <Path>DefaultBuild\cstart.obj</Path>
           <Path>DefaultBuild\stkinit.obj</Path>
         </LinkOrder>
-        <CommonOptions />
+        <CommonOptions>
+          <IncludePathForC>W:/include</IncludePathForC>
+          <IncludePathForAsm>W:\include</IncludePathForAsm>
+        </CommonOptions>
         <GeneralOptions>
           <SimultaneouslyBuild>True</SimultaneouslyBuild>
         </GeneralOptions>
@@ -581,6 +584,7 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I W:/include</Option>
         </CompileOptions>
         <AssembleOptions>
           <Option>-cpu=S2</Option>
@@ -588,6 +592,7 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I W:\include</Option>
         </AssembleOptions>
         <LinkOptions>
           <Option>-DEVICE=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
@@ -1571,17 +1576,17 @@
         &lt;cg_security7 Name="cg_security7" Value="00" /&gt;
         &lt;cg_security5 Name="cg_security5" Value="00" /&gt;
         &lt;cg_crc_area Name="cg_crc_area" Value="00" /&gt;
-        &lt;ocdstart Name="ocdstart" Value="0BE00" /&gt;
         &lt;cg_security3 Name="cg_security3" Value="00" /&gt;
         &lt;cg_security0 Name="cg_security0" Value="00" /&gt;
         &lt;cg_security1 Name="cg_security1" Value="00" /&gt;
         &lt;clock_option Name="clock_option" Value="E8" /&gt;
+        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;pior_value Name="pior_value" Value="00" /&gt;
         &lt;cg_option Name="cg_option" Value="04" /&gt;
         &lt;cg_security8 Name="cg_security8" Value="00" /&gt;
         &lt;cg_security6 Name="cg_security6" Value="00" /&gt;
+        &lt;ocdstart Name="ocdstart" Value="0BE00" /&gt;
         &lt;cg_security4 Name="cg_security4" Value="00" /&gt;
-        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;cg_iawctl_value Name="cg_iawctl_value" Value="00" /&gt;
         &lt;lvi_option Name="lvi_option" Value="FF" /&gt;
         &lt;wdt_option Name="wdt_option" Value="FF" /&gt;

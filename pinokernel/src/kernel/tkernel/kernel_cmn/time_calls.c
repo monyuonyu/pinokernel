@@ -17,13 +17,13 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "timer.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "tkdev_timer.h"
-#include "time_calls.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/timer.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/wait.h"
+#include "kernel/tkernel/check.h"
+#include "kernel/tkernel/tkdev_timer.h"
+#include "kernel/tkernel/time_calls.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_TK_SET_TIM

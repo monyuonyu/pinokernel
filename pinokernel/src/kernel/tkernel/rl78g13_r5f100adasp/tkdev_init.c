@@ -16,8 +16,8 @@
  *	micro T-Kernel Device-Dependent Initialization/Finalization
  */
 
-#include <tk/tk_typedef.h>
-#include <tk/errno.h>
+#include <kernel/tkernel/tk_typedef.h>
+#include <kernel/tkernel/errno.h>
 
 /*
  * Target system-dependent initialization

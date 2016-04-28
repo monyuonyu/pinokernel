@@ -1990,6 +1990,12 @@
       <MemoCount>0</MemoCount>
     </Instance>
   </Class>
+  <Class Guid="873c9a58-9bc5-439a-b476-78629a4553ed">
+    <Instance Guid="873c9a58-9bc5-439a-b476-78629a4553ed">
+      <ProjectDeviceChangedCounter>0</ProjectDeviceChangedCounter>
+      <ProjectInitialDeviceName>R5F100AD</ProjectInitialDeviceName>
+    </Instance>
+  </Class>
   <Class Guid="c3835e31-dea3-4c93-b02b-d2db997f7630">
     <Instance Guid="c3835e31-dea3-4c93-b02b-d2db997f7630">
       <BuildToolManager>1159186b-b838-4741-8324-8293bf3d5c5f</BuildToolManager>
@@ -2708,14 +2714,15 @@
       <COptionIgnoreFilesMisra-DefaultValue />
       <COptionCheckLanguageExtension-DefaultValue>False</COptionCheckLanguageExtension-DefaultValue>
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587397584248583805</TimeTagModified--0>
+      <TimeTagModified--0>-8587397568583911906</TimeTagModified--0>
       <COptionAnsi-0>False</COptionAnsi-0>
       <COptionAsmPath-0>False</COptionAsmPath-0>
       <COptionCharacterSet-0>Auto</COptionCharacterSet-0>
       <COptionConvertCc-0>None</COptionConvertCc-0>
       <COptionDblSize-0>True</COptionDblSize-0>
       <COptionG-0>True</COptionG-0>
-      <COptionI-0 />
+      <COptionI-0>W:/include
+</COptionI-0>
       <COptionMemoryModel-0>Auto</COptionMemoryModel-0>
       <COptionMisra-0>Misra2012</COptionMisra-0>
       <COptionOenhance-0>False</COptionOenhance-0>
@@ -2787,12 +2794,13 @@
       <AsmOptionOtherAdditionalOptions-DefaultValue />
       <AsmOptionUndefine-DefaultValue />
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587397584248318829</TimeTagModified--0>
+      <TimeTagModified--0>-8587397569046621747</TimeTagModified--0>
       <AsmOptionCharacterSet-0>Auto</AsmOptionCharacterSet-0>
       <AsmOptionConvertAsm-0>False</AsmOptionConvertAsm-0>
       <AsmOptionG-0>True</AsmOptionG-0>
       <AsmOptionGoptimize-0>False</AsmOptionGoptimize-0>
-      <AsmOptionI-0 />
+      <AsmOptionI-0>W:\include
+</AsmOptionI-0>
       <AsmOptionPrnPath-0>False</AsmOptionPrnPath-0>
       <AsmOptionBaseNumber-0>Prefix</AsmOptionBaseNumber-0>
       <AsmOptionISystem-0 />
@@ -6320,17 +6328,17 @@
         &lt;cg_security7 Name="cg_security7" Value="00" /&gt;
         &lt;cg_security5 Name="cg_security5" Value="00" /&gt;
         &lt;cg_crc_area Name="cg_crc_area" Value="00" /&gt;
-        &lt;ocdstart Name="ocdstart" Value="0BE00" /&gt;
         &lt;cg_security3 Name="cg_security3" Value="00" /&gt;
         &lt;cg_security0 Name="cg_security0" Value="00" /&gt;
         &lt;cg_security1 Name="cg_security1" Value="00" /&gt;
         &lt;clock_option Name="clock_option" Value="E8" /&gt;
+        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;pior_value Name="pior_value" Value="00" /&gt;
         &lt;cg_option Name="cg_option" Value="04" /&gt;
         &lt;cg_security8 Name="cg_security8" Value="00" /&gt;
         &lt;cg_security6 Name="cg_security6" Value="00" /&gt;
+        &lt;ocdstart Name="ocdstart" Value="0BE00" /&gt;
         &lt;cg_security4 Name="cg_security4" Value="00" /&gt;
-        &lt;cg_security2 Name="cg_security2" Value="00" /&gt;
         &lt;cg_iawctl_value Name="cg_iawctl_value" Value="00" /&gt;
         &lt;lvi_option Name="lvi_option" Value="FF" /&gt;
         &lt;wdt_option Name="wdt_option" Value="FF" /&gt;
@@ -6448,6 +6456,11 @@
   <Class Guid="ac2a8323-4fa1-42e5-af5d-5845b66c9c38">
     <Instance Guid="ac2a8323-4fa1-42e5-af5d-5845b66c9c38">
       <ProjectKind>Project78K0RLibrary</ProjectKind>
+    </Instance>
+  </Class>
+  <Class Guid="2a2c2a43-ecdb-4e88-80bd-e75f3e33db90">
+    <Instance Guid="2a2c2a43-ecdb-4e88-80bd-e75f3e33db90">
+      <ProductVersion>6.00.00.00</ProductVersion>
     </Instance>
   </Class>
 </CubeSuiteProject>

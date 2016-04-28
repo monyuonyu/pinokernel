@@ -16,9 +16,9 @@
  *	Kernel Lock
  */
 
-#include "kernel.h"
-#include "task.h"
-#include "ready_queue.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/ready_queue.h"
 
 /*
  * Object lock

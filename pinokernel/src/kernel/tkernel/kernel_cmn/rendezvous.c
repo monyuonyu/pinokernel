@@ -18,11 +18,11 @@
 
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "rendezvous.h"
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/wait.h"
+#include "kernel/tkernel/check.h"
+#include "kernel/tkernel/rendezvous.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_PORID > 0

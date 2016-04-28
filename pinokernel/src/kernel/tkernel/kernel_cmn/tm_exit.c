@@ -11,7 +11,7 @@
  *----------------------------------------------------------------------
  */
 
-#include <typedef.h>
+#include <kernel/tkernel/typedef.h>
 
 void tm_exit( INT mode )
 {

@@ -17,12 +17,12 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "cpu_task.h"
-#include <tm/tmonitor.h>
+#include "kernel/tkernel/kernel.h"
+#include "kernel/tkernel/task.h"
+#include "kernel/tkernel/wait.h"
+#include "kernel/tkernel/check.h"
+#include "kernel/tkernel/cpu_task.h"
+#include <kernel/tkernel/tmonitor.h>
 /** [END Common Definitions] */
 
 

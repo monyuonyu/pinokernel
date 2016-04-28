@@ -16,9 +16,9 @@
  *	User Main
  */
 
-#include <basic.h>
-#include <tk/tkernel.h>
-#include <tm/tmonitor.h>
+#include <kernel/tkernel/basic.h>
+#include <kernel/tkernel/tkernel.h>
+#include <kernel/tkernel/tmonitor.h>
 
 /*
  * Entry routine for the user application.
