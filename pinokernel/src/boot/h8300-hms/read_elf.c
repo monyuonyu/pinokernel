@@ -55,8 +55,10 @@ static int elf_check(struct elf_header *header)
 char* elf_develop(char* p)
 {
 	struct elf_header* header;
-	header = (struct elf_header*) p;
 	struct elf_program_header *program;
+	int i;
+	header = (struct elf_header*) p;
+
 
 	if(elf_check(header))
 	{
@@ -70,7 +72,6 @@ char* elf_develop(char* p)
 	sci_write_str(SCI_NO_1, "EntryPoint  >>> ");
 	sci_write_str(SCI_NO_1, gen_xval(header->entry_point, 8));
 
-	int i;
 	for (i = 0; i < header->program_header_num; i++)
 	{
 
@@ -122,10 +123,10 @@ char* elf_develop(char* p)
 int elf_analysis(char* p)
 {
 	struct elf_header* header;
-
+	int i;
+	
 	header = (struct elf_header*) p;
 
-	int i;
 	for (i = 0; i < header->section_header_num; i++)
 	{
 

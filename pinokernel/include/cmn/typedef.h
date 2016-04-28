@@ -39,7 +39,16 @@ typedef signed long	    S4; /* Signed 32 bit integer   */
 typedef unsigned char   U1; /* Unsigned 8 bit integer  */
 typedef unsigned short  U2; /* Unsigned 16 bit integer */
 typedef unsigned long   U4; /* Unsigned 32 bit integer */
- 
+
+typedef signed char        int8_t;   /* Signed 8 bit integer    */
+typedef signed short        int16_t;  /* Signed 16 bit integer   */
+typedef signed long        int32_t;  /* Signed 32 bit integer   */
+typedef signed long long   int64_t;  /* Signed 64 bit integer   */
+typedef unsigned char      uint8_t;  /* Unsigned 8 bit integer  */
+typedef unsigned short     uint16_t; /* Unsigned 16 bit integer */
+typedef unsigned long      uint32_t; /* Unsigned 32 bit integer */
+typedef unsigned long long uint64_t; /* Unsigned 64 bit integer */
+
 typedef signed char	B;	/* Signed 8 bit integer */
 typedef signed short	H;	/* Signed 16 bit integer */
 typedef signed long	W;	/* Signed 32 bit integer */

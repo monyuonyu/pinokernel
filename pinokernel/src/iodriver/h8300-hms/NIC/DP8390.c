@@ -51,13 +51,10 @@ void select_page(int page_no)
 
 void nic_init(void* nic_base)
 {
-
 	long i;
-
+	UB buff[16];
 
 	nic = (struct DP8390*)nic_base;	// ベースアドレスセット
-
-	UB buff[16];
 
 	*(UB*)((UW)nic + (UW)0x18) = (UB)0x00;			// リセット
 	for(i = 0; i < 400000; i++);	// ウェイト

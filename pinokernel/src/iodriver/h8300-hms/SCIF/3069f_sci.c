@@ -9,7 +9,7 @@
 
 volatile static struct{
 	volatile struct SCI *sci;
-}volatile regs[3] =
+}regs[3] =
 {
 	{SCI0A},
 	{SCI1A},

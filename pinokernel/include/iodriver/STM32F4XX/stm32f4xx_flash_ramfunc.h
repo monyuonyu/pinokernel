@@ -76,7 +76,8 @@
    "__attribute__((section(".RamFunc")))".
 */
 #define __RAM_FUNC void  __attribute__((section(".RamFunc")))
-
+#else
+#define __RAM_FUNC void /* 暫定 */
 #endif
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

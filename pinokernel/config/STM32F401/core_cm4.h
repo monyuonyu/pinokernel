@@ -105,7 +105,8 @@
   #define __ASM            _asm                                      /*!< asm keyword for COSMIC Compiler      */
   #define __INLINE         inline                                    /*use -pc99 on compile line !< inline keyword for COSMIC Compiler   */
   #define __STATIC_INLINE  static inline
-
+#else
+  #define __STATIC_INLINE /* 暫定 */
 #endif
 
 /** __FPU_USED indicates whether an FPU is used or not.

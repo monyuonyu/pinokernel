@@ -24,7 +24,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /*
  * ISO C Standard:  7.18  Integer types  <stdint.h>
  */
-
+#if 0 /* 暫定 */
 #ifndef _GCC_STDINT_H
 #define _GCC_STDINT_H
 
@@ -261,3 +261,4 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 	   || defined __STDC_CONSTANT_MACROS) */
 
 #endif /* _GCC_STDINT_H */
+#endif /* 暫定 */

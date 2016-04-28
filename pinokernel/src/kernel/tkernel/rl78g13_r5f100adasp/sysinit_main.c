@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <typedef.h>
 #include <syscall.h>
+#include <cpu_status.h>
 
 /*
  * Initialize sequence before micro T-Kernel starts
