@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <MicomToolCommonProjectFile Version="1.00">
   <CreatorType Name="CubeSuite+" Version="V4.00.00  [15 Mar 2016]" />
   <Placeholders>
@@ -101,9 +101,7 @@
       <Path>src\iodriver\STM32F4XX\stm32f4xx_hash_md5.c</Path>
       <Path>src\iodriver\STM32F4XX\stm32f4xx_hash.c</Path>
       <Path>src\iodriver\STM32F4XX\stm32f4xx_gpio.c</Path>
-      <Path>src\iodriver\STM32F4XX\stm32f4xx_fsmc.c</Path>
       <Path>src\iodriver\STM32F4XX\stm32f4xx_fmpi2c.c</Path>
-      <Path>src\iodriver\STM32F4XX\stm32f4xx_fmc.c</Path>
       <Path>src\iodriver\STM32F4XX\stm32f4xx_flash_ramfunc.c</Path>
       <Path>src\iodriver\STM32F4XX\stm32f4xx_flash.c</Path>
       <Path>src\iodriver\STM32F4XX\stm32f4xx_exti.c</Path>
@@ -545,9 +543,7 @@
           <Path>DefaultBuild\stm32f4xx_hash_md5.obj</Path>
           <Path>DefaultBuild\stm32f4xx_hash.obj</Path>
           <Path>DefaultBuild\stm32f4xx_gpio.obj</Path>
-          <Path>DefaultBuild\stm32f4xx_fsmc.obj</Path>
           <Path>DefaultBuild\stm32f4xx_fmpi2c.obj</Path>
-          <Path>DefaultBuild\stm32f4xx_fmc.obj</Path>
           <Path>DefaultBuild\stm32f4xx_flash_ramfunc.obj</Path>
           <Path>DefaultBuild\stm32f4xx_flash.obj</Path>
           <Path>DefaultBuild\stm32f4xx_exti.obj</Path>
