@@ -11,7 +11,7 @@
  *----------------------------------------------------------------------
  */
 
-#include <kernel/tkernel/typedef.h>
+#include <cmn/typedef.h>
 
 EXPORT void init_clock_control(void)
 {

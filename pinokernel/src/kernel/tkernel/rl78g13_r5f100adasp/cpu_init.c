@@ -13,7 +13,7 @@
 
 #include <kernel/tkernel/tk_typedef.h>
 #include <kernel/tkernel/errno.h>
-#include <kernel/tkernel/typedef.h>
+#include <cmn/typedef.h>
 
 /*
  * CPU-dependent initialization

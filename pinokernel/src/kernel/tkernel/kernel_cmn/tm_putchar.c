@@ -11,8 +11,8 @@
  *----------------------------------------------------------------------
  */
 
-#include <kernel/tkernel/typedef.h>
-#include <kernel/tkernel/stddef.h>
+#include <cmn/typedef.h>
+#include <lib/libc/stddef.h>
 
 IMPORT void sio_send_frame( const UB* buf, INT size );
 
