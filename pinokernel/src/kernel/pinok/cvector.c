@@ -92,7 +92,7 @@ static void* _At(si _Dst)
 
 	/* headかtailだった場合error */
 	if(!Search_tmp->address)
-		return NULL;
+		return 0;
 
 	return (void*)Search_tmp->address;
 }
@@ -275,9 +275,9 @@ si CVECTOR_START(C_VECTOR *_Ldata, int Size)
 
 	/* リスト構造の構築 */
 	g_parameter->pri_head->next = tail;
-	g_parameter->pri_head->prev = NULL;
+	g_parameter->pri_head->prev = 0;
 	g_parameter->pri_tail->prev = head;
-	g_parameter->pri_tail->next = NULL;
+	g_parameter->pri_tail->next = 0;
 
 	/* メソッドを構造体へ格納 */
 	_Ldata->at			= _At;
