@@ -128,7 +128,6 @@
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\cpu_support.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\vector.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\startup_rom.S</Path>
-      <Path>src\kernel\tkernel\rl78g13_r5f100adasp\startup_ram.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\icrt0.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\disint.S</Path>
       <Path>src\kernel\tkernel\rl78g13_r5f100adasp\svc\tk_swri_dev.S</Path>
@@ -287,7 +286,6 @@
       <Path>include\iodriver\RL78\iodefine.h</Path>
       <Path>src\kernel\pinok\pinoc.h</Path>
       <Path>include\kernel\pinok\intr.h</Path>
-      <Path>src\mdl\XMODEM\XMODEM.h</Path>
       <Path>include\kernel\pinok\interrupt.h</Path>
       <Path>include\lib\libc\stddef.h</Path>
       <Path>include\cmn\typedef.h</Path>
@@ -444,6 +442,8 @@
       <Path>include\iodriver\h8300h\3069f_io.h</Path>
       <Path>src\boot\h8300-hms\read_elf.h</Path>
       <Path>src\boot\h8300-hms\load_mot.h</Path>
+      <Path>src\kernel\entrypoint.c</Path>
+      <Path>include\mdl\XMODEM.h</Path>
     </Files>
     <Device Series="RL78">R5F100AD</Device>
     <BuildOptions Name="CC-RL" Version="V1.02.00">
@@ -570,7 +570,6 @@
           <Path>DefaultBuild\cpu_support.obj</Path>
           <Path>DefaultBuild\vector.obj</Path>
           <Path>DefaultBuild\startup_rom.obj</Path>
-          <Path>DefaultBuild\startup_ram.obj</Path>
           <Path>DefaultBuild\icrt0.obj</Path>
           <Path>DefaultBuild\disint.obj</Path>
           <Path>DefaultBuild\tk_swri_dev.obj</Path>
@@ -721,8 +720,10 @@
           <Path>DefaultBuild\callsvc.obj</Path>
           <Path>DefaultBuild\cstart.obj</Path>
           <Path>DefaultBuild\stkinit.obj</Path>
+          <Path>DefaultBuild\entrypoint.obj</Path>
         </LinkOrder>
         <CommonOptions>
+          <IncludePathForC>include\mdl</IncludePathForC>
           <IncludePathForC>W:\config\h8300-hms</IncludePathForC>
           <IncludePathForC>W:\config\RL78</IncludePathForC>
           <IncludePathForC>W:\config\STM32F401</IncludePathForC>
@@ -749,6 +750,7 @@
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
           <Option>-c</Option>
           <Option>-g</Option>
+          <Option>-I include\mdl</Option>
           <Option>-I W:\config\h8300-hms</Option>
           <Option>-I W:\config\RL78</Option>
           <Option>-I W:\config\STM32F401</Option>

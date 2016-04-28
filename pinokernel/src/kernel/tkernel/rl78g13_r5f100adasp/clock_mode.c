@@ -7,6 +7,7 @@
  *----------------------------------------------------------------------
  *
  *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
+ *    distribute by pkernel github(https://github.com/monyuonyu/) at 2016/04/29.
  *
  *----------------------------------------------------------------------
  */

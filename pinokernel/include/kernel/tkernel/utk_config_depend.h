@@ -61,7 +61,7 @@
 /*
  * Use zero-clear bss section
  */
-// #define USE_NOINIT		(0)
+#define USE_NOINIT		(0)
 
 /*
  * Stack size for each mode

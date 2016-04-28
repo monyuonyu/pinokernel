@@ -1,7 +1,7 @@
 /* スタートアップからコールされる */
 
 /* Call the clock system intitialization function.*/
-void SystemInit()
+void nokernel_SystemInit()
 {
 
 }
