@@ -1,0 +1,41 @@
+****..\..\src\lib\libc\ctype\toupper.c
+v2 
+:1460811211
+#1
+F "isalnum" F I!1 T!2 ?4-3 P!3 
+T "int" KBS I!2 0x2 
+V "" N I!3 O!1 T!2 .2 0x2 
+F "isalpha" F I!4 T!2 ?5-3 P!5 
+V "" N I!5 O!4 T!2 .2 0x2 
+F "iscntrl" F I!6 T!2 ?6-3 P!7 
+V "" N I!7 O!6 T!2 .2 0x2 
+F "isdigit" F I!8 T!2 ?7-3 P!9 
+V "" N I!9 O!8 T!2 .2 0x2 
+F "isgraph" F I!10 T!2 ?8-3 P!11 
+V "" N I!11 O!10 T!2 .2 0x2 
+F "islower" F I!12 T!2 ?9-3 P!13 
+V "" N I!13 O!12 T!2 .2 0x2 
+F "isprint" F I!14 T!2 ?10-3 P!15 
+V "" N I!15 O!14 T!2 .2 0x2 
+F "ispunct" F I!16 T!2 ?11-3 P!17 
+V "" N I!17 O!16 T!2 .2 0x2 
+F "isspace" F I!18 T!2 ?12-3 P!19 
+V "" N I!19 O!18 T!2 .2 0x2 
+F "isupper" F I!20 T!2 ?13-3 P!21 
+V "" N I!21 O!20 T!2 .2 0x2 
+F "isxdigit" F I!22 T!2 ?14-3 P!23 
+V "" N I!23 O!22 T!2 .2 0x2 
+F "toascii" F I!24 T!2 ?15-3 P!25 
+V "" N I!25 O!24 T!2 .2 0x2 
+F "tolower" F I!26 T!2 ?16-3 P!27 
+V "" N I!27 O!26 T!2 .2 0x2 
+F "toupper" F I!28 T!2 #3-1 !4,9-1-1 ?17-3 P!31 
+V "c" N I!31 O!28 T!2 !3-1 5-1 5-1 6-1 8-1 .2 0x2 
+****%CxSystemPath%\inc\builtin.h
+v2 
+:1460811211
+#2
+****W:\include\lib\libc\ctype.h
+v2 
+:1460811211
+#3

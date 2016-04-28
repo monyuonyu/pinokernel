@@ -5,7 +5,7 @@
     <PlaceholderPrefix>%</PlaceholderPrefix>
     <PlaceholderPostfix>%</PlaceholderPostfix>
   </Placeholders>
-  <Project Name="OpenT-Kernel" Type="Application">
+  <Project Name="pKernel" Type="Application">
     <Files>
       <Path>src\footer.c</Path>
       <Path>src\header.c</Path>
@@ -175,7 +175,7 @@
     &lt;PIOR3Value Name="PIOR3Value" Text="0" /&gt;
     &lt;PIOR4Value Name="PIOR4Value" Text="0" /&gt;
     &lt;PIOR5Value Name="PIOR5Value" Text="0" /&gt;
-    &lt;ProjectName Name="PrjName" Text="OpenT-Kernel" /&gt;
+    &lt;ProjectName Name="PrjName" Text="pKernel" /&gt;
     &lt;ProjectPath Name="PrjPath" Text="W:\" /&gt;
     &lt;ProjectKind Name="PrjKind" Text="Project78K0REmpty" /&gt;
     &lt;DeviceName Name="DeviceName" Fixed="" Text="RL78G13" /&gt;

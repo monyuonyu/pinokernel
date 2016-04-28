@@ -1,4 +1,9 @@
 <CubeSuiteProject.User>
+  <Class Guid="2c267d36-9968-416b-8f39-cfcf1e069830">
+    <Instance Guid="9a2aa537-6164-42cd-80e4-e708b32cd890">
+      <Bookmarks>0</Bookmarks>
+    </Instance>
+  </Class>
   <Class Guid="eeae2c1c-3b17-44ca-9a69-17638edf07a9">
     <Instance Guid="ffd1bb0e-b707-4d38-8165-aa8629d78fcc">
       <Name>PanelWatch1</Name>

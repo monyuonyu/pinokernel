@@ -8,7 +8,7 @@
       <ProjectItemGuid>f36bcd05-2010-4860-91db-d585ed480ca8</ProjectItemGuid>
       <FileCategoryGuid>bea01d2b-3a90-4b29-8c9e-d313e7ffc044</FileCategoryGuid>
       <Property>fb98844b-2c27-4275-9804-f6e63e204da0</Property>
-      <ActiveProjectGuid>73d0eb8d-063d-4c83-9c4f-33d278c604e8</ActiveProjectGuid>
+      <ActiveProjectGuid>d9a40b06-ee40-4beb-aa7c-62db23d06973</ActiveProjectGuid>
     </Instance>
     <Instance Guid="bbf392be-9376-4aba-bf45-bd3546fe324a">
       <DependentProjectsGuidsSourceProjectsCount>0</DependentProjectsGuidsSourceProjectsCount>
@@ -690,7 +690,7 @@
       <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-DebuggerGuid />
       <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-IsDefaultItem>True</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-IsDefaultItem>
       <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-DefaultItemProjectGuid>d9a40b06-ee40-4beb-aa7c-62db23d06973</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-DefaultItemProjectGuid>
-      <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-FileName>DefaultBuild\OpenT-Kernel.abs</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-FileName>
+      <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-FileName>DefaultBuild\pKernel.abs</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-FileName>
       <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-FileType>LoadModuleFile</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-FileType>
       <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-CompilerType>Auto</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-CompilerType>
       <DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-Offset>0</DebuggerProperty-DownloadProperty-DebugInformation-DownloadFiles-DownloadItem0-Offset>
@@ -851,7 +851,7 @@
     &lt;PIOR3Value Name="PIOR3Value" Text="0" /&gt;
     &lt;PIOR4Value Name="PIOR4Value" Text="0" /&gt;
     &lt;PIOR5Value Name="PIOR5Value" Text="0" /&gt;
-    &lt;ProjectName Name="PrjName" Text="OpenT-Kernel" /&gt;
+    &lt;ProjectName Name="PrjName" Text="pKernel" /&gt;
     &lt;ProjectPath Name="PrjPath" Text="W:\" /&gt;
     &lt;ProjectKind Name="PrjKind" Text="Project78K0REmpty" /&gt;
     &lt;DeviceName Name="DeviceName" Fixed="" Text="RL78G13" /&gt;
