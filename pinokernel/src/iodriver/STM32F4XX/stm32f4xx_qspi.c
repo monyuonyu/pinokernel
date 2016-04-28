@@ -79,7 +79,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "iodriver\STM32F4XX\stm32f4xx_qspi.h"
+#include "stm32f4xx_qspi.h"
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{
@@ -332,7 +332,7 @@ void QSPI_Cmd(FunctionalState NewState)
   *          This parameter can be any value between 0x00000000 and 0xFFFFFFFF.
   * @param  QSPI_Mask: Mask to be applied to the status bytes received in polling mode.. 
   *          This parameter can be any value between 0x00000000 and 0xFFFFFFFF.
-  * @param  QSPI_Match_Mode: indicates which method should be used for determining a “match” during
+  * @param  QSPI_Match_Mode: indicates which method should be used for
   *         automatic polling mode. 
   *          This parameter can be any value of :
   *            @arg QSPI_PMM_AND: AND match mode- SMF is set if all the unmasked bits received from the flash match
