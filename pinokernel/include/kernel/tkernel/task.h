@@ -29,10 +29,10 @@ typedef struct mutex_control_block	MTXCB;
 typedef struct task_control_block	TCB;
 #endif
 
-#include <sys/queue.h>
-#include <sys/str_align.h>
-#include "timer.h"
-#include "winfo.h"
+#include <kernel/tkernel/queue.h>
+#include <kernel/tkernel/str_align.h>
+#include "kernel/tkernel/timer.h"
+#include "kernel/tkernel/winfo.h"
 
 /*
  * Internal expression of task state

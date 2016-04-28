@@ -19,14 +19,14 @@
 #ifndef _KERNEL_
 #define _KERNEL_
 
-#include <basic.h>
-#include <tk/tk_typedef.h>
-#include <tk/errno.h>
-#include <tk/syscall.h>
-#include <tk/dbgspt.h>
-#include <sys/imalloc.h>
-#include <sys/queue.h>
-#include <libstr.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tk_typedef.h>
+#include <kernel/tkernel/errno.h>
+#include <kernel/tkernel/syscall.h>
+#include <kernel/tkernel/dbgspt.h>
+#include <kernel/tkernel/imalloc.h>
+#include <kernel/tkernel/queue.h>
+#include <kernel/tkernel/libstr.h>
 
 #include "utk_config.h"
 

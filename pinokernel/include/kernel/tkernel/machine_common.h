@@ -32,6 +32,6 @@
 //#  include <sys/sysdepend/app_mb9af312k/machine_depend.h>
 //#endif
 
-#include <sys/sysdepend/app_rl78g13_r5f100adasp/machine_depend.h>
+#include <kernel/tkernel/machine_depend.h>
 
 #endif /* __SYS_MACHINE_COMMON_H__ */

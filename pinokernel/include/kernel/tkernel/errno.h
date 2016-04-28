@@ -27,7 +27,7 @@
  * MERCD, SERCD).
  */
 #ifndef _in_asm_source_
-#include <tk/tk_typedef.h>
+#include <kernel/tkernel/tk_typedef.h>
 
 #define MERCD(er)	( (ER)(er) >> 16 )	/* Main error code */
 #define SERCD(er)	( (H)(er) )		/* Sub-error code */

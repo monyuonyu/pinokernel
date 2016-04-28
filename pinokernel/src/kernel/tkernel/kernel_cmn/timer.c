@@ -94,7 +94,7 @@ LOCAL void knl_enqueue_tmeb( TMEB *event )
  *	queue, but initialize queue area in case 'timer_delete' 
  *	is called later.
  *
- *	"include/tk/tk_typedef.h"
+ *	"kernel/tkernel/tk_typedef.h"
  *	typedef	W		TMO;
  *	typedef UW		RELTIM;
  *	#define TMO_FEVR	(-1)

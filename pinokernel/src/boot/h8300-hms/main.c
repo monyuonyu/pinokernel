@@ -8,9 +8,9 @@
 //#include "3069s.h"
 #include "iodriver/h8300h/3069f_io.h"
 #include "iodriver/h8300h/3069f_sci.h"
-#include "protocol/XMODEM.h"
+#include "mdl/XMODEM.h"
 #include "load_mot.h"
-#include "kernel/ctype.h"
+#include "lib/libc/ctype.h"
 
 #include <string.h>
 #include <stdlib.h>

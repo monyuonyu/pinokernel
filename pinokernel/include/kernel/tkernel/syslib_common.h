@@ -36,7 +36,7 @@
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/syslib_depend.h>
+#  include <kernel/tkernel/syslib_depend.h>
 #endif
 
 #endif /* __TK_SYSLIB_COMMON_H__ */

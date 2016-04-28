@@ -20,14 +20,14 @@
 
 #include "utk_config.h"
 
-#include <basic.h>
-#include <tk/tkernel.h>
-#include <libstr.h>
-#include <sys/queue.h>
-#include <tk/util.h>
-#include <sys/debug.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tkernel.h>
+#include <kernel/tkernel/libstr.h>
+#include <kernel/tkernel/queue.h>
+#include <kernel/tkernel/util.h>
+#include <kernel/tkernel/debug.h>
 
-#include <sys/imalloc.h>
+#include <kernel/tkernel/imalloc.h>
 
 /* ------------------------------------------------------------------------ */
 /*

@@ -24,7 +24,7 @@
 #define __BASIC_H__
 
 #include <machine.h>
-#include <stddef.h>
+#include <lib/libc/stddef.h>
 #include <typedef.h>
 
 #endif /* __BASIC_H__ */

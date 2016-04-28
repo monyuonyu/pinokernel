@@ -8,9 +8,9 @@
 #ifndef _DP8390_H_
 #define _DP8390_H_
 
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/ctype.h"
+#include "kernel/tkernel/libstr.h"
+#include "lib/libc/basic.h"
 
 // DP8390制御レジスタ
 struct DP8390

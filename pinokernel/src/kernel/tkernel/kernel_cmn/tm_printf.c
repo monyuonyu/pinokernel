@@ -25,7 +25,7 @@
  *		appropriate value.
  */
 #include <lib/libc/stdarg.h>
-#include <kernel/tkernel/basic.h>
+#include <lib/libc/basic.h>
 
 /* Output Buffer size in stack */
 #define	OUTBUF_SZ	0

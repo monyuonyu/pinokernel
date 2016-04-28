@@ -18,7 +18,7 @@
  ;
 
 #include <machine.h>
-#include <tk/sysdef.h>
+#include <kernel/tkernel/sysdef.h>
 
 ;	.code 16
 ;	.syntax unified

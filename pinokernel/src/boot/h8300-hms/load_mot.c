@@ -7,7 +7,7 @@
 
 #include "load_mot.h"
 #include "iodriver/h8300h/3069f_sci.h"
-#include "protocol/XMODEM.h"
+#include "mdl/XMODEM.h"
 #include <stdlib.h>
 #include <string.h>
 

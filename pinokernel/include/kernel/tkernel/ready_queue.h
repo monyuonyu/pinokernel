@@ -19,7 +19,7 @@
 #ifndef _READY_QUEUE_
 #define _READY_QUEUE_
 
-#include <libstr.h>
+#include <kernel/tkernel/libstr.h>
 #include "bitop.h"
 
 /*

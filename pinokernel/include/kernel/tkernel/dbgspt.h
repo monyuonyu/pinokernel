@@ -20,11 +20,11 @@
 #ifndef __TK_DBGSPT_H__
 #define __TK_DBGSPT_H__
 
-#include <basic.h>
-#include <tk/tk_typedef.h>
-#include <tk/syscall.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tk_typedef.h>
+#include <kernel/tkernel/syscall.h>
 
-#include <tk/sysdepend/dbgspt_common.h>
+#include <kernel/tkernel/dbgspt_common.h>
 
 #ifdef __cplusplus
 extern "C" {

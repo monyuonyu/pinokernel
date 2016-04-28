@@ -36,7 +36,7 @@
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/dbgspt_depend.h>
+#  include <kernel/tkernel/dbgspt_depend.h>
 #endif
 
 #endif /* __TK_DBGSPT_COMMON_H__ */

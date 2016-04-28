@@ -19,9 +19,9 @@
 #ifndef _SYSINIT_
 #define _SYSINIT_
 
-#include <basic.h>
-#include <tk/tkernel.h>
-#include <tm/tmonitor.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tkernel.h>
+#include <kernel/tkernel/tmonitor.h>
 
 /*
  * Platform dependent sequence

@@ -20,6 +20,6 @@
 #ifndef __SYS_STR_ALIGN_H__
 #define __SYS_STR_ALIGN_H__
 
-#include <sys/sysdepend/str_align_common.h>
+#include <kernel/tkernel/str_align_common.h>
 
 #endif /* __SYS_STR_ALIGN_H__ */

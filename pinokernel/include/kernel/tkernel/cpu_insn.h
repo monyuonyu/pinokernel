@@ -19,7 +19,7 @@
 #ifndef _CPU_INSN_
 #define _CPU_INSN_
 
-#include <sys/sysinfo.h>
+#include <kernel/tkernel/sysinfo.h>
 
 /* ------------------------------------------------------------------------ */
 /*

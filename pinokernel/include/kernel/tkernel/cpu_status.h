@@ -19,8 +19,8 @@
 #ifndef _CPU_STATUS_
 #define _CPU_STATUS_
 
-#include <tk/syslib.h>
-#include <tk/sysdef.h>
+#include <kernel/tkernel/syslib.h>
+#include <kernel/tkernel/sysdef.h>
 #include "cpu_insn.h"
 
 /*

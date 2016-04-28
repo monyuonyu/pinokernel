@@ -396,7 +396,7 @@ _knl_no_support:
 _svctbl:
 ;	.int	_knl_no_support
 #define	tk_ret_int_impl	knl_no_support
-#include <sys/svc/tksvctbl.h>
+#include <kernel/tkernel/tksvctbl.h>
 #undef	tk_ret_int_impl
 #endif ;  USE_TRAP
 
@@ -696,7 +696,7 @@ _knl_unhook_svc:
 ;	.thumb
 _tdsvctbl:
 ;	.int	_knl_no_support
-#include <sys/svc/tdsvctbl.h>
+#include <kernel/tkernel/tdsvctbl.h>
 
  ;
  ; Debugger support function service call entry

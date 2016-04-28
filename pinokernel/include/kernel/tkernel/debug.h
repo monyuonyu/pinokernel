@@ -20,10 +20,10 @@
 #ifndef	__SYS_DEBUG_H__
 #define __SYS_DEBUG_H__
 
-#include <basic.h>
+#include <lib/libc/basic.h>
 
 #ifdef DEBUG
-#include <tm/tmonitor.h>
+#include <kernel/tkernel/tmonitor.h>
 #endif
 
 #ifdef __cplusplus

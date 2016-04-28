@@ -23,8 +23,8 @@
 #ifndef __SYS_IMALLOC_H__
 #define __SYS_IMALLOC_H__
 
-#include <basic.h>
-#include <tk/tk_typedef.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {

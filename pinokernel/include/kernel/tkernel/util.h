@@ -20,8 +20,8 @@
 #ifndef	__TK_UTIL_H__
 #define __TK_UTIL_H__
 
-#include <basic.h>
-#include <tk/tk_typedef.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {

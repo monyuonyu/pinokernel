@@ -20,9 +20,9 @@
 #ifndef __TK_SYSLIB_H__
 #define __TK_SYSLIB_H__
 
-#include <basic.h>
-#include <tk/tk_typedef.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tk_typedef.h>
 
-#include <tk/sysdepend/syslib_common.h>
+#include <kernel/tkernel/syslib_common.h>
 
 #endif /* __TK_SYSLIB_H__ */

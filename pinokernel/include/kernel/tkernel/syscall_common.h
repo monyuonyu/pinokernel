@@ -36,8 +36,8 @@
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/cpuattr.h>
-#  include <tk/sysdepend/app_rl78g13_r5f100adasp/cpudef.h>
+#  include <kernel/tkernel/cpuattr.h>
+#  include <kernel/tkernel/cpudef.h>
 #endif
 
 #endif /* __TK_SYSCALL_COMMON_H__ */

@@ -19,9 +19,9 @@
 #ifndef _SYSMAIN_
 #define _SYSMAIN_
 
-#include <basic.h>
-#include <tk/tkernel.h>
-#include <tm/tmonitor.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tkernel.h>
+#include <kernel/tkernel/tmonitor.h>
 
 /* Boot message */
 #define BOOT_MESSAGE \

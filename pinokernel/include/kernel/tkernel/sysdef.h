@@ -21,6 +21,6 @@
 #ifndef __TK_SYSDEF_H__
 #define __TK_SYSDEF_H__
 
-#include <tk/sysdepend/sysdef_common.h>
+#include <kernel/tkernel/sysdef_common.h>
 
 #endif /* __TK_SYSDEF_H__ */

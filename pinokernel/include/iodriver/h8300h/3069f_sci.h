@@ -8,9 +8,9 @@
 #ifndef _SCI_H_
 #define _SCI_H_
 
-#include "kernel/ctype.h"
-#include "kernel/libstr.h"
-#include "kernel/basic.h"
+#include "lib/libc/ctype.h"
+#include "kernel/tkernel/libstr.h"
+#include "lib/libc/basic.h"
 
 #define BIT_CTL
 #define C20MHZ 1

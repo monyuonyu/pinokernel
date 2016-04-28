@@ -21,7 +21,7 @@
  *	C standard library is not used.
  */
 /** [BEGIN Common Definitions] */
-#include <kernel/tkernel/basic.h>
+#include <lib/libc/basic.h>
 #include <kernel/tkernel/tkernel.h>
 
 #include "libstr_config.h"

@@ -69,7 +69,7 @@ EXPORT void knl_wait_release_tmout( TCB *tcb )
  *	other state by system call called in the interrupt handler.
  *	However, it does not be in WAIT state.
  *
- *	"include/tk/tk_typedef.h"
+ *	"kernel/tkernel/tk_typedef.h"
  *	typedef	W		TMO;
  *	typedef UW		RELTIM;
  *	#define TMO_FEVR	(-1)

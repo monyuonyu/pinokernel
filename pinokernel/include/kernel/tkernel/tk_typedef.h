@@ -20,7 +20,7 @@
 #ifndef	__TK_TYPEDEF_H__
 #define __TK_TYPEDEF_H__
 
-#include <basic.h>
+#include <lib/libc/basic.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -18,7 +18,7 @@
  */
 
 /** [BEGIN Common Definitions] */
-#include <kernel/tkernel/basic.h>
+#include <lib/libc/basic.h>
 #include <kernel/tkernel/tkernel.h>
 #include <kernel/tkernel/util.h>
 #include <kernel/tkernel/libstr.h>

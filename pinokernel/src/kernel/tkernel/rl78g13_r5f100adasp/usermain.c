@@ -16,7 +16,7 @@
  *	User Main
  */
 
-#include <kernel/tkernel/basic.h>
+#include <lib/libc/basic.h>
 #include <kernel/tkernel/tkernel.h>
 #include <kernel/tkernel/tmonitor.h>
 

@@ -19,8 +19,8 @@
 #ifndef _INITTASK_DEF_
 #define _INITTASK_DEF_
 
-#include <basic.h>
-#include <tk/tkernel.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tkernel.h>
 #include "utk_config.h"
 
 /*

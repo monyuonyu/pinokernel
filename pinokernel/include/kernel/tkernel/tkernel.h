@@ -20,13 +20,13 @@
 #ifndef __TK_TKERNEL_H__
 #define __TK_TKERNEL_H__
 
-#include <basic.h>
-#include <tk/tk_typedef.h>
-#include <tk/errno.h>
+#include <lib/libc/basic.h>
+#include <kernel/tkernel/tk_typedef.h>
+#include <kernel/tkernel/errno.h>
 
-#include <tk/syscall.h>
-#include <tk/syslib.h>
+#include <kernel/tkernel/syscall.h>
+#include <kernel/tkernel/syslib.h>
 
-#include <sys/profile.h>
+#include <kernel/tkernel/profile.h>
 
 #endif /* __TK_TKERNEL_H__ */

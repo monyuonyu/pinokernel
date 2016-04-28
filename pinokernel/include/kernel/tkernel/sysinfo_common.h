@@ -33,7 +33,7 @@
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#  include <sys/sysdepend/app_rl78g13_r5f100adasp/sysinfo_depend.h>
+#  include <kernel/tkernel/sysinfo_depend.h>
 #endif
 
 #endif /* __SYS_SYSINFO_COMMON_H__ */

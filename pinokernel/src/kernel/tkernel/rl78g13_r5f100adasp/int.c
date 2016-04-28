@@ -17,7 +17,7 @@
  *	Interrupt controller
  */
 
-#include <kernel/tkernel/basic.h>
+#include <lib/libc/basic.h>
 #include <kernel/tkernel/syslib.h>
 #include <kernel/tkernel/sysdef.h>
 

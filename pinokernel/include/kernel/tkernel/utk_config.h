@@ -34,7 +34,7 @@
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#include "sysdepend/app_rl78g13_r5f100adasp/utk_config_depend.h"
+#include "kernel/tkernel/utk_config_depend.h"
 #endif
 
 #include "utk_config_func.h"
