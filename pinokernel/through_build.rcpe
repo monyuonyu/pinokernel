@@ -748,6 +748,7 @@
           <Option>-cpu=S2</Option>
           <Option>-obj_path=%BuildModeName%</Option>
           <Option>-dev=%MicomToolPath%\Device\RL78\Devicefile\DR5F100AD.DVF</Option>
+          <Option>-P</Option>
           <Option>-c</Option>
           <Option>-g</Option>
           <Option>-I include\mdl</Option>
@@ -766,6 +767,8 @@
           <Option>-I W:\include\kernel\tkernel</Option>
           <Option>-I W:\include\lib\libc</Option>
           <Option>-I W:\include\lib\libfunc</Option>
+          <Option>-preprocess=comment,line</Option>
+          <Option>-prep_path=%BuildModeName%</Option>
         </CompileOptions>
         <AssembleOptions>
           <Option>-cpu=S2</Option>

@@ -3806,7 +3806,7 @@
       <COptionIgnoreFilesMisra-DefaultValue />
       <COptionCheckLanguageExtension-DefaultValue>False</COptionCheckLanguageExtension-DefaultValue>
       <IsLockedByUser>False</IsLockedByUser>
-      <TimeTagModified--0>-8587397395096253049</TimeTagModified--0>
+      <TimeTagModified--0>-8587396588825227339</TimeTagModified--0>
       <COptionAnsi-0>False</COptionAnsi-0>
       <COptionAsmPath-0>False</COptionAsmPath-0>
       <COptionCharacterSet-0>Auto</COptionCharacterSet-0>
@@ -3848,7 +3848,7 @@ W:\include\lib\libfunc
       <COptionLargeVariable-0>False</COptionLargeVariable-0>
       <COptionMisra2004RuleFile-0 />
       <COptionOdeleteStaticFunc-0>None</COptionOdeleteStaticFunc-0>
-      <COptionP-0>False</COptionP-0>
+      <COptionP-0>True</COptionP-0>
       <COptionPostCompileCommands-0 />
       <COptionPreinclude-0 />
       <COptionSignedBitfield-0>None</COptionSignedBitfield-0>
@@ -3865,12 +3865,12 @@ W:\include\lib\libfunc
       <COptionVolatile-0>False</COptionVolatile-0>
       <COptionMisra2004RuleNumberRequiredAdd-0 />
       <COptionOpipeline-0>None</COptionOpipeline-0>
-      <COptionPreprocessComment-0>False</COptionPreprocessComment-0>
+      <COptionPreprocessComment-0>True</COptionPreprocessComment-0>
       <COptionSwitch-0>Auto</COptionSwitch-0>
       <COptionMisra2004RuleNumberRequiredRemove-0 />
       <COptionOtailCall-0>None</COptionOtailCall-0>
       <COptionPassSource-0>False</COptionPassSource-0>
-      <COptionPreprocessLine-0>False</COptionPreprocessLine-0>
+      <COptionPreprocessLine-0>True</COptionPreprocessLine-0>
       <COptionMergeString-0>False</COptionMergeString-0>
       <COptionMisra2012-0>None</COptionMisra2012-0>
       <COptionOintermodule-0>None</COptionOintermodule-0>
