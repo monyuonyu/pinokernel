@@ -35,28 +35,26 @@ IMPORT ER knl_initialize_devmgr( void );
 EXPORT void knl_init_system( void )
 {
 	ER	ercd;
+	ercd = E_OK;
 
 	/* Platform dependent initialize sequence */
 	ercd = knl_init_device();
-	if ( ercd < E_OK ) {
-		goto err_ret;
-	}
 
 	/* Initialize Imalloc */
 #if USE_IMALLOC
-	ercd = knl_init_Imalloc();
-	if ( ercd < E_OK ) {
-		goto err_ret;
+	if ( ercd >= E_OK ) {
+		ercd = knl_init_Imalloc();
 	}
 #endif /* USE_IMALLOC */
 
-	return;
-
-err_ret:
+	if (ercd < E_OK) {
 #if USE_KERNEL_MESSAGE
-	tm_putstring((UB*)"!ERROR! init_kernel\n");
+		tm_putstring((UB*)"!ERROR! init_kernel\n");
 #endif
-	tm_monitor(); /* Stop */
+		tm_monitor(); /* Stop */
+	}
+
+	return;
 }
 
 /*
@@ -65,28 +63,26 @@ err_ret:
 EXPORT void knl_start_system( void )
 {
 	ER	ercd;
+	ercd = E_OK;
 
 #if CFN_MAX_REGDEV > 0
 	/* Initialize Device manager */
 	ercd = knl_initialize_devmgr();
-	if ( ercd < E_OK ) {
-		goto err_ret;
-	}
 #endif
 
 	/* Start system dependent sequence */
-	ercd = knl_start_device();
-	if ( ercd < E_OK ) {
-		goto err_ret;
+	if ( ercd >= E_OK ) {
+		ercd = knl_start_device();
+	}
+
+	if (ercd < E_OK) {
+#if USE_KERNEL_MESSAGE
+		tm_putstring((UB*)"!ERROR! start_system\n");
+#endif
+		tm_monitor();	/* Stop */
 	}
 
 	return;
-
-err_ret:
-#if USE_KERNEL_MESSAGE
-	tm_putstring((UB*)"!ERROR! start_system\n");
-#endif
-	tm_monitor();	/* Stop */
 }
 
 #if USE_CLEANUP
