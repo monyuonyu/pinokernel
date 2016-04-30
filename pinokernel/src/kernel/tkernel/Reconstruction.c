@@ -35,11 +35,8 @@
 /*--------------------------------------------------------------------*/
 /*  Function definition                                               */
 /*--------------------------------------------------------------------*/
-#ifdef TKERNEL_CHECK_CONST
 #define CONST   const
-#else
 #define CONST
-#endif
 
 /*
  * General-purpose data type  
@@ -111,16 +108,10 @@ typedef UH      TC;     /* TRON character code */
 #define TNULL       ((TC)0)     /* End of TRON code character string */
 
 
-// #if APP_AT91
 // #include <asm_depend.h>
-// #endif
 
-// #if APP_H8S2212
 // #include <asm_depend.h>
-// #endif
 
-#if _APP_RL78G13_R5F100ADASP_
-#endif
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -141,18 +132,14 @@ typedef UH      TC;     /* TRON character code */
 
 /*** macros ***/
 /* bit operation macro */
-#if BIGENDIAN
 #define _BIT_SET_N(n) ( (UB)0x80 >> ((n) & 7) )
 #define _BIT_SHIFT(n) ( (UB)n >> 1 )
-#else
 #define _BIT_SET_N(n) ( (UB)0x01 << ((n) & 7) )
 #define _BIT_SHIFT(n) ( (UB)n << 1 )
-#endif
 /** [END Common Definitions] */
 
 
 /*** bit operation ***/
-#ifdef USE_FUNC_TSTDLIB_BITCLR
 /* tstdlib_bitclr : clear specified bit */
 void
 knl_tstdlib_bitclr( void *base, W offset )
@@ -170,9 +157,7 @@ knl_tstdlib_bitclr( void *base, W offset )
 
     *cp &= ~mask;
 }
-#endif /* USE_FUNC_TSTDLIB_BITCLR */
 
-#ifdef USE_FUNC_TSTDLIB_BITSET
 /* tstdlib_bitset : set specified bit */
 void
 knl_tstdlib_bitset( void *base, W offset )
@@ -190,9 +175,7 @@ knl_tstdlib_bitset( void *base, W offset )
 
     *cp |= mask;
 }
-#endif /* USE_FUNC_TSTDLIB_BITSET */
 
-#ifdef USE_FUNC_TSTDLIB_BITSEARCH1
 /* tstdlib_bitsearch1 : perform 1 search on bit string */
 W
 knl_tstdlib_bitsearch1( void *base, W offset, W width )
@@ -236,18 +219,13 @@ knl_tstdlib_bitsearch1( void *base, W offset, W width )
 
     return -1;
 }
-#endif /* USE_FUNC_TSTDLIB_BITSEARCH1 */
 
 
-#ifdef  __size_t
 typedef __size_t    size_t;
 #undef  __size_t
-#endif
 
-#ifdef  __wchar_t
 typedef __wchar_t   wchar_t;
 #undef  __wchar_t
-#endif
 
 #define NULL        0
 
@@ -260,7 +238,6 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 /*
  * Check object ID range (E_ID)
  */
-#if CHK_ID
 #define CHECK_TSKID(tskid) { if (!in_indp() && ((tskid) == TSK_SELF)) { return E_OBJ; } else if (!CHK_TSKID(tskid)) { return E_ID; } }
 #define CHECK_TSKID_SELF(tskid) { if ( !( (!in_indp() && (tskid) == TSK_SELF) || CHK_TSKID(tskid) ) ) { return E_ID; } }
 #define CHECK_SEMID(semid) { if (!CHK_SEMID(semid)) { return E_ID; } }
@@ -275,7 +252,6 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 #define CHECK_ALMID(almid) { if (!CHK_ALMID(almid)) { return E_ID; } }
 #define CHECK_SSYID(ssid) { if (!CHK_SSYID(ssid)) { return E_ID; } }
 #define CHECK_SSYID_ALL(ssid) { if (!(CHK_SSYID(ssid) || (ssid) == 0)) { return E_ID; } }
-#else /* CHK_ID */
 #define CHECK_TSKID(tskid)
 #define CHECK_TSKID_SELF(tskid)
 #define CHECK_SEMID(semid)
@@ -290,118 +266,81 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 #define CHECK_ALMID(almid)
 #define CHECK_SSYID(ssid)
 #define CHECK_SSYID_ALL(ssid)
-#endif /* CHK_ID */
 
 /*
  * Check whether its own task is specified (E_OBJ)
  */
-#if CHK_SELF
 #define CHECK_NONSELF(tskid) { if (!in_indp() && (tskid) == knl_ctxtsk->tskid) { return E_OBJ; } }
-#else /* CHK_SELF */
 #define CHECK_NONSELF(tskid)
-#endif /* CHK_SELF */
 
 /*
  * Check task priority value (E_PAR)
  */
-#if CHK_PAR
 #define CHECK_PRI(pri) { if (!CHK_PRI(pri)) { return E_PAR; } }
 #define CHECK_PRI_INI(pri) { if ((pri) != TPRI_INI && !CHK_PRI(pri)) { return E_PAR; } }
 #define CHECK_PRI_RUN(pri) { if ((pri) != TPRI_RUN && !CHK_PRI(pri)) { return E_PAR; } }
-#else /* CHK_PAR */
 #define CHECK_PRI(pri)
 #define CHECK_PRI_INI(pri)
 #define CHECK_PRI_RUN(pri)
-#endif /* CHK_PAR */
 
 /*
  * Check subsystem priority value (E_PAR)
  */
-#if CHK_PAR
 #define CHECK_SSYPRI(ssypri) { if (!CHK_SSYPRI(ssypri)) { return E_PAR; } }
-#else /* CHK_PAR */
 #define CHECK_SSYPRI(ssypri)
-#endif /* CHK_PAR */
 
 /*
  * Check timeout specification value (E_PAR)
  */
-#if CHK_PAR
 #define CHECK_TMOUT(tmout) { if (!((tmout) >= TMO_FEVR)) { return E_PAR; } }
-#else /* CHK_PAR */
 #define CHECK_TMOUT(tmout)
-#endif /* CHK_PAR */
 
 /*
  * Check other parameter errors (E_PAR)
  */
-#if CHK_PAR
 #define CHECK_PAR(exp) { if (!(exp)) { return E_PAR; } }
-#else /* CHK_PAR */
 #define CHECK_PAR(exp)
-#endif /* CHK_PAR */
 
 /*
  * Check reservation attribute error (E_RSATR)
  */
-#if CHK_RSATR
 #define CHECK_RSATR(atr, maxatr) { if ((atr) & ~(maxatr)) { return E_RSATR; } }
-#else /* CHK_RSATR */
 #define CHECK_RSATR(atr, maxatr)
-#endif /* CHK_RSATR */
 
 /*
  * Check unsupported function (E_NOSPT)
  */
-#if CHK_NOSPT
 #define CHECK_NOSPT(exp) { if (!(exp)) { return E_NOSPT; } }
-#else /* CHK_NOSPT */
 #define CHECK_NOSPT(exp)
-#endif /* CHK_NOSPT */
 
 /*
  * Check whether task-independent part is running (E_CTX)
  */
-#if CHK_CTX
 #define CHECK_INTSK() { if (in_indp()) { return E_CTX; } }
-#else /* CHK_CTX */
 #define CHECK_INTSK()
-#endif /* CHK_CTX */
 
 /*
  * Check whether dispatch is in disabled state (E_CTX)
  */
-#if CHK_CTX
 #define CHECK_DISPATCH() { if (in_ddsp()) { return E_CTX; } }
 #define CHECK_DISPATCH_POL(tmout) { if ((tmout) != TMO_POL && in_ddsp()) { return E_CTX; } }
-#else /* CHK_CTX */
 #define CHECK_DISPATCH()
 #define CHECK_DISPATCH_POL(tmout)
-#endif /* CHK_CTX */
 
 /*
  * Check other context errors (E_CTX)
  */
-#if CHK_CTX
 #define CHECK_CTX(exp) { if (!(exp)) { return E_CTX; } }
-#else /* CHK_CTX */
 #define CHECK_CTX(exp)
-#endif /* CHK_CTX */
 
 
 EXPORT void init_clock_control(void)
 {
-#if (HWWD_DISABLE)              /* HW Watchdog Disable */
 
-#endif
 
-#if (CLOCK_SETUP)               /* Clock Setup */
 
-#endif
 
-#if (CR_TRIM_SETUP)
 
-#endif
 }
 
 /* Task configuration */
@@ -584,7 +523,6 @@ typedef struct t_cregs {
 } T_CREGS;
 
 
-#ifdef USE_FUNC_TK_DIS_DSP
 /*
  * Dispatch enable/disable
  */
@@ -596,9 +534,7 @@ SYSCALL ER tk_dis_dsp_impl( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_DIS_DSP */
 
-#ifdef USE_FUNC_TK_ENA_DSP
 /*
  * Dispatch enable
  */
@@ -613,7 +549,6 @@ SYSCALL ER tk_ena_dsp_impl( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_ENA_DSP */
 
 /* ------------------------------------------------------------------------ */
 
@@ -621,12 +556,9 @@ SYSCALL ER tk_ena_dsp_impl( void )
  * High level programming language
  */
 
-#ifdef USE_FUNC_HLL_INTHDR
 /* High level programming language interrupt handler entry */
 Noinit(EXPORT FP knl_hll_inthdr[N_INTVEC]);
-#endif /* USE_FUNC_HLL_INTHDR */
 
-#ifdef USE_FUNC_TK_DEF_INT
 IMPORT FP knl_hll_inthdr[];
 
 /* High level programming language routine (Interrupt) */
@@ -649,12 +581,10 @@ SYSCALL ER tk_def_int_impl( UINT intno, CONST T_DINT *pk_dint )
 
         BEGIN_CRITICAL_SECTION;
 
-#if USE_HLL_INTHDR
         if ( (pk_dint->intatr & TA_HLNG) != 0 ) {
             knl_hll_inthdr[intno] = inthdr;
             inthdr = knl_inthdr_startup;
         }
-#endif
 
         knl_define_inthdr(intno, inthdr);
         END_CRITICAL_SECTION;
@@ -671,26 +601,20 @@ SYSCALL ER tk_def_int_impl( UINT intno, CONST T_DINT *pk_dint )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_DEF_INT */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_SET_REG
 /*
  * Set task register contents
  */
 EXPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T_CREGS *cregs )
 {
     SStackFrame *ssp;
-#if USE_TRAP
     UW  xpsr;
-#endif
     INT i;
 
     ssp = tcb->tskctxb.ssp;
-#if USE_TRAP
     xpsr = ssp->xpsr;
-#endif
 
     if ( cregs != NULL ) {
         ssp = cregs->ssp;
@@ -703,17 +627,13 @@ EXPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T
         for ( i = 4; i < 12; ++i){
             ssp->r_[i - 4] = regs->r[i];
         }
-#if USE_TRAP
         ssp->ip = regs->r[12];
         ssp->lr = regs->lr;
-#endif
     }
 
     if ( eit != NULL ) {
         ssp->pc       = eit->pc;
-#if USE_TRAP
         ssp->xpsr = (eit->xpsr & 0xff000000) | (xpsr & 0x00ffffff);
-#endif
         ssp->taskmode = eit->taskmode;
     }
 
@@ -723,9 +643,7 @@ EXPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T
 //      ssp->usp = cregs->usp;
     }
 }
-#endif /* USE_FUNC_SET_REG */
 
-#ifdef USE_FUNC_TK_SET_REG
 /*
  * Set task register contents
  */
@@ -751,24 +669,18 @@ SYSCALL ER tk_set_reg_impl( ID tskid,
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SET_REG */
 
-#ifdef USE_FUNC_GET_REG
 /*
  * Get task register contents
  */
 EXPORT void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 {
     SStackFrame *ssp;
-#if USE_TRAP
     UW      xpsr;
-#endif
     INT     i;
 
     ssp = tcb->tskctxb.ssp;
-#if USE_TRAP
     xpsr = ssp->xpsr;
-#endif
 
     if ( regs != NULL ) {
         for ( i = 0; i < 4; ++i ) {
@@ -777,17 +689,13 @@ EXPORT void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
         for ( i = 4; i < 12; ++i ){
             regs->r[i] = ssp->r_[i - 4];
         }
-#if USE_TRAP
         regs->r[12] = ssp->ip;
         regs->lr = ssp->lr;
-#endif
     }
 
     if ( eit != NULL ) {
         eit->pc       = ssp->pc;
-#if USE_TRAP
         eit->xpsr     = ssp->xpsr;
-#endif
         eit->taskmode = ssp->taskmode;
     }
 
@@ -797,9 +705,7 @@ EXPORT void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 //      cregs->usp = ssp->usp;
     }
 }
-#endif /* USE_FUNC_GET_REG */
 
-#ifdef USE_FUNC_TK_GET_REG
 /*
  * Get task register contents
  */
@@ -824,15 +730,12 @@ SYSCALL ER tk_get_reg_impl( ID tskid, T_REGS *pk_regs, T_EIT *pk_eit, T_CREGS *p
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_GET_REG */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_TD_SET_REG
 /*
  * Set task register
  */
@@ -858,9 +761,7 @@ SYSCALL ER td_set_reg_impl( ID tskid, CONST T_REGS *regs, CONST T_EIT *eit, CONS
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_SET_REG */
 
-#ifdef USE_FUNC_TD_GET_REG
 /*
  * Get task register
  */
@@ -886,9 +787,7 @@ SYSCALL ER td_get_reg_impl( ID tskid, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_GET_REG */
 
-#endif /* USE_DBGSPT */
 
 
 IMPORT void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs );
@@ -909,33 +808,25 @@ IMPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T
  */
 EXPORT ER knl_cpu_initialize( void )
 {
-#if USE_TRAP
 IMPORT void knl_dispatch_entry( void );     /* Dispatcher call */
 
     /* Register exception handler used on OS */
 //  knl_define_inthdr(EXP_PSV, knl_dispatch_entry);
-#if USE_DBGSPT
 IMPORT void knl_call_dbgspt( void );        /* Debugger support call */
 //  knl_define_inthdr(EXP_DBG, knl_call_dbgspt);
-#endif
-#endif /* USE_TRAP */
 
-#if USE_TRAP || CFN_MAX_SSYID > 0
 IMPORT void knl_call_entry( void );         /* System call */
 //  knl_define_inthdr(EXP_SVC,      knl_call_entry);
-#endif
 
     return E_OK;
 }
 
-#if USE_CLEANUP
 /*
  * CPU-dependent finalization
  */
 EXPORT void knl_cpu_shutdown( void )
 {
 }
-#endif /* USE_CLEANUP */
 
 
 /* ------------------------------------------------------------------------ */
@@ -1397,20 +1288,12 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 /*
  * System-dependent definition
  */
-// #if APP_AT91
 // #include <dbgspt_depend.h>
-// #endif
 
-// #if APP_H8S2212
 // #include <dbgspt_depend.h>
-// #endif
 
-// #if APP_MB9AF312K
 // #include <dbgspt_depend.h>
-// #endif
 
-#if _APP_RL78G13_R5F100ADASP_
-#endif
 
 
 /*
@@ -1424,8 +1307,6 @@ typedef struct td_calinf {
 
 
 
-#ifdef DEBUG
-#endif
 
 /*
  * Example
@@ -1433,11 +1314,8 @@ typedef struct td_calinf {
  *
  *  DO_DEBUG( if ( ercd < E_OK ) DEBUG_PRINT(("error = %d\n", ercd)); )
  */
-#ifdef DEBUG
 
-#ifndef DEBUG_MODULE
 #define DEBUG_MODULE    ""  /* Normally define like "(module name)" */
-#endif
 
 /*
  * Example
@@ -1447,42 +1325,32 @@ typedef struct td_calinf {
 #define DEBUG_PRINT(arg)
 #define DO_DEBUG(exp)   { exp }
 
-#else /* DEBUG */
 
 #define DEBUG_PRINT(arg)    /* arg */
 #define DO_DEBUG(exp)       /* exp */
 
-#endif /* DEBUG */
 
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_REGDEV > 0
 
-#ifdef USE_FUNC_DEVMGRLOCK
 /* Lock for device management exclusive control */
 Noinit(EXPORT   FastMLock   knl_DevMgrLock);
-#endif /* USE_FUNC_DEVMGRLOCK */
 
-#ifdef USE_FUNC_DEFAULTIDEV
 /* Device initial setting information */
 Noinit(EXPORT   T_IDEV      knl_DefaultIDev);
-#endif /* USE_FUNC_DEFAULTIDEV */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Device registration management
  */
 
-#ifdef USE_FUNC_DEVCBTBL
 Noinit(EXPORT   DevCB       knl_DevCBtbl[CFN_MAX_REGDEV]);  /* Device registration information table */
 Noinit(EXPORT   QUEUE       knl_UsedDevCB); /* In-use queue */
 Noinit(EXPORT   QUEUE       knl_FreeDevCB); /* Unused queue */
-#endif /* USE_FUNC_DEVCBTBL */
 
 
-#ifdef USE_FUNC_SEARCHDEVCB
 /*
  * Search registration device
  */
@@ -1501,9 +1369,7 @@ EXPORT DevCB* knl_searchDevCB( CONST UB *devnm )
 
     return NULL;
 }
-#endif /* USE_FUNC_SEARCHDEVCB */
 
-#ifdef USE_FUNC_TK_DEF_DEV
 /*
  * Get DevCB for new registration
  */
@@ -1596,12 +1462,10 @@ SYSCALL ID tk_def_dev_impl P3( CONST UB *devnm, CONST T_DDEV *pk_ddev, T_IDEV *p
     if ( pk_ddev != NULL ) {
         /* Set/update device registration information */
         devcb->ddev = *pk_ddev;
-#if TA_GP
         if ( (pk_ddev->drvatr & TA_GP) == 0 ) {
             /* Apply caller 'gp' if TA_GP is not specified */
             devcb->ddev.gp = gp;
         }
-#endif
 
         if ( pk_idev != NULL ) {
             /* Device initial setting information */
@@ -1630,9 +1494,7 @@ err_ret1:
     DEBUG_PRINT(("tk_def_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEF_DEV */
 
-#ifdef USE_FUNC_TK_REF_IDV
 /*
  * Check device initial information
  */
@@ -1644,11 +1506,9 @@ SYSCALL ER tk_ref_idv_impl( T_IDEV *pk_idev )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_REF_IDV */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_PHYDEVNM
 /*
  * Get physical device name
  *  Get the subunit number (return value) 
@@ -1680,9 +1540,7 @@ EXPORT INT knl_phydevnm( UB *pdevnm, CONST UB *ldevnm )
 
     return unitno;
 }
-#endif /* USE_FUNC_PHYDEVNM */
 
-#ifdef USE_FUNC_TK_GET_DEV
 /*
  * Get logical device name
  *  Get the logical device name from
@@ -1741,9 +1599,7 @@ err_ret1:
     DEBUG_PRINT(("tk_get_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_GET_DEV */
 
-#ifdef USE_FUNC_TK_REF_DEV
 /*
  * Get device information
  */
@@ -1780,9 +1636,7 @@ err_ret2:
     DEBUG_PRINT(("tk_ref_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_DEV */
 
-#ifdef USE_FUNC_TK_OREF_DEV
 /*
  * Get device information
  */
@@ -1819,9 +1673,7 @@ err_ret2:
     DEBUG_PRINT(("tk_oref_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_OREF_DEV */
 
-#ifdef USE_FUNC_TK_LST_DEV
 /*
  * Get registration device list
  */
@@ -1865,11 +1717,9 @@ err_ret:
     DEBUG_PRINT(("tk_lst_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_LST_DEV */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_TK_EVT_DEV
 /*
  * Send driver request event
  */
@@ -1878,9 +1728,7 @@ SYSCALL INT tk_evt_dev_impl( ID devid, INT evttyp, void *evtinf )
     DevCB   *devcb;
     EVTFN   eventfn;
     void    *exinf;
-#if TA_GP
     void    *gp;
-#endif
     ER  ercd;
 
     ercd = knl_check_devid(devid);
@@ -1902,9 +1750,7 @@ SYSCALL INT tk_evt_dev_impl( ID devid, INT evttyp, void *evtinf )
 
     eventfn = (EVTFN)devcb->ddev.eventfn;
     exinf = devcb->ddev.exinf;
-#if TA_GP
     gp = devcb->ddev.gp;
-#endif
 
     UnlockDM();
 
@@ -1912,11 +1758,8 @@ SYSCALL INT tk_evt_dev_impl( ID devid, INT evttyp, void *evtinf )
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode++;
     ENABLE_INTERRUPT;
-#if TA_GP
     ercd = CallDeviceDriver(evttyp, evtinf, exinf, 0, (FP)eventfn, gp);
-#else
     ercd = (*eventfn)(evttyp, evtinf, exinf);
-#endif
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode--;
     ENABLE_INTERRUPT;
@@ -1929,11 +1772,9 @@ err_ret1:
     DEBUG_PRINT(("tk_evt_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_EVT_DEV */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_INITIALIZE_DEVMGR
 /*
  * Initialization of device registration information table
  */
@@ -1960,7 +1801,6 @@ LOCAL ER initDevCB( void )
  */
 LOCAL ER initIDev( void )
 {
-#if CFN_DEVT_MBFSZ0 >= 0
     T_CMBF  cmbf;
     ER  ercd;
 
@@ -1981,11 +1821,9 @@ LOCAL ER initIDev( void )
 err_ret:
     DEBUG_PRINT(("initIDev ercd = %d\n", ercd));
     return ercd;
-#else
     /* Do not use message buffer for event notification */
     knl_DefaultIDev.evtmbfid = 0;
     return E_OK;
-#endif
 }
 
 /*
@@ -2028,9 +1866,7 @@ err_ret:
     knl_finish_devmgr();
     return ercd;
 }
-#endif /* USE_FUNC_INITIALIZE_DEVMGR */
 
-#ifdef USE_FUNC_FINISH_DEVMGR
 /*
  * Unregister device initial setting information
  */
@@ -2038,20 +1874,16 @@ LOCAL ER delIDev( void )
 {
     ER  ercd = E_OK;
 
-#if CFN_DEVT_MBFSZ0 >= 0
     /* Delete message buffer for event notification */
     if ( knl_DefaultIDev.evtmbfid > 0 ) {
         ercd = tk_del_mbf_impl(knl_DefaultIDev.evtmbfid);
         knl_DefaultIDev.evtmbfid = 0;
     }
 
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("delIDev ercd = %d\n", ercd));
     }
-#endif
 
-#endif /* CFN_DEVT_MBFSZ0 >= 0 */
 
     return ercd;
 }
@@ -2067,28 +1899,22 @@ EXPORT ER knl_finish_devmgr( void )
 
     /* Unregister device initial setting information */
     ercd = delIDev();
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("2. finish_devmgr -> delIDev ercd = %d\n", ercd));
     }
-#endif
 
     /* Finalization sequence of device input/output-related */
     ercd = knl_finishDevIO();
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("3. finish_devmgr -> finishDevIO ercd = %d\n", ercd));
     }
-#endif
 
     /* Delete lock for device management exclusive control */
     DeleteMLock(&knl_DevMgrLock);
 
     return ercd;
 }
-#endif /* USE_FUNC_FINISH_DEVMGR */
 
-#endif /* CFN_MAX_REGDEV */
 
 
 /* Set Object Name in .exinf for DEBUG */
@@ -2161,12 +1987,9 @@ ER knl_call_abortfn( DevCB *devcb, ID tskid, T_DEVREQ *devreq, INT nreq )
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode++;
     ENABLE_INTERRUPT;
-#if TA_GP
     ercd = knl_CallDeviceDriver(tskid, devreq, nreq, devcb->ddev.exinf,
                         (FP)abortfn, devcb->ddev.gp);
-#else
     ercd = (*abortfn)(tskid, devreq, nreq, devcb->ddev.exinf);
-#endif
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode--;
     ENABLE_INTERRUPT;
@@ -2186,24 +2009,16 @@ IMPORT ER knl_close_device( OpnCB *opncb, UINT option );
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_REGDEV
 
-#ifdef USE_FUNC_OPNCBTBL
 Noinit(EXPORT OpnCB knl_OpnCBtbl[CFN_MAX_OPNDEV]);  /* Open management information table */
 Noinit(EXPORT QUEUE knl_FreeOpnCB); /* Unused queue */
-#endif /* USE_FUNC_OPNCBTBL */
 
-#ifdef USE_FUNC_REQCBTBL
 Noinit(EXPORT ReqCB knl_ReqCBtbl[CFN_MAX_REQDEV]);  /* Request management information table */
 Noinit(EXPORT QUEUE knl_FreeReqCB); /* Unused queue */
-#endif /* USE_FUNC_REQCBTBL */
 
-#ifdef USE_FUNC_RESOURCE_CONTROL_BLOCK
 Noinit(EXPORT ResCB knl_resource_control_block);
-#endif /* USE_FUNC_RESOURCE_CONTROL_BLOCK */
 
 
-#ifdef USE_FUNC_GETRESCB
 /*
  * Get resource management information
  */
@@ -2221,9 +2036,7 @@ EXPORT ResCB* knl_GetResCB( void )
 
     return &knl_resource_control_block;
 }
-#endif /* USE_FUNC_GETRESCB */
 
-#ifdef USE_FUNC_CHECK_DEVDESC
 /*
  * Verify validity of device descriptor
  */
@@ -2248,9 +2061,7 @@ EXPORT ER knl_check_devdesc( ID dd, UINT mode, OpnCB **p_opncb )
     *p_opncb = opncb;
     return E_OK;
 }
-#endif /* USE_FUNC_CHECK_DEVDESC */
 
-#ifdef USE_FUNC_DELOPNCB
 /*
  * Free open management block
  */
@@ -2264,9 +2075,7 @@ EXPORT void knl_delOpnCB( OpnCB *opncb, BOOL free )
     }
     opncb->resid = 0;
 }
-#endif /* USE_FUNC_DELOPNCB */
 
-#ifdef USE_FUNC_DELREQCB
 /*
  * Free request management block
  */
@@ -2277,11 +2086,9 @@ EXPORT void knl_delReqCB( ReqCB *reqcb )
     QueInsert(&reqcb->q, &knl_FreeReqCB);
     reqcb->opncb = NULL;
 }
-#endif /* USE_FUNC_DELREQCB */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_CHKOPEN
 /*
  * TRUE if specified device is open.
  */
@@ -2296,9 +2103,7 @@ EXPORT BOOL knl_chkopen( DevCB *devcb, INT unitno )
     }
     return FALSE;
 }
-#endif /* USE_FUNC_CHKOPEN */
 
-#ifdef USE_FUNC_TK_OPN_DEV
 
 LOCAL CONST T_CSEM knl_pk_csem_DM = {
     NULL,
@@ -2395,9 +2200,7 @@ SYSCALL ID tk_opn_dev_impl( CONST UB *devnm, UINT omode )
 {
     OPNFN   openfn;
     void    *exinf;
-#if TA_GP
     void    *gp;
-#endif
     UB  pdevnm[L_DEVNM + 1];
     INT unitno;
     ResCB   *rescb;
@@ -2432,9 +2235,7 @@ SYSCALL ID tk_opn_dev_impl( CONST UB *devnm, UINT omode )
 
     openfn = (OPNFN)devcb->ddev.openfn;
     exinf = devcb->ddev.exinf;
-#if TA_GP
     gp = devcb->ddev.gp;
-#endif
 
     /* Is device driver call required? */
     if ( knl_chkopen(devcb, unitno) && (devcb->ddev.drvatr & TDA_OPENREQ) == 0 ) {
@@ -2462,12 +2263,9 @@ SYSCALL ID tk_opn_dev_impl( CONST UB *devnm, UINT omode )
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode++;
         ENABLE_INTERRUPT;
-#if TA_GP
         ercd = CallDeviceDriver(DEVID(devcb, unitno), omode, exinf, 0,
                                 (FP)openfn, gp);
-#else
         ercd = (*openfn)(DEVID(devcb, unitno), omode, exinf);
-#endif
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode--;
         ENABLE_INTERRUPT;
@@ -2494,9 +2292,7 @@ err_ret1:
     DEBUG_PRINT(("tk_opn_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_OPN_DEV */
 
-#ifdef USE_FUNC_CLOSE_DEVICE
 /*
  * Abort all requests
  */
@@ -2505,9 +2301,7 @@ LOCAL void abort_allrequest( OpnCB *opncb )
     ABTFN   abortfn;
     WAIFN   waitfn;
     void    *exinf;
-#if TA_GP
     void    *gp;
-#endif
     DevCB   *devcb;
     ReqCB   *reqcb;
     QUEUE   *q;
@@ -2519,9 +2313,7 @@ LOCAL void abort_allrequest( OpnCB *opncb )
     abortfn = (ABTFN)devcb->ddev.abortfn;
     waitfn  = (WAIFN)devcb->ddev.waitfn;
     exinf   = devcb->ddev.exinf;
-#if TA_GP
     gp = devcb->ddev.gp;
-#endif
 
     opncb->abort_tskid = tk_get_tid_impl();
     opncb->abort_cnt = 0;
@@ -2534,13 +2326,10 @@ LOCAL void abort_allrequest( OpnCB *opncb )
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode++;
         ENABLE_INTERRUPT;
-#if TA_GP
         CallDeviceDriver(reqcb->tskid, opncb->waireqlst,
                     opncb->nwaireq, exinf, (FP)abortfn, gp);
-#else
         (*abortfn)(reqcb->tskid, opncb->waireqlst, opncb->nwaireq,
                                 exinf);
-#endif
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode--;
         ENABLE_INTERRUPT;
@@ -2560,12 +2349,9 @@ LOCAL void abort_allrequest( OpnCB *opncb )
             DISABLE_INTERRUPT;
             knl_ctxtsk->sysmode++;
             ENABLE_INTERRUPT;
-#if TA_GP
             CallDeviceDriver(reqcb->tskid, &reqcb->req, 1, exinf,
                                 (FP)abortfn, gp);
-#else
             (*abortfn)(reqcb->tskid, &reqcb->req, 1, exinf);
-#endif
             DISABLE_INTERRUPT;
             knl_ctxtsk->sysmode--;
             ENABLE_INTERRUPT;
@@ -2594,11 +2380,8 @@ LOCAL void abort_allrequest( OpnCB *opncb )
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode++;
         ENABLE_INTERRUPT;
-#if TA_GP
         CallDeviceDriver(&reqcb->req, 1, TMO_FEVR, exinf, (FP)waitfn, gp);
-#else
         (*waitfn)(&reqcb->req, 1, TMO_FEVR, exinf);
-#endif
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode--;
         ENABLE_INTERRUPT;
@@ -2618,9 +2401,7 @@ EXPORT ER knl_close_device( OpnCB *opncb, UINT option )
 {
     CLSFN   closefn;
     void    *exinf;
-#if TA_GP
     void    *gp;
-#endif
     ID  devid;
     DevCB   *devcb;
     INT unitno;
@@ -2635,9 +2416,7 @@ EXPORT ER knl_close_device( OpnCB *opncb, UINT option )
     unitno = opncb->unitno;
     closefn = (CLSFN)devcb->ddev.closefn;
     exinf = devcb->ddev.exinf;
-#if TA_GP
     gp = devcb->ddev.gp;
-#endif
     devid = DEVID(devcb, unitno);
 
     /* Delete semaphore for completion check of abortion */
@@ -2661,11 +2440,8 @@ EXPORT ER knl_close_device( OpnCB *opncb, UINT option )
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode++;
         ENABLE_INTERRUPT;
-#if TA_GP
         ercd = CallDeviceDriver(devid, option, exinf, 0, (FP)closefn, gp);
-#else
         ercd = (*closefn)(devid, option, exinf);
-#endif
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode--;
         ENABLE_INTERRUPT;
@@ -2676,16 +2452,12 @@ EXPORT ER knl_close_device( OpnCB *opncb, UINT option )
     QueInsert(&opncb->q, &knl_FreeOpnCB);
     UnlockDM();
 
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("knl_close_device ercd = %d\n", ercd));
     }
-#endif
     return ercd;
 }
-#endif /* USE_FUNC_CLOSE_DEVICE */
 
-#ifdef USE_FUNC_TK_CLS_DEV
 /*
  * Device close
  */
@@ -2710,18 +2482,14 @@ SYSCALL ER tk_cls_dev_impl( ID dd, UINT option )
     ercd = knl_close_device(opncb, option);
 
 err_ret:
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("tk_cls_dev_impl ercd = %d\n", ercd));
     }
-#endif
     return ercd;
 }
-#endif /* USE_FUNC_TK_CLS_DEV */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_REQUEST
 /*
  * Get request management block
  */
@@ -2750,9 +2518,7 @@ EXPORT ID knl_request( ID dd, W start, void *buf, W size, TMO tmout, INT cmd )
 {
     EXCFN   execfn;
     void    *exinf;
-#if TA_GP
     void    *gp;
-#endif
     OpnCB   *opncb;
     DevCB   *devcb;
     ReqCB   *reqcb;
@@ -2774,9 +2540,7 @@ EXPORT ID knl_request( ID dd, W start, void *buf, W size, TMO tmout, INT cmd )
     devcb = opncb->devcb;
     execfn = (EXCFN)devcb->ddev.execfn;
     exinf = devcb->ddev.exinf;
-#if TA_GP
     gp = devcb->ddev.gp;
-#endif
 
     /* Get request management block */
     reqcb = newReqCB(opncb);
@@ -2806,11 +2570,8 @@ EXPORT ID knl_request( ID dd, W start, void *buf, W size, TMO tmout, INT cmd )
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode++;
     ENABLE_INTERRUPT;
-#if TA_GP
     ercd = CallDeviceDriver(&reqcb->req, tmout, exinf, 0, (FP)execfn, gp);
-#else
     ercd = (*execfn)(&reqcb->req, tmout, exinf);
-#endif
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode--;
     ENABLE_INTERRUPT;
@@ -2841,9 +2602,7 @@ err_ret1:
     DEBUG_PRINT(("knl_request ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_REQUEST */
 
-#ifdef USE_FUNC_TK_REA_DEV
 /*
  * Start reading from device
  */
@@ -2853,16 +2612,12 @@ SYSCALL ID tk_rea_dev_impl( ID dd, W start, void *buf, SZ size, TMO tmout )
 
     ercd = knl_request(dd, start, buf, size, tmout, TDC_READ);
 
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("tk_rea_dev_impl ercd = %d\n", ercd));
     }
-#endif
     return ercd;
 }
-#endif /* USE_FUNC_TK_REA_DEV */
 
-#ifdef USE_FUNC_TK_SREA_DEV
 /*
  * Synchronous reading from device
  */
@@ -2886,9 +2641,7 @@ err_ret:
     DEBUG_PRINT(("tk_srea_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_SREA_DEV */
 
-#ifdef USE_FUNC_TK_WRI_DEV
 /*
  * Start writing to device
  */
@@ -2898,16 +2651,12 @@ SYSCALL ID tk_wri_dev_impl( ID dd, W start, CONST void *buf, SZ size, TMO tmout 
 
     ercd = knl_request(dd, start, (void *)buf, size, tmout, TDC_WRITE);
 
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("tk_wri_dev_impl ercd = %d\n", ercd));
     }
-#endif
     return ercd;
 }
-#endif /* USE_FUNC_TK_WRI_DEV */
 
-#ifdef USE_FUNC_TK_SWRI_DEV
 /*
  * Synchronous writing to device
  */
@@ -2931,9 +2680,7 @@ err_ret:
     DEBUG_PRINT(("tk_swri_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_SWRI_DEV */
 
-#ifdef USE_FUNC_TK_WAI_DEV
 /*
  * Verify validity of request ID
  */
@@ -2959,9 +2706,7 @@ SYSCALL ID tk_wai_dev_impl( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout )
 {
     WAIFN   waitfn;
     void    *exinf;
-#if TA_GP
     void    *gp;
-#endif
     OpnCB   *opncb;
     DevCB   *devcb;
     ReqCB   *reqcb;
@@ -2982,9 +2727,7 @@ SYSCALL ID tk_wai_dev_impl( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout )
     devcb = opncb->devcb;
     waitfn = (WAIFN)devcb->ddev.waitfn;
     exinf = devcb->ddev.exinf;
-#if TA_GP
     gp = devcb->ddev.gp;
-#endif
 
     if ( reqid == 0 ) {
         /* When waiting for completion of any of requests for 'dd' */
@@ -3040,11 +2783,8 @@ SYSCALL ID tk_wai_dev_impl( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout )
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode++;
     ENABLE_INTERRUPT;
-#if TA_GP
     reqno = CallDeviceDriver(devreq, nreq, tmout, exinf, (FP)waitfn, gp);
-#else
     reqno = (*waitfn)(devreq, nreq, tmout, exinf);
-#endif
     DISABLE_INTERRUPT;
     knl_ctxtsk->sysmode--;
     ENABLE_INTERRUPT;
@@ -3099,16 +2839,12 @@ err_ret2:
     DEBUG_PRINT(("tk_wai_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_WAI_DEV */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_DISSUSCNT
 /* Suspend disable request count */
 EXPORT INT  knl_DisSusCnt = 0;
-#endif /* USE_FUNC_DISSUSCNT */
 
-#ifdef USE_FUNC_TK_SUS_DEV
 /*
  * Send driver request event to each device
  */
@@ -3134,22 +2870,17 @@ LOCAL ER sendevt_alldevice( INT evttyp, BOOL disk )
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode++;
         ENABLE_INTERRUPT;
-#if TA_GP
         ercd = CallDeviceDriver(evttyp, NULL, devcb->ddev.exinf, 0,
                         (FP)eventfn, devcb->ddev.gp);
-#else
         ercd = (*eventfn)(evttyp, NULL, devcb->ddev.exinf);
-#endif
         DISABLE_INTERRUPT;
         knl_ctxtsk->sysmode--;
         ENABLE_INTERRUPT;
     }
 
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("sendevt_alldevice ercd = %d\n", ercd));
     }
-#endif
     return ercd;
 }
 
@@ -3165,19 +2896,15 @@ LOCAL ER do_suspend( void )
 
     /* Suspend processing of device except for disks */
     ercd = sendevt_alldevice(TDV_SUSPEND, FALSE);
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("2. do_suspend -> sendevt_alldevice ercd = %d\n", ercd));
     }
-#endif
 
     /* Suspend processing of disk device */
     ercd = sendevt_alldevice(TDV_SUSPEND, TRUE);
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("3. do_suspend -> sendevt_alldevice ercd = %d\n", ercd));
     }
-#endif
 
     /* Stop accepting new requests */
     LockDM();
@@ -3196,19 +2923,15 @@ LOCAL ER do_suspend( void )
 
     /* Resume processing of disk device */
     ercd = sendevt_alldevice(TDV_RESUME, TRUE);
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("7. do_suspend -> sendevt_alldevice ercd = %d\n", ercd));
     }
-#endif
 
     /* Resume processing of device except for disks */
     ercd = sendevt_alldevice(TDV_RESUME, FALSE);
-#ifdef DEBUG
     if ( ercd < E_OK ) {
         DEBUG_PRINT(("8. do_suspend -> sendevt_alldevice ercd = %d\n", ercd));
     }
-#endif
 
     /* Resume accepting device registration/unregistration */
     UnlockREG();
@@ -3284,11 +3007,9 @@ err_ret1:
     DEBUG_PRINT(("tk_sus_dev_impl ercd = %d\n", ercd));
     return ercd;
 }
-#endif /* USE_FUNC_TK_SUS_DEV */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_DEVMGR_STARTUP
 /*
  * Device management startup function
  */
@@ -3304,9 +3025,7 @@ EXPORT void knl_devmgr_startup( void )
 
     return;
 }
-#endif /* USE_FUNC_DEVMGR_STARTUP */
 
-#ifdef USE_FUNC_DEVMGR_CLEANUP
 /*
  * Device management cleanup function
  */
@@ -3343,9 +3062,7 @@ EXPORT void knl_devmgr_cleanup( void )
 
     return;
 }
-#endif /* USE_FUNC_DEVMGR_CLEANUP */
 
-#ifdef USE_FUNC_INITDEVIO
 /*
  * Initialization sequence of device input/output-related
  */
@@ -3367,9 +3084,7 @@ EXPORT ER knl_initDevIO( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_INITDEVIO */
 
-#ifdef USE_FUNC_FINISHDEVIO
 /*
  * Finalization sequence of device input/output-related
  */
@@ -3377,18 +3092,14 @@ EXPORT ER knl_finishDevIO( void )
 {
     return E_OK;
 }
-#endif /* USE_FUNC_FINISHDEVIO */
 
-#endif /* CFN_MAX_REGDEV */
 
 
 EXPORT  W   knl_taskindp = 0;
 Noinit(EXPORT   UW  knl_taskmode);
-#if USE_IMALLOC
 /* Low level memory manager information */
 Noinit(EXPORT   void    *knl_lowmem_top);   /* Head of area (Low address) */
 Noinit(EXPORT   void    *knl_lowmem_limit); /* End of area (High address) */
-#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -3411,7 +3122,6 @@ EXPORT ER knl_start_device( void )
     return E_OK;
 }
 
-#if USE_CLEANUP
 /* ------------------------------------------------------------------------ */
 /*
  * System finalization
@@ -3440,18 +3150,14 @@ EXPORT ER knl_restart_device( W mode )
 {
     if ( mode == -1 ) {
         /* Reset and re-start (cold boot) */
-#if USE_KERNEL_MESSAGE
         tm_putstring((UB*)"\n<< SYSTEM RESTART >>\n");
-#endif
         tm_exit(-1);  /* no return */
         return E_OBJ;
     }
 
     if ( mode == -3 ) {
         /* Reboot (normal boot) */
-#if USE_KERNEL_MESSAGE
         tm_putstring((UB*)"\n<< SYSTEM REBOOT >>\n");
-#endif
         return E_NOSPT;
     }
 
@@ -3466,24 +3172,18 @@ EXPORT ER knl_restart_device( W mode )
 
     return E_PAR;
 }
-#endif /* USE_CLEANUP */
 
 
-#if 0
 /*
  * To port a program using macros concerning error codes from T-Kernel
  * into micro T-Kernel, you may modify and use following macros (ERCD, 
  * MERCD, SERCD).
  */
-#ifndef _in_asm_source_
 
 #define MERCD(er)   ( (ER)(er) >> 16 )  /* Main error code */
 #define SERCD(er)   ( (H)(er) )     /* Sub-error code */
 #define ERCD(mer, ser)  ( (ER)(((UW)(mer) << 16) | ((UW)(ser) & 0x0000FFFF)) )
-#else
 #define ERCD(mer, ser)  ( ((mer) << 16) | ((ser) & 0xffff) )
-#endif /* _in_asm_source_ */
-#endif
 
 #define E_OK        (0) /* Completed successfully */
 
@@ -3518,15 +3218,11 @@ EXPORT ER knl_restart_device( W mode )
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_FLGID > 0
 
-#ifdef USE_FUNC_FLGCB_TABLE
 Noinit(EXPORT FLGCB knl_flgcb_table[NUM_FLGID]);    /* Event flag control block */
 Noinit(EXPORT QUEUE knl_free_flgcb);    /* FreeQue */
-#endif /* USE_FUNC_FLGCB_TABLE */
 
 
-#ifdef USE_FUNC_EVENTFLAG_INITIALIZE
 /*
  * Initialization of event flag control block 
  */
@@ -3549,23 +3245,17 @@ EXPORT ER knl_eventflag_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_EVENTFLAG_INITIALIZE */
 
-#ifdef USE_FUNC_TK_CRE_FLG
 /*
  * Create event flag
  */
 SYSCALL ID tk_cre_flg_impl( CONST T_CFLG *pk_cflg )
 {
-#if CHK_RSATR
     const ATR VALID_FLGATR = {
          TA_TPRI
         |TA_WMUL
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     FLGCB   *flgcb;
     ID  flgid;
     ER  ercd;
@@ -3586,21 +3276,17 @@ SYSCALL ID tk_cre_flg_impl( CONST T_CFLG *pk_cflg )
         flgcb->exinf = pk_cflg->exinf;
         flgcb->flgatr = pk_cflg->flgatr;
         flgcb->flgptn = pk_cflg->iflgptn;
-#if USE_OBJECT_NAME
         if ( (pk_cflg->flgatr & TA_DSNAME) != 0 ) {
             strncpy((char*)flgcb->name, (char*)pk_cflg->dsname,
                 OBJECT_NAME_LENGTH);
         }
-#endif
         ercd = flgid;
     }
     END_CRITICAL_SECTION;
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_FLG */
 
-#ifdef USE_FUNC_TK_DEL_FLG
 /*
  * Delete event flag
  */
@@ -3628,9 +3314,7 @@ SYSCALL ER tk_del_flg_impl( ID flgid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_FLG */
 
-#ifdef USE_FUNC_TK_SET_FLG
 /*
  * Event flag set
  */
@@ -3688,9 +3372,7 @@ SYSCALL ER tk_set_flg_impl( ID flgid, UINT setptn )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SET_FLG */
 
-#ifdef USE_FUNC_TK_CLR_FLG
 /*
  * Clear event flag 
  */
@@ -3713,9 +3395,7 @@ SYSCALL ER tk_clr_flg_impl( ID flgid, UINT clrptn )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CLR_FLG */
 
-#ifdef USE_FUNC_TK_WAI_FLG
 /*
  * Processing if the priority of wait task changes
  */
@@ -3787,9 +3467,7 @@ SYSCALL ER tk_wai_flg_impl( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, 
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_WAI_FLG */
 
-#ifdef USE_FUNC_TK_REF_FLG
 /*
  * Check event flag state
  */
@@ -3814,16 +3492,12 @@ SYSCALL ER tk_ref_flg_impl( ID flgid, T_RFLG *pk_rflg )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_FLG */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_EVENTFLAG_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -3851,10 +3525,7 @@ EXPORT ER knl_eventflag_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_EVENTFLAG_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_FLG
 /*
  * Refer event flag usage state
  */
@@ -3878,9 +3549,7 @@ SYSCALL INT td_lst_flg_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_FLG */
 
-#ifdef USE_FUNC_TD_REF_FLG
 /*
  * Refer event flag state
  */
@@ -3905,9 +3574,7 @@ SYSCALL ER td_ref_flg_impl( ID flgid, TD_RFLG *pk_rflg )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_FLG */
 
-#ifdef USE_FUNC_TD_FLG_QUE
 /*
  * Refer event flag wait queue
  */
@@ -3937,10 +3604,7 @@ SYSCALL INT td_flg_que_impl( ID flgid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_FLG_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_FLGID */
 
 
 /*
@@ -3952,9 +3616,7 @@ typedef struct eventflag_control_block {
     void    *exinf;     /* Extended information */
     ATR flgatr;     /* Event flag attribute */
     UINT    flgptn;     /* Event flag current pattern */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } FLGCB;
 
 IMPORT FLGCB knl_flgcb_table[]; /* Event flag control block */
@@ -4010,7 +3672,6 @@ INT Dec( FastLock *lock )
 /* ------------------------------------------------------------------------ */
 /** [END Common Definitions] */
 
-#ifdef USE_FUNC_LOCK
 /*
  * Lock 
  */
@@ -4020,9 +3681,7 @@ EXPORT void Lock( FastLock *lock )
         tk_wai_sem(lock->id, 1, TMO_FEVR);
     }
 }
-#endif /* USE_FUNC_LOCK */
 
-#ifdef USE_FUNC_UNLOCK
 /*
  * Lock release
  */
@@ -4032,9 +3691,7 @@ EXPORT void Unlock( FastLock *lock )
         tk_sig_sem(lock->id, 1);
     }
 }
-#endif /* USE_FUNC_UNLOCK */
 
-#ifdef USE_FUNC_CREATELOCK
 /*
  * Create high-speed lock 
  */
@@ -4062,9 +3719,7 @@ EXPORT ER CreateLock( FastLock *lock, CONST UB *name )
 
     return E_OK;
 }
-#endif /* USE_FUNC_CREATELOCK */
 
-#ifdef USE_FUNC_DELETELOCK
 /*
  * Delete high-speed lock
  */
@@ -4075,7 +3730,6 @@ EXPORT void DeleteLock( FastLock *lock )
     }
     lock->id = 0;
 }
-#endif /* USE_FUNC_DELETELOCK */
 
 /** [BEGIN Common Definitions] */
 
@@ -4132,7 +3786,6 @@ void BR( UINT *val, INT no )
 /* ------------------------------------------------------------------------ */
 /** [END Common Definitions] */
 
-#ifdef USE_FUNC_MLOCKTMO
 /*
  * Lock with wait time designation 
  *  no  lock number 0 - 31 
@@ -4159,9 +3812,7 @@ EXPORT ER MLockTmo( FastMLock *lock, INT no, TMO tmo )
 
     return ercd;
 }
-#endif /* USE_FUNC_MLOCKTMO */
 
-#ifdef USE_FUNC_MLOCK
 /*
  * Lock 
  *  no  Lock number 0 - 31 
@@ -4170,9 +3821,7 @@ EXPORT ER MLock( FastMLock *lock, INT no )
 {
     return MLockTmo(lock, no, TMO_FEVR);
 }
-#endif /* USE_FUNC_MLOCK */
 
-#ifdef USE_FUNC_MUNLOCK
 /*
  * Lock release 
  *  no  Lock number 0 - 31 
@@ -4187,9 +3836,7 @@ EXPORT ER MUnlock( FastMLock *lock, INT no )
 
     return ercd;
 }
-#endif /* USE_FUNC_MUNLOCK */
 
-#ifdef USE_FUNC_CREATEMLOCK
 /*
  * Create multi-lock 
  */
@@ -4216,9 +3863,7 @@ EXPORT ER CreateMLock( FastMLock *lock, CONST UB *name )
 
     return E_OK;
 }
-#endif /* USE_FUNC_CREATEMLOCK */
 
-#ifdef USE_FUNC_DELETEMLOCK
 /*
  * Delete multi-lock 
  */
@@ -4239,7 +3884,6 @@ EXPORT ER DeleteMLock( FastMLock *lock )
 
     return E_OK;
 }
-#endif /* USE_FUNC_DELETEMLOCK */
 
 
 #define USE_TMONITOR 0
@@ -4271,31 +3915,21 @@ IMPORT void  knl_Ifree( void *ptr );
 
 IMPORT void knl_init_task(void);
 
-#if !USE_IMALLOC
 INT init_task_stack[INITTASK_STKSZ/sizeof(INT)];
-#endif
 
 /*
  * Initial task creation parameter
  */
 EXPORT const T_CTSK knl_c_init_task = {
     (void *)INITTASK_EXINF,     /* exinf */
-#if USE_IMALLOC
     INITTASK_TSKATR,        /* tskatr */
-#else
     INITTASK_TSKATR|TA_USERBUF, /* tskatr */
-#endif
     (FP)&knl_init_task,     /* task */
     INITTASK_ITSKPRI,       /* itskpri */
     INITTASK_STKSZ,         /* stksz */
-#if USE_OBJECT_NAME
     INITTASK_DSNAME,        /* dsname */
-#endif
-#if USE_IMALLOC
     INITTASK_STACK,         /* bufptr */
-#else
     init_task_stack,        /* bufptr */
-#endif
 };
 
 
@@ -4312,11 +3946,9 @@ EXPORT const T_CTSK knl_c_init_task = {
 
 typedef INT (*MAIN_FP)(INT, UB **);
 
-#if USE_KERNEL_MESSAGE
 LOCAL const char knl_boot_message[] = { /* Boot message */
     BOOT_MESSAGE
 };
-#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -4331,26 +3963,20 @@ EXPORT INT knl_init_task_main( void )
     INT fin;
 
     /* Start message */
-#if USE_KERNEL_MESSAGE
     tm_putstring((UB*)knl_boot_message);
-#endif
 
     fin = 1;
 
-#if RI_USERINIT != NULL
     /* Perform user defined initialization sequence */
     fin = (*(MAIN_FP)RI_USERINIT)(0, NULL);
-#endif
 
     if ( fin > 0 ) {
         /* Perform user main */
         fin = usermain();
     }
 
-#if RI_USERINIT != NULL
     /* Perform user defined finalization sequence */
     (*(MAIN_FP)RI_USERINIT)(-1, NULL);
-#endif
 
     return fin;
 }
@@ -4436,22 +4062,18 @@ EXPORT BOOL CheckInt( UINT intno )
 
 /* ------------------------------------------------------------------------ */
 
-#if TA_GP
 # define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
 # define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
 # define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
 # define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
 # define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
-#else
 # define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
 # define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
 # define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
 # define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
-#endif
 
 /* ------------------------------------------------------------------------ */
 
-#if TA_GP
 #define P0(void)        ( int _1,int _2,int _3,int _4,int _5, void *gp )
 #define P1(p1)          ( p1,    int _2,int _3,int _4,int _5, void *gp )
 #define P2(p1, p2)      ( p1, p2,       int _3,int _4,int _5, void *gp )
@@ -4459,7 +4081,6 @@ EXPORT BOOL CheckInt( UINT intno )
 #define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4,             int _5, void *gp )
 #define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5,                 void *gp )
 #define P2GP(p1, p2)        ( p1, p2,                 void *gp )
-#else
 #define P0(void)        ( void )
 #define P1(p1)          ( p1 )
 #define P2(p1, p2)      ( p1, p2 )
@@ -4467,7 +4088,6 @@ EXPORT BOOL CheckInt( UINT intno )
 #define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4 )
 #define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5 )
 #define P2GP(p1, p2)        ( p1, p2 )
-#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -4494,48 +4114,37 @@ IMPORT ER tk_slp_tsk_impl( TMO tmout );
 IMPORT ER tk_wup_tsk_impl( ID tskid );
 IMPORT INT tk_can_wup_impl( ID tskid );
 
-#if CFN_MAX_SEMID > 0
 IMPORT ID tk_cre_sem_impl( CONST T_CSEM *pk_csem );
 IMPORT ER tk_del_sem_impl( ID semid );
 IMPORT ER tk_sig_sem_impl( ID semid, INT cnt );
 IMPORT ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout );
 IMPORT ER tk_ref_sem_impl( ID semid, T_RSEM *pk_rsem );
-#endif
 
-#if CFN_MAX_MTXID > 0
 IMPORT ID tk_cre_mtx_impl( CONST T_CMTX *pk_cmtx );
 IMPORT ER tk_del_mtx_impl( ID mtxid );
 IMPORT ER tk_loc_mtx_impl( ID mtxid, TMO tmout );
 IMPORT ER tk_unl_mtx_impl( ID mtxid );
 IMPORT ER tk_ref_mtx_impl( ID mtxid, T_RMTX *pk_rmtx );
-#endif
 
-#if CFN_MAX_FLGID > 0
 IMPORT ID tk_cre_flg_impl( CONST T_CFLG *pk_cflg );
 IMPORT ER tk_del_flg_impl( ID flgid );
 IMPORT ER tk_set_flg_impl( ID flgid, UINT setptn );
 IMPORT ER tk_clr_flg_impl( ID flgid, UINT clrptn );
 IMPORT ER tk_wai_flg_impl( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, TMO tmout );
 IMPORT ER tk_ref_flg_impl( ID flgid, T_RFLG *pk_rflg );
-#endif
 
-#if CFN_MAX_MBXID > 0
 IMPORT ID tk_cre_mbx_impl( CONST T_CMBX* pk_cmbx );
 IMPORT ER tk_del_mbx_impl( ID mbxid );
 IMPORT ER tk_snd_mbx_impl( ID mbxid, T_MSG *pk_msg );
 IMPORT ER tk_rcv_mbx_impl( ID mbxid, T_MSG **ppk_msg, TMO tmout );
 IMPORT ER tk_ref_mbx_impl( ID mbxid, T_RMBX *pk_rmbx );
-#endif
 
-#if CFN_MAX_MBFID > 0
 IMPORT ID tk_cre_mbf_impl( CONST T_CMBF *pk_cmbf );
 IMPORT ER tk_del_mbf_impl( ID mbfid );
 IMPORT ER tk_snd_mbf_impl( ID mbfid, CONST void *msg, INT msgsz, TMO tmout );
 IMPORT INT tk_rcv_mbf_impl( ID mbfid, void *msg, TMO tmout );
 IMPORT ER tk_ref_mbf_impl( ID mbfid, T_RMBF *pk_rmbf );
-#endif
 
-#if CFN_MAX_PORID > 0
 IMPORT ID tk_cre_por_impl( CONST T_CPOR *pk_cpor );
 IMPORT ER tk_del_por_impl( ID porid );
 IMPORT INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO tmout );
@@ -4543,57 +4152,45 @@ IMPORT INT tk_acp_por_impl( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO 
 IMPORT ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, CONST void *msg, INT cmsgsz );
 IMPORT ER tk_rpl_rdv_impl( RNO rdvno, CONST void *msg, INT rmsgsz );
 IMPORT ER tk_ref_por_impl( ID porid, T_RPOR *pk_rpor );
-#endif
 
 IMPORT ER tk_def_int_impl P2( UINT intno, CONST T_DINT *pk_dint );
 IMPORT void tk_ret_int_impl( void );
 
-#if CFN_MAX_MPLID > 0
 IMPORT ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl );
 IMPORT ER tk_del_mpl_impl( ID mplid );
 IMPORT ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout );
 IMPORT ER tk_rel_mpl_impl( ID mplid, void *blk );
 IMPORT ER tk_ref_mpl_impl( ID mplid, T_RMPL *pk_rmpl );
-#endif
 
-#if CFN_MAX_MPFID > 0
 IMPORT ID tk_cre_mpf_impl( CONST T_CMPF *pk_cmpf );
 IMPORT ER tk_del_mpf_impl( ID mpfid );
 IMPORT ER tk_get_mpf_impl( ID mpfid, void **p_blf, TMO tmout );
 IMPORT ER tk_rel_mpf_impl( ID mpfid, void *blf );
 IMPORT ER tk_ref_mpf_impl( ID mpfid, T_RMPF *pk_rmpf );
-#endif
 
 IMPORT ER tk_set_tim_impl( CONST SYSTIM *pk_tim );
 IMPORT ER tk_get_tim_impl( SYSTIM *pk_tim );
 IMPORT ER tk_get_otm_impl( SYSTIM *pk_tim );
 IMPORT ER tk_dly_tsk_impl( RELTIM dlytim );
 
-#if CFN_MAX_CYCID > 0
 IMPORT ID tk_cre_cyc_impl P1( CONST T_CCYC *pk_ccyc );
 IMPORT ER tk_del_cyc_impl( ID cycid );
 IMPORT ER tk_sta_cyc_impl( ID cycid );
 IMPORT ER tk_stp_cyc_impl( ID cycid );
 IMPORT ER tk_ref_cyc_impl( ID cycid, T_RCYC *pk_rcyc );
-#endif
 
-#if CFN_MAX_ALMID > 0
 IMPORT ID tk_cre_alm_impl P1( CONST T_CALM *pk_calm );
 IMPORT ER tk_del_alm_impl( ID almid );
 IMPORT ER tk_sta_alm_impl( ID almid, RELTIM almtim );
 IMPORT ER tk_stp_alm_impl( ID almid );
 IMPORT ER tk_ref_alm_impl( ID almid, T_RALM *pk_ralm );
-#endif
 
 IMPORT ER tk_ref_ver_impl( T_RVER *pk_rver );
 IMPORT ER tk_ref_sys_impl( T_RSYS *pk_rsys );
 
-#if CFN_MAX_SSYID > 0
 IMPORT ER tk_def_ssy_impl P2( ID ssid, CONST T_DSSY *pk_dssy );
 IMPORT ER tk_ref_ssy_impl( ID ssid, T_RSSY *pk_rssy );
-#endif
 
-#if CFN_MAX_REGDEV > 0
 IMPORT ID tk_opn_dev_impl( CONST UB *devnm, UINT omode );
 IMPORT ER tk_cls_dev_impl( ID dd, UINT option );
 IMPORT ID tk_rea_dev_impl( ID dd, W start, void *buf, SZ size, TMO tmout );
@@ -4609,672 +4206,248 @@ IMPORT INT tk_lst_dev_impl( T_LDEV *ldev, INT start, INT ndev );
 IMPORT INT tk_evt_dev_impl( ID devid, INT evttype, void *evtinf );
 IMPORT ID tk_def_dev_impl P3( CONST UB *devnm, CONST T_DDEV *ddev, T_IDEV *idev );
 IMPORT ER tk_ref_idv_impl( T_IDEV *idev );
-#endif
 
 /*
  * Definition of unused system call
  */
-#if _Csym == 0
 
-#ifndef USE_FUNC_TK_CRE_SEM
 #define tk_cre_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_SEM
 #define tk_del_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SIG_SEM
 #define tk_sig_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WAI_SEM
 #define tk_wai_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_SEM
 #define tk_ref_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_SEM
 #define td_lst_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_SEM
 #define td_ref_sem_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_SEM_QUE
 #define td_sem_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_FLG
 #define tk_cre_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_FLG
 #define tk_del_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SET_FLG
 #define tk_set_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_CLR_FLG
 #define tk_clr_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WAI_FLG
 #define tk_wai_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_FLG
 #define tk_ref_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_FLG
 #define td_lst_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_FLG
 #define td_ref_flg_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_FLG_QUE
 #define td_flg_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MBX
 #define tk_cre_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MBX
 #define tk_del_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SND_MBX
 #define tk_snd_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_RCV_MBX
 #define tk_rcv_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MBX
 #define tk_ref_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MBX
 #define td_lst_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MBX
 #define td_ref_mbx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MBX_QUE
 #define td_mbx_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MBF
 #define tk_cre_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MBF
 #define tk_del_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SND_MBF
 #define tk_snd_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_RCV_MBF
 #define tk_rcv_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MBF
 #define tk_ref_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MBF
 #define td_lst_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MBF
 #define td_ref_mbf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_SMBF_QUE
 #define td_smbf_que_impl    knl_no_support
-#endif
-#ifndef USE_FUNC_TD_RMBF_QUE
 #define td_rmbf_que_impl    knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_POR
 #define tk_cre_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_POR
 #define tk_del_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_CAL_POR
 #define tk_cal_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_ACP_POR
 #define tk_acp_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_FWD_POR
 #define tk_fwd_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_RPL_RDV
 #define tk_rpl_rdv_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_POR
 #define tk_ref_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_POR
 #define td_lst_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_POR
 #define td_ref_por_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_ACP_QUE
 #define td_acp_que_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_CAL_QUE
 #define td_cal_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MTX
 #define tk_cre_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MTX
 #define tk_del_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_LOC_MTX
 #define tk_loc_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_UNL_MTX
 #define tk_unl_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MTX
 #define tk_ref_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MTX
 #define td_lst_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MTX
 #define td_ref_mtx_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MTX_QUE
 #define td_mtx_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MPL
 #define tk_cre_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MPL
 #define tk_del_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_GET_MPL
 #define tk_get_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REL_MPL
 #define tk_rel_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MPL
 #define tk_ref_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MPL
 #define td_lst_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MPL
 #define td_ref_mpl_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MPL_QUE
 #define td_mpl_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MPF
 #define tk_cre_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MPF
 #define tk_del_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_GET_MPF
 #define tk_get_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REL_MPF
 #define tk_rel_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MPF
 #define tk_ref_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MPF
 #define td_lst_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MPF
 #define td_ref_mpf_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MPF_QUE
 #define td_mpf_que_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_CYC
 #define tk_cre_cyc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_CYC
 #define tk_del_cyc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STA_CYC
 #define tk_sta_cyc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STP_CYC
 #define tk_stp_cyc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_CYC
 #define tk_ref_cyc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_CYC
 #define td_lst_cyc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_CYC
 #define td_ref_cyc_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_ALM
 #define tk_cre_alm_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_ALM
 #define tk_del_alm_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STA_ALM
 #define tk_sta_alm_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STP_ALM
 #define tk_stp_alm_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_ALM
 #define tk_ref_alm_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_ALM
 #define td_lst_alm_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_ALM
 #define td_ref_alm_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_DEF_SSY
 #define tk_def_ssy_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_SSY
 #define tk_ref_ssy_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_SSY
 #define td_lst_ssy_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_SSY
 #define td_ref_ssy_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_OPN_DEV
 #define tk_opn_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_CLS_DEV
 #define tk_cls_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REA_DEV
 #define tk_rea_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SREA_DEV
 #define tk_srea_dev_impl    knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WRI_DEV
 #define tk_wri_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SWRI_DEV
 #define tk_swri_dev_impl    knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WAI_DEV
 #define tk_wai_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SUS_DEV
 #define tk_sus_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_GET_DEV
 #define tk_get_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_DEV
 #define tk_ref_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_OREF_DEV
 #define tk_oref_dev_impl    knl_no_support
-#endif
-#ifndef USE_FUNC_TK_LST_DEV
 #define tk_lst_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_EVT_DEV
 #define tk_evt_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEF_DEV
 #define tk_def_dev_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_IDV
 #define tk_ref_idv_impl knl_no_support
-#endif
 
-#ifndef USE_FUNC_TD_HOK_SVC
 #define td_hok_svc_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_HOK_DSP
 #define td_hok_dsp_impl knl_no_support
-#endif
-#ifndef USE_FUNC_TD_HOK_INT
 #define td_hok_int_impl knl_no_support
-#endif
 
-#else /* _Csym == 1 */
 
-#ifndef USE_FUNC_TK_CRE_SEM
 #define _tk_cre_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_SEM
 #define _tk_del_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SIG_SEM
 #define _tk_sig_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WAI_SEM
 #define _tk_wai_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_SEM
 #define _tk_ref_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_SEM
 #define _td_lst_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_SEM
 #define _td_ref_sem_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_SEM_QUE
 #define _td_sem_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_FLG
 #define _tk_cre_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_FLG
 #define _tk_del_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SET_FLG
 #define _tk_set_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_CLR_FLG
 #define _tk_clr_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WAI_FLG
 #define _tk_wai_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_FLG
 #define _tk_ref_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_FLG
 #define _td_lst_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_FLG
 #define _td_ref_flg_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_FLG_QUE
 #define _td_flg_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MBX
 #define _tk_cre_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MBX
 #define _tk_del_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SND_MBX
 #define _tk_snd_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_RCV_MBX
 #define _tk_rcv_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MBX
 #define _tk_ref_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MBX
 #define _td_lst_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MBX
 #define _td_ref_mbx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MBX_QUE
 #define _td_mbx_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MBF
 #define _tk_cre_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MBF
 #define _tk_del_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SND_MBF
 #define _tk_snd_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_RCV_MBF
 #define _tk_rcv_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MBF
 #define _tk_ref_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MBF
 #define _td_lst_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MBF
 #define _td_ref_mbf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_SMBF_QUE
 #define _td_smbf_que_impl   _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_RMBF_QUE
 #define _td_rmbf_que_impl   _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_POR
 #define _tk_cre_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_POR
 #define _tk_del_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_CAL_POR
 #define _tk_cal_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_ACP_POR
 #define _tk_acp_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_FWD_POR
 #define _tk_fwd_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_RPL_RDV
 #define _tk_rpl_rdv_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_POR
 #define _tk_ref_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_POR
 #define _td_lst_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_POR
 #define _td_ref_por_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_ACP_QUE
 #define _td_acp_que_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_CAL_QUE
 #define _td_cal_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MTX
 #define _tk_cre_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MTX
 #define _tk_del_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_LOC_MTX
 #define _tk_loc_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_UNL_MTX
 #define _tk_unl_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MTX
 #define _tk_ref_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MTX
 #define _td_lst_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MTX
 #define _td_ref_mtx_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MTX_QUE
 #define _td_mtx_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MPL
 #define _tk_cre_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MPL
 #define _tk_del_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_GET_MPL
 #define _tk_get_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REL_MPL
 #define _tk_rel_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MPL
 #define _tk_ref_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MPL
 #define _td_lst_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MPL
 #define _td_ref_mpl_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MPL_QUE
 #define _td_mpl_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_MPF
 #define _tk_cre_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_MPF
 #define _tk_del_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_GET_MPF
 #define _tk_get_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REL_MPF
 #define _tk_rel_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_MPF
 #define _tk_ref_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_MPF
 #define _td_lst_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_MPF
 #define _td_ref_mpf_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_MPF_QUE
 #define _td_mpf_que_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_CYC
 #define _tk_cre_cyc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_CYC
 #define _tk_del_cyc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STA_CYC
 #define _tk_sta_cyc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STP_CYC
 #define _tk_stp_cyc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_CYC
 #define _tk_ref_cyc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_CYC
 #define _td_lst_cyc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_CYC
 #define _td_ref_cyc_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_CRE_ALM
 #define _tk_cre_alm_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEL_ALM
 #define _tk_del_alm_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STA_ALM
 #define _tk_sta_alm_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_STP_ALM
 #define _tk_stp_alm_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_ALM
 #define _tk_ref_alm_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_ALM
 #define _td_lst_alm_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_ALM
 #define _td_ref_alm_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_DEF_SSY
 #define _tk_def_ssy_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_SSY
 #define _tk_ref_ssy_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_LST_SSY
 #define _td_lst_ssy_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_REF_SSY
 #define _td_ref_ssy_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TK_OPN_DEV
 #define _tk_opn_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_CLS_DEV
 #define _tk_cls_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REA_DEV
 #define _tk_rea_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SREA_DEV
 #define _tk_srea_dev_impl   _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WRI_DEV
 #define _tk_wri_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SWRI_DEV
 #define _tk_swri_dev_impl   _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_WAI_DEV
 #define _tk_wai_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_SUS_DEV
 #define _tk_sus_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_GET_DEV
 #define _tk_get_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_DEV
 #define _tk_ref_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_OREF_DEV
 #define _tk_oref_dev_impl   _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_LST_DEV
 #define _tk_lst_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_EVT_DEV
 #define _tk_evt_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_DEF_DEV
 #define _tk_def_dev_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TK_REF_IDV
 #define _tk_ref_idv_impl    _knl_no_support
-#endif
 
-#ifndef USE_FUNC_TD_HOK_SVC
 #define _td_hok_svc_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_HOK_DSP
 #define _td_hok_dsp_impl    _knl_no_support
-#endif
-#ifndef USE_FUNC_TD_HOK_INT
 #define _td_hok_int_impl    _knl_no_support
-#endif
 
-#endif /* _Csym == 0 */
 
 
 
@@ -5419,15 +4592,11 @@ EXPORT void knl_UnlockOBJ( OBJLOCK *loc )
 
 
 
-#ifdef  __size_t
 typedef __size_t    size_t;
 #undef  __size_t
-#endif
 
-#ifdef  __wchar_t
 typedef __wchar_t   wchar_t;
 #undef  __wchar_t
-#endif
 
 #define NULL        0
 
@@ -5492,22 +4661,18 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 #define ULONG_MAX   (4294967295L)
 
 
-#if INT_BITWIDTH == 16
 
 #define INT_MIN     SHRT_MIN
 #define INT_MAX     SHRT_MAX
 #define UINT_MAX    USHRT_MAX
 
-#else /* 32bit */
 
 #define INT_MIN     LONG_MIN
 #define INT_MAX     LONG_MAX
 #define UINT_MAX    ULONG_MAX
 
-#endif /* INT_BITWIDTH == 16 */
 
 
-#ifdef __GNUC__
 
 typedef long long   longlong;
 
@@ -5536,7 +4701,6 @@ typedef long long   longlong;
 #define hilo_ll(ll, h, l)   ( (ll) = ((longlong)(h) << 32) | (l) )
 #define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), (l) = (unsigned long)(ll) )
 
-#else /* __GNUC__ */
 
 typedef struct {
     long        hi;
@@ -5568,7 +4732,6 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
 #define hilo_ll(ll, h, l)   ( (ll).hi = (h), (ll).lo = (l) )
 #define ll_hilo(h, l, ll)   ( (h) = (ll).hi, (l) = (ll).lo )
 
-#endif /* __GNUC__ */
 
 
 /* ===== System dependencies definitions ================================ */
@@ -5576,19 +4739,10 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
 
 /* ===== Common definitions ============================================= */
 
-#ifndef Inline
-#ifdef __cplusplus
 #define Inline      inline
-#else
 #define Inline      static __inline__
-#endif
-#endif
 
-#ifndef Asm
-#ifdef __GNUC__
 #define Asm     __asm__ volatile
-#endif
-#endif
 
 /*
  * C symbol format 
@@ -5598,34 +4752,22 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
  *  * In the UNIX System V Release 4 C compiler,
  *     _ is not appended to symbols.
  */
-// #if _Csym == 0
 // #define _sym sym
-// #else
 // #define _sym _##sym
-// #endif
 
 
 /*
  * No initialization section
  */
-#ifdef __GNUC__
 #define Noinit(decl)    decl __attribute__ ((section (".noinit")))
-#else
 #define Noinit(decl)    decl
-#endif
 
 
-//#ifdef _APP_AT91_
 //#include <machine_depend.h>
-//#endif
 
-//#ifdef _APP_H8S2212_
 //#include <machine_depend.h>
-//#endif
 
-//#ifdef _APP_MB9AF312K_
 //#include <machine_depend.h>
-//#endif
 
 
 /*
@@ -5651,23 +4793,17 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
 //#define ALLOCA_NOSPT      0
 #define INT_BITWIDTH        32
 
-//#ifndef _Csym
 // #define _Csym            1
-//#endif
 
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_MBXID > 0
 
-#ifdef USE_FUNC_MBXCB_TABLE
 Noinit(EXPORT MBXCB knl_mbxcb_table[NUM_MBXID]);    /* Mailbox control block */
 Noinit(EXPORT QUEUE knl_free_mbxcb);    /* FreeQue */
-#endif /* USE_FUNC_MBXCB_TABLE */
 
 
-#ifdef USE_FUNC_MAILBOX_INITIALIZE
 /*
  * Initialization of mailbox control block 
  */
@@ -5690,24 +4826,18 @@ EXPORT ER knl_mailbox_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_MAILBOX_INITIALIZE */
 
 
-#ifdef USE_FUNC_TK_CRE_MBX
 /*
  * Create mailbox
  */
 SYSCALL ID tk_cre_mbx_impl( CONST T_CMBX *pk_cmbx )
 {
-#if CHK_RSATR
     const ATR VALID_MBXATR = {
          TA_MPRI
         |TA_TPRI
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     MBXCB   *mbxcb;
     ID  mbxid;
     ER  ercd;
@@ -5728,21 +4858,17 @@ SYSCALL ID tk_cre_mbx_impl( CONST T_CMBX *pk_cmbx )
         mbxcb->exinf  = pk_cmbx->exinf;
         mbxcb->mbxatr = pk_cmbx->mbxatr;
         mbxcb->mq_head.msgque[0] = NULL;
-#if USE_OBJECT_NAME
         if ( (pk_cmbx->mbxatr & TA_DSNAME) != 0 ) {
             strncpy((char*)mbxcb->name, (char*)pk_cmbx->dsname,
                 OBJECT_NAME_LENGTH);
         }
-#endif
         ercd = mbxid;
     }
     END_CRITICAL_SECTION;
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_MBX */
 
-#ifdef USE_FUNC_TK_DEL_MBX
 /*
  * Delete mailbox
  */
@@ -5770,9 +4896,7 @@ SYSCALL ER tk_del_mbx_impl( ID mbxid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_MBX */
 
-#ifdef USE_FUNC_TK_SND_MBX
 /*
  * Send to mailbox
  */
@@ -5827,9 +4951,7 @@ SYSCALL ER tk_snd_mbx_impl( ID mbxid, T_MSG *pk_msg )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SND_MBX */
 
-#ifdef USE_FUNC_TK_RCV_MBX
 /*
  * Processing if the priority of wait task changes
  */
@@ -5885,9 +5007,7 @@ SYSCALL ER tk_rcv_mbx_impl( ID mbxid, T_MSG **ppk_msg, TMO tmout )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_RCV_MBX */
 
-#ifdef USE_FUNC_TK_REF_MBX
 /*
  * Refer mailbox state 
  */
@@ -5912,16 +5032,12 @@ SYSCALL ER tk_ref_mbx_impl( ID mbxid, T_RMBX *pk_rmbx )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_MBX */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_MAILBOX_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -5949,10 +5065,7 @@ EXPORT ER knl_mailbox_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_MAILBOX_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_MBX
 /*
  * Refer mailbox usage state
  */
@@ -5976,9 +5089,7 @@ SYSCALL INT td_lst_mbx_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_MBX */
 
-#ifdef USE_FUNC_TD_REF_MBX
 /*
  * Refer mailbox state
  */
@@ -6003,9 +5114,7 @@ SYSCALL ER td_ref_mbx_impl( ID mbxid, TD_RMBX *pk_rmbx )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_MBX */
 
-#ifdef USE_FUNC_TD_MBX_QUE
 /*
  * Refer mailbox wait queue
  */
@@ -6035,10 +5144,7 @@ SYSCALL INT td_mbx_que_impl( ID mbxid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_MBX_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_MBXID */
 
 /*
  * Mailbox control block
@@ -6059,9 +5165,7 @@ typedef struct mailbox_control_block {
     ATR mbxatr;     /* Mailbox attribute */
     T_MSG   mq_head;    /* Head of message queue */
     T_MSG   *mq_tail;   /* End of message queue */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } MBXCB;
 
 IMPORT MBXCB knl_mbxcb_table[]; /* Mailbox control block */
@@ -6101,7 +5205,6 @@ void knl_queue_insert_mpri( T_MSG_PRI *pk_msg, T_MSG *head )
 /** [END Common Definitions] */
 
 
-#ifdef USE_FUNC_SEARCHFREEAREA
 /*
  * FreeQue search
  *  Search the free area whose size is equal to 'blksz',
@@ -6136,10 +5239,8 @@ EXPORT QUEUE* knl_searchFreeArea( IMACB *imacb, W blksz )
         return q;
     }
 }
-#endif /* USE_FUNC_SEARCHFREEAREA */
 
 
-#ifdef USE_FUNC_APPENDFREEAREA
 /*
  * Registration of free area on FreeQue
  *  FreeQue is composed of 2 types: Queue that links the
@@ -6189,9 +5290,7 @@ EXPORT void knl_appendFreeArea( IMACB *imacb, QUEUE *aq )
         (aq + 2)->prev = (QUEUE*)size;
     }
 }
-#endif /* USE_FUNC_APPENDFREEAREA */
 
-#ifdef USE_FUNC_REMOVEFREEQUE
 /*
  * Delete from FreeQue
  */
@@ -6210,9 +5309,7 @@ EXPORT void knl_removeFreeQue( QUEUE *fq )
         QueRemove(fq);
     }
 }
-#endif /* USE_FUNC_REMOVEFREEQUE */
 
-#ifdef USE_FUNC_INSERTAREAQUE
 /*
  * Register area
  *  Insert 'ent' just after 'que.'
@@ -6224,9 +5321,7 @@ EXPORT void knl_insertAreaQue( QUEUE *que, QUEUE *ent )
     Assign(que->next->prev, ent);
     que->next = ent;
 }
-#endif /* USE_FUNC_INSERTAREAQUE */
 
-#ifdef USE_FUNC_REMOVEAREAQUE
 /*
  * Delete area
  */
@@ -6235,22 +5330,17 @@ EXPORT void knl_removeAreaQue( QUEUE *aq )
     Mask(aq->prev)->next = aq->next;
     Assign(aq->next->prev, Mask(aq->prev));
 }
-#endif /* USE_FUNC_REMOVEAREAQUE */
 
 /* ------------------------------------------------------------------------ */
 
-#if USE_IMALLOC
 
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_IMACB
 Noinit(EXPORT IMACB *knl_imacb);
-#endif /* USE_FUNC_IMACB */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_IMALLOC
 /*
  * Get memory 
  */
@@ -6299,9 +5389,7 @@ err_ret:
 
     return (void *)q;
 }
-#endif /* USE_FUNC_IMALLOC */
 
-#ifdef USE_FUNC_ICALLOC
 /*
  * Get memory
  */
@@ -6319,9 +5407,7 @@ EXPORT void* knl_Icalloc( size_t nmemb, size_t size )
 
     return mem;
 }
-#endif /* USE_FUNC_ICALLOC */
 
-#ifdef USE_FUNC_IFREE
 /*
  * Free memory
  *  It may be called during interrupt disable. In this case, need to wait
@@ -6354,11 +5440,9 @@ EXPORT void  knl_Ifree( void *ptr )
 
     EI(imask);
 }
-#endif /* USE_FUNC_IFREE */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_INIT_IMALLOC
 /*
  * IMACB Initialization 
  */
@@ -6410,9 +5494,7 @@ IMPORT  void    *knl_lowmem_top, *knl_lowmem_limit;
 
     return E_OK;
 }
-#endif /* USE_FUNC_INIT_IMALLOC */
 
-#endif /* USE_IMALLOC */
 
 
 /*
@@ -6494,15 +5576,11 @@ IMPORT ER knl_init_Imalloc( void );
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_MPFID > 0
 
-#ifdef USE_FUNC_MPFCB_TABLE
 Noinit(EXPORT MPFCB knl_mpfcb_table[NUM_MPFID]);    /* Fixed size memory pool control block */
 Noinit(EXPORT QUEUE knl_free_mpfcb);    /* FreeQue */
-#endif /* USE_FUNC_MPFCB_TABLE */
 
 
-#ifdef USE_FUNC_FIX_MEMORYPOOL_INITIALIZE
 /*
  * Initialization of fixed size memory pool control block
  */
@@ -6526,25 +5604,19 @@ EXPORT ER knl_fix_memorypool_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_FIX_MEMORYPOOL_INITIALIZE */
 
 
-#ifdef USE_FUNC_TK_CRE_MPF
 /*
  * Create fixed size memory pool
  */
 SYSCALL ID tk_cre_mpf_impl( CONST T_CMPF *pk_cmpf )
 {
-#if CHK_RSATR
     const ATR VALID_MPFATR = {
          TA_TPRI
         |TA_RNG3
         |TA_USERBUF
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     MPFCB   *mpfcb;
     ID  mpfid;
     W   blfsz, mpfsz;
@@ -6553,16 +5625,13 @@ SYSCALL ID tk_cre_mpf_impl( CONST T_CMPF *pk_cmpf )
     CHECK_RSATR(pk_cmpf->mpfatr, VALID_MPFATR);
     CHECK_PAR(pk_cmpf->mpfcnt > 0);
     CHECK_PAR(pk_cmpf->blfsz > 0);
-#if !USE_IMALLOC
     /* TA_USERBUF must be specified if configured in no Imalloc */
     CHECK_PAR((pk_cmpf->mpfatr & TA_USERBUF) != 0);
-#endif
     CHECK_DISPATCH();
 
     blfsz = (W)MINSZ(pk_cmpf->blfsz);
     mpfsz = blfsz * pk_cmpf->mpfcnt;
 
-#if USE_IMALLOC
     if ( (pk_cmpf->mpfatr & TA_USERBUF) != 0 ) {
         /* Size of user buffer must be multiples of sizeof(FREEL) */
         if ( blfsz != pk_cmpf->blfsz ) {
@@ -6577,14 +5646,12 @@ SYSCALL ID tk_cre_mpf_impl( CONST T_CMPF *pk_cmpf )
             return E_NOMEM;
         }
     }
-#else
     /* Size of user buffer must be larger than sizeof(FREEL) */
     if ( blfsz != pk_cmpf->blfsz ) {
         return E_PAR;
     }
     /* Use user buffer */
     mempool = pk_cmpf->bufptr;
-#endif
 
     /* Get control block from FreeQue */
     DISABLE_INTERRUPT;
@@ -6592,11 +5659,9 @@ SYSCALL ID tk_cre_mpf_impl( CONST T_CMPF *pk_cmpf )
     ENABLE_INTERRUPT;
 
     if ( mpfcb == NULL ) {
-#if USE_IMALLOC
         if ( (pk_cmpf->mpfatr & TA_USERBUF) == 0 ) {
             knl_Ifree(mempool);
         }
-#endif
         return E_LIMIT;
     }
 
@@ -6612,20 +5677,16 @@ SYSCALL ID tk_cre_mpf_impl( CONST T_CMPF *pk_cmpf )
     mpfcb->mpfsz    = mpfsz;
     mpfcb->unused   = mpfcb->mempool = mempool;
     mpfcb->freelist = NULL;
-#if USE_OBJECT_NAME
     if ( (pk_cmpf->mpfatr & TA_DSNAME) != 0 ) {
         strncpy((char*)mpfcb->name, (char*)pk_cmpf->dsname, OBJECT_NAME_LENGTH);
     }
-#endif
 
     mpfcb->mpfid    = mpfid;  /* Set ID after completion */
     knl_UnlockOBJ(&mpfcb->lock);
 
     return mpfid;
 }
-#endif /* USE_FUNC_TK_CRE_MPF */
 
-#ifdef USE_FUNC_TK_DEL_MPF
 /*
  * Delete fixed size memory pool 
  */
@@ -6659,17 +5720,13 @@ SYSCALL ER tk_del_mpf_impl( ID mpfid )
     }
     knl_UnlockOBJ(&mpfcb->lock);
 
-#if USE_IMALLOC
     if ( (mempool != NULL) && ((memattr & TA_USERBUF) == 0) ) {
         knl_Ifree(mempool);
     }
-#endif
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_MPF */
 
-#ifdef USE_FUNC_TK_GET_MPF
 /*
  * Processing if the priority of wait task changes
  */
@@ -6743,9 +5800,7 @@ wait_mpf:
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_GET_MPF */
 
-#ifdef USE_FUNC_TK_REL_MPF
 /*
  * Return fixed size memory block 
  */
@@ -6766,12 +5821,10 @@ SYSCALL ER tk_rel_mpf_impl( ID mpfid, void *blf )
         ercd = E_NOEXS;
         goto error_exit;
     }
-#if CHK_PAR
     if ( blf < mpfcb->mempool || blf >= knl_mempool_end(mpfcb) || (((VB*)blf - (VB*)mpfcb->mempool) % mpfcb->blfsz) != 0 ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     DISABLE_INTERRUPT;
     if ( !isQueEmpty(&mpfcb->wait_queue) ) {
@@ -6795,9 +5848,7 @@ error_exit:
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REL_MPF */
 
-#ifdef USE_FUNC_TK_REF_MPF
 /*
  * Check fixed size pool state
  */
@@ -6825,16 +5876,12 @@ SYSCALL ER tk_ref_mpf_impl( ID mpfid, T_RMPF *pk_rmpf )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_MPF */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_FIX_MEMORYPOOL_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -6862,10 +5909,7 @@ EXPORT ER knl_fix_memorypool_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_FIX_MEMORYPOOL_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_MPF
 /*
  * Refer fixed size memory pool usage state
  */
@@ -6889,9 +5933,7 @@ SYSCALL INT td_lst_mpf_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_MPF */
 
-#ifdef USE_FUNC_TD_REF_MPF
 /*
  * Refer fixed size memory pool state 
  */
@@ -6918,9 +5960,7 @@ SYSCALL ER td_ref_mpf_impl( ID mpfid, TD_RMPF *pk_rmpf )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_MPF */
 
-#ifdef USE_FUNC_TD_MPF_QUE
 /*
  * Refer fixed size memory wait queue 
  */
@@ -6950,10 +5990,7 @@ SYSCALL INT td_mpf_que_impl( ID mpfid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_MPF_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_MPFID */
 
 /*
  * Fixed size memory pool control block
@@ -6975,9 +6012,7 @@ typedef struct fix_memorypool_control_block {
     void    *unused;        /* Top address of unused area */
     FREEL   *freelist;  /* Free block list */
     OBJLOCK lock;       /* Lock for object exclusive access */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } MPFCB;
 
 IMPORT MPFCB knl_mpfcb_table[]; /* Fixed size memory pool control block */
@@ -7002,16 +6037,12 @@ void *knl_mempool_end( MPFCB *mpfcb )
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_MPLID > 0
 
 
-#ifdef USE_FUNC_MPLCB_TABLE
 Noinit(EXPORT MPLCB knl_mplcb_table[NUM_MPLID]);    /* Variable size memory pool control block */
 Noinit(EXPORT QUEUE knl_free_mplcb);    /* FreeQue */
-#endif /* USE_FUNC_MPLCB_TABLE */
 
 
-#ifdef USE_FUNC_MEMORYPOOL_INITIALIZE
 /*
  * Initialization of variable size memory pool control block
  */
@@ -7033,11 +6064,9 @@ EXPORT ER knl_memorypool_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_MEMORYPOOL_INITIALIZE */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_APPENDFREEAREABOUND
 /*
  * Registration of free area on FreeQue
  *   Specialized version for merging with top/end area
@@ -7087,9 +6116,7 @@ EXPORT void knl_appendFreeAreaBound( MPLCB *mplcb, QUEUE *aq )
         (top + 1)->prev = (QUEUE*)size;
     }
 }
-#endif /* USE_FUNC_APPENDFREEAREABOUND */
 
-#ifdef USE_FUNC_GET_BLK
 /*
  * Get memory block 
  *  'blksz' must be larger than minimum fragment size
@@ -7129,9 +6156,7 @@ EXPORT void *knl_get_blk( MPLCB *mplcb, W blksz )
 
     return (void *)q;
 }
-#endif /* USE_FUNC_GET_BLK */
 
-#ifdef USE_FUNC_REL_BLK
 /*
  * Free memory block 
  */
@@ -7142,11 +6167,9 @@ EXPORT ER knl_rel_blk( MPLCB *mplcb, void *blk )
 
     aq = (blk == mplcb->mempool) ? &(mplcb->areaque) : (QUEUE*)blk - 1;
 
-#if CHK_PAR
     if ( !chkAreaFlag(aq, AREA_USE) ) {
         return E_PAR;
     }
-#endif
     clrAreaFlag(aq, AREA_USE);
 
     if ( !chkAreaFlag(aq->next, AREA_USE) ) {
@@ -7173,11 +6196,9 @@ EXPORT ER knl_rel_blk( MPLCB *mplcb, void *blk )
 
     return E_OK;
 }
-#endif /* USE_FUNC_REL_BLK */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_MPL_WAKEUP
 /*
  * Allocate memory and release wait task,
  * as long as there are enough free memory.
@@ -7205,10 +6226,8 @@ EXPORT void knl_mpl_wakeup( MPLCB *mplcb )
         knl_wait_release_ok(top);
     }
 }
-#endif /* USE_FUNC_MPL_WAKEUP */
 
 
-#ifdef USE_FUNC_TK_CRE_MPL
 /*
  * Memory pool initial setting
  */
@@ -7232,16 +6251,12 @@ LOCAL void init_mempool( MPLCB *mplcb )
  */
 SYSCALL ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl )
 {
-#if CHK_RSATR
     const ATR VALID_MPLATR = {
          TA_TPRI
         |TA_RNG3
         |TA_USERBUF
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     MPLCB   *mplcb;
     ID  mplid;
     W   mplsz;
@@ -7250,15 +6265,12 @@ SYSCALL ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl )
 
     CHECK_RSATR(pk_cmpl->mplatr, VALID_MPLATR);
     CHECK_PAR(pk_cmpl->mplsz > 0);
-#if !USE_IMALLOC
     /* TA_USERBUF must be specified if configured in no Imalloc */
     CHECK_PAR((pk_cmpl->mplatr & TA_USERBUF) != 0);
-#endif
     CHECK_DISPATCH();
 
     mplsz = roundSize(pk_cmpl->mplsz);
 
-#if USE_IMALLOC
     if ( (pk_cmpl->mplatr & TA_USERBUF) != 0 ) {
         /* Size of user buffer must be multiples of sizeof(QUEUE)
             and larger than sizeof(QUEUE)*2 */
@@ -7274,7 +6286,6 @@ SYSCALL ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl )
             return E_NOMEM;
         }
     }
-#else
     /* Size of user buffer must be multiples of sizeof(QUEUE)
         and larger than sizeof(QUEUE)*2 */
     if ( mplsz != pk_cmpl->mplsz ) {
@@ -7282,7 +6293,6 @@ SYSCALL ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl )
     }
     /* Use user buffer */
     mempool = pk_cmpl->bufptr;
-#endif
 
     BEGIN_CRITICAL_SECTION;
     /* Get control block from FreeQue */
@@ -7298,11 +6308,9 @@ SYSCALL ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl )
         mplcb->exinf  = pk_cmpl->exinf;
         mplcb->mplatr = pk_cmpl->mplatr;
         mplcb->mplsz  = mplsz;
-#if USE_OBJECT_NAME
         if ( (pk_cmpl->mplatr & TA_DSNAME) != 0 ) {
             strncpy((char*)mplcb->name, (char*)pk_cmpl->dsname, OBJECT_NAME_LENGTH);
         }
-#endif
 
         mplcb->mempool = mempool;
 
@@ -7313,17 +6321,13 @@ SYSCALL ID tk_cre_mpl_impl( CONST T_CMPL *pk_cmpl )
     }
     END_CRITICAL_SECTION;
 
-#if USE_IMALLOC
     if ( (ercd < E_OK) && ((pk_cmpl->mplatr & TA_USERBUF) == 0) ) {
         knl_Ifree(mempool);
     }
-#endif
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_MPL */
 
-#ifdef USE_FUNC_TK_DEL_MPL
 /*
  * Delete variable size memory pool 
  */
@@ -7355,17 +6359,13 @@ SYSCALL ER tk_del_mpl_impl( ID mplid )
     }
     END_CRITICAL_SECTION;
 
-#if USE_IMALLOC
     if ( (ercd == E_OK) && ((memattr & TA_USERBUF) == 0) ) {
         knl_Ifree(mempool);
     }
-#endif
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_MPL */
 
-#ifdef USE_FUNC_TK_GET_MPL
 /*
  * Processing if the priority of wait task changes.
  *  You need to execute with interrupt disable.
@@ -7422,12 +6422,10 @@ SYSCALL ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout )
         goto error_exit;
     }
 
-#if CHK_PAR
     if ( blksz > mplcb->mplsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     if ( knl_gcb_top_of_wait_queue((GCB*)mplcb, knl_ctxtsk) == knl_ctxtsk
       && (blk = knl_get_blk(mplcb, blksz)) != NULL ) {
@@ -7448,9 +6446,7 @@ SYSCALL ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_GET_MPL */
 
-#ifdef USE_FUNC_TK_REL_MPL
 /*
  * Return variable size memory block 
  */
@@ -7469,12 +6465,10 @@ SYSCALL ER tk_rel_mpl_impl( ID mplid, void *blk )
         ercd = E_NOEXS;
         goto error_exit;
     }
-#if CHK_PAR
     if ( (B*)blk < (B*)mplcb->mempool || (B*)blk > (B*)mplcb->mempool + mplcb->mplsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     /* Free memory block */
     ercd = knl_rel_blk(mplcb, blk);
@@ -7490,9 +6484,7 @@ SYSCALL ER tk_rel_mpl_impl( ID mplid, void *blk )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REL_MPL */
 
-#ifdef USE_FUNC_TK_REF_MPL
 /*
  * Refer variable size memory pool state
  */
@@ -7529,16 +6521,12 @@ SYSCALL ER tk_ref_mpl_impl( ID mplid, T_RMPL *pk_rmpl )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_MPL */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_MEMORYPOOL_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -7566,10 +6554,7 @@ EXPORT ER knl_memorypool_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_FIX_MEMORYPOOL_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_MPL
 /*
  * Refer variable size memory pool usage state
  */
@@ -7593,9 +6578,7 @@ SYSCALL INT td_lst_mpl_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_MPL */
 
-#ifdef USE_FUNC_TD_REF_MPL
 /*
  * Refer variable size memory pool state
  */
@@ -7631,9 +6614,7 @@ SYSCALL ER td_ref_mpl_impl( ID mplid, TD_RMPL *pk_rmpl )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_MPL */
 
-#ifdef USE_FUNC_TD_MPL_QUE
 /*
  * Refer variable size memory pool wait queue 
  */
@@ -7663,10 +6644,7 @@ SYSCALL INT td_mpl_que_impl( ID mplid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_MPL_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_MPLID */
 
 
 /*
@@ -7687,9 +6665,7 @@ typedef struct memorypool_control_block {
     QUEUE   freeque;    /* Queue connecting free blocks */
     QUEUE   areaque_end;    /* the last element of areaque */
     void    *mempool;   /* Top address of memory pool */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } MPLCB;
 
 IMPORT MPLCB knl_mplcb_table[]; /* Variable size memory pool control block */
@@ -7720,16 +6696,12 @@ IMPORT void knl_mpl_wakeup( MPLCB *mplcb );
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_MBFID > 0
 
 
-#ifdef USE_FUNC_MBFCB_TABLE
 Noinit(EXPORT MBFCB knl_mbfcb_table[NUM_MBFID]);    /* Message buffer control block */
 Noinit(EXPORT QUEUE knl_free_mbfcb);    /* FreeQue */
-#endif /* USE_FUNC_MBFCB_TABLE */
 
 
-#ifdef USE_FUNC_MESSAGEBUFFER_INITIALIZE
 /*
  * Initialization of message buffer control block 
  */
@@ -7752,11 +6724,9 @@ EXPORT ER knl_messagebuffer_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_MESSAGEBUFFER_INITIALIZE */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_MSG_TO_MBF
 /*
  * Store the message to message buffer.
  */
@@ -7788,11 +6758,9 @@ EXPORT void knl_msg_to_mbf( MBFCB *mbfcb, CONST void *msg, INT msgsz )
 
     mbfcb->tail = tail;
 }
-#endif /* USE_FUNC_MSG_TO_MBF */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_MBF_WAKEUP
 /*
  * Accept message and release wait task,
  * as long as there are free message area.
@@ -7814,24 +6782,18 @@ EXPORT void knl_mbf_wakeup( MBFCB *mbfcb )
         knl_wait_release_ok(top);
     }
 }
-#endif /* USE_FUNC_MBF_WAKEUP */
 
 
-#ifdef USE_FUNC_TK_CRE_MBF
 /*
  * Create message buffer
  */
 SYSCALL ID tk_cre_mbf_impl( CONST T_CMBF *pk_cmbf )
 {
-#if CHK_RSATR
     const ATR VALID_MBFATR = {
          TA_TPRI
         |TA_USERBUF
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     MBFCB   *mbfcb;
     ID  mbfid;
     W   bufsz;
@@ -7841,14 +6803,11 @@ SYSCALL ID tk_cre_mbf_impl( CONST T_CMBF *pk_cmbf )
     CHECK_RSATR(pk_cmbf->mbfatr, VALID_MBFATR);
     CHECK_PAR(pk_cmbf->bufsz >= 0);
     CHECK_PAR(pk_cmbf->maxmsz > 0);
-#if !USE_IMALLOC
     /* TA_USERBUF must be specified if configured in no Imalloc */
     CHECK_PAR((pk_cmbf->mbfatr & TA_USERBUF) != 0);
-#endif
     bufsz = (W)ROUNDSZ(pk_cmbf->bufsz);
 
     if ( bufsz > 0 ) {
-#if USE_IMALLOC
         if ( (pk_cmbf->mbfatr & TA_USERBUF) != 0 ) {
             /* Size of user buffer must be multiples of sizeof(HEADER) */
             if ( bufsz != pk_cmbf->bufsz ) {
@@ -7863,14 +6822,12 @@ SYSCALL ID tk_cre_mbf_impl( CONST T_CMBF *pk_cmbf )
                 return E_NOMEM;
             }
         }
-#else
         /* Size of user buffer must be multiples of sizeof(HEADER) */
         if ( bufsz != pk_cmbf->bufsz ) {
             return E_PAR;
         }
         /* Use user buffer */
         msgbuf = (VB*) pk_cmbf->bufptr;
-#endif
     } else {
         msgbuf = NULL;
     }
@@ -7893,27 +6850,21 @@ SYSCALL ID tk_cre_mbf_impl( CONST T_CMBF *pk_cmbf )
         mbfcb->bufsz = mbfcb->frbufsz = bufsz;
         mbfcb->maxmsz = pk_cmbf->maxmsz;
         mbfcb->head = mbfcb->tail = 0;
-#if USE_OBJECT_NAME
         if ( (pk_cmbf->mbfatr & TA_DSNAME) != 0 ) {
             strncpy((char*)mbfcb->name, (char*)pk_cmbf->dsname,
                 OBJECT_NAME_LENGTH);
         }
-#endif
         ercd = mbfid;
     }
     END_CRITICAL_SECTION;
 
-#if USE_IMALLOC
     if ( (ercd < E_OK) && (msgbuf != NULL) && ((pk_cmbf->mbfatr & TA_USERBUF) == 0 ) ) {
         knl_Ifree(msgbuf);
     }
-#endif
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_MBF */
 
-#ifdef USE_FUNC_TK_DEL_MBF
 /*
  * Delete message buffer
  */
@@ -7943,17 +6894,13 @@ SYSCALL ER tk_del_mbf_impl( ID mbfid )
     }
     END_CRITICAL_SECTION;
 
-#if USE_IMALLOC
     if ( msgbuf != NULL && ((mbfcb->mbfatr & TA_USERBUF) == 0 ) ) {
         knl_Ifree(msgbuf);
     }
-#endif
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_MBF */
 
-#ifdef USE_FUNC_TK_SND_MBF
 /*
  * Processing if the priority of wait task changes
  */
@@ -8007,12 +6954,10 @@ SYSCALL ER tk_snd_mbf_impl( ID mbfid, CONST void *msg, INT msgsz, TMO tmout )
         ercd = E_NOEXS;
         goto error_exit;
     }
-#if CHK_PAR
     if ( msgsz > mbfcb->maxmsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     if ( !isQueEmpty(&mbfcb->recv_queue) ) {
         /* Send directly to the receive wait task */
@@ -8044,9 +6989,7 @@ SYSCALL ER tk_snd_mbf_impl( ID mbfid, CONST void *msg, INT msgsz, TMO tmout )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SND_MBF */
 
-#ifdef USE_FUNC_TK_RCV_MBF
 
 LOCAL CONST WSPEC knl_wspec_rmbf = { TTW_RMBF, NULL, NULL };
 
@@ -8141,9 +7084,7 @@ SYSCALL INT tk_rcv_mbf_impl( ID mbfid, void *msg, TMO tmout )
 
     return ( ercd < E_OK )? ercd: rcvsz;
 }
-#endif /* USE_FUNC_TK_RCV_MBF */
 
-#ifdef USE_FUNC_TK_REF_MBF
 /*
  * Refer message buffer state
  */
@@ -8181,16 +7122,12 @@ SYSCALL ER tk_ref_mbf_impl( ID mbfid, T_RMBF *pk_rmbf )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_MBF */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_MESSAGEBUFFER_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -8218,10 +7155,7 @@ EXPORT ER knl_messagebuffer_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_MESSAGEBUFFER_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_MBF
 /*
  * Refer message buffer usage state
  */
@@ -8245,9 +7179,7 @@ SYSCALL INT td_lst_mbf_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_MBF */
 
-#ifdef USE_FUNC_TD_REF_MBF
 /*
  * Refer message buffer state
  */
@@ -8285,9 +7217,7 @@ SYSCALL ER td_ref_mbf_impl( ID mbfid, TD_RMBF *pk_rmbf )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_MBF */
 
-#ifdef USE_FUNC_TD_SMBF_QUE
 /*
  * Refer message buffer send wait queue
  */
@@ -8317,9 +7247,7 @@ SYSCALL INT td_smbf_que_impl( ID mbfid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_SMBF_QUE */
 
-#ifdef USE_FUNC_TD_RMBF_QUE
 /*
  * Refer message buffer receive wait queue
  */
@@ -8349,10 +7277,7 @@ SYSCALL INT td_rmbf_que_impl( ID mbfid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_RMBF_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_MBFID */
 
 /*
  * Message buffer control block
@@ -8376,9 +7301,7 @@ typedef struct messagebuffer_control_block {
     W   head;       /* First message store address */
     W   tail;       /* Next to the last message store address */
     VB  *buffer;    /* Message buffer address */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } MBFCB;
 
 IMPORT MBFCB knl_mbfcb_table[]; /* Message buffer control block */
@@ -8424,7 +7347,6 @@ IMPORT void knl_mbf_wakeup( MBFCB *mbfcb );
 /** [END Common Definitions] */
 
 
-#ifdef USE_FUNC_TK_REF_SYS
 /*
  * Refer system state
  */
@@ -8450,9 +7372,7 @@ SYSCALL ER tk_ref_sys_impl( T_RSYS *pk_rsys )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_REF_SYS */
 
-#ifdef USE_FUNC_TK_REF_VER
 /*
  * Refer version information
  *  If there is no kernel version information,
@@ -8471,50 +7391,33 @@ SYSCALL ER tk_ref_ver_impl( T_RVER *pk_rver )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_REF_VER */
 
-#ifdef USE_FUNC_LOWPOW_DISCNT
 /*
  * Number of times for disabling power-saving mode switch
  *  If it is 0, the mode switch is enabled.
  */
 EXPORT UINT knl_lowpow_discnt = 0;
-#endif /* USE_FUNC_LOWPOW_DISCNT */
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
 /*
  * Hook routine address
  */
-#ifdef USE_FUNC_HOOK_ENTERFN
 Noinit(EXPORT FP knl_hook_enterfn);
 Noinit(EXPORT FP knl_hook_leavefn);
-#if TA_GP
 Noinit(EXPORT void *knl_hook_svc_gp);
-#endif
-#endif /* USE_FUNC_HOOK_ENTERFN */
 
-#ifdef USE_FUNC_HOOK_EXECFN
 Noinit(EXPORT FP knl_hook_execfn);
 Noinit(EXPORT FP knl_hook_stopfn);
-#if TA_GP
 Noinit(EXPORT void *knl_hook_dsp_gp);
-#endif
-#endif /* USE_FUNC_HOOK_EXECFN */
 
-#ifdef USE_FUNC_HOOK_IENTERFN
 Noinit(EXPORT FP knl_hook_ienterfn);
 Noinit(EXPORT FP knl_hook_ileavefn);
-#if TA_GP
 Noinit(EXPORT void *knl_hook_int_gp);
-#endif
-#endif /* USE_FUNC_HOOK_IENTERFN */
 
 
-#ifdef USE_FUNC_TD_HOK_SVC
 /*
  * Set/Cancel system call/extended SVC hook routine
  */
@@ -8528,18 +7431,14 @@ SYSCALL ER td_hok_svc_impl P1( TD_HSVC *hsvc )
         /* Set */
         knl_hook_enterfn = hsvc->enter;
         knl_hook_leavefn = hsvc->leave;
-#if TA_GP
         knl_hook_svc_gp = gp;
-#endif
         knl_hook_svc();
     }
     END_DISABLE_INTERRUPT;
 
     return E_OK;
 }
-#endif /* USE_FUNC_TD_HOK_SVC */
 
-#ifdef USE_FUNC_TD_HOK_DSP
 /*
  * Set/Cancel dispatcher hook routine
  */
@@ -8553,24 +7452,19 @@ SYSCALL ER td_hok_dsp_impl P1( TD_HDSP *hdsp )
         /* Set */
         knl_hook_execfn = hdsp->exec;
         knl_hook_stopfn = hdsp->stop;
-#if TA_GP
         knl_hook_dsp_gp = gp;
-#endif
         knl_hook_dsp();
     }
     END_DISABLE_INTERRUPT;
 
     return E_OK;
 }
-#endif /* USE_FUNC_TD_HOK_DSP */
 
-#ifdef USE_FUNC_TD_HOK_INT
 /*
  * Set/Cancel EIT handler hook routine
  */
 SYSCALL ER td_hok_int_impl P1( TD_HINT *hint )
 {
-#if USE_HLL_INTHDR
     BEGIN_DISABLE_INTERRUPT;
     if ( hint == NULL ) { /* Cancel interrupt handler hook routine */
         /* Cancel */
@@ -8579,21 +7473,15 @@ SYSCALL ER td_hok_int_impl P1( TD_HINT *hint )
         /* Set */
         knl_hook_ienterfn = hint->enter;
         knl_hook_ileavefn = hint->leave;
-#if TA_GP
         knl_hook_int_gp = gp;
-#endif
         knl_hook_int();
     }
     END_DISABLE_INTERRUPT;
 
     return E_OK;
-#else
     return E_NOSPT;
-#endif /* USE_HLL_INTHDR */
 }
-#endif /* USE_FUNC_TD_HOK_INT */
 
-#ifdef USE_FUNC_TD_REF_SYS
 /*
  * Refer system state
  */
@@ -8619,9 +7507,7 @@ SYSCALL ER td_ref_sys_impl( TD_RSYS *pk_rsys )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TD_REF_SYS */
 
-#endif /* USE_DBGSPT */
 
 IMPORT UINT knl_lowpow_discnt;
 
@@ -8635,11 +7521,9 @@ IMPORT FP knl_hook_stopfn;
 IMPORT FP knl_hook_ienterfn;
 IMPORT FP knl_hook_ileavefn;
 
-#if TA_GP
 IMPORT void *knl_hook_svc_gp;
 IMPORT void *knl_hook_dsp_gp;
 IMPORT void *knl_hook_int_gp;
-#endif
 
 /*
  * Hook enable/disable setting
@@ -8655,15 +7539,11 @@ IMPORT void knl_unhook_int( void );
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_MTXID > 0
 
-#ifdef USE_FUNC_MTXCB_TABLE
 Noinit(EXPORT MTXCB knl_mtxcb_table[NUM_MTXID]);    /* Mutex control block */
 Noinit(EXPORT QUEUE knl_free_mtxcb);    /* FreeQue */
-#endif /* USE_FUNC_MTXCB_TABLE */
 
 
-#ifdef USE_FUNC_MUTEX_INITIALIZE
 /*
  * Initialization of mutex control block 
  */
@@ -8686,10 +7566,8 @@ EXPORT ER knl_mutex_initialize(void)
 
     return E_OK;
 }
-#endif /* USE_FUNC_MUTEX_INITIALIZE */
 
 
-#ifdef USE_FUNC_RELEASE_MUTEX
 /*
  * Release the lock and delete it from list, and then adjust the
  * priority of task.
@@ -8740,9 +7618,7 @@ EXPORT void knl_release_mutex( TCB *tcb, MTXCB *relmtxcb )
         knl_change_task_priority(tcb, newpri);
     }
 }
-#endif /* USE_FUNC_RELEASE_MUTEX */
 
-#ifdef USE_FUNC_SIGNAL_ALL_MUTEX
 /*
  * Free mutex when task is terminated
  *  Free all mutexes which the task holds.
@@ -8784,9 +7660,7 @@ EXPORT void knl_signal_all_mutex( TCB *tcb )
         }
     }
 }
-#endif /* USE_FUNC_SIGNAL_ALL_MUTEX */
 
-#ifdef USE_FUNC_CHG_PRI_MUTEX
 /*
  * Limit the priority change by mutex at task priority change
  *    1.If the 'tcb' task locks mutex, cannot set lower priority than the 
@@ -8846,23 +7720,17 @@ EXPORT INT knl_chg_pri_mutex( TCB *tcb, INT priority )
     }
     return hi_pri;
 }
-#endif /* USE_FUNC_CHG_PRI_MUTEX */
 
 
-#ifdef USE_FUNC_TK_CRE_MTX
 /*
  * Create mutex
  */
 SYSCALL ID tk_cre_mtx_impl( CONST T_CMTX *pk_cmtx )
 {
-#if CHK_RSATR
     const ATR VALID_MTXATR = {
          TA_CEILING
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     MTXCB   *mtxcb;
     ID  mtxid;
     INT ceilpri;
@@ -8893,21 +7761,17 @@ SYSCALL ID tk_cre_mtx_impl( CONST T_CMTX *pk_cmtx )
         mtxcb->ceilpri = ceilpri;
         mtxcb->mtxtsk  = NULL;
         mtxcb->mtxlist = NULL;
-#if USE_OBJECT_NAME
         if ( (pk_cmtx->mtxatr & TA_DSNAME) != 0 ) {
             strncpy((char*)mtxcb->name, (char*)pk_cmtx->dsname,
                 (UINT)OBJECT_NAME_LENGTH);
         }
-#endif
         ercd = mtxid;
     }
     END_CRITICAL_SECTION;
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_MTX */
 
-#ifdef USE_FUNC_TK_DEL_MTX
 /*
  * Delete mutex
  */
@@ -8943,10 +7807,8 @@ SYSCALL ER tk_del_mtx_impl( ID mtxid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_MTX */
 
 
-#ifdef USE_FUNC_TK_LOC_MTX
 /*
  * Processing if the priority of wait task changes
  */
@@ -9082,9 +7944,7 @@ SYSCALL ER tk_loc_mtx_impl( ID mtxid, TMO tmout )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_LOC_MTX */
 
-#ifdef USE_FUNC_TK_UNL_MTX
 /*
  * Unlock mutex
  */
@@ -9141,10 +8001,8 @@ SYSCALL ER tk_unl_mtx_impl( ID mtxid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_UNL_MTX */
 
 
-#ifdef USE_FUNC_TK_REF_MTX
 /*
  * Refer mutex state
  */
@@ -9170,16 +8028,12 @@ SYSCALL ER tk_ref_mtx_impl( ID mtxid, T_RMTX *pk_rmtx )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_MTX */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_MUTEX_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -9207,10 +8061,7 @@ EXPORT ER knl_mutex_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_MUTEX_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_MTX
 /*
  * Refer mutex usage state
  */
@@ -9234,9 +8085,7 @@ SYSCALL INT td_lst_mtx_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_MTX */
 
-#ifdef USE_FUNC_TD_REF_MTX
 /*
  * Refer mutex state
  */
@@ -9262,9 +8111,7 @@ SYSCALL ER td_ref_mtx_impl( ID mtxid, TD_RMTX *pk_rmtx )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_MTX */
 
-#ifdef USE_FUNC_TD_MTX_QUE
 /*
  * Refer mutex wait queue
  */
@@ -9294,10 +8141,7 @@ SYSCALL INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_MTX_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_MTXID */
 
 
 typedef struct mutex_control_block  MTXCB;
@@ -9313,9 +8157,7 @@ struct mutex_control_block {
     UB  ceilpri;    /* Highest priority limit of mutex */
     TCB *mtxtsk;    /* Mutex get task */
     MTXCB   *mtxlist;   /* Mutex get list */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 };
 
 IMPORT MTXCB knl_mtxcb_table[]; /* Mutex control block */
@@ -9346,113 +8188,88 @@ IMPORT void knl_release_mutex( TCB *tcb, MTXCB *relmtxcb );
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if USE_DBGSPT
 
-#if USE_OBJECT_NAME
-#ifdef USE_FUNC_OBJECT_GETNAME
 EXPORT ER knl_object_getname( UINT objtype, ID objid, UB **name)
 {
     ER  ercd;
 
     switch (objtype) {
-#if CFN_MAX_TSKID > 0
       case TN_TSK:
         {
             IMPORT ER knl_task_getname(ID id, UB **name);
             ercd = knl_task_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_SEMID > 0
       case TN_SEM:
         {
             IMPORT ER knl_semaphore_getname(ID id, UB **name);
             ercd = knl_semaphore_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_FLGID > 0
       case TN_FLG:
         {
             IMPORT ER knl_eventflag_getname(ID id, UB **name);
             ercd = knl_eventflag_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_MBXID > 0
       case TN_MBX:
         {
             IMPORT ER knl_mailbox_getname(ID id, UB **name);
             ercd = knl_mailbox_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_MBFID > 0
       case TN_MBF:
         {
             IMPORT ER knl_messagebuffer_getname(ID id, UB **name);
             ercd = knl_messagebuffer_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_PORID > 0
       case TN_POR:
         {
             IMPORT ER knl_rendezvous_getname(ID id, UB **name);
             ercd = knl_rendezvous_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_MTXID > 0
       case TN_MTX:
         {
             IMPORT ER knl_mutex_getname(ID id, UB **name);
             ercd = knl_mutex_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_MPLID > 0
       case TN_MPL:
         {
             IMPORT ER knl_memorypool_getname(ID id, UB **name);
             ercd = knl_memorypool_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_MPFID > 0
       case TN_MPF:
         {
             IMPORT ER knl_fix_memorypool_getname(ID id, UB **name);
             ercd = knl_fix_memorypool_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_CYCID > 0
       case TN_CYC:
         {
             IMPORT ER knl_cyclichandler_getname(ID id, UB **name);
             ercd = knl_cyclichandler_getname(objid, name);
             break;
         }
-#endif
 
-#if CFN_MAX_ALMID > 0
       case TN_ALM:
         {
             IMPORT ER knl_alarmhandler_getname(ID id, UB **name);
             ercd = knl_alarmhandler_getname(objid, name);
             break;
         }
-#endif
 
       default:
         ercd = E_PAR;
@@ -9461,17 +8278,11 @@ EXPORT ER knl_object_getname( UINT objtype, ID objid, UB **name)
 
     return ercd;
 }
-#endif /* USE_FUNC_OBJECT_GETNAME */
-#endif /* USE_OBJECT_NAME */
 
-#ifdef USE_FUNC_TD_REF_DSNAME
-#if USE_OBJECT_NAME
 IMPORT ER knl_object_getname( UINT objtype, ID objid, UB **name);
-#endif /* USE_OBJECT_NAME */
 
 SYSCALL ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
 {
-#if USE_OBJECT_NAME
     UB  *name_cb;
     ER  ercd;
 
@@ -9481,20 +8292,13 @@ SYSCALL ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
     }
 
     return ercd;
-#else
     return E_NOSPT;
-#endif /* USE_OBJECT_NAME */
 }
-#endif /* USE_FUNC_TD_REF_DSNAME */
 
-#ifdef USE_FUNC_TD_SET_DSNAME
-#if USE_OBJECT_NAME
 IMPORT ER knl_object_getname( UINT objtype, ID objid, UB **name);
-#endif /* USE_OBJECT_NAME */
 
 SYSCALL ER td_set_dsname_impl( UINT type, ID id, CONST UB *dsname )
 {
-#if USE_OBJECT_NAME
     UB  *name_cb;
     ER  ercd;
 
@@ -9504,55 +8308,30 @@ SYSCALL ER td_set_dsname_impl( UINT type, ID id, CONST UB *dsname )
     }
 
     return ercd;
-#else
     return E_NOSPT;
-#endif /* USE_OBJECT_NAME */
 }
-#endif /* USE_FUNC_TD_SET_DSNAME */
 
-#endif /* USE_DBGSPT */
 
 /* Adjust offset of TCB member variables in offset.h for cpu_support.S */
 
 /*  TCB.wrdvno  */
-#if CFN_MAX_PORID > 0
 #define TCBSZ_POR   (4) /* = sizeof(RNO) */
-#else
 #define TCBSZ_POR   (0)
-#endif
 
 /*  TCB.mtxlist */
-#if CFN_MAX_MTXID > 0
 #define TCBSZ_MTX   (4) /* = sizeof(MTXCB*) */
-#else
 #define TCBSZ_MTX   (0)
-#endif
 
 /*  TCB.winfo.xxx   */
-#if CFN_MAX_PORID > 0
 #define TCBSZ_WINFO (16)
-#else
-#if CFN_MAX_FLGID > 0
 #define TCBSZ_WINFO (12)
-#else
-#if CFN_MAX_MBFID > 0 || CFN_MAX_MPLID > 0
 #define TCBSZ_WINFO (8)
-#else
-#if CFN_MAX_SEMID > 0 || CFN_MAX_MBXID > 0 || CFN_MAX_MPFID > 0
 #define TCBSZ_WINFO (4)
-#else
 #define TCBSZ_WINFO (0)
-#endif
-#endif
-#endif
-#endif
 
 /*  TCB.stime, TCB.utime */
-#if USE_DBGSPT && defined(USE_FUNC_TD_INF_TSK)
 #define TCBSZ_EXECTIME  (8)
-#else
 #define TCBSZ_EXECTIME  (0)
-#endif
 
 #define _ALIGN_CPU(x)   (((x)+3)&0xFFFFFFFC)    /* Cortex-m4 : 32 bit CPU   */
 #define _ALIGN_64(x)    (((x)+7)&0xFFFFFFF8)    /* Struct use 64bit align */
@@ -9579,7 +8358,6 @@ SYSCALL ER td_set_dsname_impl( UINT type, ID id, CONST UB *dsname )
 #define CTXB_ssp    0
 
 
-#if USE_SYSDEPEND_PATCH1
 /*
  * System-dependent processes (before start_system)
  */
@@ -9587,9 +8365,7 @@ EXPORT void sysdepend_patch1( void )
 {
     /* Do nothing */
 }
-#endif
 
-#if USE_SYSDEPEND_PATCH2
 /*
  * System-dependent processes (after start_system)
  */
@@ -9597,7 +8373,6 @@ EXPORT void sysdepend_patch2( void )
 {
     /* Do nothing */
 }
-#endif
 
 
 
@@ -9625,58 +8400,32 @@ EXPORT void knl_off_pow( void )
 }
 
 
-#if !(TK_SUPPORT_USERBUF || TK_SUPPORT_AUTOBUF)
 # error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."
-#endif
 
-#if TK_MAX_TSKPRI < 16
 # error "TK_MAX_TSKPRI MUST be greater than or equal to 16."
-#endif
 
-#if TK_WAKEUP_MAXCNT < 1
 # error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 1."
-#endif
 
-#if TK_SEMAPHORE_MAXCNT < 32767
 # error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
-#endif
 
-#if TK_SUSPEND_MAXCNT < 32767
 # error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
-#endif
 
-#if !(TK_MEM_RNG0 >= 0 && TK_MEM_RNG0 <= 3)
 # error "TK_MEM_RNG0 has an invalid value."
-#endif
 
-#if !(TK_MEM_RNG1 >= 0 && TK_MEM_RNG1 <= 3 && TK_MEM_RNG0 <= TK_MEM_RNG1)
 # error "TK_MEM_RNG1 has an invalid value."
-#endif
 
-#if !(TK_MEM_RNG2 >= 0 && TK_MEM_RNG2 <= 3 && TK_MEM_RNG1 <= TK_MEM_RNG2)
 # error "TK_MEM_RNG1 has an invalid value."
-#endif
 
-#if !(TK_MEM_RNG3 >= 0 && TK_MEM_RNG3 <= 3 && TK_MEM_RNG2 <= TK_MEM_RNG3)
 # error "TK_MEM_RNG1 has an invalid value."
-#endif
 
 
 
-// #ifdef _APP_AT91_
 // #include <profile_depend.h>
-// #endif
 
-// #ifdef _APP_H8S2212_
 // #include <profile_depend.h>
-// #endif
 
-// #ifdef _APP_MB9AF312K_
 // #include <profile_depend.h>
-// #endif
 
-#ifdef _APP_RL78G13_R5F100ADASP_
-#endif
 
 
 
@@ -10153,16 +8902,12 @@ TCB* knl_ready_queue_move_last( RDYQUE *rq, TCB *tcb )
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_PORID > 0
 
 
-#ifdef USE_FUNC_PORCB_TABLE
 Noinit(EXPORT PORCB knl_porcb_table[NUM_PORID]);    /* Rendezvous port control block */
 Noinit(EXPORT QUEUE knl_free_porcb);    /* FreeQue */
-#endif /* USE_FUNC_PORCB_TABLE */
 
 
-#ifdef USE_FUNC_RENDEZVOUS_INITIALIZE
 /* 
  * Initialization of port control block 
  */
@@ -10185,10 +8930,8 @@ EXPORT ER knl_rendezvous_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_RENDEZVOUS_INITIALIZE */
 
 
-#ifdef USE_FUNC_WSPEC_CAL
 /*
  * Processing if the priority of send wait task changes
  */
@@ -10205,27 +8948,19 @@ LOCAL void cal_chg_pri( TCB *tcb, INT oldpri )
  */
 EXPORT CONST WSPEC knl_wspec_cal_tfifo = { TTW_CAL, NULL, NULL };
 EXPORT CONST WSPEC knl_wspec_cal_tpri  = { TTW_CAL, cal_chg_pri, NULL };
-#endif /* USE_FUNC_WSPEC_CAL */
 
-#ifdef USE_FUNC_WSPEC_RDV
 EXPORT CONST WSPEC knl_wspec_rdv       = { TTW_RDV, NULL, NULL };
-#endif /* USE_FUNC_WSPEC_RDV */
 
 
-#ifdef USE_FUNC_TK_CRE_POR
 /*
  * Create rendezvous port
  */
 SYSCALL ID tk_cre_por_impl( CONST T_CPOR *pk_cpor )
 {
-#if CHK_RSATR
     const ATR VALID_PORATR = {
          TA_TPRI
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     PORCB   *porcb;
     ID  porid;
     ER  ercd;
@@ -10251,21 +8986,17 @@ SYSCALL ID tk_cre_por_impl( CONST T_CPOR *pk_cpor )
         QueInit(&porcb->accept_queue);
         porcb->maxcmsz = pk_cpor->maxcmsz;
         porcb->maxrmsz = pk_cpor->maxrmsz;
-#if USE_OBJECT_NAME
         if ( (pk_cpor->poratr & TA_DSNAME) != 0 ) {
             strncpy((char*)porcb->name, (char*)pk_cpor->dsname,
                 OBJECT_NAME_LENGTH);
         }
-#endif
         ercd = porid;
     }
     END_CRITICAL_SECTION;
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_POR */
 
-#ifdef USE_FUNC_TK_DEL_POR
 /*
  * Delete rendezvous port
  */
@@ -10295,9 +9026,7 @@ SYSCALL ER tk_del_por_impl( ID porid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_POR */
 
-#ifdef USE_FUNC_TK_CAL_POR
 /*
  * Call rendezvous
  */
@@ -10323,12 +9052,10 @@ SYSCALL INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO t
         ercd = E_NOEXS;
         goto error_exit;
     }
-#if CHK_PAR
     if ( cmsgsz > porcb->maxcmsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     /* Search accept wait task */
     queue = porcb->accept_queue.next;
@@ -10378,9 +9105,7 @@ SYSCALL INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO t
 
     return ( ercd < E_OK )? ercd: rmsgsz;
 }
-#endif /* USE_FUNC_TK_CAL_POR */
 
-#ifdef USE_FUNC_TK_ACP_POR
 
 LOCAL CONST WSPEC knl_wspec_acp = { TTW_ACP, NULL, NULL };
 
@@ -10460,9 +9185,7 @@ SYSCALL INT tk_acp_por_impl( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO
 
     return ( ercd < E_OK )? ercd: cmsgsz;
 }
-#endif /* USE_FUNC_TK_ACP_POR */
 
-#ifdef USE_FUNC_TK_FWD_POR
 /*
  * Forward Rendezvous to Other Port
  */
@@ -10488,12 +9211,10 @@ SYSCALL ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, CONST void *msg, I
         ercd = E_NOEXS;
         goto error_exit;
     }
-#if CHK_PAR
     if ( cmsgsz > porcb->maxcmsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
     if ( (caltcb->state & TS_WAIT) == 0
       || caltcb->wspec != &knl_wspec_rdv
       || rdvno != caltcb->winfo.rdv.rdvno ) {
@@ -10504,12 +9225,10 @@ SYSCALL ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, CONST void *msg, I
         ercd = E_OBJ;
         goto error_exit;
     }
-#if CHK_PAR
     if ( cmsgsz > caltcb->winfo.rdv.maxrmsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     /* Search accept wait task */
     queue = porcb->accept_queue.next;
@@ -10563,9 +9282,7 @@ SYSCALL ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, CONST void *msg, I
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_FWD_POR */
 
-#ifdef USE_FUNC_TK_RPL_RDV
 /*
  * Reply rendezvous
  */
@@ -10587,12 +9304,10 @@ SYSCALL ER tk_rpl_rdv_impl( RNO rdvno, CONST void *msg, INT rmsgsz )
         ercd = E_OBJ;
         goto error_exit;
     }
-#if CHK_PAR
     if ( rmsgsz > caltcb->winfo.rdv.maxrmsz ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     /* Send message */
     if ( rmsgsz > 0 ) {
@@ -10606,9 +9321,7 @@ SYSCALL ER tk_rpl_rdv_impl( RNO rdvno, CONST void *msg, INT rmsgsz )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_RPL_RDV */
 
-#ifdef USE_FUNC_TK_REF_POR
 /*
  * Refer rendezvous port
  */
@@ -10635,16 +9348,12 @@ SYSCALL ER tk_ref_por_impl( ID porid, T_RPOR *pk_rpor )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_POR */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_RENDEZVOUS_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -10672,10 +9381,7 @@ EXPORT ER knl_rendezvous_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_RENDEZVOUS_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_POR
 /*
  * Refer rendezvous port usage state
  */
@@ -10699,9 +9405,7 @@ SYSCALL INT td_lst_por_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_POR */
 
-#ifdef USE_FUNC_TD_REF_POR
 /*
  * Refer rendezvous port
  */
@@ -10728,9 +9432,7 @@ SYSCALL ER td_ref_por_impl( ID porid, TD_RPOR *pk_rpor )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_POR */
 
-#ifdef USE_FUNC_TD_CAL_QUE
 /*
  * Refer rendezvous call wait queue
  */
@@ -10760,9 +9462,7 @@ SYSCALL INT td_cal_que_impl( ID porid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_CAL_QUE */
 
-#ifdef USE_FUNC_TD_ACP_QUE
 /*
  * Refer rendezvous accept wait queue
  */
@@ -10792,10 +9492,7 @@ SYSCALL INT td_acp_que_impl( ID porid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_ACP_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_PORID */
 
 
 /*
@@ -10809,9 +9506,7 @@ typedef struct port_control_block {
     QUEUE   accept_queue;   /* Port accept wait queue */
     INT maxcmsz;    /* Maximum length of call message */
     INT maxrmsz;    /* Maximum length of reply message */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } PORCB;
 /** [END Common Definitions] */
 
@@ -10821,7 +9516,6 @@ IMPORT QUEUE knl_free_porcb;    /* FreeQue */
 #define get_porcb(id)   ( &knl_porcb_table[INDEX_POR(id)] )
 
 
-#if CFN_MAX_PORID > 0
 
 #define RDVNO_SHIFT (sizeof(RNO)*8/2)
 
@@ -10846,7 +9540,6 @@ ID knl_get_tskid_rdvno( RNO rdvno )
     return (ID)((UINT)rdvno & ((1U << RDVNO_SHIFT) - 1));
 }
 
-#endif /* CFN_MAX_PORID > 0 */
 
 /*
  * Check validity of rendezvous number
@@ -10866,15 +9559,11 @@ IMPORT CONST WSPEC knl_wspec_rdv;
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_SEMID > 0
 
-#ifdef USE_FUNC_SEMCB_TABLE
 Noinit(EXPORT SEMCB knl_semcb_table[NUM_SEMID]);    /* Semaphore control block */
 Noinit(EXPORT QUEUE knl_free_semcb);    /* FreeQue */
-#endif /* USE_FUNC_SEMCB_TABLE */
 
 
-#ifdef USE_FUNC_SEMAPHORE_INITIALIZE
 /* 
  * Initialization of semaphore control block 
  */
@@ -10897,24 +9586,18 @@ EXPORT ER knl_semaphore_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_SEMAPHORE_INITIALIZE */
 
 
-#ifdef USE_FUNC_TK_CRE_SEM
 /*
  * Create semaphore
  */
 SYSCALL ID tk_cre_sem_impl( CONST T_CSEM *pk_csem )
 {
-#if CHK_RSATR
     const ATR VALID_SEMATR = {
          TA_TPRI
         |TA_CNT
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     SEMCB   *semcb;
     ID  semid;
     ER  ercd;
@@ -10939,21 +9622,17 @@ SYSCALL ID tk_cre_sem_impl( CONST T_CSEM *pk_csem )
         semcb->sematr = pk_csem->sematr;
         semcb->semcnt = pk_csem->isemcnt;
         semcb->maxsem = pk_csem->maxsem;
-#if USE_OBJECT_NAME
         if ( (pk_csem->sematr & TA_DSNAME) != 0 ) {
             strncpy((char*)semcb->name, (char*)pk_csem->dsname,
                 OBJECT_NAME_LENGTH);
         }
-#endif
         ercd = semid;
     }
     END_CRITICAL_SECTION;
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_SEM */
 
-#ifdef USE_FUNC_TK_DEL_SEM
 /*
  * Delete semaphore
  */
@@ -10981,9 +9660,7 @@ SYSCALL ER tk_del_sem_impl( ID semid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_SEM */
 
-#ifdef USE_FUNC_TK_SIG_SEM
 /*
  * Signal semaphore
  */
@@ -11040,9 +9717,7 @@ SYSCALL ER tk_sig_sem_impl( ID semid, INT cnt )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SIG_SEM */
 
-#ifdef USE_FUNC_TK_WAI_SEM
 /*
  * Processing if the priority of wait task changes
  */
@@ -11115,12 +9790,10 @@ SYSCALL ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout )
         ercd = E_NOEXS;
         goto error_exit;
     }
-#if CHK_PAR
     if ( cnt > semcb->maxsem ) {
         ercd = E_PAR;
         goto error_exit;
     }
-#endif
 
     if ( ((semcb->sematr & TA_CNT) != 0
           || knl_gcb_top_of_wait_queue((GCB*)semcb, knl_ctxtsk) == knl_ctxtsk)
@@ -11142,9 +9815,7 @@ SYSCALL ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_WAI_SEM */
 
-#ifdef USE_FUNC_TK_REF_SEM
 /*
  * Refer semaphore state
  */
@@ -11169,16 +9840,12 @@ SYSCALL ER tk_ref_sem_impl( ID semid, T_RSEM *pk_rsem )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_SEM */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_SEMAPHORE_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -11206,10 +9873,7 @@ EXPORT ER knl_semaphore_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_SEMAPHORE_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_SEM
 /*
  * Refer object usage state
  */
@@ -11233,9 +9897,7 @@ SYSCALL INT td_lst_sem_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_SEM */
 
-#ifdef USE_FUNC_TD_REF_SEM
 /*
  * Refer object state
  */
@@ -11260,9 +9922,7 @@ SYSCALL ER td_ref_sem_impl( ID semid, TD_RSEM *pk_rsem )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_SEM */
 
-#ifdef USE_FUNC_TD_SEM_QUE
 /*
  * Refer wait queue
  */
@@ -11292,10 +9952,7 @@ SYSCALL INT td_sem_que_impl( ID semid, ID list[], INT nent )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_SEM_QUE */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_SEMID */
 
 
 /*
@@ -11308,9 +9965,7 @@ typedef struct semaphore_control_block {
     ATR sematr;     /* Semaphore attribute */
     INT semcnt;     /* Semaphore current count value */
     INT maxsem;     /* Semaphore maximum count value */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } SEMCB;
 
 IMPORT SEMCB knl_semcb_table[]; /* Semaphore control block */
@@ -11334,7 +9989,6 @@ IMPORT QUEUE knl_free_semcb;    /* FreeQue */
 // #define GPIO_EPFR08      ((_UW*)(GPIO_BASE + 0x0620UL))
 // #define  GPIO_ADE        ((_UW*)(GPIO_BASE + 0x0500UL))
 
-// #if TERM_PORT == 0       /* Sxx0_0 */
 // #define UART_BASE        (0x40038000UL)
 // #elif TERM_PORT == 1     /* Sxx1_1 */
 // #define UART_BASE        (0x40038100UL)
@@ -11352,9 +10006,7 @@ IMPORT QUEUE knl_free_semcb;    /* FreeQue */
 // #define UART_BASE        (0x40038700UL)
 // #elif TERM_PORT == 10        /* Sxx0_1 */
 // #define UART_BASE        (0x40038000UL)
-// #else                /* default Sxx0_0 */
 // #define UART_BASE        (0x40038000UL)
-// #endif   /* TERM_PORT */
 // #define UART_SMR     ((_UB*)(UART_BASE + 0x00UL))
 // #define UART_SCR     ((_UB*)(UART_BASE + 0x01UL))
 // #define UART_ESCR        ((_UB*)(UART_BASE + 0x04UL))
@@ -11411,7 +10063,6 @@ EXPORT void sio_init(void)
 {
 //  UW  r;
 
-// #if TERM_PORT == 0
     // r = *GPIO_ADE;
     // r &= 0xffffff7f;
     // *GPIO_ADE = r;
@@ -11470,14 +10121,12 @@ EXPORT void sio_init(void)
     // *GPIO_PFR1 = 0x00000070U; /* use P14, P15, P16 for Serial I/O */
     // *GPIO_EPFR07 = 0x000002a0U; /* use UART0_1 for IN/OUT/CLOCK */
 
-// #else
     // r = *GPIO_ADE;
     // r &= 0xfff8ffff;
     // *GPIO_ADE = r;
     // *GPIO_PFR2 = 0x0000000eU; /* use P21, P22, P23 for Serial I/O */
     // *GPIO_EPFR07 = 0x00000040U; /* use UART0_0 for IN/OUT/CLOCK */
 
-// #endif   /* TERM_PORT */
 
     // *UART_SCR = 0x80U; /* Clear */
     // *UART_SMR = 0x01U; /* async normal mode, stop-bit = 1, LSB-first, output enable */
@@ -11491,52 +10140,35 @@ EXPORT void sio_init(void)
 
 #define __size_t    unsigned long
 
-#ifndef __cplusplus
 #define __wchar_t   int
-#endif
 
 
 
-// #ifdef APP_AT91
 // #include <str_align_depend.h>
-// #endif
 
-// #ifdef APP_H8S2212
 // #include <str_align_depend.h>
-// #endif
 
-// #ifdef _APP_MB9AF312K_
 // #include <str_align_depend.h>
-// #endif
 
-#ifdef _APP_RL78G13_R5F100ADASP_
-#endif
 
 
 
 /* 32 bit alignment */
-#if BIGENDIAN
 #  define _pad_b(n) int :n;
 #  define _pad_l(n)
-#else
 #  define _pad_b(n)
 #  define _pad_l(n) int :n;
-#endif
 
 #define _align64
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#if CFN_MAX_SSYID > 0
 
 
-#ifdef USE_FUNC_SSYCB_TABLE
 Noinit(EXPORT SSYCB knl_ssycb_table[NUM_SSYID]);    /* Subsystem control block */
-#endif /* USE_FUNC_SSYCB_TABLE */
 
 
-#ifdef USE_FUNC_SUBSYSTEM_INITIALIZE
 /*
  * Initialization of subsystem control block
  */
@@ -11558,10 +10190,8 @@ EXPORT ER knl_subsystem_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_SUBSYSTEM_INITIALIZE */
 
 
-#ifdef USE_FUNC_TK_DEF_SSY
 /*
  * Definition of subsystem
  */
@@ -11571,11 +10201,9 @@ SYSCALL ER tk_def_ssy_impl P2( ID ssid, CONST T_DSSY *pk_dssy )
     ER  ercd = E_OK;
 
     CHECK_SSYID(ssid);
-#if CHK_RSATR
     if ( pk_dssy != NULL ) {
         CHECK_RSATR(pk_dssy->ssyatr, TA_NULL|TA_GP);
     }
-#endif
 
     ssycb = get_ssycb(ssid);
 
@@ -11587,12 +10215,10 @@ SYSCALL ER tk_def_ssy_impl P2( ID ssid, CONST T_DSSY *pk_dssy )
             goto error_exit;
         }
         ssycb->svchdr    = (SVC)pk_dssy->svchdr;
-#if TA_GP
         if ( (pk_dssy->ssyatr & TA_GP) != 0 ) {
             gp = pk_dssy->gp;
         }
         ssycb->gp = gp;
-#endif
 
     } else {
         /* Delete */
@@ -11609,9 +10235,7 @@ SYSCALL ER tk_def_ssy_impl P2( ID ssid, CONST T_DSSY *pk_dssy )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEF_SSY */
 
-#ifdef USE_FUNC_TK_REF_SSY
 /*
  * Refer subsystem definition information
  */
@@ -11632,11 +10256,8 @@ SYSCALL ER tk_ref_ssy_impl( ID ssid, T_RSSY *pk_rssy )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_SSY */
 
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_TD_LST_SSY
 /*
  * Refer subsystem usage state
  */
@@ -11660,9 +10281,7 @@ SYSCALL INT td_lst_ssy_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_SSY */
 
-#ifdef USE_FUNC_TD_REF_SSY
 /*
  * Refer subsystem definition information
  */
@@ -11683,11 +10302,8 @@ SYSCALL ER td_ref_ssy_impl( ID ssid, TD_RSSY *pk_rssy )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_SSY */
 
-#endif /* USE_DBGSPT */
 
-#ifdef USE_FUNC_SVC_IENTRY
 /*
  * Branch routine to extended SVC handler
  */
@@ -11725,9 +10341,7 @@ EXPORT ER knl_svc_ientry P2GP( void *pk_para, FN fncd )
 
     return ercd;
 }
-#endif /* USE_FUNC_SVC_IENTRY */
 
-#endif /* CFN_MAX_SSYID */
 
 typedef INT  (*SVC)( void *pk_para, FN fncd );  /* Extended SVC handler */
 
@@ -11737,9 +10351,7 @@ typedef INT  (*SVC)( void *pk_para, FN fncd );  /* Extended SVC handler */
 typedef struct subsystem_control_block  SSYCB;
 struct subsystem_control_block {
     SVC svchdr;     /* Extended SVC handler */
-#if TA_GP
     void    *gp;        /* Global pointer */
-#endif
 };
 
 IMPORT SSYCB knl_ssycb_table[]; /* Subsystem control block */
@@ -11920,13 +10532,9 @@ typedef struct t_ctsk {
     FP  task;       /* Task startup address */
     PRI itskpri;    /* Priority at task startup */
     SZ  stksz;      /* User stack size (byte) */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
     void    *bufptr;    /* User buffer */
-#if TA_GP
     void    *gp;        /* Global pointer (gp) */
-#endif
 } T_CTSK;
 
 /*
@@ -11951,9 +10559,7 @@ typedef struct t_csem {
     ATR sematr;     /* Semaphore attribute */
     INT isemcnt;    /* Semaphore initial count value */
     INT maxsem;     /* Semaphore maximum count value */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
 } T_CSEM;
 
 /*
@@ -11972,9 +10578,7 @@ typedef struct t_cmtx {
     void    *exinf;     /* Extended information */
     ATR mtxatr;     /* Mutex attribute */
     PRI ceilpri;    /* Upper limit priority of mutex */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
 } T_CMTX;
 
 /*
@@ -11993,9 +10597,7 @@ typedef struct t_cflg {
     void    *exinf;     /* Extended information */
     ATR flgatr;     /* Event flag attribute */
     UINT    iflgptn;    /* Event flag initial value */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
 } T_CFLG;
 
 /*
@@ -12013,9 +10615,7 @@ typedef struct t_rflg {
 typedef struct t_cmbx {
     void    *exinf;     /* Extended information */
     ATR mbxatr;     /* Mail box attribute */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
 } T_CMBX;
 
 /*
@@ -12047,9 +10647,7 @@ typedef struct t_cmbf {
     ATR mbfatr;     /* Message buffer attribute */
     SZ  bufsz;      /* Message buffer size (byte) */
     INT maxmsz;     /* Maximum length of message (byte) */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
     void    *bufptr;        /* User buffer */
 } T_CMBF;
 
@@ -12073,9 +10671,7 @@ typedef struct t_cpor {
     ATR poratr;     /* Port attribute */
     INT maxcmsz;    /* Maximum length of call message (byte) */
     INT maxrmsz;    /* Maximum length of replay message (byte) */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
 } T_CPOR;
 
 /*
@@ -12095,9 +10691,7 @@ typedef struct t_rpor {
 typedef struct t_dint {
     ATR intatr;     /* Interrupt handler attribute */
     FP  inthdr;     /* Interrupt handler address */
-#if TA_GP
     void    *gp;        /* Global pointer (gp) */
-#endif
 } T_DINT;
 
 /*
@@ -12107,9 +10701,7 @@ typedef struct t_cmpl {
     void    *exinf;     /* Extended information */
     ATR mplatr;     /* Memory pool attribute */
     SZ  mplsz;      /* Size of whole memory pool (byte) */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
     void    *bufptr;        /* User buffer */
 } T_CMPL;
 
@@ -12132,9 +10724,7 @@ typedef struct t_cmpf {
     ATR mpfatr;     /* Memory pool attribute */
     SZ  mpfcnt;     /* Number of blocks in whole memory pool */
     SZ  blfsz;      /* Fixed size memory block size (byte) */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
     void    *bufptr;        /* User buffer */
 } T_CMPF;
 
@@ -12156,12 +10746,8 @@ typedef struct t_ccyc {
     FP  cychdr;     /* Cycle handler address */
     RELTIM  cyctim;     /* Cycle interval */
     RELTIM  cycphs;     /* Cycle phase */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
-#if TA_GP
     void    *gp;        /* Global pointer (gp) */
-#endif
 } T_CCYC;
 
 /*
@@ -12180,12 +10766,8 @@ typedef struct t_calm {
     void    *exinf;     /* Extended information */
     ATR almatr;     /* Alarm handler attribute */
     FP  almhdr;     /* Alarm handler address */
-#if USE_OBJECT_NAME
     UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-#endif
-#if TA_GP
     void    *gp;        /* Global pointer (gp) */
-#endif
 } T_CALM;
 
 /*
@@ -12231,9 +10813,7 @@ typedef struct t_dssy {
     FP  cleanupfn;  /* Cleanup function address */
     FP  eventfn;    /* Event function address */
     SZ  resblksz;   /* Resource management block size (byte) */
-#if TA_GP
     void    *gp;        /* Global pointer (gp) */
-#endif
 } T_DSSY;
 
 /*
@@ -12399,9 +10979,7 @@ typedef struct t_ddev {
     FP  waitfn;     /* Completion wait function */
     FP  abortfn;    /* Abort function */
     FP  eventfn;    /* Event function */
-#if TA_GP
     void    *gp;        /* Global pointer (gp) */
-#endif
 } T_DDEV;
 
 /*
@@ -12574,40 +11152,24 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 
 
 
-// #if APP_AT91
 // #include <cpuattr.h>
 // #include <cpudef.h>
-// #endif
 
-// #if APP_H8S2212
 // #include <cpuattr.h>
 // #include <cpudef.h>
-// #endif
 
-// #if APP_MB9AF312K
 // #include <cpuattr.h>
 // #include <cpudef.h>
-// #endif
-
-#if _APP_RL78G13_R5F100ADASP_
-#endif
 
 
 
-// #if APP_AT91
+
 // #include <sysdef_depend.h>
-// #endif
 
-// #if APP_H8S2212
 // #include <sysdef_depend.h>
-// #endif
 
-// #if APP_MB9AF312K
 // #include <sysdef_depend.h>
-// #endif
 
-#if _APP_RL78G13_R5F100ADASP_
-#endif
 
 /*
  * Program status register (PSR)
@@ -12802,23 +11364,14 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 
 
 
-// #ifdef APP_AT91
 // #include <sysinfo_depend.h>
-// #endif
 
-// #ifdef APP_H8S2212
 // #include <sysinfo_depend.h>
-// #endif
 
-// #ifdef _APP_MB9AF312K_
 // #include <sysinfo_depend.h>
-// #endif
-
-#ifdef _APP_RL78G13_R5F100ADASP_
-#endif
 
 
-#ifndef _in_asm_source_
+
 
 #define N_INTVEC    48
 
@@ -12826,7 +11379,6 @@ IMPORT  FP  knl_intvec[];
 IMPORT  W   knl_taskindp;
 IMPORT  UW  knl_taskmode;
 
-#endif /* _in_asm_source_ */
 
 
 
@@ -12858,7 +11410,6 @@ IMPORT void knl_t_kernel_main( T_CTSK *ctsk );
  */
 IMPORT void knl_start_system( void );
 
-#if USE_CLEANUP
 /*
  * Stop System
  *  Never return from this function.
@@ -12871,7 +11422,6 @@ IMPORT void knl_start_system( void );
  *  fin are not always supported.
  */
 IMPORT void knl_shutdown_system( INT fin );
-#endif /* USE_CLEANUP */
 
 /*
  * Main initial task sequence (sysmain)
@@ -12887,31 +11437,24 @@ EXPORT void knl_init_task(void)
 {
     INT fin;
 
-#if USE_SYSDEPEND_PATCH1
     /* System-dependent processes (before knl_start_system) */
     knl_sysdepend_patch1();
-#endif
 
     /* Start system */
     knl_start_system();
 
-#if USE_SYSDEPEND_PATCH2
     /* System-dependent processes (after knl_start_system) */
     knl_sysdepend_patch2();
-#endif
 
     /* Initial task main */
     fin = knl_init_task_main();
 
     /* Stop System */
-#if USE_CLEANUP
     knl_shutdown_system(fin);   /* Never return */
-#else
     DISABLE_INTERRUPT;
     for(;;) {
         ;
     }
-#endif /* USE_CLEANUP */
 }
 
 /*
@@ -12937,20 +11480,12 @@ EXPORT int main( void )
 /*
  * CPU-dependent
  */
-// #if APP_AT91
 // #include <syslib_depend.h>
-// #endif
 
-// #if APP_H8S2212
 // #include <syslib_depend.h>
-// #endif
 
-// #if APP_MB9AF312K
 // #include <syslib_depend.h>
-// #endif
 
-#if _APP_RL78G13_R5F100ADASP_
-#endif
 
 
 /*
@@ -13185,16 +11720,13 @@ typedef ER  (*EXCFN)( T_DEVREQ *devreq, TMO tmout, void *exinf );
 
 /* ------------------------------------------------------------------------ */
 
-#if TA_GP
 /*
  * Device driver call 
  */
 IMPORT INT knl_CallDeviceDriver( INT p1, INT p2, INT p3, INT p4, FP drv, void *gp );
 #define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4),                             (FP)(drv), (gp))
-#endif
 
 #define IMPORT_DEFINE   1
-#if IMPORT_DEFINE
 /* device.c */
 IMPORT  FastMLock   knl_DevMgrLock;
 IMPORT  DevCB       knl_DevCBtbl[];
@@ -13210,15 +11742,12 @@ IMPORT void knl_devmgr_cleanup( void );
 IMPORT ER knl_initDevIO( void );
 IMPORT ER knl_finishDevIO( void );
 
-#endif
 
 /*
  * Manager/Driver
  */
 IMPORT ER knl_init_Imalloc( void );         /* Internal memory allocation */
-#if CFN_MAX_REGDEV > 0
 IMPORT ER knl_initialize_devmgr( void );
-#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -13236,19 +11765,15 @@ EXPORT void knl_init_system( void )
     }
 
     /* Initialize Imalloc */
-#if USE_IMALLOC
     ercd = knl_init_Imalloc();
     if ( ercd < E_OK ) {
         goto err_ret;
     }
-#endif /* USE_IMALLOC */
 
     return;
 
 err_ret:
-#if USE_KERNEL_MESSAGE
     tm_putstring((UB*)"!ERROR! init_kernel\n");
-#endif
     tm_monitor(); /* Stop */
 }
 
@@ -13259,13 +11784,11 @@ EXPORT void knl_start_system( void )
 {
     ER  ercd;
 
-#if CFN_MAX_REGDEV > 0
     /* Initialize Device manager */
     ercd = knl_initialize_devmgr();
     if ( ercd < E_OK ) {
         goto err_ret;
     }
-#endif
 
     /* Start system dependent sequence */
     ercd = knl_start_device();
@@ -13276,13 +11799,10 @@ EXPORT void knl_start_system( void )
     return;
 
 err_ret:
-#if USE_KERNEL_MESSAGE
     tm_putstring((UB*)"!ERROR! start_system\n");
-#endif
     tm_monitor();   /* Stop */
 }
 
-#if USE_CLEANUP
 /*
  * Stop system
  */
@@ -13292,11 +11812,9 @@ EXPORT void knl_shutdown_system( INT fin )
     knl_finish_device();
 
     /* Shutdown message output */
-#if USE_KERNEL_MESSAGE
     if ( fin >= 0 ) {
       tm_putstring((UB*)"\n<< SYSTEM SHUTDOWN >>\n");
     }
-#endif
 
     if ( fin < 0 ) {
         /* Re-start sequence (platform dependent) */
@@ -13306,12 +11824,10 @@ EXPORT void knl_shutdown_system( INT fin )
     /* Stop system */
     knl_t_kernel_exit();
 }
-#endif /* USE_CLEANUP */
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#ifdef USE_FUNC_CTXTSK
 /*
  * Task dispatch disable state
  */
@@ -13323,17 +11839,13 @@ Noinit(EXPORT INT   knl_dispatch_disabled); /* DDS_XXX see task.h */
 Noinit(EXPORT TCB   *knl_ctxtsk);   /* Task in execution */
 Noinit(EXPORT TCB   *knl_schedtsk); /* Task which should be executed */
 Noinit(EXPORT RDYQUE    knl_ready_queue);   /* Ready queue */
-#endif /* USE_FUNC_CTXTSK */
 
-#ifdef USE_FUNC_TCB_TABLE
 /*
  * Task control information
  */
 Noinit(EXPORT TCB   knl_tcb_table[NUM_TSKID]);  /* Task control block */
 Noinit(EXPORT QUEUE knl_free_tcb);  /* FreeQue */
-#endif /* USE_FUNC_TCB_TABLE */
 
-#ifdef USE_FUNC_TASK_INITIALIZE
 /*
  * TCB Initialization
  */
@@ -13359,18 +11871,14 @@ EXPORT ER knl_task_initialize( void )
         tskid = ID_TSK(i);
         tcb->tskid = tskid;
         tcb->state = TS_NONEXIST;
-#if CFN_MAX_PORID > 0
         tcb->wrdvno = tskid;
-#endif
 
         QueInsert(&tcb->tskque, &knl_free_tcb);
     }
 
     return E_OK;
 }
-#endif /* USE_FUNC_TASK_INITIALIZE */
 
-#ifdef USE_FUNC_MAKE_DORMANT
 /*
  * Prepare task execution.
  */
@@ -13386,25 +11894,19 @@ EXPORT void knl_make_dormant( TCB *tcb )
     tcb->klockwait  = FALSE;
     tcb->klocked    = FALSE;
 
-#if USE_DBGSPT && defined(USE_FUNC_TD_INF_TSK)
     tcb->stime  = 0;
     tcb->utime  = 0;
-#endif
 
     tcb->wercd = NULL;
 
-#if CFN_MAX_MTXID > 0
     tcb->mtxlist    = NULL;
-#endif
 
     /* Set context to start task */
     knl_setup_context(tcb);
 }
-#endif /* USE_FUNC_MAKE_DORMANT */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_MAKE_READY
 /*
  * Set task to READY state.
  *  Update the task state and insert in the ready queue. If necessary, 
@@ -13418,9 +11920,7 @@ EXPORT void knl_make_ready( TCB *tcb )
         knl_dispatch_request();
     }
 }
-#endif /* USE_FUNC_MAKE_READY */
 
-#ifdef USE_FUNC_MAKE_NON_READY
 /*
  * Set task to non-executable state.
  *  Delete the task from the ready queue.
@@ -13436,9 +11936,7 @@ EXPORT void knl_make_non_ready( TCB *tcb )
         knl_dispatch_request();
     }
 }
-#endif /* USE_FUNC_MAKE_NON_READY */
 
-#ifdef USE_FUNC_CHANGE_TASK_PRIORITY
 /*
  * Change task priority.
  */
@@ -13468,9 +11966,7 @@ EXPORT void knl_change_task_priority( TCB *tcb, INT priority )
         }
     }
 }
-#endif /* USE_FUNC_CHANGE_TASK_PRIORITY */
 
-#ifdef USE_FUNC_ROTATE_READY_QUEUE
 /*
  * Rotate ready queue.
  */
@@ -13479,9 +11975,7 @@ EXPORT void knl_rotate_ready_queue( INT priority )
     knl_ready_queue_rotate(&knl_ready_queue, priority);
     knl_reschedule();
 }
-#endif /* USE_FUNC_ROTATE_READY_QUEUE */
 
-#ifdef USE_FUNC_ROTATE_READY_QUEUE_RUN
 /*
  * Rotate the ready queue including the highest priority task.
  */
@@ -13493,15 +11987,12 @@ EXPORT void knl_rotate_ready_queue_run( void )
         knl_reschedule();
     }
 }
-#endif /* USE_FUNC_ROTATE_READY_QUEUE_RUN */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debug support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_TD_RDY_QUE
 /*
  * Refer ready queue
  */
@@ -13523,9 +12014,7 @@ SYSCALL INT td_rdy_que_impl( PRI pri, ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_RDY_QUE */
 
-#endif /* USE_DBGSPT */
 
 
 typedef struct mutex_control_block  MTXCB;
@@ -13603,27 +12092,17 @@ struct task_control_block {
     WINFO   winfo;      /* Wait information */
     TMEB    wtmeb;      /* Wait timer event block */
 
-#if CFN_MAX_PORID > 0
     RNO wrdvno;     /* For creating rendezvous number */
-#endif
-#if CFN_MAX_MTXID > 0
     MTXCB   *mtxlist;   /* List of hold mutexes */
-#endif
 
-#if USE_DBGSPT && defined(USE_FUNC_TD_INF_TSK)
     UW  stime;      /* System execution time (ms) */
     UW  utime;      /* User execution time (ms) */
-#endif
 
     void    *isstack;   /* stack pointer initial value */
-#if TA_GP
     void    *gp;        /* Global pointer */
-#endif
     _align64        /* alignment for CTXB.ssp */
     CTXB    tskctxb;    /* Task context block */
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 };
 
 /*
@@ -13740,40 +12219,32 @@ IMPORT void knl_ter_tsk( TCB *tcb );
 /** [END Common Definitions] */
 
 
-#ifdef USE_FUNC_TK_CRE_TSK
 /*
  * Create task
  */
 SYSCALL ID tk_cre_tsk_impl P1( CONST T_CTSK *pk_ctsk )
 {
-#if CHK_RSATR
     const ATR VALID_TSKATR = {  /* Valid value of task attribute */
          TA_HLNG
         |TA_RNG3
         |TA_USERBUF
         |TA_GP
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     TCB *tcb;
     W   sstksz;
     void    *stack;
     ER  ercd;
 
     CHECK_RSATR(pk_ctsk->tskatr, VALID_TSKATR);
-#if !USE_IMALLOC
     /* TA_USERBUF must be specified if configured in no Imalloc */
     CHECK_PAR((pk_ctsk->tskatr & TA_USERBUF) != 0);
-#endif
     CHECK_PRI(pk_ctsk->itskpri);
     CHECK_PAR(pk_ctsk->stksz >= MIN_SYS_STACK_SIZE);
 
     /* Adjust stack size by 8 bytes */
     sstksz  = (pk_ctsk->stksz  + 7) / 8 * 8;
 
-#if USE_IMALLOC
     if ( (pk_ctsk->tskatr & TA_USERBUF) != 0 ) {
         /* Size of User buffer must be multiples of 8 */
         if ( sstksz != pk_ctsk->stksz ) {
@@ -13788,14 +12259,12 @@ SYSCALL ID tk_cre_tsk_impl P1( CONST T_CTSK *pk_ctsk )
             return E_NOMEM;
         }
     }
-#else
     /* Size of User buffer must be multiples of 8 */
     if ( sstksz != pk_ctsk->stksz ) {
         return E_PAR;
     }
     /* Use user buffer */
     stack = pk_ctsk->bufptr;
-#endif
 
     BEGIN_CRITICAL_SECTION;
     /* Get control block from FreeQue */
@@ -13811,18 +12280,14 @@ SYSCALL ID tk_cre_tsk_impl P1( CONST T_CTSK *pk_ctsk )
     tcb->task      = pk_ctsk->task;
     tcb->ipriority = (UB)int_priority(pk_ctsk->itskpri);
     tcb->sstksz    = sstksz;
-#if USE_OBJECT_NAME
     if ( (pk_ctsk->tskatr & TA_DSNAME) != 0 ) {
         strncpy((char*)tcb->name, (char*)pk_ctsk->dsname, OBJECT_NAME_LENGTH);
     }
-#endif
-#if TA_GP
     /* Set global pointer */
     if ( (pk_ctsk->tskatr & TA_GP) != 0 ) {
         gp = pk_ctsk->gp;
     }
     tcb->gp = gp;
-#endif
 
     /* Set stack pointer */
     tcb->isstack = (VB*)stack + sstksz;
@@ -13839,39 +12304,31 @@ SYSCALL ID tk_cre_tsk_impl P1( CONST T_CTSK *pk_ctsk )
     error_exit:
     END_CRITICAL_SECTION;
 
-#if USE_IMALLOC
     if ( (ercd < E_OK) && ((pk_ctsk->tskatr & TA_USERBUF) == 0) ) {
         knl_Ifree(stack);
     }
-#endif
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_TSK */
 
-#ifdef USE_FUNC_DEL_TSK
 /*
  * Task deletion
  *  Call from critical section
  */
 EXPORT void knl_del_tsk( TCB *tcb )
 {
-#if USE_IMALLOC
     if ( (tcb->tskatr & TA_USERBUF) == 0 ) {
         /* User buffer is not used */
         /* Free system stack */
         void *stack = (VB*)tcb->isstack - tcb->sstksz;
         knl_Ifree(stack);
     }
-#endif
 
     /* Return control block to FreeQue */
     QueInsert(&tcb->tskque, &knl_free_tcb);
     tcb->state = TS_NONEXIST;
 }
-#endif /* USE_FUNC_DEL_TSK */
 
-#ifdef USE_FUNC_TK_DEL_TSK
 /*
  * Delete task 
  */
@@ -13897,11 +12354,9 @@ SYSCALL ER tk_del_tsk_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_TSK */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_TK_STA_TSK
 /*
  * Start task
  */
@@ -13928,9 +12383,7 @@ SYSCALL ER tk_sta_tsk_impl( ID tskid, INT stacd )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_STA_TSK */
 
-#ifdef USE_FUNC_TER_TSK
 /*
  * Task finalization
  *  Call from critical section
@@ -13950,43 +12403,29 @@ EXPORT void knl_ter_tsk( TCB *tcb )
         }
     }
 
-#if CFN_MAX_MTXID > 0
     /* signal mutex */
     knl_signal_all_mutex(tcb);
-#endif
 
     knl_cleanup_context(tcb);
 }
-#endif /* USE_FUNC_TER_TSK */
 
-#ifdef USE_FUNC_TK_EXT_TSK
 /*
  * End its own task
  */
 SYSCALL void tk_ext_tsk_impl( void )
 {
-#ifdef DORMANT_STACK_SIZE
     /* To avoid destroying stack used in 'knl_make_dormant', 
        allocate the dummy area on the stack. */
     volatile VB _dummy[DORMANT_STACK_SIZE];
-#endif
 
     /* Check context error */
-#if CHK_CTX2
     if ( in_indp() ) {
-#if USE_KERNEL_MESSAGE
         tm_putstring((UB*)"tk_ext_tsk was called in the task independent\n");
-#endif
         tm_monitor(); /* To monitor */
     }
-#endif
-#if CHK_CTX1
     if ( in_ddsp() ) {
-#if USE_KERNEL_MESSAGE
         tm_putstring((UB*)"tk_ext_tsk was called in the dispatch disabled\n");
-#endif
     }
-#endif
 
     DISABLE_INTERRUPT;
     knl_ter_tsk(knl_ctxtsk);
@@ -13995,35 +12434,23 @@ SYSCALL void tk_ext_tsk_impl( void )
     knl_force_dispatch();
     /* No return */
 
-#ifdef DORMANT_STACK_SIZE
     /* for WARNING */
     _dummy[0] = 0;
-#endif
 }
-#endif /* USE_FUNC_TK_EXT_TSK */
 
-#ifdef USE_FUNC_TK_EXD_TSK
 /*
  * End and delete its own task
  */
 SYSCALL void tk_exd_tsk_impl( void )
 {
     /* Check context error */
-#if CHK_CTX2
     if ( in_indp() ) {
-#if USE_KERNEL_MESSAGE
         tm_putstring((UB*)"tk_exd_tsk was called in the task independent\n");
-#endif
         tm_monitor(); /* To monitor */
     }
-#endif
-#if CHK_CTX1
     if ( in_ddsp() ) {
-#if USE_KERNEL_MESSAGE
         tm_putstring((UB*)"tk_exd_tsk was called in the dispatch disabled\n");
-#endif
     }
-#endif
 
     DISABLE_INTERRUPT;
     knl_ter_tsk(knl_ctxtsk);
@@ -14032,9 +12459,7 @@ SYSCALL void tk_exd_tsk_impl( void )
     knl_force_dispatch();
     /* No return */
 }
-#endif /* USE_FUNC_TK_EXD_TSK */
 
-#ifdef USE_FUNC_TK_TER_TSK
 /*
  * Termination of other task
  */
@@ -14068,11 +12493,9 @@ SYSCALL ER tk_ter_tsk_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_TER_TSK */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_TK_CHG_PRI
 /*
  * Change task priority
  */
@@ -14100,7 +12523,6 @@ SYSCALL ER tk_chg_pri_impl( ID tskid, PRI tskpri )
         priority = int_priority(tskpri);
     }
 
-#if CFN_MAX_MTXID > 0
     /* Mutex priority change limit */
     ercd = knl_chg_pri_mutex(tcb, priority);
     if ( ercd < E_OK ) {
@@ -14109,9 +12531,7 @@ SYSCALL ER tk_chg_pri_impl( ID tskid, PRI tskpri )
 
     tcb->bpriority = (UB)priority;
     priority = ercd;
-#else
     tcb->bpriority = priority;
-#endif
 
     /* Change priority */
     knl_change_task_priority(tcb, priority);
@@ -14122,9 +12542,7 @@ SYSCALL ER tk_chg_pri_impl( ID tskid, PRI tskpri )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CHG_PRI */
 
-#ifdef USE_FUNC_TK_ROT_RDQ
 /*
  * Rotate ready queue
  */
@@ -14146,11 +12564,9 @@ SYSCALL ER tk_rot_rdq_impl( PRI tskpri )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_ROT_RDQ */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_TK_GET_TID
 /*
  * Refer task ID at execution
  */
@@ -14158,9 +12574,7 @@ SYSCALL ID tk_get_tid_impl( void )
 {
     return ( knl_ctxtsk == NULL )? 0: knl_ctxtsk->tskid;
 }
-#endif /* USE_FUNC_TK_GET_TID */
 
-#ifdef USE_FUNC_TK_REF_TSK
 /*
  * Refer task state
  */
@@ -14200,12 +12614,10 @@ SYSCALL ER tk_ref_tsk_impl( ID tskid, T_RTSK *pk_rtsk )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_TSK */
 
 /* ------------------------------------------------------------------------ */
 
 
-#ifdef USE_FUNC_TK_REL_WAI
 /*
  * Release wait
  */
@@ -14230,16 +12642,12 @@ SYSCALL ER tk_rel_wai_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REL_WAI */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Debug support function
  */
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_TASK_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -14267,10 +12675,7 @@ EXPORT ER knl_task_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_TASK_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_TSK
 /*
  * Refer task usage state
  */
@@ -14294,9 +12699,7 @@ SYSCALL INT td_lst_tsk_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_TSK */
 
-#ifdef USE_FUNC_TD_REF_TSK
 /*
  * Refer task state
  */
@@ -14340,9 +12743,7 @@ SYSCALL ER td_ref_tsk_impl( ID tskid, TD_RTSK *pk_rtsk )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_TSK */
 
-#ifdef USE_FUNC_TD_INF_TSK
 /*
  * Get task statistic information
  */
@@ -14370,14 +12771,11 @@ SYSCALL ER td_inf_tsk_impl( ID tskid, TD_ITSK *pk_itsk, BOOL clr )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_INF_TSK */
 
-#endif /* USE_DBGSPT */
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#ifdef USE_FUNC_TK_SUS_TSK
 /*
  * Suspend task
  */
@@ -14424,9 +12822,7 @@ SYSCALL ER tk_sus_tsk_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SUS_TSK */
 
-#ifdef USE_FUNC_TK_RSM_TSK
 /*
  * Resume task
  */
@@ -14471,9 +12867,7 @@ SYSCALL ER tk_rsm_tsk_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_RSM_TSK */
 
-#ifdef USE_FUNC_TK_FRSM_TSK
 /*
  * Force resume task
  */
@@ -14516,18 +12910,14 @@ SYSCALL ER tk_frsm_tsk_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_FRSM_TSK */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_WSPEC_SLP
 /*
  * Definition of task wait specification
  */
 EXPORT CONST WSPEC knl_wspec_slp = { TTW_SLP, NULL, NULL };
-#endif /* USE_FUNC_WSPEC_SLP */
 
-#ifdef USE_FUNC_TK_SLP_TSK
 /*
  * Move its own task state to wait state
  */
@@ -14557,9 +12947,7 @@ SYSCALL ER tk_slp_tsk_impl( TMO tmout )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_SLP_TSK */
 
-#ifdef USE_FUNC_TK_WUP_TSK
 /*
  * Wakeup task
  */
@@ -14591,9 +12979,7 @@ SYSCALL ER tk_wup_tsk_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_WUP_TSK */
 
-#ifdef USE_FUNC_TK_CAN_WUP
 /*
  * Cancel wakeup request
  */
@@ -14623,7 +13009,6 @@ SYSCALL INT tk_can_wup_impl( ID tskid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CAN_WUP */
 
 
 /*
@@ -14636,9 +13021,6 @@ IMPORT CONST WSPEC knl_wspec_slp;
  */
 
 
-#if INT_BITWIDTH == 16
-#else
-#endif
 
 /*
  *  micro T-Kernel function code (Debugger Support)
@@ -14886,7 +13268,6 @@ EXPORT ER knl_timer_initialize( void )
     return E_OK;
 }
 
-#if USE_CLEANUP
 /*
  * Stop timer
  */
@@ -14894,7 +13275,6 @@ EXPORT void knl_timer_shutdown( void )
 {
     knl_terminate_hw_timer();
 }
-#endif /* USE_CLEANUP */
 
 
 /*
@@ -14986,7 +13366,6 @@ EXPORT void knl_timer_handler( void )
     BEGIN_CRITICAL_SECTION;
     knl_current_time = ll_add(knl_current_time, uitoll(CFN_TIMER_PERIOD));
 
-#if USE_DBGSPT && defined(USE_FUNC_TD_INF_TSK)
     if ( knl_ctxtsk != NULL ) {
         /* Task at execution */
         if ( knl_ctxtsk->sysmode > 0 ) {
@@ -14995,7 +13374,6 @@ EXPORT void knl_timer_handler( void )
             knl_ctxtsk->utime += CFN_TIMER_PERIOD;
         }
     }
-#endif
 
     /* Execute event that passed occurring time. */
     while ( !isQueEmpty(&knl_timer_queue) ) {
@@ -15091,7 +13469,6 @@ void knl_timer_delete( TMEB *event )
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#ifdef USE_FUNC_TK_SET_TIM
 /*
  * Set system clock
  */
@@ -15105,9 +13482,7 @@ SYSCALL ER tk_set_tim_impl( CONST SYSTIM *pk_tim )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_SET_TIM */
 
-#ifdef USE_FUNC_TK_GET_TIM
 /*
  * Refer system clock
  */
@@ -15119,9 +13494,7 @@ SYSCALL ER tk_get_tim_impl( SYSTIM *pk_tim )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_GET_TIM */
 
-#ifdef USE_FUNC_TK_GET_OTM
 /*
  * Refer system operating time
  */
@@ -15133,10 +13506,7 @@ SYSCALL ER tk_get_otm_impl( SYSTIM *pk_tim )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TK_GET_OTM */
 
-#if USE_DBGSPT
-#ifdef USE_FUNC_TD_GET_TIM
 /*
  * Refer system clock
  */
@@ -15149,9 +13519,7 @@ SYSCALL ER td_get_tim_impl( SYSTIM *tim, UW *ofs )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TD_GET_TIM */
 
-#ifdef USE_FUNC_TD_GET_OTM
 /*
  * Refer system operating time
  */
@@ -15164,12 +13532,9 @@ SYSCALL ER td_get_otm_impl( SYSTIM *tim, UW *ofs )
 
     return E_OK;
 }
-#endif /* USE_FUNC_TD_GET_OTM */
-#endif /* USE_DBGSPT */
 
 /* ------------------------------------------------------------------------ */
 
-#ifdef USE_FUNC_TK_DLY_TSK
 /*
  * Definition of task delay wait specification
  */
@@ -15196,22 +13561,17 @@ SYSCALL ER tk_dly_tsk_impl( RELTIM dlytim )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DLY_TSK */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Cyclic handler
  */
 
-#if CFN_MAX_CYCID > 0
 
-#ifdef USE_FUNC_CYCCB_TABLE
 Noinit(EXPORT CYCCB knl_cyccb_table[NUM_CYCID]);    /* Cyclic handler control block */
 Noinit(EXPORT QUEUE knl_free_cyccb);    /* FreeQue */
-#endif /* USE_FUNC_CYCCB_TABLE */
 
 
-#ifdef USE_FUNC_CYCLICHANDLER_INITIALIZE
 /*
  * Initialization of cyclic handler control block
  */
@@ -15234,10 +13594,8 @@ EXPORT ER knl_cyclichandler_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_CYCLICHANDLER_INITIALIZE */
 
 
-#ifdef USE_FUNC_CALL_CYCHDR
 /*
  * Cyclic handler routine
  */
@@ -15251,9 +13609,7 @@ EXPORT void knl_call_cychdr( CYCCB *cyccb )
     CallUserHandlerP1(cyccb->exinf, cyccb->cychdr, cyccb);
     DISABLE_INTERRUPT;
 }
-#endif /* USE_FUNC_CALL_CYCHDR */
 
-#ifdef USE_FUNC_TK_CRE_CYC
 /*
  * Immediate call of cyclic handler 
  */
@@ -15274,17 +13630,13 @@ LOCAL void knl_immediate_call_cychdr( CYCCB *cyccb )
  */
 SYSCALL ID tk_cre_cyc_impl P1( CONST T_CCYC *pk_ccyc )
 {
-#if CHK_RSATR
     const ATR VALID_CYCATR = {
          TA_HLNG
         |TA_STA
         |TA_PHS
         |TA_GP
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     CYCCB   *cyccb;
     LSYSTIM tm;
     ER  ercd = E_OK;
@@ -15306,17 +13658,13 @@ SYSCALL ID tk_cre_cyc_impl P1( CONST T_CCYC *pk_ccyc )
     cyccb->cycatr  = pk_ccyc->cycatr;
     cyccb->cychdr  = pk_ccyc->cychdr;
     cyccb->cyctim  = pk_ccyc->cyctim;
-#if USE_OBJECT_NAME
     if ( (pk_ccyc->cycatr & TA_DSNAME) != 0 ) {
         strncpy((char*)cyccb->name, (char*)pk_ccyc->dsname, OBJECT_NAME_LENGTH);
     }
-#endif
-#if TA_GP
     if ( (pk_ccyc->cycatr & TA_GP) != 0 ) {
         gp = pk_ccyc->gp;
     }
     cyccb->gp = gp;
-#endif
 
     /* First startup time
      *  To guarantee the start of handler after the specified time,
@@ -15350,9 +13698,7 @@ SYSCALL ID tk_cre_cyc_impl P1( CONST T_CCYC *pk_ccyc )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_CYC */
 
-#ifdef USE_FUNC_TK_DEL_CYC
 /*
  * Delete cyclic handler 
  */
@@ -15382,9 +13728,7 @@ SYSCALL ER tk_del_cyc_impl( ID cycid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_CYC */
 
-#ifdef USE_FUNC_TK_STA_CYC
 /*
  * Start cyclic handler 
  */
@@ -15438,9 +13782,7 @@ SYSCALL ER tk_sta_cyc_impl( ID cycid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_STA_CYC */
 
-#ifdef USE_FUNC_TK_STP_CYC
 /*
  * Stop cyclic handler 
  */
@@ -15467,9 +13809,7 @@ SYSCALL ER tk_stp_cyc_impl( ID cycid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_STP_CYC */
 
-#ifdef USE_FUNC_TK_REF_CYC
 /*
  * Refer cyclic handler state
  */
@@ -15507,12 +13847,8 @@ SYSCALL ER tk_ref_cyc_impl( ID cycid, T_RCYC* pk_rcyc )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_CYC */
 
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_CYCLICHANDLER_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -15540,10 +13876,7 @@ EXPORT ER knl_cyclichandler_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_CYCLICHANDLER_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_CYC
 /*
  * Refer cyclic handler usage state
  */
@@ -15568,9 +13901,7 @@ SYSCALL INT td_lst_cyc_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_CYC */
 
-#ifdef USE_FUNC_TD_REF_CYC
 /*
  * Refer cyclic handler state
  */
@@ -15608,25 +13939,18 @@ SYSCALL ER td_ref_cyc_impl( ID cycid, TD_RCYC* pk_rcyc )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_CYC */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_CYCID */
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Alarm handler
  */
 
-#if CFN_MAX_ALMID > 0
 
-#ifdef USE_FUNC_ALMCB_TABLE
 Noinit(EXPORT ALMCB knl_almcb_table[NUM_ALMID]);    /* Alarm handler control block */
 Noinit(EXPORT QUEUE knl_free_almcb);    /* FreeQue */
-#endif /* USE_FUNC_ALMCB_TABLE */
 
 
-#ifdef USE_FUNC_ALARMHANDLER_INITIALIZE
 /*
  * Initialization of alarm handler control block 
  */
@@ -15649,10 +13973,8 @@ EXPORT ER knl_alarmhandler_initialize( void )
 
     return E_OK;
 }
-#endif /* USE_FUNC_ALARMHANDLER_INITIALIZE */
 
 
-#ifdef USE_FUNC_CALL_ALMHDR
 /*
  * Alarm handler start routine
  */
@@ -15665,24 +13987,18 @@ EXPORT void knl_call_almhdr( ALMCB *almcb )
     CallUserHandlerP1(almcb->exinf, almcb->almhdr, almcb);
     DISABLE_INTERRUPT;
 }
-#endif /* USE_FUNC_CALL_ALMHDR */
 
 
-#ifdef USE_FUNC_TK_CRE_ALM
 /*
  * Create alarm handler
  */
 SYSCALL ID tk_cre_alm_impl P1( CONST T_CALM *pk_calm )
 {
-#if CHK_RSATR
     const ATR VALID_ALMATR = {
          TA_HLNG
         |TA_GP
-#if USE_OBJECT_NAME
         |TA_DSNAME
-#endif
     };
-#endif
     ALMCB   *almcb;
     ER  ercd = E_OK;
 
@@ -15702,17 +14018,13 @@ SYSCALL ID tk_cre_alm_impl P1( CONST T_CALM *pk_calm )
     almcb->almatr  = pk_calm->almatr;
     almcb->almhdr  = pk_calm->almhdr;
     almcb->almstat = TALM_STP;
-#if USE_OBJECT_NAME
     if ( (pk_calm->almatr & TA_DSNAME) != 0 ) {
         strncpy((char*)almcb->name, (char*)pk_calm->dsname, OBJECT_NAME_LENGTH);
     }
-#endif
-#if TA_GP
     if ( (pk_calm->almatr & TA_GP) != 0 ) {
         gp = pk_calm->gp;
     }
     almcb->gp = gp;
-#endif
 
     ercd = ID_ALM(almcb - knl_almcb_table);
 
@@ -15721,9 +14033,7 @@ SYSCALL ID tk_cre_alm_impl P1( CONST T_CALM *pk_calm )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_CRE_ALM */
 
-#ifdef USE_FUNC_TK_DEL_ALM
 /*
  * Delete alarm handler
  */
@@ -15753,9 +14063,7 @@ SYSCALL ER tk_del_alm_impl( ID almid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_DEL_ALM */
 
-#ifdef USE_FUNC_TK_STA_ALM
 /*
  * Alarm handler immediate call
  */
@@ -15807,9 +14115,7 @@ SYSCALL ER tk_sta_alm_impl( ID almid, RELTIM almtim )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_STA_ALM */
 
-#ifdef USE_FUNC_TK_STP_ALM
 /*
  * Stop alarm handler
  */
@@ -15836,9 +14142,7 @@ SYSCALL ER tk_stp_alm_impl( ID almid )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_STP_ALM */
 
-#ifdef USE_FUNC_TK_REF_ALM
 /*
  * Refer alarm handler state
  */
@@ -15875,12 +14179,8 @@ SYSCALL ER tk_ref_alm_impl( ID almid, T_RALM *pk_ralm )
 
     return ercd;
 }
-#endif /* USE_FUNC_TK_REF_ALM */
 
-#if USE_DBGSPT
 
-#ifdef USE_FUNC_ALARMHANDLER_GETNAME
-#if USE_OBJECT_NAME
 /*
  * Get object name from control block
  */
@@ -15908,10 +14208,7 @@ EXPORT ER knl_alarmhandler_getname(ID id, UB **name)
 
     return ercd;
 }
-#endif /* USE_OBJECT_NAME */
-#endif /* USE_FUNC_ALARMHANDLER_GETNAME */
 
-#ifdef USE_FUNC_TD_LST_ALM
 /*
  * Refer alarm handler usage state
  */
@@ -15936,9 +14233,7 @@ SYSCALL INT td_lst_alm_impl( ID list[], INT nent )
 
     return n;
 }
-#endif /* USE_FUNC_TD_LST_ALM */
 
-#ifdef USE_FUNC_TD_REF_ALM
 /*
  * Refer alarm handler state
  */
@@ -15975,10 +14270,7 @@ SYSCALL ER td_ref_alm_impl( ID almid, TD_RALM *pk_ralm )
 
     return ercd;
 }
-#endif /* USE_FUNC_TD_REF_ALM */
 
-#endif /* USE_DBGSPT */
-#endif /* CFN_MAX_ALMID */
 
 /*
  * Cyclic handler control block
@@ -15990,12 +14282,8 @@ typedef struct cyclic_handler_control_block {
     UINT    cycstat;    /* Cyclic handler state */
     RELTIM  cyctim;     /* Cyclic time */
     TMEB    cyctmeb;    /* Timer event block */
-#if TA_GP
     void    *gp;        /* Global pointer */
-#endif
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } CYCCB;
 
 IMPORT CYCCB    knl_cyccb_table[];  /* Cyclic handler control block */
@@ -16047,12 +14335,8 @@ typedef struct alarm_handler_control_block {
     FP  almhdr;     /* Alarm handler address */
     UINT    almstat;    /* Alarm handler state */
     TMEB    almtmeb;    /* Timer event block */
-#if TA_GP
     void    *gp;        /* Global pointer */
-#endif
-#if USE_OBJECT_NAME
     UB  name[OBJECT_NAME_LENGTH];   /* name */
-#endif
 } ALMCB;
 /** [END Common Definitions] */
 
@@ -16103,7 +14387,6 @@ EXPORT ER knl_tkdev_initialize( void )
     return E_OK;
 }
 
-#if USE_CLEANUP
 /*
  * Target system-dependent finalization
  *  No return from this function.
@@ -16118,7 +14401,6 @@ EXPORT void knl_tkdev_exit( void )
         tm_monitor();  /* To T-Monitor equivalent function */
     }
 }
-#endif /* USE_CLEANUP */
 
 
 
@@ -16223,9 +14505,6 @@ UW knl_get_hw_timer_nsec( void )
  */
 
 
-#if INT_BITWIDTH == 16
-#else
-#endif
 
 /*
  *  micro T-Kernel function code
@@ -16444,12 +14723,9 @@ LOCAL void knl_init_task_startup( T_CTSK *ctsk )
 {
     ER  ercd;
 
-#if TA_GP
     extern int _gp;
     ercd = tk_cre_tsk_impl(ctsk, 0,0,0,0,&_gp);
-#else
     ercd = tk_cre_tsk_impl(ctsk);
-#endif
     if ( ercd < E_OK ) {
         goto err_exit;
     }
@@ -16462,9 +14738,7 @@ LOCAL void knl_init_task_startup( T_CTSK *ctsk )
     return;
 
 err_exit:
-#if USE_KERNEL_MESSAGE
     tm_putstring((UB*)"init_task can not started\n");
-#endif
     tm_monitor();
 }
 
@@ -16477,10 +14751,8 @@ LOCAL void knl_init_module( ER (*initfunc)( void ), UB *name )
 
     ercd = (*initfunc)();
     if ( ercd < E_OK ) {
-#if USE_KERNEL_MESSAGE
         tm_putstring(name);
         tm_putstring((UB*)" : module initialize error\n");
-#endif
         tm_monitor();
     }
 }
@@ -16504,61 +14776,17 @@ EXPORT void knl_t_kernel_main( T_CTSK *inittask )
      * Each module initialization
      */
     InitModule(task);
-#if CFN_MAX_SEMID > 0
-#ifdef USE_FUNC_SEMAPHORE_INITIALIZE
     InitModule(semaphore);
-#endif
-#endif
-#if CFN_MAX_FLGID > 0
-#ifdef USE_FUNC_EVENTFLAG_INITIALIZE
     InitModule(eventflag);
-#endif
-#endif
-#if CFN_MAX_MBXID > 0
-#ifdef USE_FUNC_MAILBOX_INITIALIZE
     InitModule(mailbox);
-#endif
-#endif
-#if CFN_MAX_MBFID > 0
-#ifdef USE_FUNC_MESSAGEBUFFER_INITIALIZE
     InitModule(messagebuffer);
-#endif
-#endif
-#if CFN_MAX_PORID > 0
-#ifdef USE_FUNC_RENDEZVOUS_INITIALIZE
     InitModule(rendezvous);
-#endif
-#endif
-#if CFN_MAX_MTXID > 0
-#ifdef USE_FUNC_MUTEX_INITIALIZE
     InitModule(mutex);
-#endif
-#endif
-#if CFN_MAX_MPLID > 0
-#ifdef USE_FUNC_MEMORYPOOL_INITIALIZE
     InitModule(memorypool);
-#endif
-#endif
-#if CFN_MAX_MPFID > 0
-#ifdef USE_FUNC_FIX_MEMORYPOOL_INITIALIZE
     InitModule(fix_memorypool);
-#endif
-#endif
-#if CFN_MAX_CYCID > 0
-#ifdef USE_FUNC_CYCLICHANDLER_INITIALIZE
     InitModule(cyclichandler);
-#endif
-#endif
-#if CFN_MAX_ALMID > 0
-#ifdef USE_FUNC_ALARMHANDLER_INITIALIZE
     InitModule(alarmhandler);
-#endif
-#endif
-#if CFN_MAX_SSYID > 0
-#ifdef USE_FUNC_SUBSYSTEM_INITIALIZE
     InitModule(subsystem);
-#endif
-#endif
     InitModule(timer);
 
     /*
@@ -16570,7 +14798,6 @@ EXPORT void knl_t_kernel_main( T_CTSK *inittask )
     /* No return */
 }
 
-#if USE_CLEANUP
 /*
  * Finalization
  */
@@ -16589,7 +14816,6 @@ EXPORT void knl_t_kernel_exit( void )
     knl_tkdev_exit();
     /* No return */
 }
-#endif /* USE_CLEANUP */
 
 #define tk_cre_tsk_impl tk_cre_tsk
 #define tk_del_tsk_impl tk_del_tsk
@@ -16833,13 +15059,10 @@ typedef struct systim {         /* System time */
  * 64 bits value
  */
 typedef struct dw {
-#if BIGENDIAN
     W   hi; /* Upper 32 bits */
     UW  lo; /* Lower 32 bits */
-#else
     UW  lo; /* Lower 32 bits */
     W   hi; /* Upper 32 bits */
-#endif
 } DW;
 
 
@@ -17172,10 +15395,8 @@ static  void    _vsprintf( OutFn ostr, OutPar *par, const UB *fmt, va_list ap )
     if (fms != NULL) {
         (*ostr)(fms, fmt - fms - 1, par);
     }
-#if OUTBUF_SZ > 0
     /* Flush output */
     (*ostr)(NULL, 0, par);
-#endif
 }
 
 /*
@@ -17183,11 +15404,9 @@ static  void    _vsprintf( OutFn ostr, OutPar *par, const UB *fmt, va_list ap )
  */
 static  void    out_cons( UB *str, int len,  OutPar *par )
 {
-#if OUTBUF_SZ == 0
     /* Direct output to console */
     par->len += len;
     while (--len >= 0) tm_putchar(*str++);
-#else
     /* Buffered output to console */
     if (str == NULL) {  /* Flush */
         if (par->cnt > 0) {
@@ -17206,21 +15425,18 @@ static  void    out_cons( UB *str, int len,  OutPar *par )
             par->bufp[par->cnt++] = *str++;
         }
     }
-#endif
 }
 
 INT tm_printf( const UB *format, ... )
 {
     va_list ap;
 
-#if OUTBUF_SZ == 0
     short   len = 0;
 
     va_start(ap, format);
     _vsprintf(out_cons, (OutPar*)&len, format, ap);
     va_end(ap);
     return len;
-#else
     char    obuf[OUTBUF_SZ];
     OutPar  par;
 
@@ -17230,7 +15446,6 @@ INT tm_printf( const UB *format, ... )
     _vsprintf(out_cons, (OutPar*)&par, format, ap);
     va_end(ap);
     return par.len;
-#endif
 }
 
 /*
@@ -17369,24 +15584,14 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 
 
 
-// #ifdef _APP_H8S2212_
 // #include "utk_config_depend.h"
-// #endif
 
-// #ifdef _APP_AT91_
 // #include "utk_config_depend.h"
-// #endif
 
-// #ifdef _APP_MB9AF312K_
 // #include "utk_config_depend.h"
-// #endif
-
-#ifdef _APP_RL78G13_R5F100ADASP_
-#endif
 
 
-#if !USE_TRAP && !(USE_DBGSPT && USE_HOOK_TRACE)
-#endif
+
 
 
 /* RAMINFO */
@@ -17492,7 +15697,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_TK_WUP_TSK
 #define USE_FUNC_TK_CAN_WUP
 
-#if CFN_MAX_SEMID > 0
 #define USE_FUNC_TK_CRE_SEM
 #define USE_FUNC_TK_DEL_SEM
 #define USE_FUNC_TK_SIG_SEM
@@ -17500,15 +15704,11 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_TK_REF_SEM
 #define USE_FUNC_SEMAPHORE_INITIALIZE
 #define USE_FUNC_SEMCB_TABLE
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_SEM
 #define USE_FUNC_TD_REF_SEM
 #define USE_FUNC_TD_SEM_QUE
 #define USE_FUNC_SEMAPHORE_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_MTXID > 0
 #define USE_FUNC_TK_CRE_MTX
 #define USE_FUNC_TK_DEL_MTX
 #define USE_FUNC_TK_LOC_MTX
@@ -17519,15 +15719,11 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_RELEASE_MUTEX
 #define USE_FUNC_SIGNAL_ALL_MUTEX
 #define USE_FUNC_CHG_PRI_MUTEX
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_MTX
 #define USE_FUNC_TD_REF_MTX
 #define USE_FUNC_TD_MTX_QUE
 #define USE_FUNC_MUTEX_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_FLGID > 0
 #define USE_FUNC_TK_CRE_FLG
 #define USE_FUNC_TK_DEL_FLG
 #define USE_FUNC_TK_SET_FLG
@@ -17536,15 +15732,11 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_TK_REF_FLG
 #define USE_FUNC_EVENTFLAG_INITIALIZE
 #define USE_FUNC_FLGCB_TABLE
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_FLG
 #define USE_FUNC_TD_REF_FLG
 #define USE_FUNC_TD_FLG_QUE
 #define USE_FUNC_EVENTFLAG_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_MBXID > 0
 #define USE_FUNC_TK_CRE_MBX
 #define USE_FUNC_TK_DEL_MBX
 #define USE_FUNC_TK_SND_MBX
@@ -17552,15 +15744,11 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_TK_REF_MBX
 #define USE_FUNC_MAILBOX_INITIALIZE
 #define USE_FUNC_MBXCB_TABLE
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_MBX
 #define USE_FUNC_TD_REF_MBX
 #define USE_FUNC_TD_MBX_QUE
 #define USE_FUNC_MAILBOX_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_MBFID > 0
 #define USE_FUNC_TK_CRE_MBF
 #define USE_FUNC_TK_DEL_MBF
 #define USE_FUNC_TK_SND_MBF
@@ -17570,16 +15758,12 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_MBFCB_TABLE
 #define USE_FUNC_MSG_TO_MBF
 #define USE_FUNC_MBF_WAKEUP
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_MBF
 #define USE_FUNC_TD_REF_MBF
 #define USE_FUNC_TD_SMBF_QUE
 #define USE_FUNC_TD_RMBF_QUE
 #define USE_FUNC_MESSAGEBUFFER_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_PORID > 0
 #define USE_FUNC_TK_CRE_POR
 #define USE_FUNC_TK_DEL_POR
 #define USE_FUNC_TK_CAL_POR
@@ -17591,20 +15775,16 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_PORCB_TABLE
 #define USE_FUNC_WSPEC_CAL
 #define USE_FUNC_WSPEC_RDV
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_POR
 #define USE_FUNC_TD_REF_POR
 #define USE_FUNC_TD_CAL_QUE
 #define USE_FUNC_TD_ACP_QUE
 #define USE_FUNC_RENDEZVOUS_GETNAME
-#endif
-#endif
 
 #define USE_FUNC_HLL_INTHDR
 #define USE_FUNC_TK_DEF_INT
 #define USE_FUNC_TK_RET_INT
 
-#if CFN_MAX_MPLID > 0
 #define USE_FUNC_TK_CRE_MPL
 #define USE_FUNC_TK_DEL_MPL
 #define USE_FUNC_TK_GET_MPL
@@ -17613,15 +15793,11 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_MEMORYPOOL_INITIALIZE
 #define USE_FUNC_MPLCB_TABLE
 #define USE_FUNC_MPL_WAKEUP
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_MPL
 #define USE_FUNC_TD_REF_MPL
 #define USE_FUNC_TD_MPL_QUE
 #define USE_FUNC_MEMORYPOOL_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_MPFID > 0
 #define USE_FUNC_TK_CRE_MPF
 #define USE_FUNC_TK_DEL_MPF
 #define USE_FUNC_TK_GET_MPF
@@ -17629,20 +15805,16 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_TK_REF_MPF
 #define USE_FUNC_FIX_MEMORYPOOL_INITIALIZE
 #define USE_FUNC_MPFCB_TABLE
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_MPF
 #define USE_FUNC_TD_REF_MPF
 #define USE_FUNC_TD_MPF_QUE
 #define USE_FUNC_FIX_MEMORYPOOL_GETNAME
-#endif
-#endif
 
 #define USE_FUNC_TK_SET_TIM
 #define USE_FUNC_TK_GET_TIM
 #define USE_FUNC_TK_GET_OTM
 #define USE_FUNC_TK_DLY_TSK
 
-#if CFN_MAX_CYCID > 0
 #define USE_FUNC_TK_CRE_CYC
 #define USE_FUNC_TK_DEL_CYC
 #define USE_FUNC_TK_STA_CYC
@@ -17651,14 +15823,10 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_CYCLICHANDLER_INITIALIZE
 #define USE_FUNC_CYCCB_TABLE
 #define USE_FUNC_CALL_CYCHDR
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_CYC
 #define USE_FUNC_TD_REF_CYC
 #define USE_FUNC_CYCLICHANDLER_GETNAME
-#endif
-#endif
 
-#if CFN_MAX_ALMID > 0
 #define USE_FUNC_TK_CRE_ALM
 #define USE_FUNC_TK_DEL_ALM
 #define USE_FUNC_TK_STA_ALM
@@ -17667,30 +15835,22 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_ALARMHANDLER_INITIALIZE
 #define USE_FUNC_ALMCB_TABLE
 #define USE_FUNC_CALL_ALMHDR
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_ALM
 #define USE_FUNC_TD_REF_ALM
 #define USE_FUNC_ALARMHANDLER_GETNAME
-#endif
-#endif
 
 #define USE_FUNC_TK_REF_VER
 #define USE_FUNC_TK_REF_SYS
 #define USE_FUNC_LOWPOW_DISCNT
 
-#if CFN_MAX_SSYID > 0
 #define USE_FUNC_TK_DEF_SSY
 #define USE_FUNC_TK_REF_SSY
 #define USE_FUNC_SUBSYSTEM_INITIALIZE
 #define USE_FUNC_SSYCB_TABLE
 #define USE_FUNC_SVC_IENTRY
-#if USE_DBGSPT
 #define USE_FUNC_TD_LST_SSY
 #define USE_FUNC_TD_REF_SSY
-#endif
-#endif
 
-#if CFN_MAX_REGDEV > 0
 #define USE_FUNC_TK_OPN_DEV
 #define USE_FUNC_TK_CLS_DEV
 #define USE_FUNC_TK_REA_DEV
@@ -17728,9 +15888,7 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_DEVMGRLOCK
 #define USE_FUNC_DEFAULTIDEV
 #define USE_FUNC_PHYDEVNM
-#endif
 
-#if USE_DBGSPT
 /* Refer each object usage state */
 #define USE_FUNC_TD_LST_TSK
 #define USE_FUNC_TD_REF_TSK
@@ -17748,21 +15906,18 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_TD_RDY_QUE
 
 /* Execution trace */
-#if USE_HOOK_TRACE
 #define USE_FUNC_TD_HOK_SVC
 #define USE_FUNC_TD_HOK_DSP
 #define USE_FUNC_TD_HOK_INT
 #define USE_FUNC_HOOK_ENTERFN
 #define USE_FUNC_HOOK_EXECFN
 #define USE_FUNC_HOOK_IENTERFN
-#endif
 
 /* Object name */
 #define USE_FUNC_OBJECT_GETNAME
 #define USE_FUNC_TD_REF_DSNAME
 #define USE_FUNC_TD_SET_DSNAME
 
-#endif /* USE_DBGSPT */
 
 /*
  * Other functions
@@ -17816,34 +15971,27 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #define USE_FUNC_REMOVEFREEQUE
 #define USE_FUNC_INSERTAREAQUE
 #define USE_FUNC_REMOVEAREAQUE
-#if USE_IMALLOC
 #define USE_FUNC_IMACB
 #define USE_FUNC_IMALLOC
 #define USE_FUNC_ICALLOC
 #define USE_FUNC_IFREE
 #define USE_FUNC_INIT_IMALLOC
-#endif /* USE_IMALLOC */
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
 
-#ifdef USE_FUNC_WAIT_RELEASE_OK
 EXPORT void knl_wait_release_ok( TCB *tcb )
 {
     knl_wait_release(tcb);
     *tcb->wercd = E_OK;
 }
-#endif /* USE_FUNC_WAIT_RELEASE_OK */
 
-#ifdef USE_FUNC_WAIT_RELEASE_OK_ERCD
 EXPORT void knl_wait_release_ok_ercd( TCB *tcb, ER ercd )
 {
     knl_wait_release(tcb);
     *tcb->wercd = ercd;
 }
-#endif /* USE_FUNC_WAIT_RELEASE_OK_ERCD */
 
-#ifdef USE_FUNC_WAIT_RELEASE_NG
 EXPORT void knl_wait_release_ng( TCB *tcb, ER ercd )
 {
     knl_wait_release(tcb);
@@ -17852,9 +16000,7 @@ EXPORT void knl_wait_release_ng( TCB *tcb, ER ercd )
     }
     *tcb->wercd = ercd;
 }
-#endif /* USE_FUNC_WAIT_RELEASE_NG */
 
-#ifdef USE_FUNC_WAIT_RELEASE_TMOUT
 EXPORT void knl_wait_release_tmout( TCB *tcb )
 {
     QueRemove(&tcb->tskque);
@@ -17863,9 +16009,7 @@ EXPORT void knl_wait_release_tmout( TCB *tcb )
         (*tcb->wspec->rel_wai_hook)(tcb);
     }
 }
-#endif /* USE_FUNC_WAIT_RELEASE_TMOUT */
 
-#ifdef USE_FUNC_MAKE_WAIT
 /*
  * Change the active task state to wait state and connect to the
  * timer event queue.
@@ -17892,9 +16036,7 @@ EXPORT void knl_make_wait( TMO tmout, ATR atr )
     }
     knl_timer_insert(&knl_ctxtsk->wtmeb, tmout, (CBACK)knl_wait_release_tmout, knl_ctxtsk);
 }
-#endif /* USE_FUNC_MAKE_WAIT */
 
-#ifdef USE_FUNC_MAKE_WAIT_RELTIM
 EXPORT void knl_make_wait_reltim( RELTIM tmout, ATR atr )
 {
     switch ( knl_ctxtsk->state ) {
@@ -17908,9 +16050,7 @@ EXPORT void knl_make_wait_reltim( RELTIM tmout, ATR atr )
     }
     knl_timer_insert_reltim(&knl_ctxtsk->wtmeb, tmout, (CBACK)knl_wait_release_tmout, knl_ctxtsk);
 }
-#endif /* USE_FUNC_MAKE_WAIT_RELTIM */
 
-#ifdef USE_FUNC_WAIT_DELETE
 /*
  * Release all tasks connected to the wait queue, and define it
  * as E_DLT error.
@@ -17925,9 +16065,7 @@ EXPORT void knl_wait_delete( QUEUE *wait_queue )
         *tcb->wercd = E_DLT;
     }
 }
-#endif /* USE_FUNC_WAIT_DELETE */
 
-#ifdef USE_FUNC_WAIT_TSKID
 /*
  * Get ID of the head task in the wait queue.
  */
@@ -17939,9 +16077,7 @@ EXPORT ID knl_wait_tskid( QUEUE *wait_queue )
 
     return ((TCB*)wait_queue->next)->tskid;
 }
-#endif /* USE_FUNC_WAIT_TSKID */
 
-#ifdef USE_FUNC_GCB_MAKE_WAIT
 /*
  * Change the active task state to wait state and connect to the timer wait 
  * queue and the object wait queue. Also set 'wid' in 'knl_ctxtsk'.
@@ -17959,9 +16095,7 @@ EXPORT void knl_gcb_make_wait( GCB *gcb, TMO tmout )
         }
     }
 }
-#endif /* USE_FUNC_GCB_MAKE_WAIT */
 
-#ifdef USE_FUNC_GCB_CHANGE_PRIORITY
 /*
  * When the task priority changes, adjust the task position at the wait queue.
  * It is called only if the object attribute TA_TPRI is specified.
@@ -17972,9 +16106,7 @@ EXPORT void knl_gcb_change_priority( GCB *gcb, TCB *tcb )
     QueRemove(&tcb->tskque);
     knl_queue_insert_tpri(tcb, &gcb->wait_queue);
 }
-#endif /* USE_FUNC_GCB_CHANGE_PRIORITY */
 
-#ifdef USE_FUNC_GCB_TOP_OF_WAIT_QUEUE
 /*
  * Search the first task of wait queue include "tcb" with target.
  * (Not insert "tcb" into wait queue.)
@@ -17995,7 +16127,6 @@ EXPORT TCB* knl_gcb_top_of_wait_queue( GCB *gcb, TCB *tcb )
 
     return ( tcb->priority < q->priority )? tcb: q;
 }
-#endif /* USE_FUNC_GCB_TOP_OF_WAIT_QUEUE */
 
 
 /*
@@ -18221,30 +16352,16 @@ typedef struct {
  * Definition of wait information in task control block
  */
 typedef union {
-#if CFN_MAX_SEMID > 0
     WINFO_SEM   sem;
-#endif
-#if CFN_MAX_FLGID > 0
     WINFO_FLG   flg;
-#endif
-#if CFN_MAX_MBXID > 0
     WINFO_MBX   mbx;
-#endif
-#if CFN_MAX_MBFID > 0
     WINFO_RMBF  rmbf;
     WINFO_SMBF  smbf;
-#endif
-#if CFN_MAX_PORID > 0
     WINFO_CAL   cal;
     WINFO_ACP   acp;
     WINFO_RDV   rdv;
-#endif
-#if CFN_MAX_MPLID > 0
     WINFO_MPL   mpl;
-#endif
-#if CFN_MAX_MPFID > 0
     WINFO_MPF   mpf;
-#endif
 } WINFO;
 
 /*
