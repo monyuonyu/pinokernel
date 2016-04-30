@@ -490,7 +490,6 @@
 #define _td_hok_svc_impl    _knl_no_support
 #define _td_hok_dsp_impl    _knl_no_support
 #define _td_hok_int_impl    _knl_no_support
-#define SYSCALL     EXPORT
 #define NULL        0
 #define USE_FUNC_MEMSET
 #define USE_FUNC_MEMCMP
@@ -3230,7 +3229,7 @@ void init_clock_control(void)
 /*
  * Dispatch enable/disable
  */
-SYSCALL ER tk_dis_dsp_impl( void )
+ER tk_dis_dsp_impl( void )
 {
     CHECK_CTX(!in_loc());
 
@@ -3242,7 +3241,7 @@ SYSCALL ER tk_dis_dsp_impl( void )
 /*
  * Dispatch enable
  */
-SYSCALL ER tk_ena_dsp_impl( void )
+ER tk_ena_dsp_impl( void )
 {
     CHECK_CTX(!in_loc());
 
@@ -3271,7 +3270,7 @@ extern void knl_inthdr_startup();
 /*
  * Interrupt handler definition
  */
-SYSCALL ER tk_def_int_impl( UINT intno, const T_DINT *pk_dint )
+ER tk_def_int_impl( UINT intno, const T_DINT *pk_dint )
 {
     FP  inthdr;
 
@@ -3351,7 +3350,7 @@ void knl_set_reg( TCB *tcb, const T_REGS *regs, const T_EIT *eit, const T_CREGS 
 /*
  * Set task register contents
  */
-SYSCALL ER tk_set_reg_impl( ID tskid,
+ER tk_set_reg_impl( ID tskid,
         const T_REGS *pk_regs, const T_EIT *pk_eit, const T_CREGS *pk_cregs )
 {
     TCB     *tcb;
@@ -3413,7 +3412,7 @@ void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 /*
  * Get task register contents
  */
-SYSCALL ER tk_get_reg_impl( ID tskid, T_REGS *pk_regs, T_EIT *pk_eit, T_CREGS *pk_cregs )
+ER tk_get_reg_impl( ID tskid, T_REGS *pk_regs, T_EIT *pk_eit, T_CREGS *pk_cregs )
 {
     TCB     *tcb;
     ER      ercd = E_OK;
@@ -3443,7 +3442,7 @@ SYSCALL ER tk_get_reg_impl( ID tskid, T_REGS *pk_regs, T_EIT *pk_eit, T_CREGS *p
 /*
  * Set task register
  */
-SYSCALL ER td_set_reg_impl( ID tskid, const T_REGS *regs, const T_EIT *eit, const T_CREGS *cregs )
+ER td_set_reg_impl( ID tskid, const T_REGS *regs, const T_EIT *eit, const T_CREGS *cregs )
 {
     TCB *tcb;
     ER  ercd = E_OK;
@@ -3469,7 +3468,7 @@ SYSCALL ER td_set_reg_impl( ID tskid, const T_REGS *regs, const T_EIT *eit, cons
 /*
  * Get task register
  */
-SYSCALL ER td_get_reg_impl( ID tskid, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
+ER td_get_reg_impl( ID tskid, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 {
     TCB *tcb;
     ER  ercd = E_OK;
@@ -3882,7 +3881,7 @@ static void delDevCB( DevCB *devcb )
 /*
  * Device registration
  */
-SYSCALL ID tk_def_dev_impl P3( const UB *devnm, const T_DDEV *pk_ddev, T_IDEV *pk_idev )
+ID tk_def_dev_impl P3( const UB *devnm, const T_DDEV *pk_ddev, T_IDEV *pk_idev )
 {
     DevCB   *devcb;
     INT len;
@@ -3977,7 +3976,7 @@ err_ret1:
 /*
  * Check device initial information
  */
-SYSCALL ER tk_ref_idv_impl( T_IDEV *pk_idev )
+ER tk_ref_idv_impl( T_IDEV *pk_idev )
 {
     LockDM();
     *pk_idev = knl_DefaultIDev;
@@ -4048,7 +4047,7 @@ static void logdevnm( UB *ldevnm, UB *pdevnm, INT unitno )
 /*
  * Get device name
  */
-SYSCALL ID tk_get_dev_impl( ID devid, UB *devnm )
+ID tk_get_dev_impl( ID devid, UB *devnm )
 {
     DevCB   *devcb;
     ER  ercd;
@@ -4082,7 +4081,7 @@ err_ret1:
 /*
  * Get device information
  */
-SYSCALL ID tk_ref_dev_impl( const UB *devnm, T_RDEV *pk_rdev )
+ID tk_ref_dev_impl( const UB *devnm, T_RDEV *pk_rdev )
 {
     UB  pdevnm[L_DEVNM + 1];
     DevCB   *devcb;
@@ -4119,7 +4118,7 @@ err_ret2:
 /*
  * Get device information
  */
-SYSCALL ID tk_oref_dev_impl( ID dd, T_RDEV *pk_rdev )
+ID tk_oref_dev_impl( ID dd, T_RDEV *pk_rdev )
 {
     OpnCB   *opncb;
     DevCB   *devcb;
@@ -4156,7 +4155,7 @@ err_ret2:
 /*
  * Get registration device list
  */
-SYSCALL INT tk_lst_dev_impl( T_LDEV *pk_ldev, INT start, INT ndev )
+INT tk_lst_dev_impl( T_LDEV *pk_ldev, INT start, INT ndev )
 {
     DevCB   *devcb;
     QUEUE   *q;
@@ -4202,7 +4201,7 @@ err_ret:
 /*
  * Send driver request event
  */
-SYSCALL INT tk_evt_dev_impl( ID devid, INT evttyp, void *evtinf )
+INT tk_evt_dev_impl( ID devid, INT evttyp, void *evtinf )
 {
     DevCB   *devcb;
     EVTFN   eventfn;
@@ -4657,7 +4656,7 @@ static ER chkopenmode( DevCB *devcb, INT unitno, UINT omode )
 /*
  * Device open
  */
-SYSCALL ID tk_opn_dev_impl( const UB *devnm, UINT omode )
+ID tk_opn_dev_impl( const UB *devnm, UINT omode )
 {
     OPNFN   openfn;
     void    *exinf;
@@ -4922,7 +4921,7 @@ ER knl_close_device( OpnCB *opncb, UINT option )
 /*
  * Device close
  */
-SYSCALL ER tk_cls_dev_impl( ID dd, UINT option )
+ER tk_cls_dev_impl( ID dd, UINT option )
 {
     OpnCB   *opncb;
     ER  ercd;
@@ -5067,7 +5066,7 @@ err_ret1:
 /*
  * Start reading from device
  */
-SYSCALL ID tk_rea_dev_impl( ID dd, W start, void *buf, SZ size, TMO tmout )
+ID tk_rea_dev_impl( ID dd, W start, void *buf, SZ size, TMO tmout )
 {
     ER  ercd;
 
@@ -5082,7 +5081,7 @@ SYSCALL ID tk_rea_dev_impl( ID dd, W start, void *buf, SZ size, TMO tmout )
 /*
  * Synchronous reading from device
  */
-SYSCALL ER tk_srea_dev_impl( ID dd, W start, void *buf, SZ size, SZ *asize )
+ER tk_srea_dev_impl( ID dd, W start, void *buf, SZ size, SZ *asize )
 {
     ER  ercd, ioercd;
 
@@ -5106,7 +5105,7 @@ err_ret:
 /*
  * Start writing to device
  */
-SYSCALL ID tk_wri_dev_impl( ID dd, W start, const void *buf, SZ size, TMO tmout )
+ID tk_wri_dev_impl( ID dd, W start, const void *buf, SZ size, TMO tmout )
 {
     ER  ercd;
 
@@ -5121,7 +5120,7 @@ SYSCALL ID tk_wri_dev_impl( ID dd, W start, const void *buf, SZ size, TMO tmout 
 /*
  * Synchronous writing to device
  */
-SYSCALL ER tk_swri_dev_impl( ID dd, W start, const void *buf, SZ size, SZ *asize )
+ER tk_swri_dev_impl( ID dd, W start, const void *buf, SZ size, SZ *asize )
 {
     ER  ercd, ioercd;
 
@@ -5163,7 +5162,7 @@ static ReqCB* knl_check_reqid( ID reqid, OpnCB *opncb )
 /*
  * Request completion wait
  */
-SYSCALL ID tk_wai_dev_impl( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout )
+ID tk_wai_dev_impl( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout )
 {
     WAIFN   waitfn;
     void    *exinf;
@@ -5403,7 +5402,7 @@ static ER do_suspend( void )
 /*
  * Suspend processing
  */
-SYSCALL INT tk_sus_dev_impl( UINT mode )
+INT tk_sus_dev_impl( UINT mode )
 {
     ResCB   *rescb;
     BOOL    suspend = FALSE;
@@ -5680,7 +5679,7 @@ ER knl_eventflag_initialize( void )
 /*
  * Create event flag
  */
-SYSCALL ID tk_cre_flg_impl( const T_CFLG *pk_cflg )
+ID tk_cre_flg_impl( const T_CFLG *pk_cflg )
 {
 
     FLGCB   *flgcb;
@@ -5717,7 +5716,7 @@ SYSCALL ID tk_cre_flg_impl( const T_CFLG *pk_cflg )
 /*
  * Delete event flag
  */
-SYSCALL ER tk_del_flg_impl( ID flgid )
+ER tk_del_flg_impl( ID flgid )
 {
     FLGCB   *flgcb;
     ER  ercd = E_OK;
@@ -5745,7 +5744,7 @@ SYSCALL ER tk_del_flg_impl( ID flgid )
 /*
  * Event flag set
  */
-SYSCALL ER tk_set_flg_impl( ID flgid, UINT setptn )
+ER tk_set_flg_impl( ID flgid, UINT setptn )
 {
     FLGCB   *flgcb;
     TCB *tcb;
@@ -5803,7 +5802,7 @@ SYSCALL ER tk_set_flg_impl( ID flgid, UINT setptn )
 /*
  * Clear event flag 
  */
-SYSCALL ER tk_clr_flg_impl( ID flgid, UINT clrptn )
+ER tk_clr_flg_impl( ID flgid, UINT clrptn )
 {
     FLGCB   *flgcb;
     ER  ercd = E_OK;
@@ -5843,7 +5842,7 @@ static const WSPEC knl_wspec_flg_tpri  = { TTW_FLG, flg_chg_pri, NULL };
 /*
  * Event flag wait
  */
-SYSCALL ER tk_wai_flg_impl( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, TMO tmout )
+ER tk_wai_flg_impl( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, TMO tmout )
 {
     FLGCB   *flgcb;
     ER  ercd = E_OK;
@@ -5898,7 +5897,7 @@ SYSCALL ER tk_wai_flg_impl( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, 
 /*
  * Check event flag state
  */
-SYSCALL ER tk_ref_flg_impl( ID flgid, T_RFLG *pk_rflg )
+ER tk_ref_flg_impl( ID flgid, T_RFLG *pk_rflg )
 {
     FLGCB   *flgcb;
     ER  ercd = E_OK;
@@ -5956,7 +5955,7 @@ ER knl_eventflag_getname(ID id, UB **name)
 /*
  * Refer event flag usage state
  */
-SYSCALL INT td_lst_flg_impl( ID list[], INT nent )
+INT td_lst_flg_impl( ID list[], INT nent )
 {
     FLGCB   *flgcb, *end;
     INT n = 0;
@@ -5980,7 +5979,7 @@ SYSCALL INT td_lst_flg_impl( ID list[], INT nent )
 /*
  * Refer event flag state
  */
-SYSCALL ER td_ref_flg_impl( ID flgid, TD_RFLG *pk_rflg )
+ER td_ref_flg_impl( ID flgid, TD_RFLG *pk_rflg )
 {
     FLGCB   *flgcb;
     ER  ercd = E_OK;
@@ -6005,7 +6004,7 @@ SYSCALL ER td_ref_flg_impl( ID flgid, TD_RFLG *pk_rflg )
 /*
  * Refer event flag wait queue
  */
-SYSCALL INT td_flg_que_impl( ID flgid, ID list[], INT nent )
+INT td_flg_que_impl( ID flgid, ID list[], INT nent )
 {
     FLGCB   *flgcb;
     QUEUE   *q;
@@ -6877,7 +6876,7 @@ ER knl_mailbox_initialize( void )
 /*
  * Create mailbox
  */
-SYSCALL ID tk_cre_mbx_impl( const T_CMBX *pk_cmbx )
+ID tk_cre_mbx_impl( const T_CMBX *pk_cmbx )
 {
 
     MBXCB   *mbxcb;
@@ -6914,7 +6913,7 @@ SYSCALL ID tk_cre_mbx_impl( const T_CMBX *pk_cmbx )
 /*
  * Delete mailbox
  */
-SYSCALL ER tk_del_mbx_impl( ID mbxid )
+ER tk_del_mbx_impl( ID mbxid )
 {
     MBXCB   *mbxcb;
     ER  ercd = E_OK;
@@ -6942,7 +6941,7 @@ SYSCALL ER tk_del_mbx_impl( ID mbxid )
 /*
  * Send to mailbox
  */
-SYSCALL ER tk_snd_mbx_impl( ID mbxid, T_MSG *pk_msg )
+ER tk_snd_mbx_impl( ID mbxid, T_MSG *pk_msg )
 {
     MBXCB   *mbxcb;
     TCB *tcb;
@@ -7012,7 +7011,7 @@ static void mbx_chg_pri( TCB *tcb, INT oldpri )
 /*
  * Receive from mailbox
  */
-SYSCALL ER tk_rcv_mbx_impl( ID mbxid, T_MSG **ppk_msg, TMO tmout )
+ER tk_rcv_mbx_impl( ID mbxid, T_MSG **ppk_msg, TMO tmout )
 {
     MBXCB   *mbxcb;
     ER  ercd = E_OK;
@@ -7051,7 +7050,7 @@ SYSCALL ER tk_rcv_mbx_impl( ID mbxid, T_MSG **ppk_msg, TMO tmout )
 /*
  * Refer mailbox state 
  */
-SYSCALL ER tk_ref_mbx_impl( ID mbxid, T_RMBX *pk_rmbx )
+ER tk_ref_mbx_impl( ID mbxid, T_RMBX *pk_rmbx )
 {
     MBXCB   *mbxcb;
     ER  ercd = E_OK;
@@ -7109,7 +7108,7 @@ ER knl_mailbox_getname(ID id, UB **name)
 /*
  * Refer mailbox usage state
  */
-SYSCALL INT td_lst_mbx_impl( ID list[], INT nent )
+INT td_lst_mbx_impl( ID list[], INT nent )
 {
     MBXCB   *mbxcb, *end;
     INT n = 0;
@@ -7133,7 +7132,7 @@ SYSCALL INT td_lst_mbx_impl( ID list[], INT nent )
 /*
  * Refer mailbox state
  */
-SYSCALL ER td_ref_mbx_impl( ID mbxid, TD_RMBX *pk_rmbx )
+ER td_ref_mbx_impl( ID mbxid, TD_RMBX *pk_rmbx )
 {
     MBXCB   *mbxcb;
     ER  ercd = E_OK;
@@ -7158,7 +7157,7 @@ SYSCALL ER td_ref_mbx_impl( ID mbxid, TD_RMBX *pk_rmbx )
 /*
  * Refer mailbox wait queue
  */
-SYSCALL INT td_mbx_que_impl( ID mbxid, ID list[], INT nent )
+INT td_mbx_que_impl( ID mbxid, ID list[], INT nent )
 {
     MBXCB   *mbxcb;
     QUEUE   *q;
@@ -7595,7 +7594,7 @@ ER knl_fix_memorypool_initialize( void )
 /*
  * Create fixed size memory pool
  */
-SYSCALL ID tk_cre_mpf_impl( const T_CMPF *pk_cmpf )
+ID tk_cre_mpf_impl( const T_CMPF *pk_cmpf )
 {
 
     MPFCB   *mpfcb;
@@ -7671,7 +7670,7 @@ SYSCALL ID tk_cre_mpf_impl( const T_CMPF *pk_cmpf )
 /*
  * Delete fixed size memory pool 
  */
-SYSCALL ER tk_del_mpf_impl( ID mpfid )
+ER tk_del_mpf_impl( ID mpfid )
 {
     MPFCB   *mpfcb;
     void    *mempool = NULL;
@@ -7726,7 +7725,7 @@ static void knl_mpf_chg_pri( TCB *tcb, INT oldpri )
 /*
  * Get fixed size memory block 
  */
-SYSCALL ER tk_get_mpf_impl( ID mpfid, void **p_blf, TMO tmout )
+ER tk_get_mpf_impl( ID mpfid, void **p_blf, TMO tmout )
 {
     MPFCB   *mpfcb;
     FREEL   *free;
@@ -7783,7 +7782,7 @@ wait_mpf:
 /*
  * Return fixed size memory block 
  */
-SYSCALL ER tk_rel_mpf_impl( ID mpfid, void *blf )
+ER tk_rel_mpf_impl( ID mpfid, void *blf )
 {
     MPFCB   *mpfcb;
     TCB *tcb;
@@ -7831,7 +7830,7 @@ error_exit:
 /*
  * Check fixed size pool state
  */
-SYSCALL ER tk_ref_mpf_impl( ID mpfid, T_RMPF *pk_rmpf )
+ER tk_ref_mpf_impl( ID mpfid, T_RMPF *pk_rmpf )
 {
     MPFCB   *mpfcb;
     ER  ercd = E_OK;
@@ -7892,7 +7891,7 @@ ER knl_fix_memorypool_getname(ID id, UB **name)
 /*
  * Refer fixed size memory pool usage state
  */
-SYSCALL INT td_lst_mpf_impl( ID list[], INT nent )
+INT td_lst_mpf_impl( ID list[], INT nent )
 {
     MPFCB   *mpfcb, *end;
     INT n = 0;
@@ -7916,7 +7915,7 @@ SYSCALL INT td_lst_mpf_impl( ID list[], INT nent )
 /*
  * Refer fixed size memory pool state 
  */
-SYSCALL ER td_ref_mpf_impl( ID mpfid, TD_RMPF *pk_rmpf )
+ER td_ref_mpf_impl( ID mpfid, TD_RMPF *pk_rmpf )
 {
     MPFCB   *mpfcb;
     ER  ercd = E_OK;
@@ -7943,7 +7942,7 @@ SYSCALL ER td_ref_mpf_impl( ID mpfid, TD_RMPF *pk_rmpf )
 /*
  * Refer fixed size memory wait queue 
  */
-SYSCALL INT td_mpf_que_impl( ID mpfid, ID list[], INT nent )
+INT td_mpf_que_impl( ID mpfid, ID list[], INT nent )
 {
     MPFCB   *mpfcb;
     QUEUE   *q;
@@ -8203,7 +8202,7 @@ static void init_mempool( MPLCB *mplcb )
 /*
  * Create variable size memory pool 
  */
-SYSCALL ID tk_cre_mpl_impl( const T_CMPL *pk_cmpl )
+ID tk_cre_mpl_impl( const T_CMPL *pk_cmpl )
 {
 
     MPLCB   *mplcb;
@@ -8280,7 +8279,7 @@ SYSCALL ID tk_cre_mpl_impl( const T_CMPL *pk_cmpl )
 /*
  * Delete variable size memory pool 
  */
-SYSCALL ER tk_del_mpl_impl( ID mplid )
+ER tk_del_mpl_impl( ID mplid )
 {
     MPLCB   *mplcb;
     void    *mempool = NULL;
@@ -8349,7 +8348,7 @@ static void mpl_rel_wai( TCB *tcb )
 /*
  * Get variable size memory block 
  */
-SYSCALL ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout )
+ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout )
 {
     MPLCB   *mplcb;
     void    *blk = NULL;
@@ -8397,7 +8396,7 @@ SYSCALL ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout )
 /*
  * Return variable size memory block 
  */
-SYSCALL ER tk_rel_mpl_impl( ID mplid, void *blk )
+ER tk_rel_mpl_impl( ID mplid, void *blk )
 {
     MPLCB   *mplcb;
     ER  ercd = E_OK;
@@ -8435,7 +8434,7 @@ SYSCALL ER tk_rel_mpl_impl( ID mplid, void *blk )
 /*
  * Refer variable size memory pool state
  */
-SYSCALL ER tk_ref_mpl_impl( ID mplid, T_RMPL *pk_rmpl )
+ER tk_ref_mpl_impl( ID mplid, T_RMPL *pk_rmpl )
 {
     MPLCB   *mplcb;
     QUEUE   *fq, *q;
@@ -8505,7 +8504,7 @@ ER knl_memorypool_getname(ID id, UB **name)
 /*
  * Refer variable size memory pool usage state
  */
-SYSCALL INT td_lst_mpl_impl( ID list[], INT nent )
+INT td_lst_mpl_impl( ID list[], INT nent )
 {
     MPLCB   *mplcb, *end;
     INT n = 0;
@@ -8529,7 +8528,7 @@ SYSCALL INT td_lst_mpl_impl( ID list[], INT nent )
 /*
  * Refer variable size memory pool state
  */
-SYSCALL ER td_ref_mpl_impl( ID mplid, TD_RMPL *pk_rmpl )
+ER td_ref_mpl_impl( ID mplid, TD_RMPL *pk_rmpl )
 {
     MPLCB   *mplcb;
     QUEUE   *fq, *q;
@@ -8565,7 +8564,7 @@ SYSCALL ER td_ref_mpl_impl( ID mplid, TD_RMPL *pk_rmpl )
 /*
  * Refer variable size memory pool wait queue 
  */
-SYSCALL INT td_mpl_que_impl( ID mplid, ID list[], INT nent )
+INT td_mpl_que_impl( ID mplid, ID list[], INT nent )
 {
     MPLCB   *mplcb;
     QUEUE   *q;
@@ -8713,7 +8712,7 @@ void knl_mbf_wakeup( MBFCB *mbfcb )
 /*
  * Create message buffer
  */
-SYSCALL ID tk_cre_mbf_impl( const T_CMBF *pk_cmbf )
+ID tk_cre_mbf_impl( const T_CMBF *pk_cmbf )
 {
 
     MBFCB   *mbfcb;
@@ -8790,7 +8789,7 @@ SYSCALL ID tk_cre_mbf_impl( const T_CMBF *pk_cmbf )
 /*
  * Delete message buffer
  */
-SYSCALL ER tk_del_mbf_impl( ID mbfid )
+ER tk_del_mbf_impl( ID mbfid )
 {
     MBFCB   *mbfcb;
     VB  *msgbuf = NULL;
@@ -8856,7 +8855,7 @@ static void knl_mbf_rel_wai( TCB *tcb )
 /*
  * Send to message buffer
  */
-SYSCALL ER tk_snd_mbf_impl( ID mbfid, const void *msg, INT msgsz, TMO tmout )
+ER tk_snd_mbf_impl( ID mbfid, const void *msg, INT msgsz, TMO tmout )
 {
     MBFCB   *mbfcb;
     TCB *tcb;
@@ -8951,7 +8950,7 @@ static INT knl_mbf_to_msg( MBFCB *mbfcb, void *msg )
 /*
  * Receive from message buffer
  */
-SYSCALL INT tk_rcv_mbf_impl( ID mbfid, void *msg, TMO tmout )
+INT tk_rcv_mbf_impl( ID mbfid, void *msg, TMO tmout )
 {
     MBFCB   *mbfcb;
     TCB *tcb;
@@ -9007,7 +9006,7 @@ SYSCALL INT tk_rcv_mbf_impl( ID mbfid, void *msg, TMO tmout )
 /*
  * Refer message buffer state
  */
-SYSCALL ER tk_ref_mbf_impl( ID mbfid, T_RMBF *pk_rmbf )
+ER tk_ref_mbf_impl( ID mbfid, T_RMBF *pk_rmbf )
 {
     MBFCB   *mbfcb;
     TCB *tcb;
@@ -9078,7 +9077,7 @@ ER knl_messagebuffer_getname(ID id, UB **name)
 /*
  * Refer message buffer usage state
  */
-SYSCALL INT td_lst_mbf_impl( ID list[], INT nent )
+INT td_lst_mbf_impl( ID list[], INT nent )
 {
     MBFCB   *mbfcb, *end;
     INT n = 0;
@@ -9102,7 +9101,7 @@ SYSCALL INT td_lst_mbf_impl( ID list[], INT nent )
 /*
  * Refer message buffer state
  */
-SYSCALL ER td_ref_mbf_impl( ID mbfid, TD_RMBF *pk_rmbf )
+ER td_ref_mbf_impl( ID mbfid, TD_RMBF *pk_rmbf )
 {
     MBFCB   *mbfcb;
     TCB *tcb;
@@ -9140,7 +9139,7 @@ SYSCALL ER td_ref_mbf_impl( ID mbfid, TD_RMBF *pk_rmbf )
 /*
  * Refer message buffer send wait queue
  */
-SYSCALL INT td_smbf_que_impl( ID mbfid, ID list[], INT nent )
+INT td_smbf_que_impl( ID mbfid, ID list[], INT nent )
 {
     MBFCB   *mbfcb;
     QUEUE   *q;
@@ -9170,7 +9169,7 @@ SYSCALL INT td_smbf_que_impl( ID mbfid, ID list[], INT nent )
 /*
  * Refer message buffer receive wait queue
  */
-SYSCALL INT td_rmbf_que_impl( ID mbfid, ID list[], INT nent )
+INT td_rmbf_que_impl( ID mbfid, ID list[], INT nent )
 {
     MBFCB   *mbfcb;
     QUEUE   *q;
@@ -9241,7 +9240,7 @@ extern void knl_mbf_wakeup( MBFCB *mbfcb );
 /*
  * Refer system state
  */
-SYSCALL ER tk_ref_sys_impl( T_RSYS *pk_rsys )
+ER tk_ref_sys_impl( T_RSYS *pk_rsys )
 {
     if ( in_indp() ) {
         pk_rsys->sysstat = TSS_INDP;
@@ -9269,7 +9268,7 @@ SYSCALL ER tk_ref_sys_impl( T_RSYS *pk_rsys )
  *  If there is no kernel version information,
  *  set 0 in each information. (Do NOT cause errors.)
  */
-SYSCALL ER tk_ref_ver_impl( T_RVER *pk_rver )
+ER tk_ref_ver_impl( T_RVER *pk_rver )
 {
     pk_rver->maker = (UH)CFN_VER_MAKER; /* OS manufacturer */
     pk_rver->prid  = (UH)CFN_VER_PRID;  /* OS identification number */
@@ -9312,7 +9311,7 @@ Noinit(void *knl_hook_int_gp);
 /*
  * Set/Cancel system call/extended SVC hook routine
  */
-SYSCALL ER td_hok_svc_impl P1( TD_HSVC *hsvc )
+ER td_hok_svc_impl P1( TD_HSVC *hsvc )
 {
     BEGIN_DISABLE_INTERRUPT;
     if ( hsvc == NULL ) { /* Cancel system call hook routine */
@@ -9333,7 +9332,7 @@ SYSCALL ER td_hok_svc_impl P1( TD_HSVC *hsvc )
 /*
  * Set/Cancel dispatcher hook routine
  */
-SYSCALL ER td_hok_dsp_impl P1( TD_HDSP *hdsp )
+ER td_hok_dsp_impl P1( TD_HDSP *hdsp )
 {
     BEGIN_DISABLE_INTERRUPT;
     if ( hdsp == NULL ) { /* Cancel dispatcher hook routine */
@@ -9354,7 +9353,7 @@ SYSCALL ER td_hok_dsp_impl P1( TD_HDSP *hdsp )
 /*
  * Set/Cancel EIT handler hook routine
  */
-SYSCALL ER td_hok_int_impl P1( TD_HINT *hint )
+ER td_hok_int_impl P1( TD_HINT *hint )
 {
     BEGIN_DISABLE_INTERRUPT;
     if ( hint == NULL ) { /* Cancel interrupt handler hook routine */
@@ -9376,7 +9375,7 @@ SYSCALL ER td_hok_int_impl P1( TD_HINT *hint )
 /*
  * Refer system state
  */
-SYSCALL ER td_ref_sys_impl( TD_RSYS *pk_rsys )
+ER td_ref_sys_impl( TD_RSYS *pk_rsys )
 {
     if ( in_indp() ) {
         pk_rsys->sysstat = TSS_INDP;
@@ -9616,7 +9615,7 @@ INT knl_chg_pri_mutex( TCB *tcb, INT priority )
 /*
  * Create mutex
  */
-SYSCALL ID tk_cre_mtx_impl( const T_CMTX *pk_cmtx )
+ID tk_cre_mtx_impl( const T_CMTX *pk_cmtx )
 {
 
     MTXCB   *mtxcb;
@@ -9663,7 +9662,7 @@ SYSCALL ID tk_cre_mtx_impl( const T_CMTX *pk_cmtx )
 /*
  * Delete mutex
  */
-SYSCALL ER tk_del_mtx_impl( ID mtxid )
+ER tk_del_mtx_impl( ID mtxid )
 {
     MTXCB   *mtxcb;
     ER  ercd = E_OK;
@@ -9749,7 +9748,7 @@ static void mtx_rel_wai( TCB *tcb )
 /*
  * Lock mutex
  */
-SYSCALL ER tk_loc_mtx_impl( ID mtxid, TMO tmout )
+ER tk_loc_mtx_impl( ID mtxid, TMO tmout )
 {
     MTXCB   *mtxcb;
     TCB *mtxtsk;
@@ -9833,7 +9832,7 @@ SYSCALL ER tk_loc_mtx_impl( ID mtxid, TMO tmout )
 /*
  * Unlock mutex
  */
-SYSCALL ER tk_unl_mtx_impl( ID mtxid )
+ER tk_unl_mtx_impl( ID mtxid )
 {
     MTXCB   *mtxcb; 
     TCB *tcb;
@@ -9891,7 +9890,7 @@ SYSCALL ER tk_unl_mtx_impl( ID mtxid )
 /*
  * Refer mutex state
  */
-SYSCALL ER tk_ref_mtx_impl( ID mtxid, T_RMTX *pk_rmtx )
+ER tk_ref_mtx_impl( ID mtxid, T_RMTX *pk_rmtx )
 {
     MTXCB   *mtxcb;
     ER  ercd = E_OK;
@@ -9950,7 +9949,7 @@ ER knl_mutex_getname(ID id, UB **name)
 /*
  * Refer mutex usage state
  */
-SYSCALL INT td_lst_mtx_impl( ID list[], INT nent )
+INT td_lst_mtx_impl( ID list[], INT nent )
 {
     MTXCB   *mtxcb, *end;
     INT n = 0;
@@ -9974,7 +9973,7 @@ SYSCALL INT td_lst_mtx_impl( ID list[], INT nent )
 /*
  * Refer mutex state
  */
-SYSCALL ER td_ref_mtx_impl( ID mtxid, TD_RMTX *pk_rmtx )
+ER td_ref_mtx_impl( ID mtxid, TD_RMTX *pk_rmtx )
 {
     MTXCB   *mtxcb;
     ER  ercd = E_OK;
@@ -10000,7 +9999,7 @@ SYSCALL ER td_ref_mtx_impl( ID mtxid, TD_RMTX *pk_rmtx )
 /*
  * Refer mutex wait queue
  */
-SYSCALL INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
+INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
 {
     MTXCB   *mtxcb;
     QUEUE   *q;
@@ -10145,7 +10144,7 @@ ER knl_object_getname( UINT objtype, ID objid, UB **name)
 
 extern ER knl_object_getname( UINT objtype, ID objid, UB **name);
 
-SYSCALL ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
+ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
 {
     UB  *name_cb;
     ER  ercd;
@@ -10161,7 +10160,7 @@ SYSCALL ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
 
 extern ER knl_object_getname( UINT objtype, ID objid, UB **name);
 
-SYSCALL ER td_set_dsname_impl( UINT type, ID id, const UB *dsname )
+ER td_set_dsname_impl( UINT type, ID id, const UB *dsname )
 {
     UB  *name_cb;
     ER  ercd;
@@ -10714,7 +10713,7 @@ static void cal_chg_pri( TCB *tcb, INT oldpri )
 /*
  * Create rendezvous port
  */
-SYSCALL ID tk_cre_por_impl( const T_CPOR *pk_cpor )
+ID tk_cre_por_impl( const T_CPOR *pk_cpor )
 {
 
     PORCB   *porcb;
@@ -10756,7 +10755,7 @@ SYSCALL ID tk_cre_por_impl( const T_CPOR *pk_cpor )
 /*
  * Delete rendezvous port
  */
-SYSCALL ER tk_del_por_impl( ID porid )
+ER tk_del_por_impl( ID porid )
 {
     PORCB   *porcb;
     ER  ercd = E_OK;
@@ -10786,7 +10785,7 @@ SYSCALL ER tk_del_por_impl( ID porid )
 /*
  * Call rendezvous
  */
-SYSCALL INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO tmout )
+INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO tmout )
 {
     PORCB   *porcb;
     TCB *tcb;
@@ -10867,7 +10866,7 @@ SYSCALL INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO t
 /*
  * Accept rendezvous
  */
-SYSCALL INT tk_acp_por_impl( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO tmout )
+INT tk_acp_por_impl( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO tmout )
 {
     PORCB   *porcb;
     TCB *tcb;
@@ -10944,7 +10943,7 @@ SYSCALL INT tk_acp_por_impl( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO
 /*
  * Forward Rendezvous to Other Port
  */
-SYSCALL ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, const void *msg, INT cmsgsz )
+ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, const void *msg, INT cmsgsz )
 {
     PORCB   *porcb;
     TCB *caltcb, *tcb;
@@ -11041,7 +11040,7 @@ SYSCALL ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, const void *msg, I
 /*
  * Reply rendezvous
  */
-SYSCALL ER tk_rpl_rdv_impl( RNO rdvno, const void *msg, INT rmsgsz )
+ER tk_rpl_rdv_impl( RNO rdvno, const void *msg, INT rmsgsz )
 {
     TCB *caltcb;
     ER  ercd = E_OK;
@@ -11080,7 +11079,7 @@ SYSCALL ER tk_rpl_rdv_impl( RNO rdvno, const void *msg, INT rmsgsz )
 /*
  * Refer rendezvous port
  */
-SYSCALL ER tk_ref_por_impl( ID porid, T_RPOR *pk_rpor )
+ER tk_ref_por_impl( ID porid, T_RPOR *pk_rpor )
 {
     PORCB   *porcb;
     ER  ercd = E_OK;
@@ -11140,7 +11139,7 @@ ER knl_rendezvous_getname(ID id, UB **name)
 /*
  * Refer rendezvous port usage state
  */
-SYSCALL INT td_lst_por_impl( ID list[], INT nent )
+INT td_lst_por_impl( ID list[], INT nent )
 {
     PORCB   *porcb, *end;
     INT n = 0;
@@ -11164,7 +11163,7 @@ SYSCALL INT td_lst_por_impl( ID list[], INT nent )
 /*
  * Refer rendezvous port
  */
-SYSCALL ER td_ref_por_impl( ID porid, TD_RPOR *pk_rpor )
+ER td_ref_por_impl( ID porid, TD_RPOR *pk_rpor )
 {
     PORCB   *porcb;
     ER  ercd = E_OK;
@@ -11191,7 +11190,7 @@ SYSCALL ER td_ref_por_impl( ID porid, TD_RPOR *pk_rpor )
 /*
  * Refer rendezvous call wait queue
  */
-SYSCALL INT td_cal_que_impl( ID porid, ID list[], INT nent )
+INT td_cal_que_impl( ID porid, ID list[], INT nent )
 {
     PORCB   *porcb;
     QUEUE   *q;
@@ -11221,7 +11220,7 @@ SYSCALL INT td_cal_que_impl( ID porid, ID list[], INT nent )
 /*
  * Refer rendezvous accept wait queue
  */
-SYSCALL INT td_acp_que_impl( ID porid, ID list[], INT nent )
+INT td_acp_que_impl( ID porid, ID list[], INT nent )
 {
     PORCB   *porcb;
     QUEUE   *q;
@@ -11331,7 +11330,7 @@ ER knl_semaphore_initialize( void )
 /*
  * Create semaphore
  */
-SYSCALL ID tk_cre_sem_impl( const T_CSEM *pk_csem )
+ID tk_cre_sem_impl( const T_CSEM *pk_csem )
 {
 
     SEMCB   *semcb;
@@ -11372,7 +11371,7 @@ SYSCALL ID tk_cre_sem_impl( const T_CSEM *pk_csem )
 /*
  * Delete semaphore
  */
-SYSCALL ER tk_del_sem_impl( ID semid )
+ER tk_del_sem_impl( ID semid )
 {
     SEMCB   *semcb;
     ER  ercd = E_OK;
@@ -11400,7 +11399,7 @@ SYSCALL ER tk_del_sem_impl( ID semid )
 /*
  * Signal semaphore
  */
-SYSCALL ER tk_sig_sem_impl( ID semid, INT cnt )
+ER tk_sig_sem_impl( ID semid, INT cnt )
 {
     SEMCB   *semcb;
     TCB *tcb;
@@ -11507,7 +11506,7 @@ static void sem_rel_wai( TCB *tcb )
 /*
  * Wait on semaphore
  */
-SYSCALL ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout )
+ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout )
 {
     SEMCB   *semcb;
     ER  ercd = E_OK;
@@ -11553,7 +11552,7 @@ SYSCALL ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout )
 /*
  * Refer semaphore state
  */
-SYSCALL ER tk_ref_sem_impl( ID semid, T_RSEM *pk_rsem )
+ER tk_ref_sem_impl( ID semid, T_RSEM *pk_rsem )
 {
     SEMCB   *semcb;
     ER  ercd = E_OK;
@@ -11611,7 +11610,7 @@ ER knl_semaphore_getname(ID id, UB **name)
 /*
  * Refer object usage state
  */
-SYSCALL INT td_lst_sem_impl( ID list[], INT nent )
+INT td_lst_sem_impl( ID list[], INT nent )
 {
     SEMCB   *semcb, *end;
     INT n = 0;
@@ -11635,7 +11634,7 @@ SYSCALL INT td_lst_sem_impl( ID list[], INT nent )
 /*
  * Refer object state
  */
-SYSCALL ER td_ref_sem_impl( ID semid, TD_RSEM *pk_rsem )
+ER td_ref_sem_impl( ID semid, TD_RSEM *pk_rsem )
 {
     SEMCB   *semcb;
     ER  ercd = E_OK;
@@ -11660,7 +11659,7 @@ SYSCALL ER td_ref_sem_impl( ID semid, TD_RSEM *pk_rsem )
 /*
  * Refer wait queue
  */
-SYSCALL INT td_sem_que_impl( ID semid, ID list[], INT nent )
+INT td_sem_que_impl( ID semid, ID list[], INT nent )
 {
     SEMCB   *semcb;
     QUEUE   *q;
@@ -11886,7 +11885,7 @@ ER knl_subsystem_initialize( void )
 /*
  * Definition of subsystem
  */
-SYSCALL ER tk_def_ssy_impl P2( ID ssid, const T_DSSY *pk_dssy )
+ER tk_def_ssy_impl P2( ID ssid, const T_DSSY *pk_dssy )
 {
     SSYCB   *ssycb;
     ER  ercd = E_OK;
@@ -11930,7 +11929,7 @@ SYSCALL ER tk_def_ssy_impl P2( ID ssid, const T_DSSY *pk_dssy )
 /*
  * Refer subsystem definition information
  */
-SYSCALL ER tk_ref_ssy_impl( ID ssid, T_RSSY *pk_rssy )
+ER tk_ref_ssy_impl( ID ssid, T_RSSY *pk_rssy )
 {
     SSYCB   *ssycb;
     ER  ercd = E_OK;
@@ -11952,7 +11951,7 @@ SYSCALL ER tk_ref_ssy_impl( ID ssid, T_RSSY *pk_rssy )
 /*
  * Refer subsystem usage state
  */
-SYSCALL INT td_lst_ssy_impl( ID list[], INT nent )
+INT td_lst_ssy_impl( ID list[], INT nent )
 {
     SSYCB   *ssycb, *end;
     INT n = 0;
@@ -11976,7 +11975,7 @@ SYSCALL INT td_lst_ssy_impl( ID list[], INT nent )
 /*
  * Refer subsystem definition information
  */
-SYSCALL ER td_ref_ssy_impl( ID ssid, TD_RSSY *pk_rssy )
+ER td_ref_ssy_impl( ID ssid, TD_RSSY *pk_rssy )
 {
     SSYCB   *ssycb;
     ER  ercd = E_OK;
@@ -12885,7 +12884,7 @@ void knl_rotate_ready_queue_run( void )
 /*
  * Refer ready queue
  */
-SYSCALL INT td_rdy_que_impl( PRI pri, ID list[], INT nent )
+INT td_rdy_que_impl( PRI pri, ID list[], INT nent )
 {
     QUEUE   *q, *tskque;
     INT n = 0;
@@ -13032,7 +13031,7 @@ extern void knl_ter_tsk( TCB *tcb );
 /*
  * Create task
  */
-SYSCALL ID tk_cre_tsk_impl P1( const T_CTSK *pk_ctsk )
+ID tk_cre_tsk_impl P1( const T_CTSK *pk_ctsk )
 {
 
     TCB *tcb;
@@ -13136,7 +13135,7 @@ void knl_del_tsk( TCB *tcb )
 /*
  * Delete task 
  */
-SYSCALL ER tk_del_tsk_impl( ID tskid )
+ER tk_del_tsk_impl( ID tskid )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13164,7 +13163,7 @@ SYSCALL ER tk_del_tsk_impl( ID tskid )
 /*
  * Start task
  */
-SYSCALL ER tk_sta_tsk_impl( ID tskid, INT stacd )
+ER tk_sta_tsk_impl( ID tskid, INT stacd )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13216,7 +13215,7 @@ void knl_ter_tsk( TCB *tcb )
 /*
  * End its own task
  */
-SYSCALL void tk_ext_tsk_impl( void )
+void tk_ext_tsk_impl( void )
 {
     /* To avoid destroying stack used in 'knl_make_dormant', 
        allocate the dummy area on the stack. */
@@ -13245,7 +13244,7 @@ SYSCALL void tk_ext_tsk_impl( void )
 /*
  * End and delete its own task
  */
-SYSCALL void tk_exd_tsk_impl( void )
+void tk_exd_tsk_impl( void )
 {
     /* Check context error */
     if ( in_indp() ) {
@@ -13267,7 +13266,7 @@ SYSCALL void tk_exd_tsk_impl( void )
 /*
  * Termination of other task
  */
-SYSCALL ER tk_ter_tsk_impl( ID tskid )
+ER tk_ter_tsk_impl( ID tskid )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13303,7 +13302,7 @@ SYSCALL ER tk_ter_tsk_impl( ID tskid )
 /*
  * Change task priority
  */
-SYSCALL ER tk_chg_pri_impl( ID tskid, PRI tskpri )
+ER tk_chg_pri_impl( ID tskid, PRI tskpri )
 {
     TCB *tcb;
     INT priority;
@@ -13350,7 +13349,7 @@ SYSCALL ER tk_chg_pri_impl( ID tskid, PRI tskpri )
 /*
  * Rotate ready queue
  */
-SYSCALL ER tk_rot_rdq_impl( PRI tskpri )
+ER tk_rot_rdq_impl( PRI tskpri )
 {
     CHECK_PRI_RUN(tskpri);
 
@@ -13374,7 +13373,7 @@ SYSCALL ER tk_rot_rdq_impl( PRI tskpri )
 /*
  * Refer task ID at execution
  */
-SYSCALL ID tk_get_tid_impl( void )
+ID tk_get_tid_impl( void )
 {
     return ( knl_ctxtsk == NULL )? 0: knl_ctxtsk->tskid;
 }
@@ -13382,7 +13381,7 @@ SYSCALL ID tk_get_tid_impl( void )
 /*
  * Refer task state
  */
-SYSCALL ER tk_ref_tsk_impl( ID tskid, T_RTSK *pk_rtsk )
+ER tk_ref_tsk_impl( ID tskid, T_RTSK *pk_rtsk )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13425,7 +13424,7 @@ SYSCALL ER tk_ref_tsk_impl( ID tskid, T_RTSK *pk_rtsk )
 /*
  * Release wait
  */
-SYSCALL ER tk_rel_wai_impl( ID tskid )
+ER tk_rel_wai_impl( ID tskid )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13483,7 +13482,7 @@ ER knl_task_getname(ID id, UB **name)
 /*
  * Refer task usage state
  */
-SYSCALL INT td_lst_tsk_impl( ID list[], INT nent )
+INT td_lst_tsk_impl( ID list[], INT nent )
 {
     TCB *tcb, *end;
     INT n = 0;
@@ -13507,7 +13506,7 @@ SYSCALL INT td_lst_tsk_impl( ID list[], INT nent )
 /*
  * Refer task state
  */
-SYSCALL ER td_ref_tsk_impl( ID tskid, TD_RTSK *pk_rtsk )
+ER td_ref_tsk_impl( ID tskid, TD_RTSK *pk_rtsk )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13551,7 +13550,7 @@ SYSCALL ER td_ref_tsk_impl( ID tskid, TD_RTSK *pk_rtsk )
 /*
  * Get task statistic information
  */
-SYSCALL ER td_inf_tsk_impl( ID tskid, TD_ITSK *pk_itsk, BOOL clr )
+ER td_inf_tsk_impl( ID tskid, TD_ITSK *pk_itsk, BOOL clr )
 {
     TCB *tcb;
     ER  ercd = E_OK;
@@ -13583,7 +13582,7 @@ SYSCALL ER td_inf_tsk_impl( ID tskid, TD_ITSK *pk_itsk, BOOL clr )
 /*
  * Suspend task
  */
-SYSCALL ER tk_sus_tsk_impl( ID tskid )
+ER tk_sus_tsk_impl( ID tskid )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13630,7 +13629,7 @@ SYSCALL ER tk_sus_tsk_impl( ID tskid )
 /*
  * Resume task
  */
-SYSCALL ER tk_rsm_tsk_impl( ID tskid )
+ER tk_rsm_tsk_impl( ID tskid )
 {
     TCB *tcb;
     ER  ercd = E_OK;
@@ -13675,7 +13674,7 @@ SYSCALL ER tk_rsm_tsk_impl( ID tskid )
 /*
  * Force resume task
  */
-SYSCALL ER tk_frsm_tsk_impl( ID tskid )
+ER tk_frsm_tsk_impl( ID tskid )
 {
     TCB *tcb;
     ER  ercd = E_OK;
@@ -13724,7 +13723,7 @@ SYSCALL ER tk_frsm_tsk_impl( ID tskid )
 /*
  * Move its own task state to wait state
  */
-SYSCALL ER tk_slp_tsk_impl( TMO tmout )
+ER tk_slp_tsk_impl( TMO tmout )
 {
     ER  ercd = E_OK;
 
@@ -13754,7 +13753,7 @@ SYSCALL ER tk_slp_tsk_impl( TMO tmout )
 /*
  * Wakeup task
  */
-SYSCALL ER tk_wup_tsk_impl( ID tskid )
+ER tk_wup_tsk_impl( ID tskid )
 {
     TCB *tcb;
     TSTAT   state;
@@ -13786,7 +13785,7 @@ SYSCALL ER tk_wup_tsk_impl( ID tskid )
 /*
  * Cancel wakeup request
  */
-SYSCALL INT tk_can_wup_impl( ID tskid )
+INT tk_can_wup_impl( ID tskid )
 {
     TCB *tcb;
     ER  ercd = E_OK;
@@ -14119,7 +14118,7 @@ void knl_timer_delete( TMEB *event )
 /*
  * Set system clock
  */
-SYSCALL ER tk_set_tim_impl( const SYSTIM *pk_tim )
+ER tk_set_tim_impl( const SYSTIM *pk_tim )
 {
     CHECK_PAR(pk_tim->hi >= 0);
 
@@ -14133,7 +14132,7 @@ SYSCALL ER tk_set_tim_impl( const SYSTIM *pk_tim )
 /*
  * Refer system clock
  */
-SYSCALL ER tk_get_tim_impl( SYSTIM *pk_tim )
+ER tk_get_tim_impl( SYSTIM *pk_tim )
 {
     BEGIN_CRITICAL_SECTION;
     *pk_tim = knl_toSYSTIM(real_time());
@@ -14145,7 +14144,7 @@ SYSCALL ER tk_get_tim_impl( SYSTIM *pk_tim )
 /*
  * Refer system operating time
  */
-SYSCALL ER tk_get_otm_impl( SYSTIM *pk_tim )
+ER tk_get_otm_impl( SYSTIM *pk_tim )
 {
     BEGIN_CRITICAL_SECTION;
     *pk_tim = knl_toSYSTIM(knl_current_time);
@@ -14157,7 +14156,7 @@ SYSCALL ER tk_get_otm_impl( SYSTIM *pk_tim )
 /*
  * Refer system clock
  */
-SYSCALL ER td_get_tim_impl( SYSTIM *tim, UW *ofs )
+ER td_get_tim_impl( SYSTIM *tim, UW *ofs )
 {
     BEGIN_DISABLE_INTERRUPT;
     *ofs = knl_get_hw_timer_nsec();
@@ -14170,7 +14169,7 @@ SYSCALL ER td_get_tim_impl( SYSTIM *tim, UW *ofs )
 /*
  * Refer system operating time
  */
-SYSCALL ER td_get_otm_impl( SYSTIM *tim, UW *ofs )
+ER td_get_otm_impl( SYSTIM *tim, UW *ofs )
 {
     BEGIN_DISABLE_INTERRUPT;
     *ofs = knl_get_hw_timer_nsec();
@@ -14189,7 +14188,7 @@ SYSCALL ER td_get_otm_impl( SYSTIM *tim, UW *ofs )
 /*
  * Task delay
  */
-SYSCALL ER tk_dly_tsk_impl( RELTIM dlytim )
+ER tk_dly_tsk_impl( RELTIM dlytim )
 {
     ER  ercd = E_OK;
 
@@ -14274,7 +14273,7 @@ static void knl_immediate_call_cychdr( CYCCB *cyccb )
 /*
  * Create cyclic handler 
  */
-SYSCALL ID tk_cre_cyc_impl P1( const T_CCYC *pk_ccyc )
+ID tk_cre_cyc_impl P1( const T_CCYC *pk_ccyc )
 {
 
     CYCCB   *cyccb;
@@ -14342,7 +14341,7 @@ SYSCALL ID tk_cre_cyc_impl P1( const T_CCYC *pk_ccyc )
 /*
  * Delete cyclic handler 
  */
-SYSCALL ER tk_del_cyc_impl( ID cycid )
+ER tk_del_cyc_impl( ID cycid )
 {
     CYCCB   *cyccb;
     ER  ercd = E_OK;
@@ -14372,7 +14371,7 @@ SYSCALL ER tk_del_cyc_impl( ID cycid )
 /*
  * Start cyclic handler 
  */
-SYSCALL ER tk_sta_cyc_impl( ID cycid )
+ER tk_sta_cyc_impl( ID cycid )
 {
     CYCCB   *cyccb;
     LSYSTIM tm;
@@ -14426,7 +14425,7 @@ SYSCALL ER tk_sta_cyc_impl( ID cycid )
 /*
  * Stop cyclic handler 
  */
-SYSCALL ER tk_stp_cyc_impl( ID cycid )
+ER tk_stp_cyc_impl( ID cycid )
 {
     CYCCB   *cyccb;
     ER  ercd = E_OK;
@@ -14453,7 +14452,7 @@ SYSCALL ER tk_stp_cyc_impl( ID cycid )
 /*
  * Refer cyclic handler state
  */
-SYSCALL ER tk_ref_cyc_impl( ID cycid, T_RCYC* pk_rcyc )
+ER tk_ref_cyc_impl( ID cycid, T_RCYC* pk_rcyc )
 {
     CYCCB   *cyccb;
     LSYSTIM tm;
@@ -14520,7 +14519,7 @@ ER knl_cyclichandler_getname(ID id, UB **name)
 /*
  * Refer cyclic handler usage state
  */
-SYSCALL INT td_lst_cyc_impl( ID list[], INT nent )
+INT td_lst_cyc_impl( ID list[], INT nent )
 {
     CYCCB   *cyccb, *end;
     INT n = 0;
@@ -14545,7 +14544,7 @@ SYSCALL INT td_lst_cyc_impl( ID list[], INT nent )
 /*
  * Refer cyclic handler state
  */
-SYSCALL ER td_ref_cyc_impl( ID cycid, TD_RCYC* pk_rcyc )
+ER td_ref_cyc_impl( ID cycid, TD_RCYC* pk_rcyc )
 {
     CYCCB   *cyccb;
     LSYSTIM tm;
@@ -14632,7 +14631,7 @@ void knl_call_almhdr( ALMCB *almcb )
 /*
  * Create alarm handler
  */
-SYSCALL ID tk_cre_alm_impl P1( const T_CALM *pk_calm )
+ID tk_cre_alm_impl P1( const T_CALM *pk_calm )
 {
 
     ALMCB   *almcb;
@@ -14673,7 +14672,7 @@ SYSCALL ID tk_cre_alm_impl P1( const T_CALM *pk_calm )
 /*
  * Delete alarm handler
  */
-SYSCALL ER tk_del_alm_impl( ID almid )
+ER tk_del_alm_impl( ID almid )
 {
     ALMCB   *almcb;
     ER  ercd = E_OK;
@@ -14717,7 +14716,7 @@ static void knl_immediate_call_almhdr( ALMCB *almcb )
 /*
  * Start alarm handler
  */
-SYSCALL ER tk_sta_alm_impl( ID almid, RELTIM almtim )
+ER tk_sta_alm_impl( ID almid, RELTIM almtim )
 {
     ALMCB   *almcb;
     ER  ercd = E_OK;
@@ -14755,7 +14754,7 @@ SYSCALL ER tk_sta_alm_impl( ID almid, RELTIM almtim )
 /*
  * Stop alarm handler
  */
-SYSCALL ER tk_stp_alm_impl( ID almid )
+ER tk_stp_alm_impl( ID almid )
 {
     ALMCB   *almcb;
     ER  ercd = E_OK;
@@ -14782,7 +14781,7 @@ SYSCALL ER tk_stp_alm_impl( ID almid )
 /*
  * Refer alarm handler state
  */
-SYSCALL ER tk_ref_alm_impl( ID almid, T_RALM *pk_ralm )
+ER tk_ref_alm_impl( ID almid, T_RALM *pk_ralm )
 {
     ALMCB   *almcb;
     LSYSTIM tm;
@@ -14848,7 +14847,7 @@ ER knl_alarmhandler_getname(ID id, UB **name)
 /*
  * Refer alarm handler usage state
  */
-SYSCALL INT td_lst_alm_impl( ID list[], INT nent )
+INT td_lst_alm_impl( ID list[], INT nent )
 {
     ALMCB   *almcb, *end;
     INT n = 0;
@@ -14873,7 +14872,7 @@ SYSCALL INT td_lst_alm_impl( ID list[], INT nent )
 /*
  * Refer alarm handler state
  */
-SYSCALL ER td_ref_alm_impl( ID almid, TD_RALM *pk_ralm )
+ER td_ref_alm_impl( ID almid, TD_RALM *pk_ralm )
 {
     ALMCB   *almcb;
     LSYSTIM tm;
