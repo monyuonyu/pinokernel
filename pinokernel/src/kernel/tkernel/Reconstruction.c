@@ -13,9 +13,7 @@
 /*--------------------------------------------------------------------*/
 /*  Include definition                                                */
 /*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
+
 /*--------------------------------------------------------------------*/
 /*  Constant definition                                               */
 /*--------------------------------------------------------------------*/
@@ -1768,6 +1766,158 @@
 #define USE_FUNC_IFREE
 #define USE_FUNC_INIT_IMALLOC
 
+
+
+
+static const T_CSEM knl_pk_csem_DM = {
+    NULL,
+    TA_TFIFO | TA_FIRST,
+    0,
+    1,
+};
+
+const ATR VALID_FLGATR = {
+     TA_TPRI
+    |TA_WMUL
+    |TA_DSNAME
+};
+
+const T_CTSK knl_c_init_task = {
+    (void *)INITTASK_EXINF,     /* exinf */
+    INITTASK_TSKATR,        /* tskatr */
+    INITTASK_TSKATR|TA_USERBUF, /* tskatr */
+    (FP)&knl_init_task,     /* task */
+    INITTASK_ITSKPRI,       /* itskpri */
+    INITTASK_STKSZ,         /* stksz */
+    INITTASK_DSNAME,        /* dsname */
+    INITTASK_STACK,         /* bufptr */
+    init_task_stack,        /* bufptr */
+};
+
+static const char knl_boot_message[] = { /* Boot message */
+    BOOT_MESSAGE
+};
+
+const ATR VALID_MBXATR = {
+     TA_MPRI
+    |TA_TPRI
+    |TA_DSNAME
+};
+
+static const WSPEC knl_wspec_mbx_tfifo = { TTW_MBX, NULL, NULL };
+static const WSPEC knl_wspec_mbx_tpri  = { TTW_MBX, mbx_chg_pri, NULL };
+
+    const ATR VALID_MPFATR = {
+         TA_TPRI
+        |TA_RNG3
+        |TA_USERBUF
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_mpf_tfifo = { TTW_MPF, NULL, NULL };
+static const WSPEC knl_wspec_mpf_tpri  = { TTW_MPF, knl_mpf_chg_pri, NULL };
+
+    const ATR VALID_MPLATR = {
+         TA_TPRI
+        |TA_RNG3
+        |TA_USERBUF
+        |TA_DSNAME
+    };
+
+
+static const WSPEC knl_wspec_mpl_tfifo = { TTW_MPL, NULL,        mpl_rel_wai };
+static const WSPEC knl_wspec_mpl_tpri  = { TTW_MPL, mpl_chg_pri, mpl_rel_wai };
+
+    const ATR VALID_MBFATR = {
+         TA_TPRI
+        |TA_USERBUF
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_smbf_tfifo = { TTW_SMBF, NULL, knl_mbf_rel_wai };
+static const WSPEC knl_wspec_smbf_tpri  = { TTW_SMBF, knl_mbf_chg_pri, knl_mbf_rel_wai };
+
+static const WSPEC knl_wspec_rmbf = { TTW_RMBF, NULL, NULL };
+
+    const ATR VALID_MTXATR = {
+         TA_CEILING
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_mtx_tfifo   = { TTW_MTX, NULL, NULL };
+static const WSPEC knl_wspec_mtx_tpri    = { TTW_MTX, mtx_chg_pri, NULL };
+static const WSPEC knl_wspec_mtx_inherit = { TTW_MTX, mtx_chg_pri, mtx_rel_wai };
+
+
+const WSPEC knl_wspec_cal_tfifo = { TTW_CAL, NULL, NULL };
+const WSPEC knl_wspec_cal_tpri  = { TTW_CAL, cal_chg_pri, NULL };
+
+const WSPEC knl_wspec_rdv       = { TTW_RDV, NULL, NULL };
+
+
+    const ATR VALID_PORATR = {
+         TA_TPRI
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_acp = { TTW_ACP, NULL, NULL };
+
+
+    const ATR VALID_SEMATR = {
+         TA_TPRI
+        |TA_CNT
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_sem_tfifo = { TTW_SEM, NULL,        sem_rel_wai };
+static const WSPEC knl_wspec_sem_tpri  = { TTW_SEM, sem_chg_pri, sem_rel_wai };
+
+    const ATR VALID_TSKATR = {  /* Valid value of task attribute */
+         TA_HLNG
+        |TA_RNG3
+        |TA_USERBUF
+        |TA_GP
+        |TA_DSNAME
+    };
+
+const WSPEC knl_wspec_slp = { TTW_SLP, NULL, NULL };
+
+
+static const WSPEC knl_wspec_dly = { TTW_DLY, NULL, NULL };
+
+
+    const ATR VALID_CYCATR = {
+         TA_HLNG
+        |TA_STA
+        |TA_PHS
+        |TA_GP
+        |TA_DSNAME
+    };
+
+    const ATR VALID_ALMATR = {
+         TA_HLNG
+        |TA_GP
+        |TA_DSNAME
+    };
+
+    static const char LF = 0x0a;
+
+
+static const UB  digits[32] = "0123456789abcdef0123456789ABCDEF";
+
+    static const char CR = 0x0d;
+
+    static const char CR = 0x0d;
+
+
+
+
+
+
+
+
+
+
 /*--------------------------------------------------------------------*/
 /*  Typedef definition                                                */
 /*--------------------------------------------------------------------*/
@@ -2753,7 +2903,79 @@ typedef struct {
     void    (*rel_wai_hook)(TCB *);     /* Process at task wait release */
 } WSPEC;
 
+/*--------------------------------------------------------------------*/
+/*  Struct definition                                                 */
+/*--------------------------------------------------------------------*/
 
+
+/*
+ * Mutex control block
+ */
+struct mutex_control_block {
+    QUEUE   wait_queue; /* Mutex wait queue */
+    ID  mtxid;      /* Mutex ID */
+    void    *exinf;     /* Extended information */
+    ATR mtxatr;     /* Mutex attribute */
+    UB  ceilpri;    /* Highest priority limit of mutex */
+    TCB *mtxtsk;    /* Mutex get task */
+    MTXCB   *mtxlist;   /* Mutex get list */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+};
+
+/*
+ * Task control block (TCB)
+ */
+struct task_control_block {
+    QUEUE   tskque;     /* Task queue */
+    ID  tskid;      /* Task ID */
+    void    *exinf;     /* Extended information */
+    ATR tskatr;     /* Task attribute */
+    FP  task;       /* Task startup address */
+
+    W   sstksz;     /* stack size */
+
+    INT :0;     /* ### From here */
+    B   isysmode;   /* Task operation mode initial value */
+    H   sysmode;    /* Task operation mode, quasi task part
+                   call level */
+    INT :0;     /* ### To here, since it might be accessed
+                   from outside of the critical section,
+                   need to be assigned as an independent
+                   word. Also, there is a case where one
+                   word is read from 'reqdct' and is read
+                   all at once from 'reqdct', 'isysmode',
+                   and 'sysmode', so do not change the
+                   order and size. */
+
+    UB  ipriority;  /* Priority at task startup */
+    UB  bpriority;  /* Base priority */
+    UB  priority;   /* Current priority */
+
+    UB /*TSTAT*/    state;  /* Task state (Int. expression) */
+
+    BOOL    klockwait:1;    /* TRUE at wait kernel lock */
+    BOOL    klocked:1;  /* TRUE at hold kernel lock */
+
+    const WSPEC *wspec; /* Wait specification */
+    ID  wid;        /* Wait object ID */
+    INT wupcnt;     /* Number of wakeup requests queuing */
+    INT suscnt;     /* Number of SUSPEND request nests */
+    ER  *wercd;     /* Wait error code set area */
+    WINFO   winfo;      /* Wait information */
+    TMEB    wtmeb;      /* Wait timer event block */
+
+    RNO wrdvno;     /* For creating rendezvous number */
+    MTXCB   *mtxlist;   /* List of hold mutexes */
+
+    UW  stime;      /* System execution time (ms) */
+    UW  utime;      /* User execution time (ms) */
+
+    void    *isstack;   /* stack pointer initial value */
+    void    *gp;        /* Global pointer */
+    _align64        /* alignment for CTXB.ssp */
+    CTXB    tskctxb;    /* Task context block */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+};
 
 
 /*--------------------------------------------------------------------*/
@@ -4351,14 +4573,6 @@ BOOL knl_chkopen( DevCB *devcb, INT unitno )
     return FALSE;
 }
 
-
-static const T_CSEM knl_pk_csem_DM = {
-    NULL,
-    TA_TFIFO | TA_FIRST,
-    0,
-    1,
-};
-
 /*
  * Get open management block
  */
@@ -5468,11 +5682,7 @@ ER knl_eventflag_initialize( void )
  */
 SYSCALL ID tk_cre_flg_impl( const T_CFLG *pk_cflg )
 {
-    const ATR VALID_FLGATR = {
-         TA_TPRI
-        |TA_WMUL
-        |TA_DSNAME
-    };
+
     FLGCB   *flgcb;
     ID  flgid;
     ER  ercd;
@@ -6113,17 +6323,6 @@ INT init_task_stack[INITTASK_STKSZ/sizeof(INT)];
 /*
  * Initial task creation parameter
  */
-const T_CTSK knl_c_init_task = {
-    (void *)INITTASK_EXINF,     /* exinf */
-    INITTASK_TSKATR,        /* tskatr */
-    INITTASK_TSKATR|TA_USERBUF, /* tskatr */
-    (FP)&knl_init_task,     /* task */
-    INITTASK_ITSKPRI,       /* itskpri */
-    INITTASK_STKSZ,         /* stksz */
-    INITTASK_DSNAME,        /* dsname */
-    INITTASK_STACK,         /* bufptr */
-    init_task_stack,        /* bufptr */
-};
 
 
 /*
@@ -6132,9 +6331,7 @@ const T_CTSK knl_c_init_task = {
 
 
 
-static const char knl_boot_message[] = { /* Boot message */
-    BOOT_MESSAGE
-};
+
 
 /* ------------------------------------------------------------------------ */
 
@@ -6682,11 +6879,7 @@ ER knl_mailbox_initialize( void )
  */
 SYSCALL ID tk_cre_mbx_impl( const T_CMBX *pk_cmbx )
 {
-    const ATR VALID_MBXATR = {
-         TA_MPRI
-        |TA_TPRI
-        |TA_DSNAME
-    };
+
     MBXCB   *mbxcb;
     ID  mbxid;
     ER  ercd;
@@ -6815,8 +7008,6 @@ static void mbx_chg_pri( TCB *tcb, INT oldpri )
 /*
  * Definition of mailbox wait specification
  */
-static const WSPEC knl_wspec_mbx_tfifo = { TTW_MBX, NULL, NULL };
-static const WSPEC knl_wspec_mbx_tpri  = { TTW_MBX, mbx_chg_pri, NULL };
 
 /*
  * Receive from mailbox
@@ -7406,12 +7597,7 @@ ER knl_fix_memorypool_initialize( void )
  */
 SYSCALL ID tk_cre_mpf_impl( const T_CMPF *pk_cmpf )
 {
-    const ATR VALID_MPFATR = {
-         TA_TPRI
-        |TA_RNG3
-        |TA_USERBUF
-        |TA_DSNAME
-    };
+
     MPFCB   *mpfcb;
     ID  mpfid;
     W   blfsz, mpfsz;
@@ -7536,8 +7722,6 @@ static void knl_mpf_chg_pri( TCB *tcb, INT oldpri )
 /*
  * Definition of fixed size memory pool wait specification
  */
-static const WSPEC knl_wspec_mpf_tfifo = { TTW_MPF, NULL, NULL };
-static const WSPEC knl_wspec_mpf_tpri  = { TTW_MPF, knl_mpf_chg_pri, NULL };
 
 /*
  * Get fixed size memory block 
@@ -8021,12 +8205,7 @@ static void init_mempool( MPLCB *mplcb )
  */
 SYSCALL ID tk_cre_mpl_impl( const T_CMPL *pk_cmpl )
 {
-    const ATR VALID_MPLATR = {
-         TA_TPRI
-        |TA_RNG3
-        |TA_USERBUF
-        |TA_DSNAME
-    };
+
     MPLCB   *mplcb;
     ID  mplid;
     W   mplsz;
@@ -8166,8 +8345,6 @@ static void mpl_rel_wai( TCB *tcb )
 /*
  * Definition of variable size memory pool wait specification
  */
-static const WSPEC knl_wspec_mpl_tfifo = { TTW_MPL, NULL,        mpl_rel_wai };
-static const WSPEC knl_wspec_mpl_tpri  = { TTW_MPL, mpl_chg_pri, mpl_rel_wai };
 
 /*
  * Get variable size memory block 
@@ -8538,11 +8715,7 @@ void knl_mbf_wakeup( MBFCB *mbfcb )
  */
 SYSCALL ID tk_cre_mbf_impl( const T_CMBF *pk_cmbf )
 {
-    const ATR VALID_MBFATR = {
-         TA_TPRI
-        |TA_USERBUF
-        |TA_DSNAME
-    };
+
     MBFCB   *mbfcb;
     ID  mbfid;
     W   bufsz;
@@ -8679,8 +8852,6 @@ static void knl_mbf_rel_wai( TCB *tcb )
 /*
  * Definition of message buffer wait specification
  */
-static const WSPEC knl_wspec_smbf_tfifo = { TTW_SMBF, NULL, knl_mbf_rel_wai };
-static const WSPEC knl_wspec_smbf_tpri  = { TTW_SMBF, knl_mbf_chg_pri, knl_mbf_rel_wai };
 
 /*
  * Send to message buffer
@@ -8740,7 +8911,6 @@ SYSCALL ER tk_snd_mbf_impl( ID mbfid, const void *msg, INT msgsz, TMO tmout )
 }
 
 
-static const WSPEC knl_wspec_rmbf = { TTW_RMBF, NULL, NULL };
 
 /*
  * Get a message from message buffer.
@@ -9448,10 +9618,7 @@ INT knl_chg_pri_mutex( TCB *tcb, INT priority )
  */
 SYSCALL ID tk_cre_mtx_impl( const T_CMTX *pk_cmtx )
 {
-    const ATR VALID_MTXATR = {
-         TA_CEILING
-        |TA_DSNAME
-    };
+
     MTXCB   *mtxcb;
     ID  mtxid;
     INT ceilpri;
@@ -9578,9 +9745,6 @@ static void mtx_rel_wai( TCB *tcb )
 /*
  * Definition of mutex wait specification
  */
-static const WSPEC knl_wspec_mtx_tfifo   = { TTW_MTX, NULL, NULL };
-static const WSPEC knl_wspec_mtx_tpri    = { TTW_MTX, mtx_chg_pri, NULL };
-static const WSPEC knl_wspec_mtx_inherit = { TTW_MTX, mtx_chg_pri, mtx_rel_wai };
 
 /*
  * Lock mutex
@@ -9863,21 +10027,6 @@ SYSCALL INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
     return ercd;
 }
 
-
-
-/*
- * Mutex control block
- */
-struct mutex_control_block {
-    QUEUE   wait_queue; /* Mutex wait queue */
-    ID  mtxid;      /* Mutex ID */
-    void    *exinf;     /* Extended information */
-    ATR mtxatr;     /* Mutex attribute */
-    UB  ceilpri;    /* Highest priority limit of mutex */
-    TCB *mtxtsk;    /* Mutex get task */
-    MTXCB   *mtxlist;   /* Mutex get list */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-};
 
 extern MTXCB knl_mtxcb_table[]; /* Mutex control block */
 extern QUEUE knl_free_mtxcb;    /* FreeQue */
@@ -10560,10 +10709,6 @@ static void cal_chg_pri( TCB *tcb, INT oldpri )
 /*
  * Definition of rendezvous wait specification
  */
-const WSPEC knl_wspec_cal_tfifo = { TTW_CAL, NULL, NULL };
-const WSPEC knl_wspec_cal_tpri  = { TTW_CAL, cal_chg_pri, NULL };
-
-const WSPEC knl_wspec_rdv       = { TTW_RDV, NULL, NULL };
 
 
 /*
@@ -10571,10 +10716,7 @@ const WSPEC knl_wspec_rdv       = { TTW_RDV, NULL, NULL };
  */
 SYSCALL ID tk_cre_por_impl( const T_CPOR *pk_cpor )
 {
-    const ATR VALID_PORATR = {
-         TA_TPRI
-        |TA_DSNAME
-    };
+
     PORCB   *porcb;
     ID  porid;
     ER  ercd;
@@ -10721,7 +10863,6 @@ SYSCALL INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO t
 }
 
 
-static const WSPEC knl_wspec_acp = { TTW_ACP, NULL, NULL };
 
 /*
  * Accept rendezvous
@@ -11192,11 +11333,7 @@ ER knl_semaphore_initialize( void )
  */
 SYSCALL ID tk_cre_sem_impl( const T_CSEM *pk_csem )
 {
-    const ATR VALID_SEMATR = {
-         TA_TPRI
-        |TA_CNT
-        |TA_DSNAME
-    };
+
     SEMCB   *semcb;
     ID  semid;
     ER  ercd;
@@ -11366,8 +11503,6 @@ static void sem_rel_wai( TCB *tcb )
 /*
  * Definition of semaphore wait specification
  */
-static const WSPEC knl_wspec_sem_tfifo = { TTW_SEM, NULL,        sem_rel_wai };
-static const WSPEC knl_wspec_sem_tpri  = { TTW_SEM, sem_chg_pri, sem_rel_wai };
 
 /*
  * Wait on semaphore
@@ -12784,60 +12919,6 @@ BOOL knl_task_alive( TSTAT state )
  * Task priority internal/external expression conversion macro
  */
 
-/*
- * Task control block (TCB)
- */
-struct task_control_block {
-    QUEUE   tskque;     /* Task queue */
-    ID  tskid;      /* Task ID */
-    void    *exinf;     /* Extended information */
-    ATR tskatr;     /* Task attribute */
-    FP  task;       /* Task startup address */
-
-    W   sstksz;     /* stack size */
-
-    INT :0;     /* ### From here */
-    B   isysmode;   /* Task operation mode initial value */
-    H   sysmode;    /* Task operation mode, quasi task part
-                   call level */
-    INT :0;     /* ### To here, since it might be accessed
-                   from outside of the critical section,
-                   need to be assigned as an independent
-                   word. Also, there is a case where one
-                   word is read from 'reqdct' and is read
-                   all at once from 'reqdct', 'isysmode',
-                   and 'sysmode', so do not change the
-                   order and size. */
-
-    UB  ipriority;  /* Priority at task startup */
-    UB  bpriority;  /* Base priority */
-    UB  priority;   /* Current priority */
-
-    UB /*TSTAT*/    state;  /* Task state (Int. expression) */
-
-    BOOL    klockwait:1;    /* TRUE at wait kernel lock */
-    BOOL    klocked:1;  /* TRUE at hold kernel lock */
-
-    const WSPEC *wspec; /* Wait specification */
-    ID  wid;        /* Wait object ID */
-    INT wupcnt;     /* Number of wakeup requests queuing */
-    INT suscnt;     /* Number of SUSPEND request nests */
-    ER  *wercd;     /* Wait error code set area */
-    WINFO   winfo;      /* Wait information */
-    TMEB    wtmeb;      /* Wait timer event block */
-
-    RNO wrdvno;     /* For creating rendezvous number */
-    MTXCB   *mtxlist;   /* List of hold mutexes */
-
-    UW  stime;      /* System execution time (ms) */
-    UW  utime;      /* User execution time (ms) */
-
-    void    *isstack;   /* stack pointer initial value */
-    void    *gp;        /* Global pointer */
-    _align64        /* alignment for CTXB.ssp */
-    CTXB    tskctxb;    /* Task context block */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-};
 
 /*
  * Task dispatch disable state
@@ -12953,13 +13034,7 @@ extern void knl_ter_tsk( TCB *tcb );
  */
 SYSCALL ID tk_cre_tsk_impl P1( const T_CTSK *pk_ctsk )
 {
-    const ATR VALID_TSKATR = {  /* Valid value of task attribute */
-         TA_HLNG
-        |TA_RNG3
-        |TA_USERBUF
-        |TA_GP
-        |TA_DSNAME
-    };
+
     TCB *tcb;
     W   sstksz;
     void    *stack;
@@ -13645,7 +13720,6 @@ SYSCALL ER tk_frsm_tsk_impl( ID tskid )
 /*
  * Definition of task wait specification
  */
-const WSPEC knl_wspec_slp = { TTW_SLP, NULL, NULL };
 
 /*
  * Move its own task state to wait state
@@ -14111,7 +14185,6 @@ SYSCALL ER td_get_otm_impl( SYSTIM *tim, UW *ofs )
 /*
  * Definition of task delay wait specification
  */
-static const WSPEC knl_wspec_dly = { TTW_DLY, NULL, NULL };
 
 /*
  * Task delay
@@ -14203,13 +14276,7 @@ static void knl_immediate_call_cychdr( CYCCB *cyccb )
  */
 SYSCALL ID tk_cre_cyc_impl P1( const T_CCYC *pk_ccyc )
 {
-    const ATR VALID_CYCATR = {
-         TA_HLNG
-        |TA_STA
-        |TA_PHS
-        |TA_GP
-        |TA_DSNAME
-    };
+
     CYCCB   *cyccb;
     LSYSTIM tm;
     ER  ercd = E_OK;
@@ -14567,11 +14634,7 @@ void knl_call_almhdr( ALMCB *almcb )
  */
 SYSCALL ID tk_cre_alm_impl P1( const T_CALM *pk_calm )
 {
-    const ATR VALID_ALMATR = {
-         TA_HLNG
-        |TA_GP
-        |TA_DSNAME
-    };
+
     ALMCB   *almcb;
     ER  ercd = E_OK;
 
@@ -15333,7 +15396,7 @@ INT tm_getline( UB *buff )
 {
     UB* p = buff;
     int len = 0;
-    static const char LF = 0x0a;
+
     INT imask;
 
     DI(imask);
@@ -15378,7 +15441,7 @@ extern  int tm_putstring( UB *s );
  */
 static  UB  *outint( UB *ep, unsigned long val, UB base )
 {
-static const UB  digits[32] = "0123456789abcdef0123456789ABCDEF";
+
     UB  caps;
 
     caps = (base & 0x40) >> 2;      /* 'a' or 'A' */
@@ -15670,7 +15733,7 @@ extern void sio_send_frame( const UB* buf, INT size );
  */
 INT tm_putchar( INT c )
 {
-    static const char CR = 0x0d;
+
     UB buf = (UB)c;
 
     if (buf == 0x0a) {
@@ -15690,8 +15753,7 @@ extern void sio_recv_frame( UB* buf, INT size );
  */
 INT tm_putstring( UB *buff )
 {
-    const UB* p = buff;
-    static const char CR = 0x0d;
+    UB* p = buff;
     INT imask;
 
     DI(imask);
