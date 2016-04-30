@@ -1773,24 +1773,10 @@
 #define USE_FUNC_IFREE
 #define USE_FUNC_INIT_IMALLOC
 
-
-
 /*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
+/*  Typedef definition                                                */
 /*--------------------------------------------------------------------*/
 
-/*
- * General-purpose data type  
- */
 typedef signed char     S1; /* Signed 8 bit integer    */
 typedef signed short    S2; /* Signed 16 bit integer   */
 typedef signed long     S4; /* Signed 32 bit integer   */
@@ -1838,18 +1824,955 @@ typedef void        (*FP)();    /* Function address general */
 typedef INT     (*FUNCP)(); /* Function address general */
 
 
-/*
- * Boolean value 
- *  Defined as TRUE = 1, but it is always true when not 0.
- *  Thus, comparison such as bool = TRUE are not permitted.
- *  Should be as per bool !=FALSE.
- */
 typedef UINT        BOOL;
 
-/*
- * TRON character code
- */
 typedef UH      TC;     /* TRON character code */
+
+typedef __size_t    size_t;
+
+typedef __wchar_t   wchar_t;
+
+
+typedef struct t_regs {
+    VW  r[13];      /* General purpose register R0-R12 */
+    void    *lr;        /* Link register R14 */
+} T_REGS;
+
+
+typedef struct t_eit {
+    void    *pc;        /* Program counter R15 */
+    UW  xpsr;       /* Program status register */
+    UW  taskmode;   /* Task mode flag */
+} T_EIT;
+
+
+typedef struct t_cregs {
+    void    *ssp;       /* System stack pointer R13_svc */
+//  void    *usp;       /* User stack pointer R13_usr */
+} T_CREGS;
+
+
+typedef struct {
+    void    *ssp;       /* System stack pointer */
+} CTXB;
+
+
+
+typedef struct {
+    UW  r_[8];      /* R4-R11 */
+    UW  taskmode;   /* Task mode */
+    UW  exp_ret;    /* Exception return */ /* Exception entry stack */
+    UW  r[4];       /* R0-R3 */
+    UW  ip;     /* R12 */
+    void    *lr;        /* lr */
+    void    *pc;        /* pc */
+    UW  xpsr;       /* xpsr */
+} SStackFrame;
+
+
+
+typedef struct td_rsem {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    INT semcnt;     /* Current semaphore value */
+} TD_RSEM;
+
+
+typedef struct td_rflg {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    UINT    flgptn;     /* Current event flag pattern */
+} TD_RFLG;
+
+
+typedef struct td_rmbx {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    T_MSG   *pk_msg;    /* Next received message */
+} TD_RMBX;
+
+
+typedef struct td_rmtx {
+    void    *exinf;     /* Extended information */
+    ID  htsk;       /* Locking task ID */
+    ID  wtsk;       /* Lock wait task ID */
+} TD_RMTX;
+
+
+typedef struct td_rmbf {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Receive wait task ID */
+    ID  stsk;       /* Send wait task ID */
+    INT msgsz;      /* Next received message size (byte) */
+    W   frbufsz;    /* Free buffer size (byte) */
+    INT maxmsz;     /* Maximum length of message (byte) */
+} TD_RMBF;
+
+
+typedef struct td_rpor {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Call wait task ID */
+    ID  atsk;       /* Receive wait task ID */
+    INT maxcmsz;    /* Maximum length of call message (byte) */
+    INT maxrmsz;    /* Maximum length of replay message (byte) */
+} TD_RPOR;
+
+
+typedef struct td_rmpf {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    W   frbcnt;     /* Number of free blocks */
+} TD_RMPF;
+
+
+typedef struct td_rmpl {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    W   frsz;       /* Total size of free area (byte) */
+    W   maxsz;      /* Size of maximum continuous
+                   free area (byte) */
+} TD_RMPL;
+
+
+typedef struct td_rcyc {
+    void    *exinf;     /* Extended information */
+    RELTIM  lfttim;     /* Remaining time until next handler startup */
+    UINT    cycstat;    /* Cycle handler status */
+} TD_RCYC;
+
+
+typedef struct td_ralm {
+    void    *exinf;     /* Extended information */
+    RELTIM  lfttim;     /* Remaining time until handler startup */
+    UINT    almstat;    /* Alarm handler status */
+} TD_RALM;
+
+
+typedef struct td_rssy {
+    PRI ssypri;     /* Subsystem priority */
+    W   resblksz;   /* Resource management block size (byte) */
+} TD_RSSY;
+
+
+typedef struct td_rtsk {
+    void    *exinf;     /* Extended information */
+    PRI tskpri;     /* Current priority */
+    PRI tskbpri;    /* Base priority */
+    UINT    tskstat;    /* Task state */
+    UW  tskwait;    /* Wait factor */
+    ID  wid;        /* Wait object ID */
+    INT wupcnt;     /* Number of wakeup requests queuing */
+    INT suscnt;     /* Number of SUSPEND request nests */
+    FP  task;       /* Task startup address */
+    W   stksz;      /* stack size (byte) */
+    void    *istack;        /* stack pointer initial value */
+} TD_RTSK;
+
+
+typedef struct td_itsk {
+    RELTIM  stime;      /* Cumulative system execution time(milliseconds) */
+    RELTIM  utime;      /* Cumulative user execution time(milliseconds) */
+} TD_ITSK;
+
+
+typedef struct td_rsys {
+    UINT    sysstat;    /* System state */
+    ID  runtskid;   /* ID of task in execution state */
+    ID  schedtskid; /* ID of task that should be in
+                   execution state */
+} TD_RSYS;
+
+
+typedef struct td_hsvc {
+    FP  enter;      /* Hook routine before calling */
+    FP  leave;      /* Hook routine after calling */
+} TD_HSVC;
+
+
+typedef struct td_hdsp {
+    FP  exec;       /* Hook routine when starting execution */
+    FP  stop;       /* Hook routine when stopping execution */
+} TD_HDSP;
+
+
+typedef struct td_hint {
+    FP  enter;      /* Hook routine before calling handler */
+    FP  leave;      /* Hook routine after calling handler */
+} TD_HINT;
+
+
+typedef struct td_calinf {
+    void    *ssp;       /* System stack pointer */
+    void    *r11;       /* Frame pointer when calling */
+} TD_CALINF;
+
+
+typedef struct eventflag_control_block {
+    QUEUE   wait_queue; /* Event flag wait queue */
+    ID  flgid;      /* Event flag ID */
+    void    *exinf;     /* Extended information */
+    ATR flgatr;     /* Event flag attribute */
+    UINT    flgptn;     /* Event flag current pattern */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} FLGCB;
+
+typedef INT (*MAIN_FP)(INT, UB **);
+
+
+typedef struct task_control_block   TCB;
+
+
+typedef struct objlock {
+    QUEUE       wtskq;      /* Wait task queue */
+} OBJLOCK;
+
+
+
+
+typedef __size_t    size_t;
+
+typedef __wchar_t   wchar_t;
+
+
+
+typedef long long   longlong;
+
+
+
+
+typedef struct {
+    long        hi;
+    unsigned long   lo;
+} longlong;
+
+
+
+typedef struct mailbox_control_block {
+    QUEUE   wait_queue; /* Mailbox wait queue */
+    ID  mbxid;      /* Mailbox ID */
+    void    *exinf;     /* Extended information */
+    ATR mbxatr;     /* Mailbox attribute */
+    T_MSG   mq_head;    /* Head of message queue */
+    T_MSG   *mq_tail;   /* End of message queue */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} MBXCB;
+
+
+typedef struct {
+    W       memsz;    /* AreaQue for connecting each area where reserved pages are divided Sort in ascending order of addresses in a page. Do not sort between pages. */
+    QUEUE       areaque;    /* FreeQue for connecting unused area in reserved pages Sort from small to large free spaces. */
+    QUEUE       freeque;
+} IMACB;
+
+typedef struct free_list {
+    struct free_list *next;
+} FREEL;
+
+
+typedef struct fix_memorypool_control_block {
+    QUEUE   wait_queue; /* Memory pool wait queue */
+    ID  mpfid;      /* Fixed size memory pool ID */
+    void    *exinf;     /* Extended information */
+    ATR mpfatr;     /* Memory pool attribute */
+    W   mpfcnt;     /* Number of blocks in whole memory pool */
+    W   blfsz;      /* Fixed size memory block size */
+    W   mpfsz;      /* Whole memory pool size */
+    W   frbcnt;     /* Number of blocks in free area */
+    void    *mempool;   /* Top address of memory pool */
+    void    *unused;        /* Top address of unused area */
+    FREEL   *freelist;  /* Free block list */
+    OBJLOCK lock;       /* Lock for object exclusive access */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} MPFCB;
+
+
+typedef struct memorypool_control_block {
+    QUEUE   wait_queue; /* Memory pool wait queue */
+    ID  mplid;      /* Variable size memory pool ID */
+    void    *exinf;     /* Extended information */
+    ATR mplatr;     /* Memory pool attribute */
+    W   mplsz;      /* Whole memory pool size */
+    QUEUE   areaque;    /* Queue connecting all blocks */
+    QUEUE   freeque;    /* Queue connecting free blocks */
+    QUEUE   areaque_end;    /* the last element of areaque */
+    void    *mempool;   /* Top address of memory pool */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} MPLCB;
+
+
+typedef struct messagebuffer_control_block {
+    QUEUE   send_queue; /* Message buffer send wait queue */
+    ID  mbfid;      /* message buffer ID */
+    void    *exinf;     /* Extended information */
+    ATR mbfatr;     /* Message buffer attribute */
+    QUEUE   recv_queue; /* Message buffer receive wait queue */
+    W   bufsz;      /* Message buffer size */
+    INT maxmsz;     /* Maximum length of message */
+    W   frbufsz;    /* Free buffer size */
+    W   head;       /* First message store address */
+    W   tail;       /* Next to the last message store address */
+    VB  *buffer;    /* Message buffer address */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} MBFCB;
+
+
+
+typedef struct mutex_control_block  MTXCB;
+
+
+
+typedef struct queue {
+    struct queue    *next;
+    struct queue    *prev;
+} QUEUE;
+
+
+typedef struct ready_queue {
+    INT top_priority;       /* Highest priority in ready queue */
+    QUEUE   tskque[NUM_PRI];    /* Task queue per priority */
+    TCB *null;          /* When the ready queue is empty, */
+    UINT    bitmap[NUM_BITMAP]; /* Bitmap area per priority */
+    TCB *klocktsk;  /* READY task with kernel lock */
+} RDYQUE;
+
+
+
+typedef struct port_control_block {
+    QUEUE   call_queue; /* Port call wait queue */
+    ID  porid;      /* Port ID */
+    void    *exinf;     /* Extended information */
+    ATR poratr;     /* Port attribute */
+    QUEUE   accept_queue;   /* Port accept wait queue */
+    INT maxcmsz;    /* Maximum length of call message */
+    INT maxrmsz;    /* Maximum length of reply message */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} PORCB;
+
+
+
+typedef struct semaphore_control_block {
+    QUEUE   wait_queue; /* Semaphore wait queue */
+    ID  semid;      /* Semaphore ID */
+    void    *exinf;     /* Extended information */
+    ATR sematr;     /* Semaphore attribute */
+    INT semcnt;     /* Semaphore current count value */
+    INT maxsem;     /* Semaphore maximum count value */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} SEMCB;
+
+
+typedef INT  (*SVC)( void *pk_para, FN fncd );  /* Extended SVC handler */
+
+
+
+typedef struct subsystem_control_block  SSYCB;
+struct subsystem_control_block {
+    SVC svchdr;     /* Extended SVC handler */
+    void    *gp;        /* Global pointer */
+};
+
+
+
+
+typedef struct t_ctsk {
+    void    *exinf;     /* Extended information */
+    ATR tskatr;     /* Task attribute */
+    FP  task;       /* Task startup address */
+    PRI itskpri;    /* Priority at task startup */
+    SZ  stksz;      /* User stack size (byte) */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+    void    *bufptr;    /* User buffer */
+    void    *gp;        /* Global pointer (gp) */
+} T_CTSK;
+
+
+
+typedef struct t_rtsk {
+    void    *exinf;     /* Extended information */
+    PRI tskpri;     /* Current priority */
+    PRI tskbpri;    /* Base priority */
+    UINT    tskstat;    /* Task state */
+    UW  tskwait;    /* Wait factor */
+    ID  wid;        /* Wait object ID */
+    INT wupcnt;     /* Number of wakeup requests queuing */
+    INT suscnt;     /* Number of SUSPEND request nests */
+} T_RTSK;
+
+
+typedef struct t_csem {
+    void    *exinf;     /* Extended information */
+    ATR sematr;     /* Semaphore attribute */
+    INT isemcnt;    /* Semaphore initial count value */
+    INT maxsem;     /* Semaphore maximum count value */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+} T_CSEM;
+
+
+typedef struct t_rsem {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    INT semcnt;     /* Current semaphore value */
+} T_RSEM;
+
+
+typedef struct t_cmtx {
+    void    *exinf;     /* Extended information */
+    ATR mtxatr;     /* Mutex attribute */
+    PRI ceilpri;    /* Upper limit priority of mutex */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+} T_CMTX;
+
+
+typedef struct t_rmtx {
+    void    *exinf;     /* Extended information */
+    ID  htsk;       /* Locking task ID */
+    ID  wtsk;       /* Lock wait task ID */
+} T_RMTX;
+
+
+typedef struct t_cflg {
+    void    *exinf;     /* Extended information */
+    ATR flgatr;     /* Event flag attribute */
+    UINT    iflgptn;    /* Event flag initial value */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+} T_CFLG;
+
+
+typedef struct t_rflg {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    UINT    flgptn;     /* Current event flag pattern */
+} T_RFLG;
+
+
+typedef struct t_cmbx {
+    void    *exinf;     /* Extended information */
+    ATR mbxatr;     /* Mail box attribute */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+} T_CMBX;
+
+
+typedef struct t_msg {
+    void    *msgque[1]; /* Area for message queue */
+} T_MSG;
+
+typedef struct t_msg_pri {
+    T_MSG   msgque;     /* Area for message queue */
+    PRI msgpri;     /* Message priority */
+} T_MSG_PRI;
+
+
+typedef struct t_rmbx {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    T_MSG   *pk_msg;    /* Next received message */
+} T_RMBX;
+
+
+typedef struct t_cmbf {
+    void    *exinf;     /* Extended information */
+    ATR mbfatr;     /* Message buffer attribute */
+    SZ  bufsz;      /* Message buffer size (byte) */
+    INT maxmsz;     /* Maximum length of message (byte) */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+    void    *bufptr;        /* User buffer */
+} T_CMBF;
+
+
+typedef struct t_rmbf {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Receive wait task ID */
+    ID  stsk;       /* Send wait task ID */
+    INT msgsz;      /* Next received message size (byte) */
+    SZ  frbufsz;    /* Free buffer size (byte) */
+    INT maxmsz;     /* Maximum length of message (byte) */
+} T_RMBF;
+
+
+typedef struct t_cpor {
+    void    *exinf;     /* Extended information */
+    ATR poratr;     /* Port attribute */
+    INT maxcmsz;    /* Maximum length of call message (byte) */
+    INT maxrmsz;    /* Maximum length of replay message (byte) */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+} T_CPOR;
+
+
+typedef struct t_rpor {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Call wait task ID */
+    ID  atsk;       /* Receive wait task ID */
+    INT maxcmsz;    /* Maximum length of call message (byte) */
+    INT maxrmsz;    /* Maximum length of replay message (byte) */
+} T_RPOR;
+
+
+typedef struct t_dint {
+    ATR intatr;     /* Interrupt handler attribute */
+    FP  inthdr;     /* Interrupt handler address */
+    void    *gp;        /* Global pointer (gp) */
+} T_DINT;
+
+
+typedef struct t_cmpl {
+    void    *exinf;     /* Extended information */
+    ATR mplatr;     /* Memory pool attribute */
+    SZ  mplsz;      /* Size of whole memory pool (byte) */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+    void    *bufptr;        /* User buffer */
+} T_CMPL;
+
+
+typedef struct t_rmpl {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    SZ  frsz;       /* Total size of free area (byte) */
+    SZ  maxsz;      /* Size of maximum continuous free area(byte) */
+} T_RMPL;
+
+
+typedef struct t_cmpf {
+    void    *exinf;     /* Extended information */
+    ATR mpfatr;     /* Memory pool attribute */
+    SZ  mpfcnt;     /* Number of blocks in whole memory pool */
+    SZ  blfsz;      /* Fixed size memory block size (byte) */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+    void    *bufptr;        /* User buffer */
+} T_CMPF;
+
+
+typedef struct t_rmpf {
+    void    *exinf;     /* Extended information */
+    ID  wtsk;       /* Wait task ID */
+    SZ  frbcnt;     /* Number of free area blocks */
+} T_RMPF;
+
+
+typedef struct t_ccyc {
+    void    *exinf;     /* Extended information */
+    ATR cycatr;     /* Cycle handler attribute */
+    FP  cychdr;     /* Cycle handler address */
+    RELTIM  cyctim;     /* Cycle interval */
+    RELTIM  cycphs;     /* Cycle phase */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+    void    *gp;        /* Global pointer (gp) */
+} T_CCYC;
+
+
+typedef struct t_rcyc {
+    void    *exinf;     /* Extended information */
+    RELTIM  lfttim;     /* Remaining time until next handler startup */
+    UINT    cycstat;    /* Cycle handler status */
+} T_RCYC;
+
+
+typedef struct t_calm {
+    void    *exinf;     /* Extended information */
+    ATR almatr;     /* Alarm handler attribute */
+    FP  almhdr;     /* Alarm handler address */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+    void    *gp;        /* Global pointer (gp) */
+} T_CALM;
+
+
+typedef struct t_ralm {
+    void    *exinf;     /* Extended information */
+    RELTIM  lfttim;     /* Remaining time until handler startup */
+    UINT    almstat;    /* Alarm handler state */
+} T_RALM;
+
+
+typedef struct t_rver {
+    UH  maker;      /* OS manufacturer */
+    UH  prid;       /* OS identification number */
+    UH  spver;      /* Specification version */
+    UH  prver;      /* OS product version */
+    UH  prno[4];    /* Product number, Product management
+                   information */
+} T_RVER;
+
+
+typedef struct t_rsys {
+    UINT    sysstat;    /* System state */
+    ID  runtskid;   /* ID of task in execution state */
+    ID  schedtskid; /* ID of the task that should be the
+                   execution state */
+} T_RSYS;
+
+
+typedef struct t_dssy {
+    ATR ssyatr;     /* Subsystem attribute */
+    PRI ssypri;     /* Subsystem priority */
+    FP  svchdr;     /* Extended SVC handler address */
+    FP  breakfn;    /* Break function address */
+    FP  startupfn;  /* Startup function address */
+    FP  cleanupfn;  /* Cleanup function address */
+    FP  eventfn;    /* Event function address */
+    SZ  resblksz;   /* Resource management block size (byte) */
+    void    *gp;        /* Global pointer (gp) */
+} T_DSSY;
+
+
+typedef struct t_rssy {
+    PRI ssypri;     /* Subsystem priority */
+    SZ  resblksz;   /* Resource management block size (byte) */
+} T_RSSY;
+
+
+typedef struct t_rdev {
+    ATR devatr;     /* Device attribute */
+    W   blksz;      /* Specific data block size (-1: Unknown) */
+    INT nsub;       /* Number of subunits */
+    INT subno;      /* 0: Physical device,
+                   1 - nsub: Subunit number +1 */
+} T_RDEV;
+
+
+typedef struct t_ldev {
+    ATR devatr;     /* Device attribute */
+    W   blksz;      /* Specific data block size (-1: Unknown) */
+    INT nsub;       /* Number of subunits */
+    UB  devnm[L_DEVNM]; /* Physical device name */
+} T_LDEV;
+
+
+typedef enum tdevttyp {
+    TDE_unknown = 0,        /* Undefined */
+    TDE_MOUNT   = 0x01,     /* Media insert */
+    TDE_EJECT   = 0x02,     /* Media eject */
+    TDE_ILLMOUNT    = 0x03,     /* Media incorrect insert */
+    TDE_ILLEJECT    = 0x04,     /* Media incorrect eject */
+    TDE_REMOUNT = 0x05,     /* Media re-insert */
+    TDE_CARDBATLOW  = 0x06,     /* Card battery low */
+    TDE_CARDBATFAIL = 0x07,     /* Card battery abnormal */
+    TDE_REQEJECT    = 0x08,     /* Media eject request */
+    TDE_PDBUT   = 0x11,     /* PD button state change */
+    TDE_PDMOVE  = 0x12,     /* PD position move */
+    TDE_PDSTATE = 0x13,     /* PD state change */
+    TDE_PDEXT   = 0x14,     /* PD extended event */
+    TDE_KEYDOWN = 0x21,     /* Key down */
+    TDE_KEYUP   = 0x22,     /* Key up */
+    TDE_KEYMETA = 0x23,     /* Meta key state change */
+    TDE_POWEROFF    = 0x31,     /* Power switch off */
+    TDE_POWERLOW    = 0x32,     /* Power low */
+    TDE_POWERFAIL   = 0x33,     /* Power abnormal */
+    TDE_POWERSUS    = 0x34,     /* Automatic suspend */
+    TDE_POWERUPTM   = 0x35,     /* Clock update */
+    TDE_CKPWON  = 0x41      /* Automatic power on notification */
+} TDEvtTyp;
+
+
+typedef struct t_devevt {
+    TDEvtTyp    evttyp;     /* Event type */
+    /* Information by each event type is added below */
+} T_DEVEVT;
+
+
+typedef struct t_devevt_id {
+    TDEvtTyp    evttyp;     /* Event type */
+    ID      devid;      /* Device ID */
+    /* Information by each event type is added below */
+} T_DEVEVT_ID;
+
+
+typedef struct t_ddev {
+    void    *exinf;     /* Extended information */
+    ATR drvatr;     /* Driver attribute */
+    ATR devatr;     /* Device attribute */
+    INT nsub;       /* Number of subunits */
+    W   blksz;      /* Specific data block size (-1: Unknown) */
+    FP  openfn;     /* Open function */
+    FP  closefn;    /* Close function */
+    FP  execfn;     /* Execute function */
+    FP  waitfn;     /* Completion wait function */
+    FP  abortfn;    /* Abort function */
+    FP  eventfn;    /* Event function */
+    void    *gp;        /* Global pointer (gp) */
+} T_DDEV;
+
+
+typedef struct t_idev {
+    ID  evtmbfid;   /* Message buffer ID for event notification */
+} T_IDEV;
+
+
+typedef struct t_devreq {
+    struct t_devreq *next;  /* I:Link to request packet (NULL:End) */
+    void    *exinf;     /* X:Extended information */
+    ID  devid;      /* I:Target device ID */
+    INT cmd:4;      /* I:Request command */
+    BOOL    abort:1;    /* I:When executing abort request, TRUE */
+    W   start;      /* I:Start data number */
+    W   size;       /* I:Request size */
+    void    *buf;       /* I:Input/output buffer address */
+    W   asize;      /* O:Result size */
+    ER  error;      /* O:Result error */
+} T_DEVREQ;
+
+
+
+typedef struct DeviceControlBlock {
+    QUEUE   q;
+    UB  devnm[L_DEVNM+1];   /* Device name */
+    T_DDEV  ddev;           /* Registration information */
+    QUEUE   openq;          /* Open device management queue */
+} DevCB;
+
+IMPORT  DevCB       knl_DevCBtbl[]; /* Device registration information table */
+IMPORT  QUEUE       knl_UsedDevCB;  /* In-use queue */
+
+
+
+typedef struct OpenControlBlock {
+    QUEUE       q;
+    QUEUE       resq;       /* For connection from resource management */
+    ID      resid;      /* Section resource ID */
+    DevCB       *devcb;     /* Target device */
+    INT     unitno;     /* Subunit number (0: Physical device) */
+    UINT        omode;      /* Open mode */
+    QUEUE       requestq;   /* Request management queue */
+    UH      waitone;    /* Number of individual request waits */
+    T_DEVREQ    *waireqlst; /* List of multiple request waits */
+    INT     nwaireq;    /* Number of multiple request waits */
+    ID      abort_tskid;    /* Abort completion wait task */
+    INT     abort_cnt;  /* Number of abort completion wait requests */
+    ID      abort_semid; /* Semaphore for abort completion wait */
+} OpnCB;
+
+
+
+typedef struct RequestControlBlock {
+    QUEUE       q;
+    OpnCB       *opncb;     /* Open device */
+    ID      tskid;      /* Processing task */
+    T_DEVREQ    req;        /* Request packet */
+} ReqCB;
+
+
+typedef struct ResourceControlBlock {
+    QUEUE       openq;      /* Open device management queue */
+    INT     dissus;     /* Suspend disable request count */
+} ResCB;
+
+
+
+typedef ER  (*OPNFN)( ID devid, UINT omode, void *exinf );
+typedef ER  (*ABTFN)( ID tskid, T_DEVREQ *devreq, INT nreq, void *exinf );
+typedef INT (*WAIFN)( T_DEVREQ *devreq, INT nreq, TMO tmout, void *exinf );
+typedef INT (*EVTFN)( INT evttyp, void *evtinf, void *exinf );
+typedef ER  (*CLSFN)( ID devid, UINT option, void *exinf );
+typedef ER  (*EXCFN)( T_DEVREQ *devreq, TMO tmout, void *exinf );
+
+
+
+typedef struct mutex_control_block  MTXCB;
+typedef struct task_control_block   TCB;
+
+
+typedef enum {
+    TS_NONEXIST = 0,    /* Unregistered state */
+    TS_READY    = 1,    /* RUN or READY state */
+    TS_WAIT     = 2,    /* WAIT state */
+    TS_SUSPEND  = 4,    /* SUSPEND state */
+    TS_WAITSUS  = 6,    /* Both WAIT and SUSPEND state */
+    TS_DORMANT  = 8 /* DORMANT state */
+} TSTAT;
+
+
+typedef longlong    LSYSTIM;    /* SYSTIM int. expression */
+
+
+typedef void    (*CBACK)(void *);   /* Type of callback function */
+
+typedef struct timer_event_block {
+    QUEUE   queue;      /* Timer event queue */
+    LSYSTIM time;       /* Event time */
+    CBACK   callback;   /* Callback function */
+    void    *arg;       /* Argument to be sent to callback function */
+} TMEB;
+
+
+typedef struct cyclic_handler_control_block {
+    void    *exinf;     /* Extended information */
+    ATR cycatr;     /* Cyclic handler attribute */
+    FP  cychdr;     /* Cyclic handler address */
+    UINT    cycstat;    /* Cyclic handler state */
+    RELTIM  cyctim;     /* Cyclic time */
+    TMEB    cyctmeb;    /* Timer event block */
+    void    *gp;        /* Global pointer */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} CYCCB;
+
+
+typedef struct alarm_handler_control_block {
+    void    *exinf;     /* Extended information */
+    ATR almatr;     /* Alarm handler attribute */
+    FP  almhdr;     /* Alarm handler address */
+    UINT    almstat;    /* Alarm handler state */
+    TMEB    almtmeb;    /* Timer event block */
+    void    *gp;        /* Global pointer */
+    UB  name[OBJECT_NAME_LENGTH];   /* name */
+} ALMCB;
+
+
+
+
+typedef INT     FN;     /* Function code */
+typedef INT     RNO;        /* Rendezvous number */
+typedef UW      ATR;        /* Object/handler attribute */
+typedef INT     ER;     /* Error code */
+typedef INT     PRI;        /* Priority */
+typedef W       TMO;        /* Time out setting */
+typedef UW      RELTIM;     /* Relative time */
+
+typedef struct systim {         /* System time */
+    W   hi;         /* Upper 32 bits */
+    UW  lo;         /* Lower 32 bits */
+} SYSTIM;
+
+
+
+
+
+typedef struct dw {
+    W   hi; /* Upper 32 bits */
+    UW  lo; /* Lower 32 bits */
+    UW  lo; /* Lower 32 bits */
+    W   hi; /* Upper 32 bits */
+} DW;
+
+
+
+typedef struct {
+    short   len;        /* Total output length */
+    short   cnt;        /* Buffer counts */
+    UB  *bufp;      /* Buffer pointer for tm_sprintf */
+} OutPar;
+typedef void    (*OutFn)( UB *str, int len, OutPar *par );
+
+
+typedef struct {
+    INT cnt;
+    ID  id;
+} FastLock;
+
+
+
+typedef struct {
+    UINT    flg;
+    INT wai;
+    ID  id;
+} FastMLock;
+
+
+
+typedef struct generic_control_block {
+    QUEUE   wait_queue; /* Wait queue */
+    ID  objid;      /* Object ID */
+    void    *exinf;     /* Extended information */
+    ATR objatr;     /* Object attribute */
+    /* It is OK to have another field after this point, */
+    /* but it is not used for generic operation routines. */
+} GCB ;
+
+
+
+typedef struct {
+    INT cnt;        /* Request resource number */
+} WINFO_SEM;
+
+
+typedef struct {
+    UINT    waiptn;     /* Wait bit pattern */
+    UINT    wfmode;     /* Wait mode */
+    UINT    *p_flgptn;  /* Address that has a bit pattern at wait released */
+} WINFO_FLG;
+
+
+typedef struct {
+    T_MSG   **ppk_msg;  /* Address that has the head of a message packet */
+} WINFO_MBX;
+
+
+typedef struct {
+    void    *msg;       /* Address that has a received message */
+    INT *p_msgsz;   /* Address that has a received message size */
+} WINFO_RMBF;
+
+typedef struct {
+    CONST void *msg;    /* Send message head address */
+    INT msgsz;      /* Send message size */
+} WINFO_SMBF;
+
+
+typedef struct {
+    UINT    calptn;     /* Bit pattern that indicates caller select condition */
+    void    *msg;       /* Address that has a message */
+    INT cmsgsz;     /* Call message size */
+    INT *p_rmsgsz;  /* Address that has a reply message size */
+} WINFO_CAL;
+
+typedef struct {
+    UINT    acpptn;     /* Bit pattern that indicates receiver select condition */
+    void    *msg;       /* Address that has a call message */
+    RNO *p_rdvno;   /* Address that has the rendezvous number */
+    INT *p_cmsgsz;  /* Address that has the call message size */
+} WINFO_ACP;
+
+typedef struct {
+    RNO rdvno;      /* Rendezvous number */
+    void    *msg;       /* Address that has a message */
+    INT maxrmsz;    /* Maximum length of reply message */
+    INT *p_rmsgsz;  /* Address that has a reply message size */
+} WINFO_RDV;
+
+
+typedef struct {
+    W   blksz;      /* Memory block size */
+    void    **p_blk;        /* Address that has the head of a memory block */
+} WINFO_MPL;
+
+
+typedef struct {
+    void    **p_blf;        /* Address that has the head of a memory block */
+} WINFO_MPF;
+
+
+typedef union {
+    WINFO_SEM   sem;
+    WINFO_FLG   flg;
+    WINFO_MBX   mbx;
+    WINFO_RMBF  rmbf;
+    WINFO_SMBF  smbf;
+    WINFO_CAL   cal;
+    WINFO_ACP   acp;
+    WINFO_RDV   rdv;
+    WINFO_MPL   mpl;
+    WINFO_MPF   mpf;
+} WINFO;
+
+
+typedef struct {
+    UW  tskwait;            /* Wait factor */
+    void    (*chg_pri_hook)(TCB *, INT);    /* Process at task priority change */
+    void    (*rel_wai_hook)(TCB *);     /* Process at task wait release */
+} WSPEC;
+
+
+
+
+/*--------------------------------------------------------------------*/
+/*  Variable definition                                               */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Macro definition                                                  */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Prototype declaration                                             */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Function definition                                               */
+/*--------------------------------------------------------------------*/
 
 
 // #include <asm_depend.h>
@@ -1961,11 +2884,7 @@ knl_tstdlib_bitsearch1( void *base, W offset, W width )
 }
 
 
-typedef __size_t    size_t;
-#undef  __size_t
 
-typedef __wchar_t   wchar_t;
-#undef  __wchar_t
 
 
 extern void knl_tstdlib_bitclr( void *base, W offset );
@@ -2088,30 +3007,7 @@ EXPORT void init_clock_control(void)
 
 
 
-/*
- * General purpose register         tk_get_reg tk_set_reg
- */
-typedef struct t_regs {
-    VW  r[13];      /* General purpose register R0-R12 */
-    void    *lr;        /* Link register R14 */
-} T_REGS;
 
-/*
- * Exception-related register       tk_get_reg tk_set_reg
- */
-typedef struct t_eit {
-    void    *pc;        /* Program counter R15 */
-    UW  xpsr;       /* Program status register */
-    UW  taskmode;   /* Task mode flag */
-} T_EIT;
-
-/*
- * Control register         tk_get_reg tk_set_reg
- */
-typedef struct t_cregs {
-    void    *ssp;       /* System stack pointer R13_svc */
-//  void    *usp;       /* User stack pointer R13_usr */
-} T_CREGS;
 
 
 /*
@@ -2529,29 +3425,9 @@ IMPORT void knl_dispatch( void );
 
 /* ----------------------------------------------------------------------- */
 
-/*
- * Task context block
- */
-typedef struct {
-    void    *ssp;       /* System stack pointer */
-} CTXB;
 
 
 
-/*
- * System stack configuration at task startup
- */
-typedef struct {
-    UW  r_[8];      /* R4-R11 */
-    UW  taskmode;   /* Task mode */
-    UW  exp_ret;    /* Exception return */
-    /* Exception entry stack */
-    UW  r[4];       /* R0-R3 */
-    UW  ip;     /* R12 */
-    void    *lr;        /* lr */
-    void    *pc;        /* pc */
-    UW  xpsr;       /* xpsr */
-} SStackFrame;
 
 /*
  * Size of system stack area destroyed by 'make_dormant()'
@@ -2608,171 +3484,6 @@ void knl_cleanup_context( TCB *tcb )
  * Object name information      td_ref_dsname, td_set_dsname
  */
 
-/*
- * Semaphore state information      td_ref_sem
- */
-typedef struct td_rsem {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    INT semcnt;     /* Current semaphore value */
-} TD_RSEM;
-
-/*
- * Event flag state information     td_ref_flg
- */
-typedef struct td_rflg {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    UINT    flgptn;     /* Current event flag pattern */
-} TD_RFLG;
-
-/*
- * Mail box state information       td_ref_mbx
- */
-typedef struct td_rmbx {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    T_MSG   *pk_msg;    /* Next received message */
-} TD_RMBX;
-
-/*
- * Mutex state information      td_ref_mtx
- */
-typedef struct td_rmtx {
-    void    *exinf;     /* Extended information */
-    ID  htsk;       /* Locking task ID */
-    ID  wtsk;       /* Lock wait task ID */
-} TD_RMTX;
-
-/*
- * Message buffer state information     td_ref_mbf
- */
-typedef struct td_rmbf {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Receive wait task ID */
-    ID  stsk;       /* Send wait task ID */
-    INT msgsz;      /* Next received message size (byte) */
-    W   frbufsz;    /* Free buffer size (byte) */
-    INT maxmsz;     /* Maximum length of message (byte) */
-} TD_RMBF;
-
-/*
- * Rendezvous port state information    td_ref_por
- */
-typedef struct td_rpor {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Call wait task ID */
-    ID  atsk;       /* Receive wait task ID */
-    INT maxcmsz;    /* Maximum length of call message (byte) */
-    INT maxrmsz;    /* Maximum length of replay message (byte) */
-} TD_RPOR;
-
-/*
- * Fixed size memory pool state information td_ref_mpf
- */
-typedef struct td_rmpf {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    W   frbcnt;     /* Number of free blocks */
-} TD_RMPF;
-
-/*
- * Variable size memory pool state information  td_ref_mpl
- */
-typedef struct td_rmpl {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    W   frsz;       /* Total size of free area (byte) */
-    W   maxsz;      /* Size of maximum continuous
-                   free area (byte) */
-} TD_RMPL;
-
-/*
- * Cycle handler state information  td_ref_cyc
- */
-typedef struct td_rcyc {
-    void    *exinf;     /* Extended information */
-    RELTIM  lfttim;     /* Remaining time until next handler startup */
-    UINT    cycstat;    /* Cycle handler status */
-} TD_RCYC;
-
-/*
- * Alarm handler state information  td_ref_alm
- */
-typedef struct td_ralm {
-    void    *exinf;     /* Extended information */
-    RELTIM  lfttim;     /* Remaining time until handler startup */
-    UINT    almstat;    /* Alarm handler status */
-} TD_RALM;
-
-/*
- * Subsystem state information      td_ref_ssy
- */
-typedef struct td_rssy {
-    PRI ssypri;     /* Subsystem priority */
-    W   resblksz;   /* Resource management block size (byte) */
-} TD_RSSY;
-
-/*
- * Task state information       td_ref_tsk
- */
-typedef struct td_rtsk {
-    void    *exinf;     /* Extended information */
-    PRI tskpri;     /* Current priority */
-    PRI tskbpri;    /* Base priority */
-    UINT    tskstat;    /* Task state */
-    UW  tskwait;    /* Wait factor */
-    ID  wid;        /* Wait object ID */
-    INT wupcnt;     /* Number of wakeup requests queuing */
-    INT suscnt;     /* Number of SUSPEND request nests */
-    FP  task;       /* Task startup address */
-    W   stksz;      /* stack size (byte) */
-    void    *istack;        /* stack pointer initial value */
-} TD_RTSK;
-
-/*
- * Task statistics information      td_inf_tsk
- */
-typedef struct td_itsk {
-    RELTIM  stime;      /* Cumulative system execution time
-                   (milliseconds) */
-    RELTIM  utime;      /* Cumulative user execution time
-                   (milliseconds) */
-} TD_ITSK;
-
-/*
- * System state information     td_ref_sys
- */
-typedef struct td_rsys {
-    UINT    sysstat;    /* System state */
-    ID  runtskid;   /* ID of task in execution state */
-    ID  schedtskid; /* ID of task that should be in
-                   execution state */
-} TD_RSYS;
-
-/*
- * System call/extended SVC trace definition    td_hok_svc
- */
-typedef struct td_hsvc {
-    FP  enter;      /* Hook routine before calling */
-    FP  leave;      /* Hook routine after calling */
-} TD_HSVC;
-
-/*
- * Task dispatch trace definition       td_hok_dsp
- */
-typedef struct td_hdsp {
-    FP  exec;       /* Hook routine when starting execution */
-    FP  stop;       /* Hook routine when stopping execution */
-} TD_HDSP;
-
-/*
- * Exception/Interrupt trace definition         td_hok_int
- */
-typedef struct td_hint {
-    FP  enter;      /* Hook routine before calling handler */
-    FP  leave;      /* Hook routine after calling handler */
-} TD_HINT;
 
 /* ------------------------------------------------------------------------ */
 
@@ -2859,14 +3570,6 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 // #include <dbgspt_depend.h>
 
 
-
-/*
- * System call/extension SVC caller information 
- */
-typedef struct td_calinf {
-    void    *ssp;       /* System stack pointer */
-    void    *r11;       /* Frame pointer when calling */
-} TD_CALINF;
 
 
 
@@ -5126,17 +5829,6 @@ SYSCALL INT td_flg_que_impl( ID flgid, ID list[], INT nent )
 
 
 
-/*
- * Event flag control block
- */
-typedef struct eventflag_control_block {
-    QUEUE   wait_queue; /* Event flag wait queue */
-    ID  flgid;      /* Event flag ID */
-    void    *exinf;     /* Extended information */
-    ATR flgatr;     /* Event flag attribute */
-    UINT    flgptn;     /* Event flag current pattern */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} FLGCB;
 
 IMPORT FLGCB knl_flgcb_table[]; /* Event flag control block */
 IMPORT QUEUE knl_free_flgcb;    /* FreeQue */
@@ -5444,7 +6136,6 @@ EXPORT const T_CTSK knl_c_init_task = {
  */
 
 
-typedef INT (*MAIN_FP)(INT, UB **);
 
 LOCAL const char knl_boot_message[] = { /* Boot message */
     BOOT_MESSAGE
@@ -5731,16 +6422,7 @@ IMPORT ER tk_ref_idv_impl( T_IDEV *idev );
  * Kernel configuration file
  */
 
-typedef struct task_control_block   TCB;
 
-/*
- * Object lock
- *  Locked task is the highest run priority.
- *  Unable to nest lock.
- */
-typedef struct objlock {
-    QUEUE       wtskq;      /* Wait task queue */
-} OBJLOCK;
 
 void knl_InitOBJLOCK( OBJLOCK *loc )
 {
@@ -5865,12 +6547,6 @@ EXPORT void knl_UnlockOBJ( OBJLOCK *loc )
 
 
 
-typedef __size_t    size_t;
-#undef  __size_t
-
-typedef __wchar_t   wchar_t;
-#undef  __wchar_t
-
 
 extern void* memset( void *s, int c, size_t n );
 extern int memcmp( const void *s1, const void *s2, size_t n );
@@ -5904,16 +6580,6 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 
 
 
-
-typedef long long   longlong;
-
-
-
-
-typedef struct {
-    long        hi;
-    unsigned long   lo;
-} longlong;
 
 extern longlong ltoll( long a );            /* (longlong)a */
 extern longlong ultoll( unsigned long a );      /* (longlong)a */
@@ -6334,27 +7000,6 @@ SYSCALL INT td_mbx_que_impl( ID mbxid, ID list[], INT nent )
 }
 
 
-/*
- * Mailbox control block
- *
- *  'mq_head' is the first message queue pointer that
- *  points a message.
- *  It is NULL if the message queue is empty.
- *  'mq_tail' is a pointer that points end of message
- *  queue that is not empty.
- *  The message queue value is not guaranteed if the
- *  message queue is empty.
- *  It is used only if the message queue is FIFO (TA_MFIFO).
- */
-typedef struct mailbox_control_block {
-    QUEUE   wait_queue; /* Mailbox wait queue */
-    ID  mbxid;      /* Mailbox ID */
-    void    *exinf;     /* Extended information */
-    ATR mbxatr;     /* Mailbox attribute */
-    T_MSG   mq_head;    /* Head of message queue */
-    T_MSG   *mq_tail;   /* End of message queue */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} MBXCB;
 
 IMPORT MBXCB knl_mbxcb_table[]; /* Mailbox control block */
 IMPORT QUEUE knl_free_mbxcb;    /* FreeQue */
@@ -6682,23 +7327,6 @@ IMPORT  void    *knl_lowmem_top, *knl_lowmem_limit;
 
 
 
-/*
- * Memory allocation management information
- *
- *  Order of members must not be changed because members are used
- *  with casting from MPLCB.
- */
-typedef struct {
-    W       memsz;
-
-    /* AreaQue for connecting each area where reserved pages are
-       divided Sort in ascending order of addresses in a page.
-       Do not sort between pages. */
-    QUEUE       areaque;
-    /* FreeQue for connecting unused area in reserved pages
-       Sort from small to large free spaces. */
-    QUEUE       freeque;
-} IMACB;
 
 /*
  * Compensation for aligning "&areaque" position to 2 bytes border
@@ -7164,28 +7792,6 @@ SYSCALL INT td_mpf_que_impl( ID mpfid, ID list[], INT nent )
 }
 
 
-/*
- * Fixed size memory pool control block
- */
-typedef struct free_list {
-    struct free_list *next;
-} FREEL;
-
-typedef struct fix_memorypool_control_block {
-    QUEUE   wait_queue; /* Memory pool wait queue */
-    ID  mpfid;      /* Fixed size memory pool ID */
-    void    *exinf;     /* Extended information */
-    ATR mpfatr;     /* Memory pool attribute */
-    W   mpfcnt;     /* Number of blocks in whole memory pool */
-    W   blfsz;      /* Fixed size memory block size */
-    W   mpfsz;      /* Whole memory pool size */
-    W   frbcnt;     /* Number of blocks in free area */
-    void    *mempool;   /* Top address of memory pool */
-    void    *unused;        /* Top address of unused area */
-    FREEL   *freelist;  /* Free block list */
-    OBJLOCK lock;       /* Lock for object exclusive access */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} MPFCB;
 
 IMPORT MPFCB knl_mpfcb_table[]; /* Fixed size memory pool control block */
 IMPORT QUEUE knl_free_mpfcb;    /* FreeQue */
@@ -7816,26 +8422,6 @@ SYSCALL INT td_mpl_que_impl( ID mplid, ID list[], INT nent )
 
 
 
-/*
- * Variable size memory pool control block
- *  'areaque' connects memory blocks in address ascending order
- *  'freeque' connects memory blocks in size increasing order
- *
- *  Order of members must not be changed because a part of members
- *  are used with casting to IMACB.
- */
-typedef struct memorypool_control_block {
-    QUEUE   wait_queue; /* Memory pool wait queue */
-    ID  mplid;      /* Variable size memory pool ID */
-    void    *exinf;     /* Extended information */
-    ATR mplatr;     /* Memory pool attribute */
-    W   mplsz;      /* Whole memory pool size */
-    QUEUE   areaque;    /* Queue connecting all blocks */
-    QUEUE   freeque;    /* Queue connecting free blocks */
-    QUEUE   areaque_end;    /* the last element of areaque */
-    void    *mempool;   /* Top address of memory pool */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} MPLCB;
 
 IMPORT MPLCB knl_mplcb_table[]; /* Variable size memory pool control block */
 IMPORT QUEUE knl_free_mplcb;    /* FreeQue */
@@ -8447,30 +9033,6 @@ SYSCALL INT td_rmbf_que_impl( ID mbfid, ID list[], INT nent )
 }
 
 
-/*
- * Message buffer control block
- *
- *  Because Receive wait task (TTW_MBF) and Send wait task (TTW_SMBF)
- *  do not co-exist for one message buffer, the wait queue may be
- *  allowed to share.
- *  However, when the size of message buffer is 0, it is difficult
- *  to judge the wait queue if it is for receive or send, 
- *  therefore do not use this method.
- */
-typedef struct messagebuffer_control_block {
-    QUEUE   send_queue; /* Message buffer send wait queue */
-    ID  mbfid;      /* message buffer ID */
-    void    *exinf;     /* Extended information */
-    ATR mbfatr;     /* Message buffer attribute */
-    QUEUE   recv_queue; /* Message buffer receive wait queue */
-    W   bufsz;      /* Message buffer size */
-    INT maxmsz;     /* Maximum length of message */
-    W   frbufsz;    /* Free buffer size */
-    W   head;       /* First message store address */
-    W   tail;       /* Next to the last message store address */
-    VB  *buffer;    /* Message buffer address */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} MBFCB;
 
 IMPORT MBFCB knl_mbfcb_table[]; /* Message buffer control block */
 IMPORT QUEUE knl_free_mbfcb;    /* FreeQue */
@@ -9308,8 +9870,6 @@ SYSCALL INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
 
 
 
-typedef struct mutex_control_block  MTXCB;
-
 /*
  * Mutex control block
  */
@@ -9724,13 +10284,6 @@ EXPORT void knl_off_pow( void )
 
 
 
-/*
- * Double-link queue (ring)
- */
-typedef struct queue {
-    struct queue    *next;
-    struct queue    *prev;
-} QUEUE;
 
 /*
  * Queue initialization 
@@ -9813,14 +10366,6 @@ QUEUE* QueRemoveNext( QUEUE *que )
  *  Multiple READY tasks with kernel lock do not exist at the same time.
  */
 
-
-typedef struct ready_queue {
-    INT top_priority;       /* Highest priority in ready queue */
-    QUEUE   tskque[NUM_PRI];    /* Task queue per priority */
-    TCB *null;          /* When the ready queue is empty, */
-    UINT    bitmap[NUM_BITMAP]; /* Bitmap area per priority */
-    TCB *klocktsk;  /* READY task with kernel lock */
-} RDYQUE;
 
 IMPORT RDYQUE   knl_ready_queue;
 
@@ -10569,19 +11114,7 @@ SYSCALL INT td_acp_que_impl( ID porid, ID list[], INT nent )
 
 
 
-/*
- * Rendezvous port control block
- */
-typedef struct port_control_block {
-    QUEUE   call_queue; /* Port call wait queue */
-    ID  porid;      /* Port ID */
-    void    *exinf;     /* Extended information */
-    ATR poratr;     /* Port attribute */
-    QUEUE   accept_queue;   /* Port accept wait queue */
-    INT maxcmsz;    /* Maximum length of call message */
-    INT maxrmsz;    /* Maximum length of reply message */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} PORCB;
+
 /** [END Common Definitions] */
 
 IMPORT PORCB knl_porcb_table[]; /* Rendezvous port control block */
@@ -11026,18 +11559,6 @@ SYSCALL INT td_sem_que_impl( ID semid, ID list[], INT nent )
 
 
 
-/*
- * Semaphore control block
- */
-typedef struct semaphore_control_block {
-    QUEUE   wait_queue; /* Semaphore wait queue */
-    ID  semid;      /* Semaphore ID */
-    void    *exinf;     /* Extended information */
-    ATR sematr;     /* Semaphore attribute */
-    INT semcnt;     /* Semaphore current count value */
-    INT maxsem;     /* Semaphore maximum count value */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} SEMCB;
 
 IMPORT SEMCB knl_semcb_table[]; /* Semaphore control block */
 IMPORT QUEUE knl_free_semcb;    /* FreeQue */
@@ -11383,16 +11904,7 @@ EXPORT ER knl_svc_ientry P2GP( void *pk_para, FN fncd )
 }
 
 
-typedef INT  (*SVC)( void *pk_para, FN fncd );  /* Extended SVC handler */
 
-/*
- * Definition of subsystem control block
- */
-typedef struct subsystem_control_block  SSYCB;
-struct subsystem_control_block {
-    SVC svchdr;     /* Extended SVC handler */
-    void    *gp;        /* Global pointer */
-};
 
 IMPORT SSYCB knl_ssycb_table[]; /* Subsystem control block */
 
@@ -11441,306 +11953,6 @@ IMPORT INT knl_no_support( void *pk_para, FN fncd );
 /* System dependencies */
 
 
-/*
- * Task creation information        tk_cre_tsk
- */
-typedef struct t_ctsk {
-    void    *exinf;     /* Extended information */
-    ATR tskatr;     /* Task attribute */
-    FP  task;       /* Task startup address */
-    PRI itskpri;    /* Priority at task startup */
-    SZ  stksz;      /* User stack size (byte) */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-    void    *bufptr;    /* User buffer */
-    void    *gp;        /* Global pointer (gp) */
-} T_CTSK;
-
-/*
- * Task state information       tk_ref_tsk
- */
-typedef struct t_rtsk {
-    void    *exinf;     /* Extended information */
-    PRI tskpri;     /* Current priority */
-    PRI tskbpri;    /* Base priority */
-    UINT    tskstat;    /* Task state */
-    UW  tskwait;    /* Wait factor */
-    ID  wid;        /* Wait object ID */
-    INT wupcnt;     /* Number of wakeup requests queuing */
-    INT suscnt;     /* Number of SUSPEND request nests */
-} T_RTSK;
-
-/*
- * Semaphore creation information       tk_cre_sem
- */
-typedef struct t_csem {
-    void    *exinf;     /* Extended information */
-    ATR sematr;     /* Semaphore attribute */
-    INT isemcnt;    /* Semaphore initial count value */
-    INT maxsem;     /* Semaphore maximum count value */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-} T_CSEM;
-
-/*
- * Semaphore state information      tk_ref_sem
- */
-typedef struct t_rsem {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    INT semcnt;     /* Current semaphore value */
-} T_RSEM;
-
-/*
- * Mutex creation information       tk_cre_mtx
- */
-typedef struct t_cmtx {
-    void    *exinf;     /* Extended information */
-    ATR mtxatr;     /* Mutex attribute */
-    PRI ceilpri;    /* Upper limit priority of mutex */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-} T_CMTX;
-
-/*
- * Mutex state information      tk_ref_mtx
- */
-typedef struct t_rmtx {
-    void    *exinf;     /* Extended information */
-    ID  htsk;       /* Locking task ID */
-    ID  wtsk;       /* Lock wait task ID */
-} T_RMTX;
-
-/*
- * Event flag creation information  tk_cre_flg
- */
-typedef struct t_cflg {
-    void    *exinf;     /* Extended information */
-    ATR flgatr;     /* Event flag attribute */
-    UINT    iflgptn;    /* Event flag initial value */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-} T_CFLG;
-
-/*
- * Event flag state information     tk_ref_flg
- */
-typedef struct t_rflg {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    UINT    flgptn;     /* Current event flag pattern */
-} T_RFLG;
-
-/*
- * Mail box creation information    tk_cre_mbx
- */
-typedef struct t_cmbx {
-    void    *exinf;     /* Extended information */
-    ATR mbxatr;     /* Mail box attribute */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-} T_CMBX;
-
-/*
- * Mail box message header
- */
-typedef struct t_msg {
-    void    *msgque[1]; /* Area for message queue */
-} T_MSG;
-
-typedef struct t_msg_pri {
-    T_MSG   msgque;     /* Area for message queue */
-    PRI msgpri;     /* Message priority */
-} T_MSG_PRI;
-
-/*
- * Mail box state information       tk_ref_mbx
- */
-typedef struct t_rmbx {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    T_MSG   *pk_msg;    /* Next received message */
-} T_RMBX;
-
-/*
- * Message buffer creation information  tk_cre_mbf
- */
-typedef struct t_cmbf {
-    void    *exinf;     /* Extended information */
-    ATR mbfatr;     /* Message buffer attribute */
-    SZ  bufsz;      /* Message buffer size (byte) */
-    INT maxmsz;     /* Maximum length of message (byte) */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-    void    *bufptr;        /* User buffer */
-} T_CMBF;
-
-/*
- * Message buffer state information     tk_ref_mbf
- */
-typedef struct t_rmbf {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Receive wait task ID */
-    ID  stsk;       /* Send wait task ID */
-    INT msgsz;      /* Next received message size (byte) */
-    SZ  frbufsz;    /* Free buffer size (byte) */
-    INT maxmsz;     /* Maximum length of message (byte) */
-} T_RMBF;
-
-/*
- * Rendezvous port creation information tk_cre_por
- */
-typedef struct t_cpor {
-    void    *exinf;     /* Extended information */
-    ATR poratr;     /* Port attribute */
-    INT maxcmsz;    /* Maximum length of call message (byte) */
-    INT maxrmsz;    /* Maximum length of replay message (byte) */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-} T_CPOR;
-
-/*
- * Rendezvous port state information    tk_ref_por
- */
-typedef struct t_rpor {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Call wait task ID */
-    ID  atsk;       /* Receive wait task ID */
-    INT maxcmsz;    /* Maximum length of call message (byte) */
-    INT maxrmsz;    /* Maximum length of replay message (byte) */
-} T_RPOR;
-
-/*
- * Interrupt handler definition information tk_def_int
- */
-typedef struct t_dint {
-    ATR intatr;     /* Interrupt handler attribute */
-    FP  inthdr;     /* Interrupt handler address */
-    void    *gp;        /* Global pointer (gp) */
-} T_DINT;
-
-/*
- * Variable size memory pool creation information   tk_cre_mpl
- */
-typedef struct t_cmpl {
-    void    *exinf;     /* Extended information */
-    ATR mplatr;     /* Memory pool attribute */
-    SZ  mplsz;      /* Size of whole memory pool (byte) */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-    void    *bufptr;        /* User buffer */
-} T_CMPL;
-
-/*
- * Variable size memory pool state information  tk_ref_mpl
- */
-typedef struct t_rmpl {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    SZ  frsz;       /* Total size of free area (byte) */
-    SZ  maxsz;      /* Size of maximum continuous free area
-                   (byte) */
-} T_RMPL;
-
-/*
- * Fixed size memory pool state information tk_cre_mpf
- */
-typedef struct t_cmpf {
-    void    *exinf;     /* Extended information */
-    ATR mpfatr;     /* Memory pool attribute */
-    SZ  mpfcnt;     /* Number of blocks in whole memory pool */
-    SZ  blfsz;      /* Fixed size memory block size (byte) */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-    void    *bufptr;        /* User buffer */
-} T_CMPF;
-
-/*
- * Fixed size memory pool state information tk_ref_mpf
- */
-typedef struct t_rmpf {
-    void    *exinf;     /* Extended information */
-    ID  wtsk;       /* Wait task ID */
-    SZ  frbcnt;     /* Number of free area blocks */
-} T_RMPF;
-
-/*
- * Cycle handler creation information   tk_cre_cyc
- */
-typedef struct t_ccyc {
-    void    *exinf;     /* Extended information */
-    ATR cycatr;     /* Cycle handler attribute */
-    FP  cychdr;     /* Cycle handler address */
-    RELTIM  cyctim;     /* Cycle interval */
-    RELTIM  cycphs;     /* Cycle phase */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-    void    *gp;        /* Global pointer (gp) */
-} T_CCYC;
-
-/*
- * Cycle handler state information  tk_ref_cyc
- */
-typedef struct t_rcyc {
-    void    *exinf;     /* Extended information */
-    RELTIM  lfttim;     /* Remaining time until next handler startup */
-    UINT    cycstat;    /* Cycle handler status */
-} T_RCYC;
-
-/*
- * Alarm handler creation information       tk_cre_alm
- */
-typedef struct t_calm {
-    void    *exinf;     /* Extended information */
-    ATR almatr;     /* Alarm handler attribute */
-    FP  almhdr;     /* Alarm handler address */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
-    void    *gp;        /* Global pointer (gp) */
-} T_CALM;
-
-/*
- * Alarm handler state information  tk_ref_alm
- */
-typedef struct t_ralm {
-    void    *exinf;     /* Extended information */
-    RELTIM  lfttim;     /* Remaining time until handler startup */
-    UINT    almstat;    /* Alarm handler state */
-} T_RALM;
-
-/*
- * Version information      tk_ref_ver
- */
-typedef struct t_rver {
-    UH  maker;      /* OS manufacturer */
-    UH  prid;       /* OS identification number */
-    UH  spver;      /* Specification version */
-    UH  prver;      /* OS product version */
-    UH  prno[4];    /* Product number, Product management
-                   information */
-} T_RVER;
-
-/*
- * System state information     tk_ref_sys
- */
-typedef struct t_rsys {
-    UINT    sysstat;    /* System state */
-    ID  runtskid;   /* ID of task in execution state */
-    ID  schedtskid; /* ID of the task that should be the
-                   execution state */
-} T_RSYS;
-
-/*
- * Subsystem definition information         tk_def_ssy
- */
-typedef struct t_dssy {
-    ATR ssyatr;     /* Subsystem attribute */
-    PRI ssypri;     /* Subsystem priority */
-    FP  svchdr;     /* Extended SVC handler address */
-    FP  breakfn;    /* Break function address */
-    FP  startupfn;  /* Startup function address */
-    FP  cleanupfn;  /* Cleanup function address */
-    FP  eventfn;    /* Event function address */
-    SZ  resblksz;   /* Resource management block size (byte) */
-    void    *gp;        /* Global pointer (gp) */
-} T_DSSY;
-
-/*
- * Subsystem state information      tk_ref_ssy
- */
-typedef struct t_rssy {
-    PRI ssypri;     /* Subsystem priority */
-    SZ  resblksz;   /* Resource management block size (byte) */
-} T_RSSY;
 
 /* ------------------------------------------------------------------------ */
 
@@ -11776,142 +11988,6 @@ typedef struct t_rssy {
 /*
  * Suspend mode
  */
-
-/*
- * Device information
- */
-typedef struct t_rdev {
-    ATR devatr;     /* Device attribute */
-    W   blksz;      /* Specific data block size (-1: Unknown) */
-    INT nsub;       /* Number of subunits */
-    INT subno;      /* 0: Physical device,
-                   1 - nsub: Subunit number +1 */
-} T_RDEV;
-
-/*
- * Registration device information
- */
-typedef struct t_ldev {
-    ATR devatr;     /* Device attribute */
-    W   blksz;      /* Specific data block size (-1: Unknown) */
-    INT nsub;       /* Number of subunits */
-    UB  devnm[L_DEVNM]; /* Physical device name */
-} T_LDEV;
-
-/*
- * Common attribute data number
- *  RW: Readable (tk_rea_dev)/writable (tk_wri_dev)
- *  R-: Readable (tk_rea_dev) only
- */
-
-/*
- * Device event type
- */
-typedef enum tdevttyp {
-    TDE_unknown = 0,        /* Undefined */
-    TDE_MOUNT   = 0x01,     /* Media insert */
-    TDE_EJECT   = 0x02,     /* Media eject */
-    TDE_ILLMOUNT    = 0x03,     /* Media incorrect insert */
-    TDE_ILLEJECT    = 0x04,     /* Media incorrect eject */
-    TDE_REMOUNT = 0x05,     /* Media re-insert */
-    TDE_CARDBATLOW  = 0x06,     /* Card battery low */
-    TDE_CARDBATFAIL = 0x07,     /* Card battery abnormal */
-    TDE_REQEJECT    = 0x08,     /* Media eject request */
-    TDE_PDBUT   = 0x11,     /* PD button state change */
-    TDE_PDMOVE  = 0x12,     /* PD position move */
-    TDE_PDSTATE = 0x13,     /* PD state change */
-    TDE_PDEXT   = 0x14,     /* PD extended event */
-    TDE_KEYDOWN = 0x21,     /* Key down */
-    TDE_KEYUP   = 0x22,     /* Key up */
-    TDE_KEYMETA = 0x23,     /* Meta key state change */
-    TDE_POWEROFF    = 0x31,     /* Power switch off */
-    TDE_POWERLOW    = 0x32,     /* Power low */
-    TDE_POWERFAIL   = 0x33,     /* Power abnormal */
-    TDE_POWERSUS    = 0x34,     /* Automatic suspend */
-    TDE_POWERUPTM   = 0x35,     /* Clock update */
-    TDE_CKPWON  = 0x41      /* Automatic power on notification */
-} TDEvtTyp;
-
-/*
- * Device event message format
- */
-typedef struct t_devevt {
-    TDEvtTyp    evttyp;     /* Event type */
-    /* Information by each event type is added below */
-} T_DEVEVT;
-
-/*
- * Device event message format with device ID
- */
-typedef struct t_devevt_id {
-    TDEvtTyp    evttyp;     /* Event type */
-    ID      devid;      /* Device ID */
-    /* Information by each event type is added below */
-} T_DEVEVT_ID;
-
-/* ------------------------------------------------------------------------ */
-
-/*
- * Device registration information
- */
-typedef struct t_ddev {
-    void    *exinf;     /* Extended information */
-    ATR drvatr;     /* Driver attribute */
-    ATR devatr;     /* Device attribute */
-    INT nsub;       /* Number of subunits */
-    W   blksz;      /* Specific data block size (-1: Unknown) */
-    FP  openfn;     /* Open function */
-    FP  closefn;    /* Close function */
-    FP  execfn;     /* Execute function */
-    FP  waitfn;     /* Completion wait function */
-    FP  abortfn;    /* Abort function */
-    FP  eventfn;    /* Event function */
-    void    *gp;        /* Global pointer (gp) */
-} T_DDEV;
-
-/*
- * Open function:
- *  ER  openfn( ID devid, UINT omode, void *exinf )
- * Close function:
- *  ER  closefn( ID devid, UINT option, void *exinf )
- * Execute function:
- *  ER  execfn( T_DEVREQ *devreq, TMO tmout, void *exinf )
- * Completion wait function:
- *  INT waitfn( T_DEVREQ *devreq, INT nreq, TMO tmout, void *exinf )
- * Abort function:
- *  ER  abortfn( ID tskid, T_DEVREQ *devreq, INT nreq, void *exinf) 
- * Event function:
- *  INT eventfn( INT evttyp, void *evtinf, void *exinf )
- */
-
-/*
- * Driver attribute
- */
-
-/*
- * Device initial setting information
- */
-typedef struct t_idev {
-    ID  evtmbfid;   /* Message buffer ID for event notification */
-} T_IDEV;
-
-/*
- * Device request packet
- *   I: Input parameter
- *   O: Output parameter
- */
-typedef struct t_devreq {
-    struct t_devreq *next;  /* I:Link to request packet (NULL:End) */
-    void    *exinf;     /* X:Extended information */
-    ID  devid;      /* I:Target device ID */
-    INT cmd:4;      /* I:Request command */
-    BOOL    abort:1;    /* I:When executing abort request, TRUE */
-    W   start;      /* I:Start data number */
-    W   size;       /* I:Request size */
-    void    *buf;       /* I:Input/output buffer address */
-    W   asize;      /* O:Result size */
-    ER  error;      /* O:Result error */
-} T_DEVREQ;
 
 /*
  * Request command
@@ -12402,73 +12478,6 @@ IMPORT FastMLock    knl_DevMgrLock;
  * Lock for device registration exclusive control
  */
 
-/*
- * Device registration information
- */
-typedef struct DeviceControlBlock {
-    QUEUE   q;
-    UB  devnm[L_DEVNM+1];   /* Device name */
-    T_DDEV  ddev;           /* Registration information */
-    QUEUE   openq;          /* Open device management queue */
-} DevCB;
-
-IMPORT  DevCB       knl_DevCBtbl[]; /* Device registration information
-                       table */
-IMPORT  QUEUE       knl_UsedDevCB;  /* In-use queue */
-
-
-/*
- * Open management information
- */
-typedef struct OpenControlBlock {
-    QUEUE       q;
-    QUEUE       resq;       /* For connection from resource
-                       management */
-    ID      resid;      /* Section resource ID */
-    DevCB       *devcb;     /* Target device */
-    INT     unitno;     /* Subunit number
-                       (0: Physical device) */
-    UINT        omode;      /* Open mode */
-    QUEUE       requestq;   /* Request management queue */
-    UH      waitone;    /* Number of individual request
-                       waits */
-    T_DEVREQ    *waireqlst; /* List of multiple request waits */
-    INT     nwaireq;    /* Number of multiple request waits */
-    ID      abort_tskid;    /* Abort completion wait task */
-    INT     abort_cnt;  /* Number of abort completion wait
-                       requests */
-    ID      abort_semid; /* Semaphore for abort completion wait */
-} OpnCB;
-
-
-/*
- * Request management information
- */
-typedef struct RequestControlBlock {
-    QUEUE       q;
-    OpnCB       *opncb;     /* Open device */
-    ID      tskid;      /* Processing task */
-    T_DEVREQ    req;        /* Request packet */
-} ReqCB;
-
-/*
- * Resource management information
- */
-typedef struct ResourceControlBlock {
-    QUEUE       openq;      /* Open device management queue */
-    INT     dissus;     /* Suspend disable request count */
-} ResCB;
-
-/*
- * Request function types
- */
-
-typedef ER  (*OPNFN)( ID devid, UINT omode, void *exinf );
-typedef ER  (*ABTFN)( ID tskid, T_DEVREQ *devreq, INT nreq, void *exinf );
-typedef INT (*WAIFN)( T_DEVREQ *devreq, INT nreq, TMO tmout, void *exinf );
-typedef INT (*EVTFN)( INT evttyp, void *evtinf, void *exinf );
-typedef ER  (*CLSFN)( ID devid, UINT option, void *exinf );
-typedef ER  (*EXCFN)( T_DEVREQ *devreq, TMO tmout, void *exinf );
 
 /* ------------------------------------------------------------------------ */
 
@@ -12766,24 +12775,6 @@ SYSCALL INT td_rdy_que_impl( PRI pri, ID list[], INT nent )
 }
 
 
-
-typedef struct mutex_control_block  MTXCB;
-typedef struct task_control_block   TCB;
-
-/*
- * Internal expression of task state
- *  Can check with 'state & TS_WAIT' whether the task is in the wait state.
- *  Can check with 'state & TS_SUSPEND' whether the task is in the forced 
- *  wait state.
- */
-typedef enum {
-    TS_NONEXIST = 0,    /* Unregistered state */
-    TS_READY    = 1,    /* RUN or READY state */
-    TS_WAIT     = 2,    /* WAIT state */
-    TS_SUSPEND  = 4,    /* SUSPEND state */
-    TS_WAITSUS  = 6,    /* Both WAIT and SUSPEND state */
-    TS_DORMANT  = 8 /* DORMANT state */
-} TSTAT;
 
 /*
  * If the task is alive ( except NON-EXISTENT,DORMANT ), return TRUE.
@@ -13998,10 +13989,6 @@ EXPORT void knl_timer_handler( void )
 }
 
 
-/*
- * SYSTIM internal expression and conversion
- */
-typedef longlong    LSYSTIM;    /* SYSTIM int. expression */
 
 LSYSTIM knl_toLSYSTIM( CONST SYSTIM *time )
 {
@@ -14021,17 +14008,6 @@ SYSTIM knl_toSYSTIM( LSYSTIM ltime )
     return time;
 }
 
-/*
- * Definition of timer event block 
- */
-typedef void    (*CBACK)(void *);   /* Type of callback function */
-
-typedef struct timer_event_block {
-    QUEUE   queue;      /* Timer event queue */
-    LSYSTIM time;       /* Event time */
-    CBACK   callback;   /* Callback function */
-    void    *arg;       /* Argument to be sent to callback function */
-} TMEB;
 
 /*
  * Current time (Software clock)
@@ -14874,19 +14850,6 @@ SYSCALL ER td_ref_alm_impl( ID almid, TD_RALM *pk_ralm )
 }
 
 
-/*
- * Cyclic handler control block
- */
-typedef struct cyclic_handler_control_block {
-    void    *exinf;     /* Extended information */
-    ATR cycatr;     /* Cyclic handler attribute */
-    FP  cychdr;     /* Cyclic handler address */
-    UINT    cycstat;    /* Cyclic handler state */
-    RELTIM  cyctim;     /* Cyclic time */
-    TMEB    cyctmeb;    /* Timer event block */
-    void    *gp;        /* Global pointer */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} CYCCB;
 
 IMPORT CYCCB    knl_cyccb_table[];  /* Cyclic handler control block */
 IMPORT QUEUE    knl_free_cyccb; /* FreeQue */
@@ -14927,19 +14890,6 @@ void knl_cyc_timer_insert( CYCCB *cyccb, LSYSTIM tm )
 }
 
 
-/*
- * Alarm handler control block
- */
-typedef struct alarm_handler_control_block {
-    void    *exinf;     /* Extended information */
-    ATR almatr;     /* Alarm handler attribute */
-    FP  almhdr;     /* Alarm handler address */
-    UINT    almstat;    /* Alarm handler state */
-    TMEB    almtmeb;    /* Timer event block */
-    void    *gp;        /* Global pointer */
-    UB  name[OBJECT_NAME_LENGTH];   /* name */
-} ALMCB;
-/** [END Common Definitions] */
 
 IMPORT ALMCB    knl_almcb_table[];  /* Alarm handler control block */
 IMPORT QUEUE    knl_free_almcb; /* FreeQue */
@@ -15319,37 +15269,12 @@ EXPORT void knl_t_kernel_exit( void )
 
 
 
-/*
- * Data type in which meaning is defined in T-Kernel/OS specification 
- */
-typedef INT     FN;     /* Function code */
-typedef INT     RNO;        /* Rendezvous number */
-typedef UW      ATR;        /* Object/handler attribute */
-typedef INT     ER;     /* Error code */
-typedef INT     PRI;        /* Priority */
-typedef W       TMO;        /* Time out setting */
-typedef UW      RELTIM;     /* Relative time */
-
-typedef struct systim {         /* System time */
-    W   hi;         /* Upper 32 bits */
-    UW  lo;         /* Lower 32 bits */
-} SYSTIM;
 
 /*
  * Common constant
  */
 
 /* ------------------------------------------------------------------------ */
-
-/*
- * 64 bits value
- */
-typedef struct dw {
-    W   hi; /* Upper 32 bits */
-    UW  lo; /* Lower 32 bits */
-    UW  lo; /* Lower 32 bits */
-    W   hi; /* Upper 32 bits */
-} DW;
 
 
 
@@ -15452,14 +15377,6 @@ EXPORT void tm_monitor( void )
 
 extern  int tm_putchar( int c );
 extern  int tm_putstring( UB *s );
-
-/* Output function */
-typedef struct {
-    short   len;        /* Total output length */
-    short   cnt;        /* Buffer counts */
-    UB  *bufp;      /* Buffer pointer for tm_sprintf */
-} OutPar;
-typedef void    (*OutFn)( UB *str, int len, OutPar *par );
 
 /*
  *  Output integer value
@@ -15823,30 +15740,12 @@ EXPORT  INT usermain( void )
 
 
 
-/*
- * Fast Lock
- */
-typedef struct {
-    INT cnt;
-    ID  id;
-} FastLock;
 
 IMPORT ER CreateLock( FastLock *lock, CONST UB *name );
 IMPORT void DeleteLock( FastLock *lock );
 IMPORT void Lock( FastLock *lock );
 IMPORT void Unlock( FastLock *lock );
 
-/*
- * Multi Lock
- *  Can use the maximum of 16 or 32 independent locks with a single FastMLock.
- *  Divided by the lock number (no). Can specify 0-15 or 0-31 for 'no.'
- *  (Slightly less efficient than FastLock)
- */
-typedef struct {
-    UINT    flg;
-    INT wai;
-    ID  id;
-} FastMLock;
 
 IMPORT ER CreateMLock( FastMLock *lock, CONST UB *name );
 IMPORT ER DeleteMLock( FastMLock *lock );
@@ -16179,25 +16078,6 @@ void knl_queue_insert_tpri( TCB *tcb, QUEUE *queue )
     QueInsert(&tcb->tskque, q);
 }
 
-/*
- * Common part of control block
- *  For synchronization between tasks and communication object,
- *  the head part of control block is common. The followings are
- *  common routines.
- *  Define common part as GCB (generic control block) type.
- *  Cannot use these routines if an object has multiple wait queues
- *  and when it operates a wait queue after the first one.
- *  Cannot use these routines if TA_TPRI, TA_NODISWAI object attribute
- *  bits are used for other purposes since these bits are checked.
- */
-typedef struct generic_control_block {
-    QUEUE   wait_queue; /* Wait queue */
-    ID  objid;      /* Object ID */
-    void    *exinf;     /* Extended information */
-    ATR objatr;     /* Object attribute */
-    /* It is OK to have another field after this point, */
-    /* but it is not used for generic operation routines. */
-} GCB ;
 
 /*
  * Change the active task to wait state and connect to the timer event 
@@ -16244,112 +16124,4 @@ void knl_wait_release( TCB *tcb )
 }
 
 
-
-/*
- * Semaphore wait (TTW_SEM)
- */
-typedef struct {
-    INT cnt;        /* Request resource number */
-} WINFO_SEM;
-
-/*
- * Event flag wait (TTW_FLG)
- */
-typedef struct {
-    UINT    waiptn;     /* Wait bit pattern */
-    UINT    wfmode;     /* Wait mode */
-    UINT    *p_flgptn;  /* Address that has a bit pattern
-                   at wait released */
-} WINFO_FLG;
-
-/*
- * Mailbox wait (TTW_MBX)
- */
-typedef struct {
-    T_MSG   **ppk_msg;  /* Address that has the head of a
-                   message packet */
-} WINFO_MBX;
-
-/*
- * Message buffer receive/send wait (TTW_RMBF, TTW_SMBF)
- */
-typedef struct {
-    void    *msg;       /* Address that has a received message */
-    INT *p_msgsz;   /* Address that has a received message size */
-} WINFO_RMBF;
-
-typedef struct {
-    CONST void *msg;    /* Send message head address */
-    INT msgsz;      /* Send message size */
-} WINFO_SMBF;
-
-/*
- * Rendezvous call/accept/end wait (TTW_CAL, TTW_ACP, TTW_RDV)
- */
-typedef struct {
-    UINT    calptn;     /* Bit pattern that indicates caller
-                   select condition */
-    void    *msg;       /* Address that has a message */
-    INT cmsgsz;     /* Call message size */
-    INT *p_rmsgsz;  /* Address that has a reply message size */
-} WINFO_CAL;
-
-typedef struct {
-    UINT    acpptn;     /* Bit pattern that indicates receiver
-                   select condition */
-    void    *msg;       /* Address that has a call message */
-    RNO *p_rdvno;   /* Address that has the rendezvous number */
-    INT *p_cmsgsz;  /* Address that has the call message size */
-} WINFO_ACP;
-
-typedef struct {
-    RNO rdvno;      /* Rendezvous number */
-    void    *msg;       /* Address that has a message */
-    INT maxrmsz;    /* Maximum length of reply message */
-    INT *p_rmsgsz;  /* Address that has a reply message size */
-} WINFO_RDV;
-
-/*
- * Variable size memory pool wait (TTW_MPL)
- */
-typedef struct {
-    W   blksz;      /* Memory block size */
-    void    **p_blk;        /* Address that has the head of a
-                   memory block */
-} WINFO_MPL;
-
-/*
- * Fixed size memory pool wait (TTW_MPF)
- */
-typedef struct {
-    void    **p_blf;        /* Address that has the head of a
-                   memory block */
-} WINFO_MPF;
-
-/*
- * Definition of wait information in task control block
- */
-typedef union {
-    WINFO_SEM   sem;
-    WINFO_FLG   flg;
-    WINFO_MBX   mbx;
-    WINFO_RMBF  rmbf;
-    WINFO_SMBF  smbf;
-    WINFO_CAL   cal;
-    WINFO_ACP   acp;
-    WINFO_RDV   rdv;
-    WINFO_MPL   mpl;
-    WINFO_MPF   mpf;
-} WINFO;
-
-/*
- * Definition of wait specification structure
- */
-typedef struct {
-    UW  tskwait;            /* Wait factor */
-    void    (*chg_pri_hook)(TCB *, INT);    /* Process at task priority
-                           change */
-    void    (*rel_wai_hook)(TCB *);     /* Process at task wait
-                           release */
-} WSPEC;
 
