@@ -35,8 +35,6 @@
 #ifndef __TK_ASM_H__
 #define __TK_ASM_H__
 
-#include <sysdef.h>
-#include <asm_common.h>
 
 #endif /* __TK_ASM_H__ */
 
@@ -52,7 +50,6 @@
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#include <asm_depend.h>
 #endif
 
 #endif /* __TK_ASM_COMMON_H__ */
@@ -79,16 +76,10 @@
 #ifndef	__BASIC_H__
 #define __BASIC_H__
 
-#include <machine.h>
-#include <stddef.h>
-#include <typedef.h>
 
 #endif /* __BASIC_H__ */
 
 /** [BEGIN Common Definitions] */
-#include <basic.h>
-#include <tkernel.h>
-#include "utk_config.h"
 
 /*** macros ***/
 /* bit operation macro */
@@ -192,8 +183,6 @@ knl_tstdlib_bitsearch1( void *base, W offset, W width )
 #ifndef	_BITOP_
 #define _BITOP_
 
-#include <stdtype.h>
-#include "utk_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -469,7 +458,6 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 #endif /* _CHECK_ */
 
 
-#include <typedef.h>
 
 EXPORT void init_clock_control(void)
 {
@@ -1011,9 +999,6 @@ IMPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T
 
 #endif /* _CPU_CONF_ */
 
-#include <tk_typedef.h>
-#include <errno.h>
-#include <typedef.h>
 
 /*
  * CPU-dependent initialization
@@ -1051,7 +1036,6 @@ EXPORT void knl_cpu_shutdown( void )
 #ifndef _CPU_INSN_
 #define _CPU_INSN_
 
-#include <sysinfo.h>
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -1103,9 +1087,6 @@ void knl_LeaveTaskIndependent( void )
 #ifndef _CPU_STATUS_
 #define _CPU_STATUS_
 
-#include <syslib.h>
-#include <sysdef.h>
-#include "cpu_insn.h"
 
 /*
  * Start/End critical section
@@ -1204,7 +1185,6 @@ typedef struct {
 #ifndef _CPU_TASK_
 #define _CPU_TASK_
 
-#include "cpu_insn.h"
 
 /*
  * System stack configuration at task startup
@@ -1276,11 +1256,7 @@ void knl_cleanup_context( TCB *tcb )
 #ifndef __TK_DBGSPT_H__
 #define __TK_DBGSPT_H__
 
-#include <basic.h>
-#include <tk_typedef.h>
-#include <syscall.h>
 
-#include <dbgspt_common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1564,7 +1540,6 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#include <dbgspt_depend.h>
 #endif
 
 #endif /* __TK_DBGSPT_COMMON_H__ */
@@ -1592,10 +1567,8 @@ typedef struct td_calinf {
 #ifndef	__SYS_DEBUG_H__
 #define __SYS_DEBUG_H__
 
-#include <basic.h>
 
 #ifdef DEBUG
-#include <tmonitor.h>
 #endif
 
 #ifdef __cplusplus
@@ -1639,9 +1612,6 @@ extern "C" {
 #endif /* __SYS_DEBUG_H__ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "sysmgr.h"
-#include "device.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_REGDEV > 0
@@ -2286,7 +2256,6 @@ EXPORT ER knl_finish_devmgr( void )
 
 IMPORT	T_IDEV		knl_DefaultIDev;
 
-#include "task.h"
 /*
  *	Device registration management
  */
@@ -2329,7 +2298,6 @@ IMPORT QUEUE knl_FreeReqCB;	/* Unused queue */
 IMPORT ResCB knl_resource_control_block;
 
 
-#include "limits.h"
 
 /* Suspend disable request count */
 IMPORT	INT	knl_DisSusCnt;
@@ -2375,9 +2343,6 @@ IMPORT ER knl_close_device( OpnCB *opncb, UINT option );
 #endif /* _DEVICE_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "sysmgr.h"
-#include "device.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_REGDEV
@@ -3575,9 +3540,6 @@ EXPORT ER knl_finishDevIO( void )
 
 #endif /* CFN_MAX_REGDEV */
 
-#include <tk_typedef.h>
-#include <errno.h>
-#include <typedef.h>
 
 EXPORT	W	knl_taskindp = 0;
 Noinit(EXPORT	UW	knl_taskmode);
@@ -3675,7 +3637,6 @@ EXPORT ER knl_restart_device( W mode )
  * MERCD, SERCD).
  */
 #ifndef _in_asm_source_
-#include <tk_typedef.h>
 
 #define MERCD(er)	( (ER)(er) >> 16 )	/* Main error code */
 #define SERCD(er)	( (H)(er) )		/* Sub-error code */
@@ -3717,11 +3678,6 @@ EXPORT ER knl_restart_device( W mode )
 #endif /* __TK_ERRNO_H__ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "eventflag.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_FLGID > 0
@@ -4187,11 +4143,6 @@ BOOL knl_eventflag_cond( FLGCB *flgcb, UINT waiptn, UINT wfmode )
 #endif /* _EVENTFLAG_H_ */
 
 /** [BEGIN Common Definitions] */
-#include <basic.h>
-#include <tkernel.h>
-#include <util.h>
-#include <libstr.h>
-#include "libtk_config.h"
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -4293,11 +4244,6 @@ EXPORT void DeleteLock( FastLock *lock )
 #endif /* USE_FUNC_DELETELOCK */
 
 /** [BEGIN Common Definitions] */
-#include <basic.h>
-#include <tkernel.h>
-#include <util.h>
-#include <libstr.h>
-#include "libtk_config.h"
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -4489,8 +4435,6 @@ EXPORT ER DeleteMLock( FastMLock *lock )
 #ifndef __SYS_IMALLOC_H__
 #define __SYS_IMALLOC_H__
 
-#include <basic.h>
-#include <tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -4505,7 +4449,6 @@ IMPORT void  knl_Ifree( void *ptr );
 #endif
 #endif /* __SYS_IMALLOC_H__ */
 
-#include "inittask_def.h"
 
 IMPORT void knl_init_task(void);
 
@@ -4539,9 +4482,6 @@ EXPORT const T_CTSK knl_c_init_task = {
 #ifndef _INITTASK_DEF_
 #define _INITTASK_DEF_
 
-#include <basic.h>
-#include <tkernel.h>
-#include "utk_config.h"
 
 /*
  * Initial task parameter
@@ -4555,9 +4495,6 @@ EXPORT const T_CTSK knl_c_init_task = {
 
 #endif /* _INITTASK_DEF_ */
 
-#include "sysmain.h"
-#include "kernel.h"
-#include <debug.h>
 
 typedef INT	(*MAIN_FP)(INT, UB **);
 
@@ -4604,9 +4541,6 @@ EXPORT INT knl_init_task_main( void )
 	return fin;
 }
 
-#include <basic.h>
-#include <syslib.h>
-#include <sysdef.h>
 
 #define INTPRI_MIN_UNIT	(0x100 >> INTPRI_BITWIDTH)
 #define INTPRI_MASK	(0x100 - INTPRI_MIN_UNIT)
@@ -5542,27 +5476,14 @@ IMPORT ER tk_ref_idv_impl( T_IDEV *idev );
 #ifndef _KERNEL_
 #define _KERNEL_
 
-#include <basic.h>
-#include <tk_typedef.h>
-#include <errno.h>
-#include <syscall.h>
-#include <dbgspt.h>
-#include <imalloc.h>
-#include <queue.h>
-#include <libstr.h>
 
-#include "utk_config.h"
 
-#include "isyscall.h"
 
 #define SYSCALL		EXPORT		/* Definition of system call */
 
 /*
  * Kernel configuration file
  */
-#include "config.h"
-#include "cpu_conf.h"
-#include "tkdev_conf.h"
 
 #ifndef __tcb__
 #define __tcb__
@@ -5594,7 +5515,6 @@ BOOL knl_isLockedOBJ( OBJLOCK *loc )
 /*
  * CPU-dependent include file
  */
-#include "cpu_status.h"
 
 /*
  * System initialization (each module)
@@ -5635,9 +5555,6 @@ IMPORT INT knl_chg_pri_mutex( TCB *tcb, INT priority );
 
 #endif /* _KERNEL_ */
 
-#include "kernel.h"
-#include "task.h"
-#include "ready_queue.h"
 
 /*
  * Object lock
@@ -5708,7 +5625,6 @@ EXPORT void knl_UnlockOBJ( OBJLOCK *loc )
 #ifndef	__LIBSTR_H__
 #define __LIBSTR_H__
 
-#include <stdtype.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -5900,7 +5816,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 
 /* ===== System dependencies definitions ================================ */
 
-#include <machine_common.h>
 
 /* ===== Common definitions ============================================= */
 
@@ -5960,7 +5875,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 //#include <machine_depend.h>
 //#endif
 
-#include <machine_depend.h>
 
 #endif /* __SYS_MACHINE_COMMON_H__ */
 
@@ -5997,11 +5911,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 #endif /* __SYS_MACHINE_DEPEND_H__ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "mailbox.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_MBXID > 0
@@ -6447,9 +6356,6 @@ void knl_queue_insert_mpri( T_MSG_PRI *pk_msg, T_MSG *head )
 #endif /* _MAILBOX_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include <imalloc.h>
-#include "memory.h"
 /** [END Common Definitions] */
 
 
@@ -6848,11 +6754,6 @@ IMPORT ER knl_init_Imalloc( void );
 #endif /* _MEMORY_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "mempfix.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_MPFID > 0
@@ -7366,12 +7267,6 @@ void *knl_mempool_end( MPFCB *mpfcb )
 #endif /* _MEMPFIX_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "memory.h"
-#include "mempool.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_MPLID > 0
@@ -8094,11 +7989,6 @@ IMPORT void knl_mpl_wakeup( MPLCB *mplcb );
 #endif /* _MEMPOOL_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "messagebuf.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_MBFID > 0
@@ -8807,10 +8697,6 @@ IMPORT void knl_mbf_wakeup( MBFCB *mbfcb );
 #endif /* _MESSAGEBUF_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "check.h"
-#include "misc_calls.h"
 /** [END Common Definitions] */
 
 
@@ -9048,11 +8934,6 @@ IMPORT void knl_unhook_int( void );
 #endif /* _MISC_CALLS_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "mutex.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_MTXID > 0
@@ -9750,8 +9631,6 @@ IMPORT void knl_release_mutex( TCB *tcb, MTXCB *relmtxcb );
 #endif /* _MUTEX_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include <libstr.h>
 /** [END Common Definitions] */
 
 #if USE_DBGSPT
@@ -9924,7 +9803,6 @@ SYSCALL ER td_set_dsname_impl( UINT type, ID id, CONST UB *dsname )
 #define _OFFSET_
 
 /* Adjust offset of TCB member variables in offset.h for cpu_support.S */
-#include "config.h"
 
 /*	TCB.wrdvno	*/
 #if CFN_MAX_PORID > 0
@@ -10027,7 +9905,6 @@ EXPORT void sysdepend_patch2( void );
 #endif /* _PATCH_ */
 
 
-#include <tk_typedef.h>
 
 /*
  * Switch to power-saving mode
@@ -10047,7 +9924,6 @@ EXPORT void knl_off_pow( void )
 #ifndef __SYS_PROFILE_H__
 #define __SYS_PROFILE_H__
 
-#include <profile_common.h>
 
 #if !(TK_SUPPORT_USERBUF || TK_SUPPORT_AUTOBUF)
 # error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."
@@ -10104,7 +9980,6 @@ EXPORT void knl_off_pow( void )
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#include <profile_depend.h>
 #endif
 
 #endif /* __SYS_PROFILE_COMMON_H__ */
@@ -10113,8 +9988,6 @@ EXPORT void knl_off_pow( void )
 #ifndef __SYS_CORE_PROFILE_DEPEND_H__
 #define __SYS_CORE_PROFILE_DEPEND_H__
 
-#include <machine.h>
-#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -10347,7 +10220,6 @@ extern "C" {
 #ifndef	__SYS_QUEUE_H__
 #define __SYS_QUEUE_H__
 
-#include <basic.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10433,8 +10305,6 @@ QUEUE* QueRemoveNext( QUEUE *que )
 #ifndef _READY_QUEUE_
 #define _READY_QUEUE_
 
-#include <libstr.h>
-#include "bitop.h"
 
 /*
  * Definition of ready queue structure 
@@ -10617,11 +10487,6 @@ TCB* knl_ready_queue_move_last( RDYQUE *rq, TCB *tcb )
 #endif /* _READY_QUEUE_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "rendezvous.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_PORID > 0
@@ -11342,11 +11207,6 @@ IMPORT CONST WSPEC knl_wspec_rdv;
 #endif /* _RENDEZVOUS_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "semaphore.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_SEMID > 0
@@ -11806,7 +11666,6 @@ IMPORT QUEUE knl_free_semcb;	/* FreeQue */
 
 #endif /* _SEMAPHORE_H_ */
 
-#include <typedef.h>
 
 // #define	TERM_PORT		0
 
@@ -11990,7 +11849,6 @@ EXPORT void sio_init(void)
 #ifndef __SYS_STR_ALIGN_H__
 #define __SYS_STR_ALIGN_H__
 
-#include <str_align_common.h>
 
 #endif /* __SYS_STR_ALIGN_H__ */
 
@@ -12010,7 +11868,6 @@ EXPORT void sio_init(void)
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#include <str_align_depend.h>
 #endif
 
 #endif /* __SYS_STR_ALIGN_COMMON_H__ */
@@ -12032,11 +11889,6 @@ EXPORT void sio_init(void)
 #endif /* __SYS_STR_ALIGN_DEPEND_H__ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "check.h"
-#include "bitop.h"
-#include "subsystem.h"
 /** [END Common Definitions] */
 
 #if CFN_MAX_SSYID > 0
@@ -12270,10 +12122,7 @@ IMPORT INT knl_no_support( void *pk_para, FN fncd );
 #ifndef __TK_SYSCALL_H__
 #define __TK_SYSCALL_H__
 
-#include <config.h>
 
-#include <basic.h>
-#include <tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -12438,7 +12287,6 @@ extern "C" {
 #endif
 
 /* System dependencies */
-#include <syscall_common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13130,8 +12978,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#include <cpuattr.h>
-#include <cpudef.h>
 #endif
 
 #endif /* __TK_SYSCALL_COMMON_H__ */
@@ -13139,7 +12985,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #ifndef __TK_SYSDEF_H__
 #define __TK_SYSDEF_H__
 
-#include <sysdef_common.h>
 
 #endif /* __TK_SYSDEF_H__ */
 
@@ -13159,7 +13004,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#include <sysdef_depend.h>
 #endif
 
 #endif /* __TK_SYSDEF_COMMON_H__ */
@@ -13363,7 +13207,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #ifndef __SYS_SYSINFO_H__
 #define __SYS_SYSINFO_H__
 
-#include <sysinfo_common.h>
 
 #endif /* __SYS_SYSINFO_H__ */
 
@@ -13383,7 +13226,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#include <sysinfo_depend.h>
 #endif
 
 #endif /* __SYS_SYSINFO_COMMON_H__ */
@@ -13413,9 +13255,6 @@ IMPORT	UW	knl_taskmode;
 #ifndef _SYSINIT_
 #define _SYSINIT_
 
-#include <basic.h>
-#include <tkernel.h>
-#include <tmonitor.h>
 
 /*
  * Platform dependent sequence
@@ -13427,11 +13266,6 @@ IMPORT ER knl_restart_device( W mode );
 
 #endif /* _SYSINIT_ */
 
-#include <tk_typedef.h>
-#include <errno.h>
-#include <typedef.h>
-#include <syscall.h>
-#include <cpu_status.h>
 
 /*
  * Initialize sequence before micro T-Kernel starts
@@ -13531,10 +13365,7 @@ EXPORT int main( void )
 #ifndef __TK_SYSLIB_H__
 #define __TK_SYSLIB_H__
 
-#include <basic.h>
-#include <tk_typedef.h>
 
-#include <syslib_common.h>
 
 #endif /* __TK_SYSLIB_H__ */
 
@@ -13557,7 +13388,6 @@ EXPORT int main( void )
 // #endif
 
 #if _APP_RL78G13_R5F100ADASP_
-#include <syslib_depend.h>
 #endif
 
 #endif /* __TK_SYSLIB_COMMON_H__ */
@@ -13565,8 +13395,6 @@ EXPORT int main( void )
 #ifndef __TK_SYSLIB_DEPEND_H__
 #define __TK_SYSLIB_DEPEND_H__
 
-#include <errno.h>
-#include <sysdef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13705,9 +13533,6 @@ UB in_b( UW port )
 #ifndef _SYSMAIN_
 #define _SYSMAIN_
 
-#include <basic.h>
-#include <tkernel.h>
-#include <tmonitor.h>
 
 /* Boot message */
 #define BOOT_MESSAGE \
@@ -13725,16 +13550,8 @@ IMPORT INT usermain( void );
 #ifndef _SYSMGR_
 #define _SYSMGR_
 
-#include "utk_config.h"
 
-#include <basic.h>
-#include <tkernel.h>
-#include <libstr.h>
-#include <queue.h>
-#include <util.h>
-#include <debug.h>
 
-#include <imalloc.h>
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -13860,8 +13677,6 @@ IMPORT ER knl_finishDevIO( void );
 
 #endif /* _SYSMGR_ */
 
-#include "sysinit.h"
-#include "kernel.h"
 
 /*
  * Manager/Driver
@@ -13960,13 +13775,6 @@ EXPORT void knl_shutdown_system( INT fin )
 #endif /* USE_CLEANUP */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "ready_queue.h"
-#include "wait.h"
-#include "cpu_task.h"
-#include "tkdev_timer.h"
-#include "check.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_CTXTSK
@@ -14198,10 +14006,6 @@ typedef struct mutex_control_block	MTXCB;
 typedef struct task_control_block	TCB;
 #endif
 
-#include <queue.h>
-#include <str_align.h>
-#include "timer.h"
-#include "winfo.h"
 
 /*
  * Internal expression of task state
@@ -14388,7 +14192,6 @@ IMPORT void knl_rotate_ready_queue( INT priority );
 IMPORT void knl_rotate_ready_queue_run( void );
 
 
-#include "ready_queue.h"
 
 /*
  * Reselect task to execute
@@ -14411,12 +14214,6 @@ IMPORT void knl_ter_tsk( TCB *tcb );
 #endif /* _TASK_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "cpu_task.h"
-#include <tmonitor.h>
 /** [END Common Definitions] */
 
 
@@ -15055,12 +14852,6 @@ SYSCALL ER td_inf_tsk_impl( ID tskid, TD_ITSK *pk_itsk, BOOL clr )
 #endif /* USE_DBGSPT */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "limits.h"
-#include "task_sync.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_TK_SUS_TSK
@@ -15328,9 +15119,7 @@ IMPORT CONST WSPEC knl_wspec_slp;
 #define _TDFNCD_H_
 
 #if INT_BITWIDTH == 16
-#include "tdfncd16.h"
 #else
-#include "tdfncd32.h"
 #endif
 
 #endif /* _TDFNCD_H_ */
@@ -15489,7 +15278,6 @@ IMPORT CONST WSPEC knl_wspec_slp;
  *	   created from /usr/local/te/include/tk/dbgspt.h
  */
 
-#include <machine.h>
 
 #define _TDSC_ENTRY(name)	.long	_name##_impl
 
@@ -15542,10 +15330,6 @@ IMPORT CONST WSPEC knl_wspec_slp;
 	_TDSC_ENTRY(td_ref_dsname)
 	_TDSC_ENTRY(td_set_dsname)
 
-#include "kernel.h"
-#include "timer.h"
-#include "task.h"
-#include "tkdev_timer.h"
 
 /*
  * Current time (Software clock)
@@ -15718,7 +15502,6 @@ EXPORT void knl_timer_handler( void )
 #ifndef _TIMER_
 #define _TIMER_
 
-#include <longlong.h>
 
 /*
  * SYSTIM internal expression and conversion
@@ -15793,13 +15576,6 @@ void knl_timer_delete( TMEB *event )
 #endif /* _TIMER_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "timer.h"
-#include "task.h"
-#include "wait.h"
-#include "check.h"
-#include "tkdev_timer.h"
-#include "time_calls.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_TK_SET_TIM
@@ -16815,8 +16591,6 @@ void knl_alm_timer_insert( ALMCB *almcb, RELTIM reltim )
 
 #endif /* _TKDEV_CONF_ */
 
-#include <tk_typedef.h>
-#include <errno.h>
 
 /*
  * Target system-dependent initialization
@@ -16846,9 +16620,6 @@ EXPORT void knl_tkdev_exit( void )
 #ifndef _TKDEV_TIMER_
 #define _TKDEV_TIMER_
 
-#include <syslib.h>
-#include <sysinfo.h>
-#include "tkdev_conf.h"
 
 #define ENAINT	Asm("ldr	r0, =0 \n" \
 		    "msr	basepri, r0")
@@ -16953,14 +16724,8 @@ UW knl_get_hw_timer_nsec( void )
 #ifndef __TK_TKERNEL_H__
 #define __TK_TKERNEL_H__
 
-#include <basic.h>
-#include <tk_typedef.h>
-#include <errno.h>
 
-#include <syscall.h>
-#include <syslib.h>
 
-#include <profile.h>
 
 #endif /* __TK_TKERNEL_H__ */
 /*
@@ -16971,9 +16736,7 @@ UW knl_get_hw_timer_nsec( void )
 #define _TKFNCD_H_
 
 #if INT_BITWIDTH == 16
-#include "tkfncd16.h"
 #else
-#include "tkfncd32.h"
 #endif
 
 #endif /* _TKFNCD_H_ */
@@ -17186,10 +16949,6 @@ UW knl_get_hw_timer_nsec( void )
 #define TFN_REF_IDV	0x80630100
 
 
-#include "kernel.h"
-#include "timer.h"
-#include "task.h"
-#include <tmonitor.h>
 
 /*
  * Start initial task
@@ -17450,7 +17209,6 @@ EXPORT void knl_t_kernel_exit( void )
  *	   created from /usr/local/te/include/tk/syscall.h
  */
 
-#include <machine.h>
 
 #define _SVC_ENTRY(name)	.long	_name##_impl
 
@@ -17559,7 +17317,6 @@ EXPORT void knl_t_kernel_exit( void )
 #ifndef	__TK_TYPEDEF_H__
 #define __TK_TYPEDEF_H__
 
-#include <basic.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17612,7 +17369,6 @@ typedef struct dw {
 #ifndef __TM_TMONITOR_H__
 #define __TM_TMONITOR_H__
 
-#include <basic.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17636,7 +17392,6 @@ IMPORT INT  tm_printf( const UB *format, ... );
 #endif
 #endif /* __TM_TMONITOR_H__ */
 
-#include <typedef.h>
 
 INT tm_command ( UB *buff )
 {
@@ -17645,7 +17400,6 @@ INT tm_command ( UB *buff )
 	}
 }
 
-#include <typedef.h>
 
 void tm_exit( INT mode )
 {
@@ -17654,9 +17408,6 @@ void tm_exit( INT mode )
 	}
 }
 
-#include <typedef.h>
-#include <stddef.h>
-#include <syslib.h>
 
 IMPORT void sio_recv_frame( UB* buf, INT size );
 
@@ -17677,9 +17428,6 @@ EXPORT INT tm_getchar( INT wait )
 	return (INT)p;
 }
 
-#include <typedef.h>
-#include <stddef.h>
-#include <syslib.h>
 
 IMPORT void sio_send_frame( const UB* buf, INT size );
 IMPORT void sio_recv_frame( UB* buf, INT size );
@@ -17718,8 +17466,6 @@ err_ret:
 	return len;
 }
 
-#include <typedef.h>
-#include <stddef.h>
 
 EXPORT void tm_monitor( void )
 {
@@ -17727,8 +17473,6 @@ EXPORT void tm_monitor( void )
 		;
 	}
 }
-#include <stdarg.h>
-#include <basic.h>
 
 /* Output Buffer size in stack */
 #define	OUTBUF_SZ	0
@@ -18047,8 +17791,6 @@ int	tm_sprintf( UB *str, const UB *format, ... )
 	return par.len;
 }
 
-#include <typedef.h>
-#include <stddef.h>
 
 IMPORT void sio_send_frame( const UB* buf, INT size );
 
@@ -18068,9 +17810,6 @@ EXPORT INT tm_putchar( INT c )
 	return 0;
 }
 
-#include <typedef.h>
-#include <stddef.h>
-#include <syslib.h>
 
 IMPORT void sio_send_frame( const UB* buf, INT size );
 IMPORT void sio_recv_frame( UB* buf, INT size );
@@ -18101,9 +17840,6 @@ EXPORT INT tm_putstring( UB *buff )
 	return 0;
 }
 
-#include <basic.h>
-#include <tkernel.h>
-#include <tmonitor.h>
 
 /*
  * Entry routine for the user application.
@@ -18129,8 +17865,6 @@ EXPORT	INT	usermain( void )
 #ifndef	__TK_UTIL_H__
 #define __TK_UTIL_H__
 
-#include <basic.h>
-#include <tk_typedef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -18182,7 +17916,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #ifndef _UTK_CONFIG_H_
 #define _UTK_CONFIG_H_
 
-#include "config.h"
 
 // #ifdef _APP_H8S2212_
 // #include "utk_config_depend.h"
@@ -18197,14 +17930,10 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 // #endif
 
 #ifdef _APP_RL78G13_R5F100ADASP_
-#include "utk_config_depend.h"
 #endif
 
-#include "utk_config_func.h"
 
 #if !USE_TRAP && !(USE_DBGSPT && USE_HOOK_TRACE)
-#include "tksvcproxy.h"
-#include "tdsvcproxy.h"
 #endif
 
 #endif /* _UTK_CONFIG_H_ */
@@ -18650,9 +18379,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #endif /* _UTK_CONFIG_FUNC_H_ */
 
 /** [BEGIN Common Definitions] */
-#include "kernel.h"
-#include "task.h"
-#include "wait.h"
 /** [END Common Definitions] */
 
 #ifdef USE_FUNC_WAIT_RELEASE_OK
@@ -18828,9 +18554,6 @@ EXPORT TCB* knl_gcb_top_of_wait_queue( GCB *gcb, TCB *tcb )
 #ifndef _WAIT_
 #define _WAIT_
 
-#include <queue.h>
-#include "timer.h"
-#include "task.h"
 
 /*
  * Release wait state of the task.
