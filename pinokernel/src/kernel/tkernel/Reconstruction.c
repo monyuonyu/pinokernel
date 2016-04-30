@@ -10,12 +10,27 @@
  *
  *----------------------------------------------------------------------
  */
-
-/*
- *	@(#)asm.h
- *
- *	Assembler Macro
- */
+/*--------------------------------------------------------------------*/
+/*  Include definition                                                */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Struct definition                                                 */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Constant definition                                               */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Variable definition                                               */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Macro definition                                                  */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Prototype declaration                                             */
+/*--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
+/*  Function definition                                               */
+/*--------------------------------------------------------------------*/
 
 #ifndef __TK_ASM_H__
 #define __TK_ASM_H__
@@ -24,24 +39,6 @@
 #include <asm_common.h>
 
 #endif /* __TK_ASM_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)asm_common.h (tk)
- *
- *	Assembler Macro
- */
 
 #ifndef __TK_ASM_COMMON_H__
 #define __TK_ASM_COMMON_H__
@@ -59,24 +56,6 @@
 #endif
 
 #endif /* __TK_ASM_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)asm_depend.h (FM3)
- *
- *	Assembler Macro
- */
 
 #ifndef __TK_ASM_DEPEND_H__
 #define __TK_ASM_DEPEND_H__
@@ -96,27 +75,6 @@
 
 /* ------------------------------------------------------------------------ */
 #endif /* __TK_ASM_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)basic.h
- *
- *	Common basic header 
- *
- *	The header should normally be included at the start of 
- *	all source programs.
- */
 
 #ifndef	__BASIC_H__
 #define __BASIC_H__
@@ -126,23 +84,6 @@
 #include <typedef.h>
 
 #endif /* __BASIC_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	bitop.c (tstdlib)
- *	T-Kernel common standard library
- */
 
 /** [BEGIN Common Definitions] */
 #include <basic.h>
@@ -247,25 +188,6 @@ knl_tstdlib_bitsearch1( void *base, W offset, W width )
 	return -1;
 }
 #endif /* USE_FUNC_TSTDLIB_BITSEARCH1 */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	bitop.h (tstdlib)
- *
- *	T-Kernel common standard library
- *
- */
 
 #ifndef	_BITOP_
 #define _BITOP_
@@ -298,23 +220,6 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 }
 #endif
 #endif /* _BITOP_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	check.h
- *	Macro for Error Check 
- */
 
 #ifndef _CHECK_
 #define _CHECK_
@@ -562,40 +467,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 #endif /* CHK_CTX */
 
 #endif /* _CHECK_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *    distribute by pkernel github(https://github.com/monyuonyu/) at 2016/04/29.
- *
- *----------------------------------------------------------------------
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
+
 
 #include <typedef.h>
 
@@ -613,23 +485,6 @@ EXPORT void init_clock_control(void)
 
 #endif
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	config.h
- *	System Configuration Definition
- */
 
 #ifndef _CONFIG_
 #define _CONFIG_
@@ -780,24 +635,6 @@ EXPORT void init_clock_control(void)
 
 
 #endif /* _CONFIG_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)cpuattr.h (FM3)
- *
- *	Type Specific Function
- */
 
 #ifndef __TK_CPUATTR_H__
 #define __TK_CPUATTR_H__
@@ -809,24 +646,6 @@ EXPORT void init_clock_control(void)
 #define TA_GP		0		/* No global pointer support */
 
 #endif /* __TK_CPUATTR_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)cpudef.h (FM3)
- *
- *	FM3 dependent definition
- */
 
 #ifndef __TK_CPUDEF_H__
 #define __TK_CPUDEF_H__
@@ -864,39 +683,6 @@ typedef struct t_cregs {
 }
 #endif
 #endif /* __TK_CPUDEF_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #ifdef USE_FUNC_TK_DIS_DSP
 /*
@@ -1203,23 +989,6 @@ SYSCALL ER td_get_reg_impl( ID tskid, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 #endif /* USE_FUNC_TD_GET_REG */
 
 #endif /* USE_DBGSPT */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	cpu_calls.h (FM3)
- *	CPU-Dependent System Call
- */
 
 #ifndef _CPU_CALLS_H_
 #define _CPU_CALLS_H_
@@ -1228,24 +997,6 @@ IMPORT void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs );
 IMPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T_CREGS *cregs );
 
 #endif
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	cpu_conf.h (FM3)
- *	CPU-Dependent OS Configuration Information
- */
-
 #ifndef _CPU_CONF_
 #define _CPU_CONF_
 
@@ -1259,39 +1010,6 @@ IMPORT void knl_set_reg( TCB *tcb, CONST T_REGS *regs, CONST T_EIT *eit, CONST T
 
 
 #endif /* _CPU_CONF_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <tk_typedef.h>
 #include <errno.h>
@@ -1329,23 +1047,6 @@ EXPORT void knl_cpu_shutdown( void )
 {
 }
 #endif /* USE_CLEANUP */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	cpu_insn.h (FM3)
- *	LM3S9B92-Dependent Operation
- */
 
 #ifndef _CPU_INSN_
 #define _CPU_INSN_
@@ -1398,23 +1099,6 @@ void knl_LeaveTaskIndependent( void )
 /* ------------------------------------------------------------------------ */
 
 #endif /* _CPU_INSN_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	cpu_status.h (FM3)
- *	FM3-Dependent Definition
- */
 
 #ifndef _CPU_STATUS_
 #define _CPU_STATUS_
@@ -1516,23 +1200,6 @@ typedef struct {
 } CTXB;
 
 #endif /* _CPU_STATUS_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	cpu_task.h (FM3)
- *	CPU-Dependent Task Start Processing
- */
 
 #ifndef _CPU_TASK_
 #define _CPU_TASK_
@@ -1605,24 +1272,6 @@ void knl_cleanup_context( TCB *tcb )
 }
 
 #endif /* _CPU_TASK_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)dbgspt.h
- *
- *	micro T-Kernel Debugger Support (Common parts)
- */
 
 #ifndef __TK_DBGSPT_H__
 #define __TK_DBGSPT_H__
@@ -1895,24 +1544,6 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 }
 #endif
 #endif /* __TK_DBGSPT_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)dbgspt_common.h (tk)
- *
- *	micro T-Kernel Debugger Support
- */
 
 #ifndef __TK_DBGSPT_COMMON_H__
 #define __TK_DBGSPT_COMMON_H__
@@ -1937,24 +1568,6 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 #endif
 
 #endif /* __TK_DBGSPT_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)dbgspt_depend.h (FM3)
- *
- *	micro T-Kernel Debugger Support System-Dependent Definition
- */
 
 #ifndef __TK_DBGSPT_DEPEND_H__
 #define __TK_DBGSPT_DEPEND_H__
@@ -1975,24 +1588,6 @@ typedef struct td_calinf {
 }
 #endif
 #endif /* __TK_DBGSPT_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)debug.h (sys)
- *
- *	Debug support
- */
 
 #ifndef	__SYS_DEBUG_H__
 #define __SYS_DEBUG_H__
@@ -2042,23 +1637,6 @@ extern "C" {
 }
 #endif
 #endif /* __SYS_DEBUG_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	device.c
- *	Device Management Function
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -2697,23 +2275,6 @@ EXPORT ER knl_finish_devmgr( void )
 #endif /* USE_FUNC_FINISH_DEVMGR */
 
 #endif /* CFN_MAX_REGDEV */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	device.h
- *	Device Management Function
- */
 
 #ifndef _DEVICE_H_
 #define _DEVICE_H_
@@ -2812,23 +2373,6 @@ IMPORT void knl_delOpnCB( OpnCB *opncb, BOOL free );
 IMPORT ER knl_close_device( OpnCB *opncb, UINT option );
 
 #endif /* _DEVICE_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	deviceio.c
- *	Device Management Function: Input/Output
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -4030,39 +3574,6 @@ EXPORT ER knl_finishDevIO( void )
 #endif /* USE_FUNC_FINISHDEVIO */
 
 #endif /* CFN_MAX_REGDEV */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <tk_typedef.h>
 #include <errno.h>
@@ -4153,24 +3664,6 @@ EXPORT ER knl_restart_device( W mode )
 	return E_PAR;
 }
 #endif /* USE_CLEANUP */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)errno.h
- *
- *	micro T-Kernel Error Code
- */
 
 #ifndef __TK_ERRNO_H__
 #define __TK_ERRNO_H__
@@ -4222,23 +3715,6 @@ EXPORT ER knl_restart_device( W mode )
 #define E_RONLY		(-67)	/* Write protected */
 
 #endif /* __TK_ERRNO_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	eventflag.c
- *	Event Flag
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -4671,23 +4147,6 @@ SYSCALL INT td_flg_que_impl( ID flgid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_FLGID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	eventflag.h
- *	Event Flag
- */
 
 #ifndef _EVENTFLAG_H_
 #define _EVENTFLAG_H_
@@ -4726,24 +4185,6 @@ BOOL knl_eventflag_cond( FLGCB *flgcb, UINT waiptn, UINT wfmode )
 
 
 #endif /* _EVENTFLAG_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)fastlock.c (libtk)
- *
- *	High-speed exclusive control lock 
- */
 
 /** [BEGIN Common Definitions] */
 #include <basic.h>
@@ -4850,24 +4291,6 @@ EXPORT void DeleteLock( FastLock *lock )
 	lock->id = 0;
 }
 #endif /* USE_FUNC_DELETELOCK */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)fastmlock.c (libtk)
- *
- *	High-speed exclusive control multi-lock 
- */
 
 /** [BEGIN Common Definitions] */
 #include <basic.h>
@@ -5037,22 +4460,6 @@ EXPORT ER DeleteMLock( FastMLock *lock )
 	return E_OK;
 }
 #endif /* USE_FUNC_DELETEMLOCK */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	hardware configuration (MB9AF312K)
- */
 
 #ifndef _HWCONFIG_H_
 #define _HWCONFIG_H_
@@ -5078,27 +4485,6 @@ EXPORT ER DeleteMLock( FastMLock *lock )
 #define SRAM_END        (SRAM_START+SRAM_SIZE)
 
 #endif /* _CONFIG_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)imalloc.h (sys)
- *
- *	Kernel memory allocation 
- *
- *	A function for allocating memory used in parts of micro T-Kernel.
- *	Not for general use.
- */
 
 #ifndef __SYS_IMALLOC_H__
 #define __SYS_IMALLOC_H__
@@ -5118,44 +4504,6 @@ IMPORT void  knl_Ifree( void *ptr );
 }
 #endif
 #endif /* __SYS_IMALLOC_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	inittask_def.c
- *	Initial task definition
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include "inittask_def.h"
 
@@ -5187,23 +4535,6 @@ EXPORT const T_CTSK knl_c_init_task = {
 	init_task_stack,		/* bufptr */
 #endif
 };
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	inittask_def.h
- *	Initial task definition
- */
 
 #ifndef _INITTASK_DEF_
 #define _INITTASK_DEF_
@@ -5223,44 +4554,6 @@ EXPORT const T_CTSK knl_c_init_task = {
 #define INITTASK_STACK		(NULL)
 
 #endif /* _INITTASK_DEF_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	inittask_main.c (sysmain)
- *	Initial Task
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include "sysmain.h"
 #include "kernel.h"
@@ -5310,45 +4603,6 @@ EXPORT INT knl_init_task_main( void )
 
 	return fin;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)int.c (libtk/FM3)
- *
- *	Interrupt controller
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <basic.h>
 #include <syslib.h>
@@ -5430,23 +4684,6 @@ EXPORT BOOL CheckInt( UINT intno )
 {
 	return (*(_UW*)(NVIC_ICPR(intno)) & (0x01U << (intno % 32)));
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	isyscall.h
- *	System Call Int. Format Definition
- */
 
 #ifndef _ISYSCALL_
 #define _ISYSCALL_
@@ -5630,23 +4867,6 @@ IMPORT ER tk_ref_idv_impl( T_IDEV *idev );
 #endif
 
 #endif /* _ISYSCALL_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	isysconf.h
- *	Default Value Definition for System Configuration File
- */
 
 #ifndef _ISYSCONF_
 #define _ISYSCONF_
@@ -6318,23 +5538,6 @@ IMPORT ER tk_ref_idv_impl( T_IDEV *idev );
 
 #endif /* _ISYSCONF_ */
 
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	kernel.h
- *	micro T-Kernel Common Definition
- */
 
 #ifndef _KERNEL_
 #define _KERNEL_
@@ -6431,23 +5634,6 @@ IMPORT void knl_signal_all_mutex( TCB *tcb );
 IMPORT INT knl_chg_pri_mutex( TCB *tcb, INT priority );
 
 #endif /* _KERNEL_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	klock.c
- *	Kernel Lock
- */
 
 #include "kernel.h"
 #include "task.h"
@@ -6518,25 +5704,6 @@ EXPORT void knl_UnlockOBJ( OBJLOCK *loc )
 	}
 	END_CRITICAL_SECTION;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)libstr.h
- *
- *	Standard library for kernel link
- *
- */
 
 #ifndef	__LIBSTR_H__
 #define __LIBSTR_H__
@@ -6579,18 +5746,6 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 }
 #endif
 #endif /* __LIBSTR_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #ifndef _LIBSTR_CONFIG_H_
 #define _LIBSTR_CONFIG_H_
@@ -6611,18 +5766,6 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 
 
 #endif /* _LIBSTR_CONFIG_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #ifndef _LIBTK_CONFIG_H_
 #define _LIBTK_CONFIG_H_
@@ -6639,24 +5782,6 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 
 
 #endif /* _LIBTK_CONFIG_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	limits.h
- *
- *	C language: integer size 
- */
 
 #ifndef _LIMITS_
 #define _LIMITS_
@@ -6693,24 +5818,6 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 
 #endif /* INT_BITWIDTH == 16 */
 #endif /* _LIMITS_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	longlong.h
- *
- *	64 bit length integer 
- */
 
 #ifndef _LONGLONG_
 #define _LONGLONG_
@@ -6787,38 +5894,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 }
 #endif
 #endif /* _LONGLONG_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)machine.h
- *
- *	Machine type definition 
- *
- *	Describes differences between platforms, such as hardware
- *	and OS. Where the source code must be differentiated
- *	according to platform, macros and other definitions given
- *	here should be used.
- *
- *	Where possible, classifications should be based on general
- *	attributes rather than the machine type. Thus, the endian,
- *	for instance, should be described as BIGENDIAN rather than
- *	using a classification based on the machine type. 
- *
- *	* Machine type definition is not used solely by the machine
- *	C language source file, so non-macro definitions are not
- *	permitted.
- */
 
 #ifndef __MACHINE_H__
 #define __MACHINE_H__
@@ -6869,24 +5944,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 
 
 #endif /* __MACHINE_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)machine_common.h (sys)
- *
- *	Machine type definition
- */
 
 #ifndef __SYS_MACHINE_COMMON_H__
 #define __SYS_MACHINE_COMMON_H__
@@ -6906,24 +5963,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 #include <machine_depend.h>
 
 #endif /* __SYS_MACHINE_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)machine_depend.h (FM3)
- *
- *	Machine type definition (system dependent)
- */
 
 #ifndef __SYS_MACHINE_DEPEND_H__
 #define __SYS_MACHINE_DEPEND_H__
@@ -6956,23 +5995,6 @@ extern void	ll_dec( longlong *a );			/* (*a)-- */
 //#endif
 
 #endif /* __SYS_MACHINE_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mailbox.c
- *	Mailbox
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -7362,23 +6384,6 @@ SYSCALL INT td_mbx_que_impl( ID mbxid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_MBXID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mailbox.h
- *	Mailbox
- */
 
 #ifndef _MAILBOX_H_
 #define _MAILBOX_H_
@@ -7440,18 +6445,6 @@ void knl_queue_insert_mpri( T_MSG_PRI *pk_msg, T_MSG *head )
 }
 
 #endif /* _MAILBOX_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -7772,18 +6765,6 @@ IMPORT	void	*knl_lowmem_top, *knl_lowmem_limit;
 #endif /* USE_FUNC_INIT_IMALLOC */
 
 #endif /* USE_IMALLOC */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 
 #ifndef _MEMORY_H_
@@ -7865,23 +6846,6 @@ IMPORT IMACB *knl_imacb;
 IMPORT ER knl_init_Imalloc( void );
 
 #endif /* _MEMORY_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mempfix.c
- *	Fixed Size Memory Pool
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -8351,23 +7315,6 @@ SYSCALL INT td_mpf_que_impl( ID mpfid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_MPFID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mempfix.h
- *	Fixed Size Memory Pool
- */
 
 #ifndef _MEMPFIX_H_
 #define _MEMPFIX_H_
@@ -8417,23 +7364,6 @@ void *knl_mempool_end( MPFCB *mpfcb )
 
 
 #endif /* _MEMPFIX_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mempool.c
- *	Variable Size Memory Pool
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -9109,23 +8039,6 @@ SYSCALL INT td_mpl_que_impl( ID mplid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_MPLID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mempool.h
- *	Variable Size Memory Pool
- */
 
 #ifndef _MEMPOOL_H_
 #define _MEMPOOL_H_
@@ -9179,23 +8092,6 @@ IMPORT ER knl_rel_blk( MPLCB *mplcb, void *blk );
 IMPORT void knl_mpl_wakeup( MPLCB *mplcb );
 
 #endif /* _MEMPOOL_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	messagebuf.c
- *	Message Buffer
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -9838,23 +8734,6 @@ SYSCALL INT td_rmbf_que_impl( ID mbfid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_MBFID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	messagebuf.h
- *	Message Buffer
- */
 
 #ifndef _MESSAGEBUF_H_
 #define _MESSAGEBUF_H_
@@ -9926,23 +8805,6 @@ IMPORT void knl_msg_to_mbf( MBFCB *mbfcb, CONST void *msg, INT msgsz );
 IMPORT void knl_mbf_wakeup( MBFCB *mbfcb );
 
 #endif /* _MESSAGEBUF_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	misc_calls.c
- *	Other System Calls
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -10150,23 +9012,6 @@ SYSCALL ER td_ref_sys_impl( TD_RSYS *pk_rsys )
 #endif /* USE_FUNC_TD_REF_SYS */
 
 #endif /* USE_DBGSPT */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	misc_calls.h
- *	Other System Calls
- */
 
 #ifndef _MISC_CALLS_H_
 #define _MISC_CALLS_H_
@@ -10201,23 +9046,6 @@ IMPORT void knl_unhook_int( void );
 
 
 #endif /* _MISC_CALLS_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mutex.c
- *	Mutex
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -10870,23 +9698,6 @@ SYSCALL INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_MTXID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	mutex.h
- *	Mutex
- */
 
 #ifndef _MUTEX_H_
 #define _MUTEX_H_
@@ -10937,23 +9748,6 @@ IMPORT QUEUE knl_free_mtxcb;	/* FreeQue */
 IMPORT void knl_release_mutex( TCB *tcb, MTXCB *relmtxcb );
 
 #endif /* _MUTEX_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	objname.c
- *	Object name support
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -11125,23 +9919,6 @@ SYSCALL ER td_set_dsname_impl( UINT type, ID id, CONST UB *dsname )
 #endif /* USE_FUNC_TD_SET_DSNAME */
 
 #endif /* USE_DBGSPT */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	offset.h (FM3)
- *	TCB Offset Definition
- */
 
 #ifndef _OFFSET_
 #define _OFFSET_
@@ -11214,44 +9991,7 @@ SYSCALL ER td_set_dsname_impl( UINT type, ID id, CONST UB *dsname )
 #define CTXB_ssp	0
 
 #endif /* _OFFSET_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	patch.c (FM3)
- *	System-dependent initialize process
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #if USE_SYSDEPEND_PATCH1
 /*
@@ -11272,23 +10012,7 @@ EXPORT void sysdepend_patch2( void )
 	/* Do nothing */
 }
 #endif
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	patch.h (FM3)
- *	System-dependent initialize process
- */
 
 #ifndef _PATCH_
 #define _PATCH_
@@ -11301,44 +10025,7 @@ EXPORT void sysdepend_patch1( void );
 EXPORT void sysdepend_patch2( void );
 
 #endif /* _PATCH_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	power.c (FM3)
- *	Power-Saving Function
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <tk_typedef.h>
 
@@ -11355,24 +10042,7 @@ EXPORT void knl_low_pow( void )
 EXPORT void knl_off_pow( void )
 {
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	@(#)profile.h (sys)
- *
- *	Service Profile
- */
 
 #ifndef __SYS_PROFILE_H__
 #define __SYS_PROFILE_H__
@@ -11416,24 +10086,7 @@ EXPORT void knl_off_pow( void )
 #endif
 
 #endif /* __SYS_PROFILE_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	@(#)profile_common.h (sys)
- *
- *	System shared information  
- */
 
 #ifndef __SYS_PROFILE_COMMON_H__
 #define __SYS_PROFILE_COMMON_H__
@@ -11455,24 +10108,7 @@ EXPORT void knl_off_pow( void )
 #endif
 
 #endif /* __SYS_PROFILE_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	@(#)profile_depend.h (sys/sysdepend/app_mb9af312k)
- *
- *	System common information  
- */
 
 #ifndef __SYS_CORE_PROFILE_DEPEND_H__
 #define __SYS_CORE_PROFILE_DEPEND_H__
@@ -11706,24 +10342,7 @@ extern "C" {
 }
 #endif
 #endif /* __SYS_CORE_PROFILE_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	@(#)queue.h (sys)
- *
- *	Queuing operation
- */
 
 #ifndef	__SYS_QUEUE_H__
 #define __SYS_QUEUE_H__
@@ -11809,23 +10428,7 @@ QUEUE* QueRemoveNext( QUEUE *que )
 }
 #endif
 #endif /* __SYS_QUEUE_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
-/*
- *	ready_queue.h
- *	Ready Queue Operation Routine
- */
 
 #ifndef _READY_QUEUE_
 #define _READY_QUEUE_
@@ -12012,24 +10615,6 @@ TCB* knl_ready_queue_move_last( RDYQUE *rq, TCB *tcb )
 }
 
 #endif /* _READY_QUEUE_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	rendezvous.c
- *	Rendezvous
- */
-
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -12682,23 +11267,6 @@ SYSCALL INT td_acp_que_impl( ID porid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_PORID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	rendezvous.h
- *	Rendezvous
- */
 
 #ifndef _RENDEZVOUS_H_
 #define _RENDEZVOUS_H_
@@ -12772,23 +11340,6 @@ IMPORT CONST WSPEC knl_wspec_rdv;
 
 
 #endif /* _RENDEZVOUS_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	semaphore.c
- *	Semaphore
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -13228,23 +11779,6 @@ SYSCALL INT td_sem_que_impl( ID semid, ID list[], INT nent )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_SEMID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	semaphore.h
- *	Semaphore
- */
 
 #ifndef _SEMAPHORE_H_
 #define _SEMAPHORE_H_
@@ -13271,39 +11805,6 @@ IMPORT QUEUE knl_free_semcb;	/* FreeQue */
 
 
 #endif /* _SEMAPHORE_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <typedef.h>
 
@@ -13474,24 +11975,6 @@ EXPORT void sio_init(void)
 	// *UART_ESCR = 0x00U; /* no hardware flow control, non-parity, stop-bit = 1, data length = 8 bits */
 	// *UART_SCR = 0x03U; /* RX, TX enable */
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)stdtype.h
- *
- *	C language: standard type
- */
 
 #ifndef __STDTYPE_H__
 #define __STDTYPE_H__
@@ -13503,24 +11986,6 @@ EXPORT void sio_init(void)
 #endif
 
 #endif /* __STDTYPE_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *      @(#)str_align.h (sys)
- *
- *	Bit alignment definitions for structure 
- */
 
 #ifndef __SYS_STR_ALIGN_H__
 #define __SYS_STR_ALIGN_H__
@@ -13528,24 +11993,6 @@ EXPORT void sio_init(void)
 #include <str_align_common.h>
 
 #endif /* __SYS_STR_ALIGN_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *      @(#)str_align_common.h (sys)
- *
- *	Bit alignment definitions for structure
- */
 
 #ifndef __SYS_STR_ALIGN_COMMON_H__
 #define __SYS_STR_ALIGN_COMMON_H__
@@ -13567,24 +12014,6 @@ EXPORT void sio_init(void)
 #endif
 
 #endif /* __SYS_STR_ALIGN_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *      @(#)str_align_depend.h (FM3)
- *
- *	Bit alignment definitions for structure
- */
 
 #ifndef __SYS_STR_ALIGN_DEPEND_H__
 #define __SYS_STR_ALIGN_DEPEND_H__
@@ -13601,23 +12030,6 @@ EXPORT void sio_init(void)
 #define _align64
 
 #endif /* __SYS_STR_ALIGN_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	subsystem.c
- *	Subsystem Manager
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -13827,23 +12239,6 @@ EXPORT ER knl_svc_ientry P2GP( void *pk_para, FN fncd )
 #endif /* USE_FUNC_SVC_IENTRY */
 
 #endif /* CFN_MAX_SSYID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	subsystem.h
- *	Subsystem Manager
- */
 
 #ifndef _SUBSYSTEM_H_
 #define _SUBSYSTEM_H_
@@ -13871,24 +12266,6 @@ IMPORT SSYCB knl_ssycb_table[];	/* Subsystem control block */
 IMPORT INT knl_no_support( void *pk_para, FN fncd );
 
 #endif /* _SUBSYSTEM_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)syscall.h
- *
- *	micro T-Kernel (Common parts)
- */
 
 #ifndef __TK_SYSCALL_H__
 #define __TK_SYSCALL_H__
@@ -14733,24 +13110,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #endif
 
 #endif /* __TK_SYSCALL_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)syscall_common.h (tk)
- *
- *	micro T-Kernel
- */
 
 #ifndef __TK_SYSCALL_COMMON_H__
 #define __TK_SYSCALL_COMMON_H__
@@ -14776,25 +13135,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #endif
 
 #endif /* __TK_SYSCALL_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)sysdef.h
- *
- *	System dependencies definition.
- *	Included also from assembler program.
- */
 
 #ifndef __TK_SYSDEF_H__
 #define __TK_SYSDEF_H__
@@ -14802,25 +13142,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #include <sysdef_common.h>
 
 #endif /* __TK_SYSDEF_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)sysdef_common.h (tk)
- *
- *	System dependencies definition.
- *	Included also from assembler program.
- */
 
 #ifndef __TK_SYSDEF_COMMON_H__
 #define __TK_SYSDEF_COMMON_H__
@@ -14842,26 +13163,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #endif
 
 #endif /* __TK_SYSDEF_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)sysdef_depend.h (FM3)
- *
- *	Definition about FM3
- *
- *	Included also from assembler program.
- */
 
 #ifndef __TK_SYSDEF_DEPEND_H__
 #define __TK_SYSDEF_DEPEND_H__
@@ -15058,24 +13359,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 /* ------------------------------------------------------------------------ */
 
 #endif /* __TK_SYSDEF_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)sysinfo.h (sys)
- *
- *	System shared information  
- */
 
 #ifndef __SYS_SYSINFO_H__
 #define __SYS_SYSINFO_H__
@@ -15083,24 +13366,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #include <sysinfo_common.h>
 
 #endif /* __SYS_SYSINFO_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)sysinfo_common.h (sys)
- *
- *	System shared information
- */
 
 #ifndef __SYS_SYSINFO_COMMON_H__
 #define __SYS_SYSINFO_COMMON_H__
@@ -15122,24 +13387,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #endif
 
 #endif /* __SYS_SYSINFO_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)sysinfo_depend.h (FM3)
- *
- *	System common information  
- */
 
 #ifndef __SYS_SYSINFO_DEPEND_H__
 #define __SYS_SYSINFO_DEPEND_H__
@@ -15162,23 +13409,6 @@ IMPORT	UW	knl_taskmode;
 }
 #endif
 #endif /* __SYS_SYSINFO_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	sysinit.h (sysinit)
- *	Initialize System
- */
 
 #ifndef _SYSINIT_
 #define _SYSINIT_
@@ -15196,44 +13426,6 @@ IMPORT ER knl_finish_device( void );
 IMPORT ER knl_restart_device( W mode );
 
 #endif /* _SYSINIT_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	sysinit_main.c (sysinit)
- *	Initialize System
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <tk_typedef.h>
 #include <errno.h>
@@ -15335,24 +13527,6 @@ EXPORT int main( void )
 	return 0;
 }
 
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)syslib.h
- *
- *	System Library
- */
 
 #ifndef __TK_SYSLIB_H__
 #define __TK_SYSLIB_H__
@@ -15363,24 +13537,6 @@ EXPORT int main( void )
 #include <syslib_common.h>
 
 #endif /* __TK_SYSLIB_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)syslib_common.h (tk)
- *
- *	System Library
- */
 
 #ifndef __TK_SYSLIB_COMMON_H__
 #define __TK_SYSLIB_COMMON_H__
@@ -15405,24 +13561,6 @@ EXPORT int main( void )
 #endif
 
 #endif /* __TK_SYSLIB_COMMON_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)syslib_depend.h (FM3)
- *
- *	micro T-Kernel FM3 Library
- */
 
 #ifndef __TK_SYSLIB_DEPEND_H__
 #define __TK_SYSLIB_DEPEND_H__
@@ -15563,23 +13701,6 @@ UB in_b( UW port )
 }
 #endif
 #endif /* __TK_SYSLIB_DEPEND_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	sysmain.h (sysmain)
- *	Kernel Main
- */
 
 #ifndef _SYSMAIN_
 #define _SYSMAIN_
@@ -15600,22 +13721,6 @@ UB in_b( UW port )
 IMPORT INT usermain( void );
 
 #endif /* _SYSMAIN_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	sysmgr.h
- */
 
 #ifndef _SYSMGR_
 #define _SYSMGR_
@@ -15754,44 +13859,6 @@ IMPORT ER knl_finishDevIO( void );
 #endif
 
 #endif /* _SYSMGR_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	sysstartup.c (sysinit)
- *	Start/Stop System
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include "sysinit.h"
 #include "kernel.h"
@@ -15891,23 +13958,6 @@ EXPORT void knl_shutdown_system( INT fin )
 	knl_t_kernel_exit();
 }
 #endif /* USE_CLEANUP */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	task.c
- *	Task Control
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -16134,23 +14184,6 @@ SYSCALL INT td_rdy_que_impl( PRI pri, ID list[], INT nent )
 #endif /* USE_FUNC_TD_RDY_QUE */
 
 #endif /* USE_DBGSPT */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	task.h
- *	Task Definition
- */
 
 #ifndef _TASK_
 #define _TASK_
@@ -16376,23 +14409,6 @@ IMPORT void knl_del_tsk( TCB *tcb );
 IMPORT void knl_ter_tsk( TCB *tcb );
 
 #endif /* _TASK_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	task_manage.c
- *	Task Management Function
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -17037,23 +15053,6 @@ SYSCALL ER td_inf_tsk_impl( ID tskid, TD_ITSK *pk_itsk, BOOL clr )
 #endif /* USE_FUNC_TD_INF_TSK */
 
 #endif /* USE_DBGSPT */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	task_sync.c
- *	Task with Synchronize Function
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -17311,23 +15310,6 @@ SYSCALL INT tk_can_wup_impl( ID tskid )
 	return ercd;
 }
 #endif /* USE_FUNC_TK_CAN_WUP */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	task_sync.h
- *	Task with Synchronize Function
- */
 
 #ifndef _TASK_SYNC_H_
 #define _TASK_SYNC_H_
@@ -17454,23 +15436,6 @@ IMPORT CONST WSPEC knl_wspec_slp;
 #define TDFN_REF_DSNAME	0x802d0300
 #define TDFN_SET_DSNAME	0x802e0300
 
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	tdsvcproxy.h
- *	micro T-Kernel system call proxy for direct call
- */
 
 #define td_lst_tsk_impl	td_lst_tsk
 #define td_lst_sem_impl	td_lst_sem
@@ -17576,23 +15541,6 @@ IMPORT CONST WSPEC knl_wspec_slp;
 	_TDSC_ENTRY(td_hok_int)
 	_TDSC_ENTRY(td_ref_dsname)
 	_TDSC_ENTRY(td_set_dsname)
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	timer.c
- *	Timer Control
- */
 
 #include "kernel.h"
 #include "timer.h"
@@ -17766,23 +15714,6 @@ EXPORT void knl_timer_handler( void )
 
 	knl_end_of_hw_timer_interrupt();		/* Clear timer interrupt */
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	timer.h
- *	Timer Module Definition
- */
 
 #ifndef _TIMER_
 #define _TIMER_
@@ -17860,23 +15791,6 @@ void knl_timer_delete( TMEB *event )
 }
 
 #endif /* _TIMER_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	time_calls.c
- *	Time Management Function
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -18776,23 +16690,6 @@ SYSCALL ER td_ref_alm_impl( ID almid, TD_RALM *pk_ralm )
 
 #endif /* USE_DBGSPT */
 #endif /* CFN_MAX_ALMID */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	time_calls.h
- *	Time Management Function
- */
 
 #ifndef _TIME_CALLS_H
 #define _TIME_CALLS_H
@@ -18897,23 +16794,6 @@ void knl_alm_timer_insert( ALMCB *almcb, RELTIM reltim )
 
 
 #endif /* _TIME_CALLS_H */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	tkdev_conf.h (FM3)
- *	Target System Configuration
- */
 
 #ifndef _TKDEV_CONF_
 #define _TKDEV_CONF_
@@ -18934,44 +16814,6 @@ void knl_alm_timer_insert( ALMCB *almcb, RELTIM reltim )
 #define TIMER_INTLEVEL		0
 
 #endif /* _TKDEV_CONF_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	tkdev_init.c (FM3)
- *	micro T-Kernel Device-Dependent Initialization/Finalization
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <tk_typedef.h>
 #include <errno.h>
@@ -19000,23 +16842,6 @@ EXPORT void knl_tkdev_exit( void )
 	}
 }
 #endif /* USE_CLEANUP */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	tkdev_timer.h (FM3)
- *	Hardware-Dependent Timer Processing
- */
 
 #ifndef _TKDEV_TIMER_
 #define _TKDEV_TIMER_
@@ -19124,24 +16949,6 @@ UW knl_get_hw_timer_nsec( void )
 }
 
 #endif /* _TKDEV_TIMER_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)tkernel.h
- *
- *	T-Kernel Definition
- */
 
 #ifndef __TK_TKERNEL_H__
 #define __TK_TKERNEL_H__
@@ -19378,23 +17185,6 @@ UW knl_get_hw_timer_nsec( void )
 #define TFN_DEF_DEV	0x80620300
 #define TFN_REF_IDV	0x80630100
 
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	tkstart.c
- *	micro T-Kernel Startup / Finalization
- */
 
 #include "kernel.h"
 #include "timer.h"
@@ -19554,23 +17344,6 @@ EXPORT void knl_t_kernel_exit( void )
 	/* No return */
 }
 #endif /* USE_CLEANUP */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	tksvcproxy.h
- *	micro T-Kernel system call proxy for direct call
- */
 
 #define tk_cre_tsk_impl	tk_cre_tsk
 #define tk_del_tsk_impl	tk_del_tsk
@@ -19782,24 +17555,6 @@ EXPORT void knl_t_kernel_exit( void )
 	_SVC_ENTRY(tk_evt_dev)
 	_SVC_ENTRY(tk_def_dev)
 	_SVC_ENTRY(tk_ref_idv)
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)typedef.h (T-Kernel)
- *
- *	T-Kernel Standard Data Type Definition
- */
 
 #ifndef	__TK_TYPEDEF_H__
 #define __TK_TYPEDEF_H__
@@ -19853,24 +17608,6 @@ typedef struct dw {
 }
 #endif
 #endif /* __TK_TYPEDEF_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)tmonitor.h (tm)
- *
- *	T-Monitor equivalent function
- */
 
 #ifndef __TM_TMONITOR_H__
 #define __TM_TMONITOR_H__
@@ -19898,18 +17635,6 @@ IMPORT INT  tm_printf( const UB *format, ... );
 }
 #endif
 #endif /* __TM_TMONITOR_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 
@@ -19919,18 +17644,6 @@ INT tm_command ( UB *buff )
 		;
 	}
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 
@@ -19940,18 +17653,6 @@ void tm_exit( INT mode )
 		;
 	}
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 #include <stddef.h>
@@ -19975,18 +17676,6 @@ EXPORT INT tm_getchar( INT wait )
 
 	return (INT)p;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 #include <stddef.h>
@@ -20028,18 +17717,6 @@ err_ret:
 
 	return len;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 #include <stddef.h>
@@ -20050,32 +17727,6 @@ EXPORT void tm_monitor( void )
 		;
 	}
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)tm_printf.c (libtm)
- *
- *	printf() / sprintf() routine using t-monitor function.
- *
- *	- Unsupported specifiers: floating point, long long and others.
- *		Coversion:	 a, A, e, E, f, F, g, G, n
- *		Size qualifier:  hh, ll, j, z, t, L
- *	- No limitation of output string length.
- *	- Minimize stack usage.
- *		Depending on available stack size, define OUTBUF_SZ by
- *		appropriate value.
- */
 #include <stdarg.h>
 #include <basic.h>
 
@@ -20395,18 +18046,6 @@ int	tm_sprintf( UB *str, const UB *format, ... )
 	str[par.len] = '\0';
 	return par.len;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 #include <stddef.h>
@@ -20428,18 +18067,6 @@ EXPORT INT tm_putchar( INT c )
 
 	return 0;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 #include <typedef.h>
 #include <stddef.h>
@@ -20473,44 +18100,6 @@ EXPORT INT tm_putstring( UB *buff )
 
 	return 0;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	usermain.c (usermain)
- *	User Main
- */
-/*--------------------------------------------------------------------*/
-/*  Include definition                                                */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Struct definition                                                 */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Constant definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Variable definition                                               */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Macro definition                                                  */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Prototype declaration                                             */
-/*--------------------------------------------------------------------*/
-/*--------------------------------------------------------------------*/
-/*  Function definition                                               */
-/*--------------------------------------------------------------------*/
 
 #include <basic.h>
 #include <tkernel.h>
@@ -20536,24 +18125,6 @@ EXPORT	INT	usermain( void )
 
 	return 0;
 }
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	@(#)util.h
- *
- *	General Utilities 
- */
 
 #ifndef	__TK_UTIL_H__
 #define __TK_UTIL_H__
@@ -20602,18 +18173,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 }
 #endif
 #endif /* __TK_UTIL_H__ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
 
 /*
  *	utk_config.h
@@ -20649,23 +18208,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #endif
 
 #endif /* _UTK_CONFIG_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	utk_config_depend.h (MB9AF312K)
- *	System Configuration Definition
- */
 
 /* RAMINFO */
 #define SYSTEMAREA_TOP		0x1FFFE000	/* RAM system area top */
@@ -20744,23 +18286,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
  * Use high level programming language support routine
  */
 #define USE_HLL_INTHDR		(1)
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	utk_config_func.h
- *	System Configuration Definition
- */
 
 #ifndef _UTK_CONFIG_FUNC_H_
 #define _UTK_CONFIG_FUNC_H_
@@ -21123,23 +18648,6 @@ IMPORT ER MUnlock( FastMLock *lock, INT no );
 #endif /* USE_IMALLOC */
 
 #endif /* _UTK_CONFIG_FUNC_H_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	wait.c
- *	Common Routine for Synchronization
- */
 
 /** [BEGIN Common Definitions] */
 #include "kernel.h"
@@ -21316,23 +18824,6 @@ EXPORT TCB* knl_gcb_top_of_wait_queue( GCB *gcb, TCB *tcb )
 	return ( tcb->priority < q->priority )? tcb: q;
 }
 #endif /* USE_FUNC_GCB_TOP_OF_WAIT_QUEUE */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	wait.h
- *	Definition of Common Routine for Synchronization
- */
 
 #ifndef _WAIT_
 #define _WAIT_
@@ -21478,23 +18969,6 @@ void knl_wait_release( TCB *tcb )
 }
 
 #endif /* _WAIT_ */
-/*
- *----------------------------------------------------------------------
- *    micro T-Kernel 2.0 Software Package
- *
- *    Copyright (C) 2006-2014 by Ken Sakamura.
- *    This software is distributed under the T-License 2.0.
- *----------------------------------------------------------------------
- *
- *    Released by T-Engine Forum(http://www.t-engine.org/) at 2014/09/01.
- *
- *----------------------------------------------------------------------
- */
-
-/*
- *	winfo.h
- *	Definition of Wait Information for Synchronization/Communication Object
- */
 
 #ifndef _WINFO_
 #define _WINFO_
@@ -21622,4 +19096,3 @@ typedef struct {
 } WSPEC;
 
 #endif /* _WINFO_ */
-
