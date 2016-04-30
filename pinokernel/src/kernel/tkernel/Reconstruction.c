@@ -261,79 +261,20 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check object ID range (E_ID)
  */
 #if CHK_ID
-#define CHECK_TSKID(tskid) {                    \
-    if (!in_indp() && ((tskid) == TSK_SELF)) {      \
-        return E_OBJ;                   \
-    } else if (!CHK_TSKID(tskid)) {             \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_TSKID_SELF(tskid) {               \
-    if ( !( (!in_indp() && (tskid) == TSK_SELF)     \
-        || CHK_TSKID(tskid) ) ) {           \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_SEMID(semid) {                    \
-    if (!CHK_SEMID(semid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_FLGID(flgid) {                    \
-    if (!CHK_FLGID(flgid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_MBXID(mbxid) {                    \
-    if (!CHK_MBXID(mbxid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_MBFID(mbfid) {                    \
-    if (!CHK_MBFID(mbfid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_PORID(porid) {                    \
-    if (!CHK_PORID(porid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_MTXID(pisid) {                    \
-    if (!CHK_MTXID(pisid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_MPLID(mplid) {                    \
-    if (!CHK_MPLID(mplid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_MPFID(mpfid) {                    \
-    if (!CHK_MPFID(mpfid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_CYCID(cycid) {                    \
-    if (!CHK_CYCID(cycid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_ALMID(almid) {                    \
-    if (!CHK_ALMID(almid)) {                \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_SSYID(ssid) {                 \
-    if (!CHK_SSYID(ssid)) {                 \
-        return E_ID;                    \
-    }                           \
-}
-#define CHECK_SSYID_ALL(ssid) {                 \
-    if (!(CHK_SSYID(ssid) || (ssid) == 0)) {        \
-        return E_ID;                    \
-    }                           \
-}
+#define CHECK_TSKID(tskid) { if (!in_indp() && ((tskid) == TSK_SELF)) { return E_OBJ; } else if (!CHK_TSKID(tskid)) { return E_ID; } }
+#define CHECK_TSKID_SELF(tskid) { if ( !( (!in_indp() && (tskid) == TSK_SELF) || CHK_TSKID(tskid) ) ) { return E_ID; } }
+#define CHECK_SEMID(semid) { if (!CHK_SEMID(semid)) { return E_ID; } }
+#define CHECK_FLGID(flgid) { if (!CHK_FLGID(flgid)) { return E_ID; } }
+#define CHECK_MBXID(mbxid) { if (!CHK_MBXID(mbxid)) { return E_ID; } }
+#define CHECK_MBFID(mbfid) { if (!CHK_MBFID(mbfid)) { return E_ID; } }
+#define CHECK_PORID(porid) { if (!CHK_PORID(porid)) { return E_ID; } }
+#define CHECK_MTXID(pisid) { if (!CHK_MTXID(pisid)) { return E_ID; } }
+#define CHECK_MPLID(mplid) { if (!CHK_MPLID(mplid)) { return E_ID; } }
+#define CHECK_MPFID(mpfid) { if (!CHK_MPFID(mpfid)) { return E_ID; } }
+#define CHECK_CYCID(cycid) { if (!CHK_CYCID(cycid)) { return E_ID; } }
+#define CHECK_ALMID(almid) { if (!CHK_ALMID(almid)) { return E_ID; } }
+#define CHECK_SSYID(ssid) { if (!CHK_SSYID(ssid)) { return E_ID; } }
+#define CHECK_SSYID_ALL(ssid) { if (!(CHK_SSYID(ssid) || (ssid) == 0)) { return E_ID; } }
 #else /* CHK_ID */
 #define CHECK_TSKID(tskid)
 #define CHECK_TSKID_SELF(tskid)
@@ -355,11 +296,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check whether its own task is specified (E_OBJ)
  */
 #if CHK_SELF
-#define CHECK_NONSELF(tskid) {                  \
-    if (!in_indp() && (tskid) == knl_ctxtsk->tskid) {       \
-        return E_OBJ;                   \
-    }                           \
-}
+#define CHECK_NONSELF(tskid) { if (!in_indp() && (tskid) == knl_ctxtsk->tskid) { return E_OBJ; } }
 #else /* CHK_SELF */
 #define CHECK_NONSELF(tskid)
 #endif /* CHK_SELF */
@@ -368,21 +305,9 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check task priority value (E_PAR)
  */
 #if CHK_PAR
-#define CHECK_PRI(pri) {                    \
-    if (!CHK_PRI(pri)) {                    \
-        return E_PAR;                   \
-    }                           \
-}
-#define CHECK_PRI_INI(pri) {                    \
-    if ((pri) != TPRI_INI && !CHK_PRI(pri)) {       \
-        return E_PAR;                   \
-    }                           \
-}
-#define CHECK_PRI_RUN(pri) {                    \
-    if ((pri) != TPRI_RUN && !CHK_PRI(pri)) {       \
-        return E_PAR;                   \
-    }                           \
-}
+#define CHECK_PRI(pri) { if (!CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI_INI(pri) { if ((pri) != TPRI_INI && !CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI_RUN(pri) { if ((pri) != TPRI_RUN && !CHK_PRI(pri)) { return E_PAR; } }
 #else /* CHK_PAR */
 #define CHECK_PRI(pri)
 #define CHECK_PRI_INI(pri)
@@ -393,11 +318,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check subsystem priority value (E_PAR)
  */
 #if CHK_PAR
-#define CHECK_SSYPRI(ssypri) {                  \
-    if (!CHK_SSYPRI(ssypri)) {              \
-        return E_PAR;                   \
-    }                           \
-}
+#define CHECK_SSYPRI(ssypri) { if (!CHK_SSYPRI(ssypri)) { return E_PAR; } }
 #else /* CHK_PAR */
 #define CHECK_SSYPRI(ssypri)
 #endif /* CHK_PAR */
@@ -406,11 +327,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check timeout specification value (E_PAR)
  */
 #if CHK_PAR
-#define CHECK_TMOUT(tmout) {                    \
-    if (!((tmout) >= TMO_FEVR)) {               \
-        return E_PAR;                   \
-    }                           \
-}
+#define CHECK_TMOUT(tmout) { if (!((tmout) >= TMO_FEVR)) { return E_PAR; } }
 #else /* CHK_PAR */
 #define CHECK_TMOUT(tmout)
 #endif /* CHK_PAR */
@@ -419,11 +336,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check other parameter errors (E_PAR)
  */
 #if CHK_PAR
-#define CHECK_PAR(exp) {                    \
-    if (!(exp)) {                       \
-        return E_PAR;                   \
-    }                           \
-}
+#define CHECK_PAR(exp) { if (!(exp)) { return E_PAR; } }
 #else /* CHK_PAR */
 #define CHECK_PAR(exp)
 #endif /* CHK_PAR */
@@ -432,11 +345,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check reservation attribute error (E_RSATR)
  */
 #if CHK_RSATR
-#define CHECK_RSATR(atr, maxatr) {              \
-    if ((atr) & ~(maxatr)) {                \
-            return E_RSATR;                 \
-    }                           \
-}
+#define CHECK_RSATR(atr, maxatr) { if ((atr) & ~(maxatr)) { return E_RSATR; } }
 #else /* CHK_RSATR */
 #define CHECK_RSATR(atr, maxatr)
 #endif /* CHK_RSATR */
@@ -445,11 +354,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check unsupported function (E_NOSPT)
  */
 #if CHK_NOSPT
-#define CHECK_NOSPT(exp) {                  \
-    if (!(exp)) {                       \
-        return E_NOSPT;                 \
-    }                           \
-}
+#define CHECK_NOSPT(exp) { if (!(exp)) { return E_NOSPT; } }
 #else /* CHK_NOSPT */
 #define CHECK_NOSPT(exp)
 #endif /* CHK_NOSPT */
@@ -458,11 +363,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check whether task-independent part is running (E_CTX)
  */
 #if CHK_CTX
-#define CHECK_INTSK() {                     \
-    if (in_indp()) {                    \
-        return E_CTX;                   \
-    }                           \
-}
+#define CHECK_INTSK() { if (in_indp()) { return E_CTX; } }
 #else /* CHK_CTX */
 #define CHECK_INTSK()
 #endif /* CHK_CTX */
@@ -471,16 +372,8 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check whether dispatch is in disabled state (E_CTX)
  */
 #if CHK_CTX
-#define CHECK_DISPATCH() {                  \
-    if (in_ddsp()) {                    \
-        return E_CTX;                   \
-    }                           \
-}
-#define CHECK_DISPATCH_POL(tmout) {             \
-    if ((tmout) != TMO_POL && in_ddsp()) {          \
-        return E_CTX;                   \
-    }                           \
-}
+#define CHECK_DISPATCH() { if (in_ddsp()) { return E_CTX; } }
+#define CHECK_DISPATCH_POL(tmout) { if ((tmout) != TMO_POL && in_ddsp()) { return E_CTX; } }
 #else /* CHK_CTX */
 #define CHECK_DISPATCH()
 #define CHECK_DISPATCH_POL(tmout)
@@ -490,11 +383,7 @@ extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
  * Check other context errors (E_CTX)
  */
 #if CHK_CTX
-#define CHECK_CTX(exp) {                    \
-    if (!(exp)) {                       \
-        return E_CTX;                   \
-    }                           \
-}
+#define CHECK_CTX(exp) { if (!(exp)) { return E_CTX; } }
 #else /* CHK_CTX */
 #define CHECK_CTX(exp)
 #endif /* CHK_CTX */
@@ -1100,12 +989,7 @@ void knl_LeaveTaskIndependent( void )
  * Start/End critical section
  */
 #define BEGIN_CRITICAL_SECTION  { UINT _basepri_ = disint();
-#define END_CRITICAL_SECTION    if ( !isDI(_basepri_)           \
-                  && knl_ctxtsk != knl_schedtsk     \
-                  && !knl_dispatch_disabled ) {     \
-                    knl_dispatch();         \
-                }                   \
-                enaint(_basepri_); }
+#define END_CRITICAL_SECTION    if ( !isDI(_basepri_) && knl_ctxtsk != knl_schedtsk && !knl_dispatch_disabled ) { knl_dispatch(); } enaint(_basepri_); }
 
 /*
  * Start/End interrupt disable section
@@ -1145,16 +1029,13 @@ void knl_LeaveTaskIndependent( void )
  * When a system call is called during dispatch disable, TRUE
  * Also include the task independent part as during dispatch disable.
  */
-#define in_ddsp()   ( knl_dispatch_disabled \
-            || in_indp()        \
-            || isDI(knl_getBASEPRI()) )
+#define in_ddsp()   ( knl_dispatch_disabled || in_indp() || isDI(knl_getBASEPRI()) )
 
 /*
  * When a system call is called during CPU lock (interrupt disable), TRUE
  * Also include the task independent part as during CPU lock.
  */
-#define in_loc()    ( isDI(knl_getBASEPRI())        \
-            || in_indp() )
+#define in_loc()    ( isDI(knl_getBASEPRI()) || in_indp() )
 
 /*
  * When a system call is called during executing the quasi task part, TRUE
@@ -1560,11 +1441,7 @@ typedef struct td_calinf {
 
 /*
  * Example
- * #define DEBUG_PRINT(arg)                     \
- *  (                               \
- *      printf("%s#%d%s:", __FILE__, __LINE__, DEBUG_MODULE),   \
- *      printf arg                      \
- *  )
+ * #define DEBUG_PRINT(arg) *  ( * printf("%s#%d%s:", __FILE__, __LINE__, DEBUG_MODULE), * printf arg *  )
  */
 
 #define DEBUG_PRINT(arg)
@@ -4560,8 +4437,7 @@ EXPORT BOOL CheckInt( UINT intno )
 /* ------------------------------------------------------------------------ */
 
 #if TA_GP
-# define _CALL(p1, p2, p3, hdr, cb) \
-        CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
+# define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
 # define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
 # define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
 # define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
@@ -5658,8 +5534,7 @@ typedef long long   longlong;
 #define ll_dec(a)   ( (*(a))-- )
 
 #define hilo_ll(ll, h, l)   ( (ll) = ((longlong)(h) << 32) | (l) )
-#define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), \
-                  (l) = (unsigned long)(ll) )
+#define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), (l) = (unsigned long)(ll) )
 
 #else /* __GNUC__ */
 
@@ -10976,11 +10851,7 @@ ID knl_get_tskid_rdvno( RNO rdvno )
 /*
  * Check validity of rendezvous number
  */
-#define CHECK_RDVNO(rdvno) {                    \
-    if ( !CHK_TSKID(knl_get_tskid_rdvno(rdvno)) ) {     \
-        return E_OBJ;                   \
-    }                           \
-}
+#define CHECK_RDVNO(rdvno) { if ( !CHK_TSKID(knl_get_tskid_rdvno(rdvno)) ) { return E_OBJ; } }
 
 
 /*
@@ -13210,10 +13081,7 @@ UB in_b( UW port )
 
 
 /* Boot message */
-#define BOOT_MESSAGE \
-    "\n" \
-    "micro T-Kernel Version 2.00.00\n" \
-    "\n\0"
+#define BOOT_MESSAGE     "\n"     "micro T-Kernel Version 2.00.00\n"     "\n\0"
 
 /*
  * User main
@@ -13322,9 +13190,7 @@ typedef ER  (*EXCFN)( T_DEVREQ *devreq, TMO tmout, void *exinf );
  * Device driver call 
  */
 IMPORT INT knl_CallDeviceDriver( INT p1, INT p2, INT p3, INT p4, FP drv, void *gp );
-#define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) \
-        knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4), \
-                            (FP)(drv), (gp))
+#define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4),                             (FP)(drv), (gp))
 #endif
 
 #define IMPORT_DEFINE   1
@@ -16256,11 +16122,9 @@ EXPORT void knl_tkdev_exit( void )
 
 
 
-#define ENAINT  Asm("ldr    r0, =0 \n" \
-            "msr    basepri, r0")
+#define ENAINT  Asm("ldr    r0, =0 \n" "msr    basepri, r0")
 
-#define DISINT  Asm("ldr    r0, =MAX_EXTINT_PRI \n" \
-            "msr    basepri, r0")
+#define DISINT  Asm("ldr    r0, =MAX_EXTINT_PRI \n" "msr    basepri, r0")
 
 /*
  * Settable interval range (millisecond)
