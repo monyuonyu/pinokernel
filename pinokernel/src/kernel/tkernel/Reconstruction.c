@@ -35,10 +35,6 @@
 /*--------------------------------------------------------------------*/
 /*  Function definition                                               */
 /*--------------------------------------------------------------------*/
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef TKERNEL_CHECK_CONST
 #define CONST   const
 #else
@@ -113,10 +109,6 @@ typedef UINT        BOOL;
  */
 typedef UH      TC;     /* TRON character code */
 #define TNULL       ((TC)0)     /* End of TRON code character string */
-
-#ifdef __cplusplus
-}
-#endif
 
 
 // #if APP_AT91
@@ -247,10 +239,6 @@ knl_tstdlib_bitsearch1( void *base, W offset, W width )
 #endif /* USE_FUNC_TSTDLIB_BITSEARCH1 */
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef  __size_t
 typedef __size_t    size_t;
 #undef  __size_t
@@ -268,9 +256,6 @@ extern void knl_tstdlib_bitset( void *base, W offset );
 
 extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 
-#ifdef __cplusplus
-}
-#endif
 
 /*
  * Check object ID range (E_ID)
@@ -683,9 +668,6 @@ EXPORT void init_clock_control(void)
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * General purpose register         tk_get_reg tk_set_reg
@@ -712,9 +694,6 @@ typedef struct t_cregs {
 //  void    *usp;       /* User stack pointer R13_usr */
 } T_CREGS;
 
-#ifdef __cplusplus
-}
-#endif
 
 #ifdef USE_FUNC_TK_DIS_DSP
 /*
@@ -1277,9 +1256,6 @@ void knl_cleanup_context( TCB *tcb )
 }
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Object name information      td_ref_dsname, td_set_dsname
@@ -1535,9 +1511,6 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 
 /* [END SYSCALLS] */
 
-#ifdef __cplusplus
-}
-#endif
 
 
 /*
@@ -1559,10 +1532,6 @@ IMPORT ER td_set_dsname( UINT type, ID id, CONST UB *dsname );
 #endif
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * System call/extension SVC caller information 
  */
@@ -1571,17 +1540,10 @@ typedef struct td_calinf {
     void    *r11;       /* Frame pointer when calling */
 } TD_CALINF;
 
-#ifdef __cplusplus
-}
-#endif
 
 
 
 #ifdef DEBUG
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 /*
@@ -1615,9 +1577,6 @@ extern "C" {
 
 #endif /* DEBUG */
 
-#ifdef __cplusplus
-}
-#endif
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
@@ -4427,17 +4386,11 @@ EXPORT ER DeleteMLock( FastMLock *lock )
 #define SRAM_END        (SRAM_START+SRAM_SIZE)
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 IMPORT void* knl_Imalloc( size_t size );
 IMPORT void* knl_Icalloc( size_t nmemb, size_t size );
 IMPORT void  knl_Ifree( void *ptr );
 
-#ifdef __cplusplus
-}
-#endif
 
 IMPORT void knl_init_task(void);
 
@@ -5589,9 +5542,6 @@ EXPORT void knl_UnlockOBJ( OBJLOCK *loc )
 }
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef  __size_t
 typedef __size_t    size_t;
@@ -5621,9 +5571,6 @@ extern char* strncat( char *dst, const char *src, size_t n );
 
 extern long int strtol( const char *nptr, char **endptr, int base );
 
-#ifdef __cplusplus
-}
-#endif
 
 #define USE_FUNC_MEMSET
 #define USE_FUNC_MEMCMP
@@ -5683,9 +5630,6 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 
 #endif /* INT_BITWIDTH == 16 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef __GNUC__
 
@@ -5751,9 +5695,6 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
 
 #endif /* __GNUC__ */
 
-#ifdef __cplusplus
-}
-#endif
 
 /* ===== System dependencies definitions ================================ */
 
@@ -9864,10 +9805,6 @@ EXPORT void knl_off_pow( void )
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 /*
  * T-Kernel family
@@ -10086,14 +10023,6 @@ extern "C" {
 #define TK_MAX_PTIMER       0
 
 
-#ifdef __cplusplus
-}
-#endif
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Double-link queue (ring)
@@ -10165,10 +10094,6 @@ QUEUE* QueRemoveNext( QUEUE *que )
 
     return entry;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 
 
@@ -11957,10 +11882,6 @@ IMPORT INT knl_no_support( void *pk_para, FN fncd );
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Task creation */
 #define TSK_SELF    0       /* Its own task specify */
 #define TPRI_INI    0       /* Specify priority at task startup */
@@ -12115,15 +12036,9 @@ extern "C" {
 #define TSS_INDP    0x04U   /* During execution of task independent part */
 #define TSS_QTSK    0x08U   /* During execution of semi-task part */
 
-#ifdef __cplusplus
-}
-#endif
 
 /* System dependencies */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Task creation information        tk_cre_tsk
@@ -12786,10 +12701,6 @@ IMPORT ID tk_def_dev( CONST UB *devnm, CONST T_DDEV *pk_ddev, T_IDEV *pk_idev );
 IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 /* [END SYSCALLS] */
 
-#ifdef __cplusplus
-}
-#endif
-
 
 
 // #if APP_AT91
@@ -13035,9 +12946,6 @@ IMPORT ER tk_ref_idv( T_IDEV *pk_idev );
 #ifdef _APP_RL78G13_R5F100ADASP_
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifndef _in_asm_source_
 
@@ -13049,9 +12957,6 @@ IMPORT  UW  knl_taskmode;
 
 #endif /* _in_asm_source_ */
 
-#ifdef __cplusplus
-}
-#endif
 
 
 /*
@@ -13177,10 +13082,6 @@ EXPORT int main( void )
 #endif
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * CPU interrupt control
  *  As armv7-m architecture does not support disable interrupt in
@@ -13305,10 +13206,6 @@ UB in_b( UW port )
 {
     return *(_UB*)port;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 
 
@@ -17041,9 +16938,6 @@ EXPORT void knl_t_kernel_exit( void )
     _SVC_ENTRY(tk_ref_idv)
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Data type in which meaning is defined in T-Kernel/OS specification 
@@ -17084,14 +16978,7 @@ typedef struct dw {
 #endif
 } DW;
 
-#ifdef __cplusplus
-}
-#endif
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /*
@@ -17105,10 +16992,6 @@ IMPORT INT  tm_putstring( const UB *buff );
 IMPORT INT  tm_command( const UB *buff );
 IMPORT void tm_exit( INT mode );
 IMPORT INT  tm_printf( const UB *format, ... );
-
-#ifdef __cplusplus
-}
-#endif
 
 
 INT tm_command ( UB *buff )
@@ -17581,9 +17464,6 @@ EXPORT  INT usermain( void )
 }
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * Fast Lock
@@ -17617,10 +17497,6 @@ IMPORT ER MLock( FastMLock *lock, INT no );
 IMPORT ER MUnlock( FastMLock *lock, INT no );
 
 
-
-#ifdef __cplusplus
-}
-#endif
 
 /*
  *  utk_config.h
