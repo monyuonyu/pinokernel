@@ -444,6 +444,8 @@
       <Path>src\boot\h8300-hms\load_mot.h</Path>
       <Path>src\kernel\entrypoint.c</Path>
       <Path>include\mdl\XMODEM.h</Path>
+      <Path>src\kernel\tkernel\inspection.c</Path>
+      <Path>src\kernel\tkernel\Reconstruction.c</Path>
     </Files>
     <Device Series="RL78">R5F100AD</Device>
     <BuildOptions Name="CC-RL" Version="V1.02.00">
@@ -721,6 +723,8 @@
           <Path>DefaultBuild\cstart.obj</Path>
           <Path>DefaultBuild\stkinit.obj</Path>
           <Path>DefaultBuild\entrypoint.obj</Path>
+          <Path>DefaultBuild\inspection.obj</Path>
+          <Path>DefaultBuild\Reconstruction.obj</Path>
         </LinkOrder>
         <CommonOptions>
           <IncludePathForC>include\mdl</IncludePathForC>
