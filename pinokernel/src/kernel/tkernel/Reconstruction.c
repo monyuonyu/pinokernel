@@ -13,6 +13,13 @@
 /*--------------------------------------------------------------------*/
 /*  Include definition                                                */
 /*--------------------------------------------------------------------*/
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*--------------------------------------------------------------------*/
 /*  Define definition                                                 */
@@ -3009,6 +3016,9 @@ QUEUE knl_free_cyccb;    /* FreeQue */
 ALMCB knl_almcb_table[NUM_ALMID];    /* Alarm handler control block */
 QUEUE knl_free_almcb;    /* FreeQue */
 
+void* gp;
+
+FP	knl_intvec[];
 
 /*--------------------------------------------------------------------*/
 /*  Macro definition                                                  */
@@ -3407,6 +3417,7 @@ W knl_MaxFreeSize( MPLCB *mplcb );
 W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 W roundSize( W sz );
 
+extern knl_inthdr_startup(void);
 
 /*--------------------------------------------------------------------*/
 /*  Constant definition                                               */
@@ -3550,10 +3561,6 @@ static const UB  digits[32] = "0123456789abcdef0123456789ABCDEF";
 
     static const char CR = 0x0d;
 
-    static const char CR = 0x0d;
-
-
-
 /*
  * Definition of event flag wait specification
  */
@@ -3579,10 +3586,10 @@ static const WSPEC knl_wspec_flg_tpri  = { TTW_FLG, flg_chg_pri, NULL };
 /*
  * Exception return
  */
-.macro EXC_RETURN
+//.macro EXC_RETURN
 //  THUMB
-    bx  lr
-.endm
+//    bx  lr
+//.endm
 
 /* ------------------------------------------------------------------------ */
 
