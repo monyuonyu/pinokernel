@@ -1777,154 +1777,6 @@
 #define _pad_l(n) int :n;
 
 
-static const T_CSEM knl_pk_csem_DM = {
-    NULL,
-    TA_TFIFO | TA_FIRST,
-    0,
-    1,
-};
-
-const ATR VALID_FLGATR = {
-     TA_TPRI
-    |TA_WMUL
-    |TA_DSNAME
-};
-
-const T_CTSK knl_c_init_task = {
-    (void *)INITTASK_EXINF,     /* exinf */
-    INITTASK_TSKATR,        /* tskatr */
-    INITTASK_TSKATR|TA_USERBUF, /* tskatr */
-    (FP)&knl_init_task,     /* task */
-    INITTASK_ITSKPRI,       /* itskpri */
-    INITTASK_STKSZ,         /* stksz */
-    INITTASK_DSNAME,        /* dsname */
-    INITTASK_STACK,         /* bufptr */
-    init_task_stack,        /* bufptr */
-};
-
-static const char knl_boot_message[] = { /* Boot message */
-    BOOT_MESSAGE
-};
-
-const ATR VALID_MBXATR = {
-     TA_MPRI
-    |TA_TPRI
-    |TA_DSNAME
-};
-
-static const WSPEC knl_wspec_mbx_tfifo = { TTW_MBX, NULL, NULL };
-static const WSPEC knl_wspec_mbx_tpri  = { TTW_MBX, mbx_chg_pri, NULL };
-
-    const ATR VALID_MPFATR = {
-         TA_TPRI
-        |TA_RNG3
-        |TA_USERBUF
-        |TA_DSNAME
-    };
-
-static const WSPEC knl_wspec_mpf_tfifo = { TTW_MPF, NULL, NULL };
-static const WSPEC knl_wspec_mpf_tpri  = { TTW_MPF, knl_mpf_chg_pri, NULL };
-
-    const ATR VALID_MPLATR = {
-         TA_TPRI
-        |TA_RNG3
-        |TA_USERBUF
-        |TA_DSNAME
-    };
-
-
-static const WSPEC knl_wspec_mpl_tfifo = { TTW_MPL, NULL,        mpl_rel_wai };
-static const WSPEC knl_wspec_mpl_tpri  = { TTW_MPL, mpl_chg_pri, mpl_rel_wai };
-
-    const ATR VALID_MBFATR = {
-         TA_TPRI
-        |TA_USERBUF
-        |TA_DSNAME
-    };
-
-static const WSPEC knl_wspec_smbf_tfifo = { TTW_SMBF, NULL, knl_mbf_rel_wai };
-static const WSPEC knl_wspec_smbf_tpri  = { TTW_SMBF, knl_mbf_chg_pri, knl_mbf_rel_wai };
-
-static const WSPEC knl_wspec_rmbf = { TTW_RMBF, NULL, NULL };
-
-    const ATR VALID_MTXATR = {
-         TA_CEILING
-        |TA_DSNAME
-    };
-
-static const WSPEC knl_wspec_mtx_tfifo   = { TTW_MTX, NULL, NULL };
-static const WSPEC knl_wspec_mtx_tpri    = { TTW_MTX, mtx_chg_pri, NULL };
-static const WSPEC knl_wspec_mtx_inherit = { TTW_MTX, mtx_chg_pri, mtx_rel_wai };
-
-
-const WSPEC knl_wspec_cal_tfifo = { TTW_CAL, NULL, NULL };
-const WSPEC knl_wspec_cal_tpri  = { TTW_CAL, cal_chg_pri, NULL };
-
-const WSPEC knl_wspec_rdv       = { TTW_RDV, NULL, NULL };
-
-
-    const ATR VALID_PORATR = {
-         TA_TPRI
-        |TA_DSNAME
-    };
-
-static const WSPEC knl_wspec_acp = { TTW_ACP, NULL, NULL };
-
-
-    const ATR VALID_SEMATR = {
-         TA_TPRI
-        |TA_CNT
-        |TA_DSNAME
-    };
-
-static const WSPEC knl_wspec_sem_tfifo = { TTW_SEM, NULL,        sem_rel_wai };
-static const WSPEC knl_wspec_sem_tpri  = { TTW_SEM, sem_chg_pri, sem_rel_wai };
-
-    const ATR VALID_TSKATR = {  /* Valid value of task attribute */
-         TA_HLNG
-        |TA_RNG3
-        |TA_USERBUF
-        |TA_GP
-        |TA_DSNAME
-    };
-
-const WSPEC knl_wspec_slp = { TTW_SLP, NULL, NULL };
-
-
-static const WSPEC knl_wspec_dly = { TTW_DLY, NULL, NULL };
-
-
-    const ATR VALID_CYCATR = {
-         TA_HLNG
-        |TA_STA
-        |TA_PHS
-        |TA_GP
-        |TA_DSNAME
-    };
-
-    const ATR VALID_ALMATR = {
-         TA_HLNG
-        |TA_GP
-        |TA_DSNAME
-    };
-
-    static const char LF = 0x0a;
-
-
-static const UB  digits[32] = "0123456789abcdef0123456789ABCDEF";
-
-    static const char CR = 0x0d;
-
-    static const char CR = 0x0d;
-
-
-
-/*
- * Definition of event flag wait specification
- */
-static const WSPEC knl_wspec_flg_tfifo = { TTW_FLG, NULL, NULL };
-static const WSPEC knl_wspec_flg_tpri  = { TTW_FLG, flg_chg_pri, NULL };
-
 
 
 
@@ -1989,6 +1841,73 @@ typedef __size_t    size_t;
 
 typedef __wchar_t   wchar_t;
 
+typedef INT     FN;     /* Function code */
+typedef INT     RNO;        /* Rendezvous number */
+typedef UW      ATR;        /* Object/handler attribute */
+typedef INT     ER;     /* Error code */
+typedef INT     PRI;        /* Priority */
+typedef W       TMO;        /* Time out setting */
+typedef UW      RELTIM;     /* Relative time */
+
+typedef INT (*MAIN_FP)(INT, UB **);
+
+
+typedef struct task_control_block   TCB;
+
+
+typedef __size_t    size_t;
+typedef __wchar_t   wchar_t;
+
+
+typedef long long   longlong;
+
+typedef struct mutex_control_block  MTXCB;
+
+typedef INT  (*SVC)( void *pk_para, FN fncd );  /* Extended SVC handler */
+
+typedef struct t_devreq {
+    struct t_devreq *next;  /* I:Link to request packet (NULL:End) */
+    void    *exinf;     /* X:Extended information */
+    ID  devid;      /* I:Target device ID */
+    INT cmd:4;      /* I:Request command */
+    BOOL    abort:1;    /* I:When executing abort request, TRUE */
+    W   start;      /* I:Start data number */
+    W   size;       /* I:Request size */
+    void    *buf;       /* I:Input/output buffer address */
+    W   asize;      /* O:Result size */
+    ER  error;      /* O:Result error */
+} T_DEVREQ;
+
+typedef struct {
+    short   len;        /* Total output length */
+    short   cnt;        /* Buffer counts */
+    UB  *bufp;      /* Buffer pointer for tm_sprintf */
+} OutPar;
+
+typedef ER  (*OPNFN)( ID devid, UINT omode, void *exinf );
+typedef ER  (*ABTFN)( ID tskid, T_DEVREQ *devreq, INT nreq, void *exinf );
+typedef INT (*WAIFN)( T_DEVREQ *devreq, INT nreq, TMO tmout, void *exinf );
+typedef INT (*EVTFN)( INT evttyp, void *evtinf, void *exinf );
+typedef ER  (*CLSFN)( ID devid, UINT option, void *exinf );
+typedef ER  (*EXCFN)( T_DEVREQ *devreq, TMO tmout, void *exinf );
+
+typedef struct mutex_control_block  MTXCB;
+typedef struct task_control_block   TCB;
+
+typedef longlong    LSYSTIM;    /* SYSTIM int. expression */
+
+typedef void    (*CBACK)(void *);   /* Type of callback function */
+
+typedef void    (*OutFn)( UB *str, int len, OutPar *par );
+
+typedef INT     HEADER;
+
+
+
+
+typedef struct t_msg {
+    void    *msgque[1]; /* Area for message queue */
+} T_MSG;
 
 typedef struct t_regs {
     VW  r[13];      /* General purpose register R0-R12 */
@@ -2163,6 +2082,10 @@ typedef struct td_calinf {
     void    *r11;       /* Frame pointer when calling */
 } TD_CALINF;
 
+typedef struct queue {
+    struct queue    *next;
+    struct queue    *prev;
+} QUEUE;
 
 typedef struct eventflag_control_block {
     QUEUE   wait_queue; /* Event flag wait queue */
@@ -2173,10 +2096,6 @@ typedef struct eventflag_control_block {
     UB  name[OBJECT_NAME_LENGTH];   /* name */
 } FLGCB;
 
-typedef INT (*MAIN_FP)(INT, UB **);
-
-
-typedef struct task_control_block   TCB;
 
 
 typedef struct objlock {
@@ -2186,21 +2105,14 @@ typedef struct objlock {
 
 
 
-typedef __size_t    size_t;
-
-typedef __wchar_t   wchar_t;
-
-
-
-typedef long long   longlong;
 
 
 
 
-typedef struct {
-    long        hi;
-    unsigned long   lo;
-} longlong;
+//typedef struct {
+//    long        hi;
+//    unsigned long   lo;
+//} longlong;
 
 
 
@@ -2274,14 +2186,10 @@ typedef struct messagebuffer_control_block {
 
 
 
-typedef struct mutex_control_block  MTXCB;
 
 
 
-typedef struct queue {
-    struct queue    *next;
-    struct queue    *prev;
-} QUEUE;
+
 
 
 typedef struct ready_queue {
@@ -2318,7 +2226,6 @@ typedef struct semaphore_control_block {
 } SEMCB;
 
 
-typedef INT  (*SVC)( void *pk_para, FN fncd );  /* Extended SVC handler */
 
 
 
@@ -2356,14 +2263,13 @@ typedef struct t_rtsk {
 } T_RTSK;
 
 
-typedef struct t_csem {
-    void    *exinf;     /* Extended information */
-    ATR sematr;     /* Semaphore attribute */
-    INT isemcnt;    /* Semaphore initial count value */
-    INT maxsem;     /* Semaphore maximum count value */
-    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
+typedef	struct t_csem {
+	void	*exinf;		/* Extended information */
+	ATR	sematr;		/* Semaphore attribute */
+	INT	isemcnt;	/* Semaphore initial count value */
+	INT	maxsem;		/* Semaphore maximum count value */
+	UB	dsname[OBJECT_NAME_LENGTH];	/* Object name */
 } T_CSEM;
-
 
 typedef struct t_rsem {
     void    *exinf;     /* Extended information */
@@ -2409,9 +2315,6 @@ typedef struct t_cmbx {
 } T_CMBX;
 
 
-typedef struct t_msg {
-    void    *msgque[1]; /* Area for message queue */
-} T_MSG;
 
 typedef struct t_msg_pri {
     T_MSG   msgque;     /* Area for message queue */
@@ -2653,18 +2556,7 @@ typedef struct t_idev {
 } T_IDEV;
 
 
-typedef struct t_devreq {
-    struct t_devreq *next;  /* I:Link to request packet (NULL:End) */
-    void    *exinf;     /* X:Extended information */
-    ID  devid;      /* I:Target device ID */
-    INT cmd:4;      /* I:Request command */
-    BOOL    abort:1;    /* I:When executing abort request, TRUE */
-    W   start;      /* I:Start data number */
-    W   size;       /* I:Request size */
-    void    *buf;       /* I:Input/output buffer address */
-    W   asize;      /* O:Result size */
-    ER  error;      /* O:Result error */
-} T_DEVREQ;
+
 
 
 
@@ -2711,18 +2603,6 @@ typedef struct ResourceControlBlock {
 
 
 
-typedef ER  (*OPNFN)( ID devid, UINT omode, void *exinf );
-typedef ER  (*ABTFN)( ID tskid, T_DEVREQ *devreq, INT nreq, void *exinf );
-typedef INT (*WAIFN)( T_DEVREQ *devreq, INT nreq, TMO tmout, void *exinf );
-typedef INT (*EVTFN)( INT evttyp, void *evtinf, void *exinf );
-typedef ER  (*CLSFN)( ID devid, UINT option, void *exinf );
-typedef ER  (*EXCFN)( T_DEVREQ *devreq, TMO tmout, void *exinf );
-
-
-
-typedef struct mutex_control_block  MTXCB;
-typedef struct task_control_block   TCB;
-
 
 typedef enum {
     TS_NONEXIST = 0,    /* Unregistered state */
@@ -2734,10 +2614,6 @@ typedef enum {
 } TSTAT;
 
 
-typedef longlong    LSYSTIM;    /* SYSTIM int. expression */
-
-
-typedef void    (*CBACK)(void *);   /* Type of callback function */
 
 typedef struct timer_event_block {
     QUEUE   queue;      /* Timer event queue */
@@ -2772,13 +2648,7 @@ typedef struct alarm_handler_control_block {
 
 
 
-typedef INT     FN;     /* Function code */
-typedef INT     RNO;        /* Rendezvous number */
-typedef UW      ATR;        /* Object/handler attribute */
-typedef INT     ER;     /* Error code */
-typedef INT     PRI;        /* Priority */
-typedef W       TMO;        /* Time out setting */
-typedef UW      RELTIM;     /* Relative time */
+
 
 typedef struct systim {         /* System time */
     W   hi;         /* Upper 32 bits */
@@ -2789,21 +2659,16 @@ typedef struct systim {         /* System time */
 
 
 
-typedef struct dw {
-    W   hi; /* Upper 32 bits */
-    UW  lo; /* Lower 32 bits */
-    UW  lo; /* Lower 32 bits */
-    W   hi; /* Upper 32 bits */
-} DW;
+//typedef struct dw {
+//    W   hi; /* Upper 32 bits */
+//    UW  lo; /* Lower 32 bits */
+//    UW  lo; /* Lower 32 bits */
+//    W   hi; /* Upper 32 bits */
+//} DW;
 
 
 
-typedef struct {
-    short   len;        /* Total output length */
-    short   cnt;        /* Buffer counts */
-    UB  *bufp;      /* Buffer pointer for tm_sprintf */
-} OutPar;
-typedef void    (*OutFn)( UB *str, int len, OutPar *par );
+
 
 
 typedef struct {
@@ -2913,7 +2778,6 @@ typedef struct {
     void    (*rel_wai_hook)(TCB *);     /* Process at task wait release */
 } WSPEC;
 
-typedef INT     HEADER;
 
 /*--------------------------------------------------------------------*/
 /*  Struct definition                                                 */
@@ -3042,8 +2906,8 @@ INT  knl_DisSusCnt = 0;
 
 
 /* Low level memory manager information */
-  void    *knl_lowmem_top   /* Head of area (Low address */
-  void    *knl_lowmem_limit /* End of area (High address */
+  void    *knl_lowmem_top;   /* Head of area (Low address */
+  void    *knl_lowmem_limit; /* End of area (High address */
 
 
 FLGCB knl_flgcb_table[NUM_FLGID];    /* Event flag control block */
@@ -3153,6 +3017,160 @@ QUEUE knl_free_almcb;    /* FreeQue */
 /*--------------------------------------------------------------------*/
 /*  Prototype declaration                                             */
 /*--------------------------------------------------------------------*/
+
+
+
+
+
+static const T_CSEM knl_pk_csem_DM = {
+    NULL,
+    TA_TFIFO | TA_FIRST,
+    0,
+    1,
+};
+
+const ATR VALID_FLGATR = {
+     TA_TPRI
+    |TA_WMUL
+    |TA_DSNAME
+};
+
+const T_CTSK knl_c_init_task = {
+    (void *)INITTASK_EXINF,     /* exinf */
+    INITTASK_TSKATR,        /* tskatr */
+    INITTASK_TSKATR|TA_USERBUF, /* tskatr */
+    (FP)&knl_init_task,     /* task */
+    INITTASK_ITSKPRI,       /* itskpri */
+    INITTASK_STKSZ,         /* stksz */
+    INITTASK_DSNAME,        /* dsname */
+    INITTASK_STACK,         /* bufptr */
+    init_task_stack,        /* bufptr */
+};
+
+static const char knl_boot_message[] = { /* Boot message */
+    BOOT_MESSAGE
+};
+
+const ATR VALID_MBXATR = {
+     TA_MPRI
+    |TA_TPRI
+    |TA_DSNAME
+};
+
+static const WSPEC knl_wspec_mbx_tfifo = { TTW_MBX, NULL, NULL };
+static const WSPEC knl_wspec_mbx_tpri  = { TTW_MBX, mbx_chg_pri, NULL };
+
+    const ATR VALID_MPFATR = {
+         TA_TPRI
+        |TA_RNG3
+        |TA_USERBUF
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_mpf_tfifo = { TTW_MPF, NULL, NULL };
+static const WSPEC knl_wspec_mpf_tpri  = { TTW_MPF, knl_mpf_chg_pri, NULL };
+
+    const ATR VALID_MPLATR = {
+         TA_TPRI
+        |TA_RNG3
+        |TA_USERBUF
+        |TA_DSNAME
+    };
+
+
+static const WSPEC knl_wspec_mpl_tfifo = { TTW_MPL, NULL,        mpl_rel_wai };
+static const WSPEC knl_wspec_mpl_tpri  = { TTW_MPL, mpl_chg_pri, mpl_rel_wai };
+
+    const ATR VALID_MBFATR = {
+         TA_TPRI
+        |TA_USERBUF
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_smbf_tfifo = { TTW_SMBF, NULL, knl_mbf_rel_wai };
+static const WSPEC knl_wspec_smbf_tpri  = { TTW_SMBF, knl_mbf_chg_pri, knl_mbf_rel_wai };
+
+static const WSPEC knl_wspec_rmbf = { TTW_RMBF, NULL, NULL };
+
+    const ATR VALID_MTXATR = {
+         TA_CEILING
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_mtx_tfifo   = { TTW_MTX, NULL, NULL };
+static const WSPEC knl_wspec_mtx_tpri    = { TTW_MTX, mtx_chg_pri, NULL };
+static const WSPEC knl_wspec_mtx_inherit = { TTW_MTX, mtx_chg_pri, mtx_rel_wai };
+
+
+const WSPEC knl_wspec_cal_tfifo = { TTW_CAL, NULL, NULL };
+const WSPEC knl_wspec_cal_tpri  = { TTW_CAL, cal_chg_pri, NULL };
+
+const WSPEC knl_wspec_rdv       = { TTW_RDV, NULL, NULL };
+
+
+    const ATR VALID_PORATR = {
+         TA_TPRI
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_acp = { TTW_ACP, NULL, NULL };
+
+
+    const ATR VALID_SEMATR = {
+         TA_TPRI
+        |TA_CNT
+        |TA_DSNAME
+    };
+
+static const WSPEC knl_wspec_sem_tfifo = { TTW_SEM, NULL,        sem_rel_wai };
+static const WSPEC knl_wspec_sem_tpri  = { TTW_SEM, sem_chg_pri, sem_rel_wai };
+
+    const ATR VALID_TSKATR = {  /* Valid value of task attribute */
+         TA_HLNG
+        |TA_RNG3
+        |TA_USERBUF
+        |TA_GP
+        |TA_DSNAME
+    };
+
+const WSPEC knl_wspec_slp = { TTW_SLP, NULL, NULL };
+
+
+static const WSPEC knl_wspec_dly = { TTW_DLY, NULL, NULL };
+
+
+    const ATR VALID_CYCATR = {
+         TA_HLNG
+        |TA_STA
+        |TA_PHS
+        |TA_GP
+        |TA_DSNAME
+    };
+
+    const ATR VALID_ALMATR = {
+         TA_HLNG
+        |TA_GP
+        |TA_DSNAME
+    };
+
+    static const char LF = 0x0a;
+
+
+static const UB  digits[32] = "0123456789abcdef0123456789ABCDEF";
+
+    static const char CR = 0x0d;
+
+    static const char CR = 0x0d;
+
+
+
+/*
+ * Definition of event flag wait specification
+ */
+static const WSPEC knl_wspec_flg_tfifo = { TTW_FLG, NULL, NULL };
+static const WSPEC knl_wspec_flg_tpri  = { TTW_FLG, flg_chg_pri, NULL };
+
+
 /*--------------------------------------------------------------------*/
 /*  Function definition                                               */
 /*--------------------------------------------------------------------*/
@@ -10056,23 +10074,23 @@ void knl_off_pow( void )
 }
 
 
-#error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."
+//#error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."
 
-#error "TK_MAX_TSKPRI MUST be greater than or equal to 16."
+//#error "TK_MAX_TSKPRI MUST be greater than or equal to 16."
 
-#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 1."
+//#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 1."
 
-#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
+//#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
 
-#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
+//#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
 
-#error "TK_MEM_RNG0 has an invalid value."
+//#error "TK_MEM_RNG0 has an invalid value."
 
-#error "TK_MEM_RNG1 has an invalid value."
+//#error "TK_MEM_RNG1 has an invalid value."
 
-#error "TK_MEM_RNG1 has an invalid value."
+//#error "TK_MEM_RNG1 has an invalid value."
 
-#error "TK_MEM_RNG1 has an invalid value."
+//#error "TK_MEM_RNG1 has an invalid value."
 
 
 
