@@ -2675,8 +2675,6 @@ typedef struct DeviceControlBlock {
     QUEUE   openq;          /* Open device management queue */
 } DevCB;
 
-extern  DevCB       knl_DevCBtbl[]; /* Device registration information table */
-extern  QUEUE       knl_UsedDevCB;  /* In-use queue */
 
 
 
@@ -2998,7 +2996,6 @@ struct task_control_block {
 /* High level programming language interrupt handler entry */
 FP knl_hll_inthdr[N_INTVEC];
 
-extern FP knl_hll_inthdr[];
 
 
 /* Lock for device management exclusive control */
@@ -3013,28 +3010,18 @@ extern FP knl_hll_inthdr[];
   QUEUE       knl_UsedDevCB; /* In-use queue */
   QUEUE       knl_FreeDevCB; /* Unused queue */
 
-extern  T_IDEV      knl_DefaultIDev;
-
-extern DevCB knl_DevCBtbl[];    /* Device registration information table */
-extern QUEUE knl_UsedDevCB; /* In-use queue */
-extern QUEUE knl_FreeDevCB; /* Unused queue */
-
-
-extern OpnCB knl_OpnCBtbl[];    /* Open management information table */
-extern QUEUE knl_FreeOpnCB; /* Unused queue */
-
-
-extern ReqCB knl_ReqCBtbl[];    /* Request management information table */
-extern QUEUE knl_FreeReqCB; /* Unused queue */
 
 
 
-extern ResCB knl_resource_control_block;
+
+
+
+
+
 
 
 
 /* Suspend disable request count */
-extern  INT knl_DisSusCnt;
 
 
 OpnCB knl_OpnCBtbl[CFN_MAX_OPNDEV];  /* Open management information table */
@@ -3063,8 +3050,6 @@ FLGCB knl_flgcb_table[NUM_FLGID];    /* Event flag control block */
 QUEUE knl_free_flgcb;    /* FreeQue */
 
 
-extern FLGCB knl_flgcb_table[]; /* Event flag control block */
-extern QUEUE knl_free_flgcb;    /* FreeQue */
 
 
 INT init_task_stack[INITTASK_STKSZ/sizeof(INT)];
@@ -3073,38 +3058,29 @@ INT init_task_stack[INITTASK_STKSZ/sizeof(INT)];
 MBXCB knl_mbxcb_table[NUM_MBXID];    /* Mailbox control block */
 QUEUE knl_free_mbxcb;    /* FreeQue */
 
-extern MBXCB knl_mbxcb_table[]; /* Mailbox control block */
-extern QUEUE knl_free_mbxcb;    /* FreeQue */
 
 
 
 IMACB *knl_imacb;
 
 
-extern IMACB *knl_imacb;
 
 
 MPFCB knl_mpfcb_table[NUM_MPFID];    /* Fixed size memory pool control block */
 QUEUE knl_free_mpfcb;    /* FreeQue */
 
 
-extern MPFCB knl_mpfcb_table[]; /* Fixed size memory pool control block */
-extern QUEUE knl_free_mpfcb;    /* FreeQue */
 
 
 MPLCB knl_mplcb_table[NUM_MPLID];    /* Variable size memory pool control block */
 QUEUE knl_free_mplcb;    /* FreeQue */
 
-extern MPLCB knl_mplcb_table[]; /* Variable size memory pool control block */
-extern QUEUE knl_free_mplcb;    /* FreeQue */
 
 
 
 MBFCB knl_mbfcb_table[NUM_MBFID];    /* Message buffer control block */
 QUEUE knl_free_mbfcb;    /* FreeQue */
 
-extern MBFCB knl_mbfcb_table[]; /* Message buffer control block */
-extern QUEUE knl_free_mbfcb;    /* FreeQue */
 
 
 UINT knl_lowpow_discnt = 0;
@@ -3121,36 +3097,21 @@ FP knl_hook_ienterfn;
 FP knl_hook_ileavefn;
 void *knl_hook_int_gp;
 
-extern UINT knl_lowpow_discnt;
 
-extern FP knl_hook_enterfn;
-extern FP knl_hook_leavefn;
-extern FP knl_hook_execfn;
-extern FP knl_hook_stopfn;
-extern FP knl_hook_ienterfn;
-extern FP knl_hook_ileavefn;
 
-extern void *knl_hook_svc_gp;
-extern void *knl_hook_dsp_gp;
-extern void *knl_hook_int_gp;
 
 
 MTXCB knl_mtxcb_table[NUM_MTXID];    /* Mutex control block */
 QUEUE knl_free_mtxcb;    /* FreeQue */
 
 
-extern MTXCB knl_mtxcb_table[]; /* Mutex control block */
-extern QUEUE knl_free_mtxcb;    /* FreeQue */
 
 
-extern RDYQUE   knl_ready_queue;
 
 
 PORCB knl_porcb_table[NUM_PORID];    /* Rendezvous port control block */
 QUEUE knl_free_porcb;    /* FreeQue */
 
-extern PORCB knl_porcb_table[]; /* Rendezvous port control block */
-extern QUEUE knl_free_porcb;    /* FreeQue */
 
 
 SEMCB knl_semcb_table[NUM_SEMID];    /* Semaphore control block */
@@ -3309,10 +3270,7 @@ knl_tstdlib_bitsearch1( void *base, W offset, W width )
 
 
 
-extern void knl_tstdlib_bitclr( void *base, W offset );
-extern void knl_tstdlib_bitset( void *base, W offset );
 
-extern W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 
 
 /*
@@ -3468,7 +3426,6 @@ ER tk_ena_dsp_impl( void )
 
 
 /* High level programming language routine (Interrupt) */
-extern void knl_inthdr_startup();
 
 /*
  * Interrupt handler definition
@@ -3696,8 +3653,6 @@ ER td_get_reg_impl( ID tskid, T_REGS *regs, T_EIT *eit, T_CREGS *cregs )
 
 
 
-extern void knl_get_reg( TCB *tcb, T_REGS *regs, T_EIT *eit, T_CREGS *cregs );
-extern void knl_set_reg( TCB *tcb, const T_REGS *regs, const T_EIT *eit, const T_CREGS *cregs );
 
 
 /*
@@ -3713,14 +3668,11 @@ extern void knl_set_reg( TCB *tcb, const T_REGS *regs, const T_EIT *eit, const T
  */
 ER knl_cpu_initialize( void )
 {
-extern void knl_dispatch_entry( void );     /* Dispatcher call */
 
     /* Register exception handler used on OS */
 //  knl_define_inthdr(EXP_PSV, knl_dispatch_entry);
-extern void knl_call_dbgspt( void );        /* Debugger support call */
 //  knl_define_inthdr(EXP_DBG, knl_call_dbgspt);
 
-extern void knl_call_entry( void );         /* System call */
 //  knl_define_inthdr(EXP_SVC,      knl_call_entry);
 
     return E_OK;
@@ -3739,9 +3691,6 @@ void knl_cpu_shutdown( void )
  *  Control register operation
  */
 
-extern UINT knl_getXPSR(void);
-extern UINT knl_getBASEPRI(void);
-extern UINT knl_getPRIMASK(void);
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -3839,8 +3788,6 @@ void knl_LeaveTaskIndependent( void )
  *  Perform dispatcher startup with END_CRITICAL_SECTION.
  */
 
-extern void knl_force_dispatch( void );
-extern void knl_dispatch( void );
 
 /* ----------------------------------------------------------------------- */
 
@@ -3914,66 +3861,20 @@ void knl_cleanup_context( TCB *tcb )
 /* [BEGIN SYSCALLS] */
 
 /* Refer each object usage state */
-extern INT td_lst_tsk( ID list[], INT nent );
-extern INT td_lst_sem( ID list[], INT nent );
-extern INT td_lst_flg( ID list[], INT nent );
-extern INT td_lst_mbx( ID list[], INT nent );
-extern INT td_lst_mtx( ID list[], INT nent );
-extern INT td_lst_mbf( ID list[], INT nent );
-extern INT td_lst_por( ID list[], INT nent );
-extern INT td_lst_mpf( ID list[], INT nent );
-extern INT td_lst_mpl( ID list[], INT nent );
-extern INT td_lst_cyc( ID list[], INT nent );
-extern INT td_lst_alm( ID list[], INT nent );
-extern INT td_lst_ssy( ID list[], INT nent );
 
 /* Refer each object state */
-extern ER td_ref_sem( ID semid, TD_RSEM *rsem );
-extern ER td_ref_flg( ID flgid, TD_RFLG *rflg );
-extern ER td_ref_mbx( ID mbxid, TD_RMBX *rmbx );
-extern ER td_ref_mtx( ID mtxid, TD_RMTX *rmtx );
-extern ER td_ref_mbf( ID mbfid, TD_RMBF *rmbf );
-extern ER td_ref_por( ID porid, TD_RPOR *rpor );
-extern ER td_ref_mpf( ID mpfid, TD_RMPF *rmpf );
-extern ER td_ref_mpl( ID mplid, TD_RMPL *rmpl );
-extern ER td_ref_cyc( ID cycid, TD_RCYC *rcyc );
-extern ER td_ref_alm( ID almid, TD_RALM *ralm );
-extern ER td_ref_ssy( ID ssid, TD_RSSY *rssy );
 
 /* Refer task state */
-extern ER td_ref_tsk( ID tskid, TD_RTSK *rtsk );
-extern ER td_inf_tsk( ID tskid, TD_ITSK *itsk, BOOL clr );
-extern ER td_get_reg( ID tskid, T_REGS *regs, T_EIT *eit, T_CREGS *cregs );
-extern ER td_set_reg( ID tskid, const T_REGS *regs, const T_EIT *eit, const T_CREGS *cregs );
 
 /* Refer system state */
-extern ER td_ref_sys( TD_RSYS *rsys );
-extern ER td_get_tim( SYSTIM *tim, UW *ofs );
-extern ER td_get_otm( SYSTIM *tim, UW *ofs );
 
 /* Refer ready queue */
-extern INT td_rdy_que( PRI pri, ID list[], INT nent );
 
 /* Refer wait queue */
-extern INT td_sem_que( ID semid, ID list[], INT nent );
-extern INT td_flg_que( ID flgid, ID list[], INT nent );
-extern INT td_mbx_que( ID mbxid, ID list[], INT nent );
-extern INT td_mtx_que( ID mtxid, ID list[], INT nent );
-extern INT td_smbf_que( ID mbfid, ID list[], INT nent );
-extern INT td_rmbf_que( ID mbfid, ID list[], INT nent );
-extern INT td_cal_que( ID porid, ID list[], INT nent );
-extern INT td_acp_que( ID porid, ID list[], INT nent );
-extern INT td_mpf_que( ID mpfid, ID list[], INT nent );
-extern INT td_mpl_que( ID mplid, ID list[], INT nent );
 
 /* Execution trace */
-extern ER td_hok_svc( const TD_HSVC *hsvc );
-extern ER td_hok_dsp( const TD_HDSP *hdsp );
-extern ER td_hok_int( const TD_HINT *hint );
 
 /* Object name */
-extern ER td_ref_dsname( UINT type, ID id, UB *dsname );
-extern ER td_set_dsname( UINT type, ID id, const UB *dsname );
 
 /* [END SYSCALLS] */
 
@@ -4647,12 +4548,6 @@ ER knl_call_abortfn( DevCB *devcb, ID tskid, T_DEVREQ *devreq, INT nreq )
 }
 
 
-extern ID knl_request( ID dd, W start, void *buf, W size, TMO tmout, INT cmd );
-extern BOOL knl_chkopen( DevCB *devcb, INT unitno );
-extern void knl_delReqCB( ReqCB *reqcb );
-extern ResCB* knl_GetResCB( void );
-extern void knl_delOpnCB( OpnCB *opncb, BOOL free );
-extern ER knl_close_device( OpnCB *opncb, UINT option );
 
 
 /** [BEGIN Common Definitions] */
@@ -6462,12 +6357,8 @@ ER DeleteMLock( FastMLock *lock )
 
 
 
-extern void* knl_Imalloc( size_t size );
-extern void* knl_Icalloc( size_t nmemb, size_t size );
-extern void  knl_Ifree( void *ptr );
 
 
-extern void knl_init_task(void);
 
 
 
@@ -6520,7 +6411,7 @@ INT knl_init_task_main( void )
 /*
  * Set Interrupt Mask Level in CPU
  */
-extern void SetCpuIntLevel( INT level )
+void SetCpuIntLevel( INT level )
 {
     enaint((level + INTPRI_MIN_UNIT) & INTPRI_MASK);
 }
@@ -6528,7 +6419,7 @@ extern void SetCpuIntLevel( INT level )
 /*
  * Get Interrupt Mask Level in CPU
  */
-extern INT GetCpuIntLevel( void )
+INT GetCpuIntLevel( void )
 {
     return (get_basepri() - INTPRI_MIN_UNIT) & INTPRI_MASK;
 }
@@ -6602,120 +6493,21 @@ BOOL CheckInt( UINT intno )
 /* ------------------------------------------------------------------------ */
 
 /* micro T-Kernel */
-extern ID tk_cre_tsk_impl P1( const T_CTSK *pk_ctsk );
-extern ER tk_del_tsk_impl( ID tskid );
-extern ER tk_sta_tsk_impl( ID tskid, INT stacd );
-extern void tk_ext_tsk_impl( void );
-extern void tk_exd_tsk_impl( void );
-extern ER tk_ter_tsk_impl( ID tskid );
-extern ER tk_dis_dsp_impl( void );
-extern ER tk_ena_dsp_impl( void );
-extern ER tk_chg_pri_impl( ID tskid, PRI tskpri );
-extern ER tk_rot_rdq_impl( PRI tskpri );
-extern ER tk_rel_wai_impl( ID tskid );
-extern ID tk_get_tid_impl( void );
-extern ER tk_get_reg_impl( ID tskid, T_REGS *pk_regs, T_EIT *pk_eit, T_CREGS *pk_cregs );
-extern ER tk_set_reg_impl( ID tskid, const T_REGS *pk_regs, const T_EIT *pk_eit, const T_CREGS *pk_cregs );
-extern ER tk_ref_tsk_impl( ID tskid, T_RTSK *pk_rtsk );
-extern ER tk_sus_tsk_impl( ID tskid );
-extern ER tk_rsm_tsk_impl( ID tskid );
-extern ER tk_frsm_tsk_impl( ID tskid );
-extern ER tk_slp_tsk_impl( TMO tmout );
-extern ER tk_wup_tsk_impl( ID tskid );
-extern INT tk_can_wup_impl( ID tskid );
 
-extern ID tk_cre_sem_impl( const T_CSEM *pk_csem );
-extern ER tk_del_sem_impl( ID semid );
-extern ER tk_sig_sem_impl( ID semid, INT cnt );
-extern ER tk_wai_sem_impl( ID semid, INT cnt, TMO tmout );
-extern ER tk_ref_sem_impl( ID semid, T_RSEM *pk_rsem );
 
-extern ID tk_cre_mtx_impl( const T_CMTX *pk_cmtx );
-extern ER tk_del_mtx_impl( ID mtxid );
-extern ER tk_loc_mtx_impl( ID mtxid, TMO tmout );
-extern ER tk_unl_mtx_impl( ID mtxid );
-extern ER tk_ref_mtx_impl( ID mtxid, T_RMTX *pk_rmtx );
 
-extern ID tk_cre_flg_impl( const T_CFLG *pk_cflg );
-extern ER tk_del_flg_impl( ID flgid );
-extern ER tk_set_flg_impl( ID flgid, UINT setptn );
-extern ER tk_clr_flg_impl( ID flgid, UINT clrptn );
-extern ER tk_wai_flg_impl( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, TMO tmout );
-extern ER tk_ref_flg_impl( ID flgid, T_RFLG *pk_rflg );
 
-extern ID tk_cre_mbx_impl( const T_CMBX* pk_cmbx );
-extern ER tk_del_mbx_impl( ID mbxid );
-extern ER tk_snd_mbx_impl( ID mbxid, T_MSG *pk_msg );
-extern ER tk_rcv_mbx_impl( ID mbxid, T_MSG **ppk_msg, TMO tmout );
-extern ER tk_ref_mbx_impl( ID mbxid, T_RMBX *pk_rmbx );
 
-extern ID tk_cre_mbf_impl( const T_CMBF *pk_cmbf );
-extern ER tk_del_mbf_impl( ID mbfid );
-extern ER tk_snd_mbf_impl( ID mbfid, const void *msg, INT msgsz, TMO tmout );
-extern INT tk_rcv_mbf_impl( ID mbfid, void *msg, TMO tmout );
-extern ER tk_ref_mbf_impl( ID mbfid, T_RMBF *pk_rmbf );
 
-extern ID tk_cre_por_impl( const T_CPOR *pk_cpor );
-extern ER tk_del_por_impl( ID porid );
-extern INT tk_cal_por_impl( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO tmout );
-extern INT tk_acp_por_impl( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO tmout );
-extern ER tk_fwd_por_impl( ID porid, UINT calptn, RNO rdvno, const void *msg, INT cmsgsz );
-extern ER tk_rpl_rdv_impl( RNO rdvno, const void *msg, INT rmsgsz );
-extern ER tk_ref_por_impl( ID porid, T_RPOR *pk_rpor );
 
-extern ER tk_def_int_impl P2( UINT intno, const T_DINT *pk_dint );
-extern void tk_ret_int_impl( void );
 
-extern ID tk_cre_mpl_impl( const T_CMPL *pk_cmpl );
-extern ER tk_del_mpl_impl( ID mplid );
-extern ER tk_get_mpl_impl( ID mplid, SZ blksz, void **p_blk, TMO tmout );
-extern ER tk_rel_mpl_impl( ID mplid, void *blk );
-extern ER tk_ref_mpl_impl( ID mplid, T_RMPL *pk_rmpl );
 
-extern ID tk_cre_mpf_impl( const T_CMPF *pk_cmpf );
-extern ER tk_del_mpf_impl( ID mpfid );
-extern ER tk_get_mpf_impl( ID mpfid, void **p_blf, TMO tmout );
-extern ER tk_rel_mpf_impl( ID mpfid, void *blf );
-extern ER tk_ref_mpf_impl( ID mpfid, T_RMPF *pk_rmpf );
 
-extern ER tk_set_tim_impl( const SYSTIM *pk_tim );
-extern ER tk_get_tim_impl( SYSTIM *pk_tim );
-extern ER tk_get_otm_impl( SYSTIM *pk_tim );
-extern ER tk_dly_tsk_impl( RELTIM dlytim );
 
-extern ID tk_cre_cyc_impl P1( const T_CCYC *pk_ccyc );
-extern ER tk_del_cyc_impl( ID cycid );
-extern ER tk_sta_cyc_impl( ID cycid );
-extern ER tk_stp_cyc_impl( ID cycid );
-extern ER tk_ref_cyc_impl( ID cycid, T_RCYC *pk_rcyc );
 
-extern ID tk_cre_alm_impl P1( const T_CALM *pk_calm );
-extern ER tk_del_alm_impl( ID almid );
-extern ER tk_sta_alm_impl( ID almid, RELTIM almtim );
-extern ER tk_stp_alm_impl( ID almid );
-extern ER tk_ref_alm_impl( ID almid, T_RALM *pk_ralm );
 
-extern ER tk_ref_ver_impl( T_RVER *pk_rver );
-extern ER tk_ref_sys_impl( T_RSYS *pk_rsys );
 
-extern ER tk_def_ssy_impl P2( ID ssid, const T_DSSY *pk_dssy );
-extern ER tk_ref_ssy_impl( ID ssid, T_RSSY *pk_rssy );
 
-extern ID tk_opn_dev_impl( const UB *devnm, UINT omode );
-extern ER tk_cls_dev_impl( ID dd, UINT option );
-extern ID tk_rea_dev_impl( ID dd, W start, void *buf, SZ size, TMO tmout );
-extern ER tk_srea_dev_impl( ID dd, W start, void *buf, SZ size, SZ *asize );
-extern ID tk_wri_dev_impl( ID dd, W start, const void *buf, SZ size, TMO tmout );
-extern ER tk_swri_dev_impl( ID dd, W start, const void *buf, SZ size, SZ *asize );
-extern ID tk_wai_dev_impl( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout );
-extern INT tk_sus_dev_impl( UINT mode );
-extern ID tk_get_dev_impl( ID devid, UB *devnm );
-extern ID tk_ref_dev_impl( const UB *devnm, T_RDEV *rdev );
-extern ID tk_oref_de_implv( ID dd, T_RDEV *rdev );
-extern INT tk_lst_dev_impl( T_LDEV *ldev, INT start, INT ndev );
-extern INT tk_evt_dev_impl( ID devid, INT evttype, void *evtinf );
-extern ID tk_def_dev_impl P3( const UB *devnm, const T_DDEV *ddev, T_IDEV *idev );
-extern ER tk_ref_idv_impl( T_IDEV *idev );
 
 /*
  * Definition of unused system call
@@ -6763,8 +6555,6 @@ void knl_InitOBJLOCK( OBJLOCK *loc )
 {
     loc->wtskq.next = NULL;
 }
-extern void knl_LockOBJ( OBJLOCK* );
-extern void knl_UnlockOBJ( OBJLOCK* );
 
 BOOL knl_isLockedOBJ( OBJLOCK *loc )
 {
@@ -6779,39 +6569,18 @@ BOOL knl_isLockedOBJ( OBJLOCK *loc )
 /*
  * System initialization (each module)
  */
-extern ER knl_task_initialize( void );
-extern ER knl_semaphore_initialize( void );
-extern ER knl_eventflag_initialize( void );
-extern ER knl_mailbox_initialize( void );
-extern ER knl_messagebuffer_initialize( void );
-extern ER knl_rendezvous_initialize( void );
-extern ER knl_mutex_initialize( void );
-extern ER knl_memorypool_initialize( void );
-extern ER knl_fix_memorypool_initialize( void );
-extern ER knl_cyclichandler_initialize( void );
-extern ER knl_alarmhandler_initialize( void );
-extern ER knl_subsystem_initialize( void );
-extern ER knl_devicemanager_initialize( void );
 
 /*
  * Start/Exit system (tkstart.c)
  */
-extern void knl_t_kernel_main( T_CTSK* );
-extern void knl_t_kernel_exit( void );
 
 /*
  * Target system-dependent routine (cpu_init.c tkdev_init.c)
  */
-extern ER   knl_cpu_initialize( void );
-extern void knl_cpu_shutdown( void );
-extern ER   knl_tkdev_initialize( void );
-extern void knl_tkdev_exit( void );
 
 /*
  * Mutex
  */
-extern void knl_signal_all_mutex( TCB *tcb );
-extern INT knl_chg_pri_mutex( TCB *tcb, INT priority );
 
 
 /*
@@ -6883,21 +6652,6 @@ void knl_UnlockOBJ( OBJLOCK *loc )
 
 
 
-extern void* memset( void *s, int c, size_t n );
-extern int memcmp( const void *s1, const void *s2, size_t n );
-extern void* memcpy( void *dst, const void *src, size_t n );
-extern void* memmove( void *dst, const void *src, size_t n );
-extern void bzero( void *s, size_t n );
-
-extern size_t strlen( const char *s );
-extern int strcmp( const char *s1, const char *s2 );
-extern int strncmp( const char *s1, const char *s2, size_t n );
-extern char* strcpy( char *dst, const char *src );
-extern char* strncpy( char *dst, const char *src, size_t n );
-extern char* strcat( char *dst, const char *src );
-extern char* strncat( char *dst, const char *src, size_t n );
-
-extern long int strtol( const char *nptr, char **endptr, int base );
 
 
 
@@ -6916,27 +6670,8 @@ extern long int strtol( const char *nptr, char **endptr, int base );
 
 
 
-extern longlong ltoll( long a );            /* (longlong)a */
-extern longlong ultoll( unsigned long a );      /* (longlong)a */
-extern longlong uitoll( UINT a );           /* (longlong)a */
-extern long lltol( longlong a );            /* (long)a */
-extern unsigned long    lltoul( longlong a );   /* (unsigned long)a */
-extern longlong ll_add( longlong a, longlong b );   /* a+b */
-extern longlong ll_sub( longlong a, longlong b );   /* a-b */
-extern longlong ll_mul( longlong a, longlong b );   /* a*b */
-extern longlong li_mul( longlong a, long b );       /* a*b */
-extern longlong lui_mul( longlong a, UINT b );      /* a*b */
-extern longlong ll_div( longlong a, longlong b );   /* a/b */
-extern longlong li_div( longlong a, long b );       /* a/b */
-extern longlong lui_div( longlong a, UINT b );      /* a/b */
-extern longlong ll_mod( longlong a, longlong b );   /* a%b */
-extern long li_mod( longlong a, long b );       /* a%b */
-extern long lui_mod( longlong a, UINT b );      /* a%b */
-extern int  ll_cmp( longlong a, longlong b );   /* +:a>b,0:a=b,-:a<b */
-extern int  ll_sign( longlong a );          /* +:a>0,0:a=0,-:a<0 */
-extern longlong ll_neg( longlong a );           /* -a */
-extern void ll_inc( longlong *a );          /* (*a)++ */
-extern void ll_dec( longlong *a );          /* (*a)-- */
+
+
 
 
 
@@ -7614,7 +7349,6 @@ static void initIMACB( void )
 ER knl_init_Imalloc( void )
 {
 /* Low-level memory management information */
-extern  void    *knl_lowmem_top, *knl_lowmem_limit;
 
     void    *memend;
     QUEUE   *top, *end;
@@ -7689,14 +7423,8 @@ W roundSize( W sz )
  */
 
 
-extern QUEUE* knl_searchFreeArea( IMACB *imacb, W blksz );
-extern void knl_appendFreeArea( IMACB *imacb, QUEUE *aq );
-extern void knl_removeFreeQue( QUEUE *fq );
-extern void knl_insertAreaQue( QUEUE *que, QUEUE *ent );
-extern void knl_removeAreaQue( QUEUE *aq );
 
 
-extern ER knl_init_Imalloc( void );
 
 
 /** [BEGIN Common Definitions] */
@@ -8750,10 +8478,6 @@ W knl_MaxFreeSize( MPLCB *mplcb )
 /*
  * Definition of variable size memory pool wait specification
  */
-extern void knl_appendFreeAreaBound( MPLCB *mplcb, QUEUE *aq );
-extern void *knl_get_blk( MPLCB *mplcb, W blksz );
-extern ER knl_rel_blk( MPLCB *mplcb, void *blk );
-extern void knl_mpl_wakeup( MPLCB *mplcb );
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
@@ -9357,8 +9081,6 @@ BOOL knl_mbf_empty( MBFCB *mbfcb )
 /*
  * Definition of message buffer wait specification
  */
-extern void knl_msg_to_mbf( MBFCB *mbfcb, const void *msg, INT msgsz );
-extern void knl_mbf_wakeup( MBFCB *mbfcb );
 
 /** [BEGIN Common Definitions] */
 /** [END Common Definitions] */
@@ -9526,12 +9248,6 @@ ER td_ref_sys_impl( TD_RSYS *pk_rsys )
 /*
  * Hook enable/disable setting
  */
-extern void knl_hook_svc( void );
-extern void knl_unhook_svc( void );
-extern void knl_hook_dsp( void );
-extern void knl_unhook_dsp( void );
-extern void knl_hook_int( void );
-extern void knl_unhook_int( void );
 
 
 /** [BEGIN Common Definitions] */
@@ -10150,7 +9866,6 @@ INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
  */
 
 
-extern void knl_release_mutex( TCB *tcb, MTXCB *relmtxcb );
 
 
 /** [BEGIN Common Definitions] */
@@ -10247,7 +9962,6 @@ ER knl_object_getname( UINT objtype, ID objid, UB **name)
     return ercd;
 }
 
-extern ER knl_object_getname( UINT objtype, ID objid, UB **name);
 
 ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
 {
@@ -10263,7 +9977,6 @@ ER td_ref_dsname_impl( UINT type, ID id, UB *dsname )
     return E_NOSPT;
 }
 
-extern ER knl_object_getname( UINT objtype, ID objid, UB **name);
 
 ER td_set_dsname_impl( UINT type, ID id, const UB *dsname )
 {
@@ -11392,9 +11105,6 @@ ID knl_get_tskid_rdvno( RNO rdvno )
 /*
  * Definition of rendezvous wait specification
  */
-extern const WSPEC knl_wspec_cal_tfifo;
-extern const WSPEC knl_wspec_cal_tpri;
-extern const WSPEC knl_wspec_rdv;
 
 
 
@@ -11791,8 +11501,6 @@ INT td_sem_que_impl( ID semid, ID list[], INT nent )
 
 
 
-extern SEMCB knl_semcb_table[]; /* Semaphore control block */
-extern QUEUE knl_free_semcb;    /* FreeQue */
 
 
 
@@ -12133,13 +11841,11 @@ ER knl_svc_ientry P2GP( void *pk_para, FN fncd )
 
 
 
-extern SSYCB knl_ssycb_table[]; /* Subsystem control block */
 
 
 /*
  * Undefined extended SVC function 
  */
-extern INT knl_no_support( void *pk_para, FN fncd );
 
 
 
@@ -12231,106 +11937,7 @@ extern INT knl_no_support( void *pk_para, FN fncd );
 /*** DEFINE_TKSVC ***/
 
 /* [BEGIN SYSCALLS] */
-extern ID tk_cre_tsk( const T_CTSK *pk_ctsk );
-extern ER tk_del_tsk( ID tskid );
-extern ER tk_sta_tsk( ID tskid, INT stacd );
-extern void tk_ext_tsk( void );
-extern void tk_exd_tsk( void );
-extern ER tk_ter_tsk( ID tskid );
-extern ER tk_dis_dsp( void );
-extern ER tk_ena_dsp( void );
-extern ER tk_chg_pri( ID tskid, PRI tskpri );
-extern ER tk_rot_rdq( PRI tskpri );
-extern ER tk_rel_wai( ID tskid );
-extern ID tk_get_tid( void );
-extern ER tk_get_reg( ID tskid, T_REGS *pk_regs, T_EIT *pk_eit, T_CREGS *pk_cregs );
-extern ER tk_set_reg( ID tskid, const T_REGS *pk_regs, const T_EIT *pk_eit, const T_CREGS *pk_cregs );
-extern ER tk_ref_tsk( ID tskid, T_RTSK *pk_rtsk );
-extern ER tk_sus_tsk( ID tskid );
-extern ER tk_rsm_tsk( ID tskid );
-extern ER tk_frsm_tsk( ID tskid );
-extern ER tk_slp_tsk( TMO tmout );
-extern ER tk_wup_tsk( ID tskid );
-extern INT tk_can_wup( ID tskid );
-extern ID tk_cre_sem( const T_CSEM *pk_csem );
-extern ER tk_del_sem( ID semid );
-extern ER tk_sig_sem( ID semid, INT cnt );
-extern ER tk_wai_sem( ID semid, INT cnt, TMO tmout );
-extern ER tk_ref_sem( ID semid, T_RSEM *pk_rsem );
-extern ID tk_cre_mtx( const T_CMTX *pk_cmtx );
-extern ER tk_del_mtx( ID mtxid );
-extern ER tk_loc_mtx( ID mtxid, TMO tmout );
-extern ER tk_unl_mtx( ID mtxid );
-extern ER tk_ref_mtx( ID mtxid, T_RMTX *pk_rmtx );
-extern ID tk_cre_flg( const T_CFLG *pk_cflg );
-extern ER tk_del_flg( ID flgid );
-extern ER tk_set_flg( ID flgid, UINT setptn );
-extern ER tk_clr_flg( ID flgid, UINT clrptn );
-extern ER tk_wai_flg( ID flgid, UINT waiptn, UINT wfmode, UINT *p_flgptn, TMO tmout );
-extern ER tk_ref_flg( ID flgid, T_RFLG *pk_rflg );
-extern ID tk_cre_mbx( const T_CMBX* pk_cmbx );
-extern ER tk_del_mbx( ID mbxid );
-extern ER tk_snd_mbx( ID mbxid, T_MSG *pk_msg );
-extern ER tk_rcv_mbx( ID mbxid, T_MSG **ppk_msg, TMO tmout );
-extern ER tk_ref_mbx( ID mbxid, T_RMBX *pk_rmbx );
-extern ID tk_cre_mbf( const T_CMBF *pk_cmbf );
-extern ER tk_del_mbf( ID mbfid );
-extern ER tk_snd_mbf( ID mbfid, const void *msg, INT msgsz, TMO tmout );
-extern INT tk_rcv_mbf( ID mbfid, void *msg, TMO tmout );
-extern ER tk_ref_mbf( ID mbfid, T_RMBF *pk_rmbf );
-extern ID tk_cre_por( const T_CPOR *pk_cpor );
-extern ER tk_del_por( ID porid );
-extern INT tk_cal_por( ID porid, UINT calptn, void *msg, INT cmsgsz, TMO tmout );
-extern INT tk_acp_por( ID porid, UINT acpptn, RNO *p_rdvno, void *msg, TMO tmout );
-extern ER tk_fwd_por( ID porid, UINT calptn, RNO rdvno, const void *msg, INT cmsgsz );
-extern ER tk_rpl_rdv( RNO rdvno, const void *msg, INT rmsgsz );
-extern ER tk_ref_por( ID porid, T_RPOR *pk_rpor );
-extern ER tk_def_int( UINT intno, const T_DINT *pk_dint );
-extern void tk_ret_int( void );
-extern ID tk_cre_mpl( const T_CMPL *pk_cmpl );
-extern ER tk_del_mpl( ID mplid );
-extern ER tk_get_mpl( ID mplid, SZ blksz, void **p_blk, TMO tmout );
-extern ER tk_rel_mpl( ID mplid, void *blk );
-extern ER tk_ref_mpl( ID mplid, T_RMPL *pk_rmpl );
-extern ID tk_cre_mpf( const T_CMPF *pk_cmpf );
-extern ER tk_del_mpf( ID mpfid );
-extern ER tk_get_mpf( ID mpfid, void **p_blf, TMO tmout );
-extern ER tk_rel_mpf( ID mpfid, void *blf );
-extern ER tk_ref_mpf( ID mpfid, T_RMPF *pk_rmpf );
-extern ER tk_set_tim( const SYSTIM *pk_tim );
-extern ER tk_get_tim( SYSTIM *pk_tim );
-extern ER tk_get_otm( SYSTIM *pk_tim );
-extern ER tk_dly_tsk( RELTIM dlytim );
-extern ID tk_cre_cyc( const T_CCYC *pk_ccyc );
-extern ER tk_del_cyc( ID cycid );
-extern ER tk_sta_cyc( ID cycid );
-extern ER tk_stp_cyc( ID cycid );
-extern ER tk_ref_cyc( ID cycid, T_RCYC *pk_rcyc );
-extern ID tk_cre_alm( const T_CALM *pk_calm );
-extern ER tk_del_alm( ID almid );
-extern ER tk_sta_alm( ID almid, RELTIM almtim );
-extern ER tk_stp_alm( ID almid );
-extern ER tk_ref_alm( ID almid, T_RALM *pk_ralm );
-extern ER tk_ref_ver( T_RVER *pk_rver );
-extern ER tk_ref_sys( T_RSYS *pk_rsys );
-extern ER tk_def_ssy( ID ssid, const T_DSSY *pk_dssy );
-extern ER tk_ref_ssy( ID ssid, T_RSSY *pk_rssy );
 
-extern ID tk_opn_dev( const UB *devnm, UINT omode );
-extern ER tk_cls_dev( ID dd, UINT option );
-extern ID tk_rea_dev( ID dd, W start, void *buf, SZ size, TMO tmout );
-extern ER tk_srea_dev( ID dd, W start, void *buf, SZ size, SZ *asize );
-extern ID tk_wri_dev( ID dd, W start, const void *buf, SZ size, TMO tmout );
-extern ER tk_swri_dev( ID dd, W start, const void *buf, SZ size, SZ *asize );
-extern ID tk_wai_dev( ID dd, ID reqid, SZ *asize, ER *ioer, TMO tmout );
-extern INT tk_sus_dev( UINT mode );
-extern ID tk_get_dev( ID devid, UB *devnm );
-extern ID tk_ref_dev( const UB *devnm, T_RDEV *pk_rdev );
-extern ID tk_oref_dev( ID dd, T_RDEV *pk_rdev );
-extern INT tk_lst_dev( T_LDEV *pk_ldev, INT start, INT ndev );
-extern INT tk_evt_dev( ID devid, INT evttyp, void *evtinf );
-extern ID tk_def_dev( const UB *devnm, const T_DDEV *pk_ddev, T_IDEV *pk_idev );
-extern ER tk_ref_idv( T_IDEV *pk_idev );
 /* [END SYSCALLS] */
 
 
@@ -12449,9 +12056,6 @@ extern ER tk_ref_idv( T_IDEV *pk_idev );
 
 
 
-extern  FP  knl_intvec[];
-extern  W   knl_taskindp;
-extern  UW  knl_taskmode;
 
 
 
@@ -12459,30 +12063,23 @@ extern  UW  knl_taskmode;
 /*
  * Platform dependent sequence
  */
-extern ER knl_init_device( void );
-extern ER knl_start_device( void );
-extern ER knl_finish_device( void );
-extern ER knl_restart_device( W mode );
 
 
 /*
  * Initialize sequence before micro T-Kernel starts
  *  Perform preparation necessary to start micro T-Kernel.
  */
-extern void knl_init_system( void );
 
 /*
  * Start micro T-Kernel
  *  Start micro T-Kernel and the initial task specified by 'ctsk'.
  */
-extern void knl_t_kernel_main( T_CTSK *ctsk );
 
 /*
  * Start System
  *  At this point, start each subsystem and each device driver.
  *  Return from function after starting.
  */
-extern void knl_start_system( void );
 
 /*
  * Stop System
@@ -12495,12 +12092,10 @@ extern void knl_start_system( void );
  *
  *  fin are not always supported.
  */
-extern void knl_shutdown_system( INT fin );
 
 /*
  * Main initial task sequence (sysmain)
  */
-extern INT knl_init_task_main( void );
 
 /* ------------------------------------------------------------------------ */
 
@@ -12534,7 +12129,6 @@ void knl_init_task(void)
 /*
  * Initial task creation parameter
  */
-extern const T_CTSK knl_c_init_task;
 
 /*
  * Entry for starting Kernel
@@ -12569,9 +12163,6 @@ int main( void )
  *  that the interrupt group have. Write the BASEPRI to implement 
  *  disint and enaint.
  */
-extern UINT disint( void );
-extern UINT enaint( UINT intsts );
-extern UINT get_basepri( void );
 
 /* Convert to interrupt definition number */
 
@@ -12587,24 +12178,20 @@ extern UINT get_basepri( void );
 /*
  * Set Interrupt Mask Level in CPU
  */
-extern void SetCpuIntLevel( INT level );
 
 /*
  * Get Interrupt Mask Level in CPU
  */
-extern INT GetCpuIntLevel( void );
 
 /*
  * Interrupt enable
  *  Enable the interrupt specified by 'intno.'
  */
-extern void EnableInt( UINT intno, INT level );
 
 /*
  * Interrupt disable
  *  Disable the interrupt specified by 'intno.'
  */
-extern void DisableInt( UINT intno );
 
 /*
  * Clear interrupt
@@ -12627,7 +12214,6 @@ extern void DisableInt( UINT intno );
  * Check active state
  *  Current active state for the associated interrupt
  */
-extern BOOL CheckInt( UINT intno );
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -12638,13 +12224,11 @@ extern BOOL CheckInt( UINT intno );
  * Set-Pending
  *  Pends the associated interrupt under software control.
  */
-extern void SetPendingInt( UINT intno );
 
 /*
  * Clear-Pending
  *  Un-pends the associated interrupt under software control.
  */
-extern void ClearPendingInt( UINT intno );
 
 /* ------------------------------------------------------------------------ */
 
@@ -12685,7 +12269,6 @@ UB in_b( UW port )
 /*
  * User main
  */
-extern INT usermain( void );
 
 
 
@@ -12699,7 +12282,6 @@ extern INT usermain( void );
 /*
  * Lock for device management exclusive control
  */
-extern FastMLock    knl_DevMgrLock;
 
 /*
  * Lock for device registration exclusive control
@@ -12711,29 +12293,14 @@ extern FastMLock    knl_DevMgrLock;
 /*
  * Device driver call 
  */
-extern INT knl_CallDeviceDriver( INT p1, INT p2, INT p3, INT p4, FP drv, void *gp );
 
 /* device.c */
-extern  FastMLock   knl_DevMgrLock;
-extern  DevCB       knl_DevCBtbl[];
-extern  QUEUE       knl_UsedDevCB;
-extern  DevCB*      knl_searchDevCB( const UB *devnm );
-extern  INT     knl_phydevnm( UB *pdevnm, const UB *ldevnm );
-extern  ER      knl_initialize_devmgr( void );
-extern  ER      knl_finish_devmgr( void );
 /* deviceio.c */
-extern ER knl_check_devdesc( ID dd, UINT mode, OpnCB **p_opncb );
-extern void knl_devmgr_startup( void );
-extern void knl_devmgr_cleanup( void );
-extern ER knl_initDevIO( void );
-extern ER knl_finishDevIO( void );
 
 
 /*
  * Manager/Driver
  */
-extern ER knl_init_Imalloc( void );         /* Internal memory allocation */
-extern ER knl_initialize_devmgr( void );
 
 /* ------------------------------------------------------------------------ */
 
@@ -13031,7 +12598,6 @@ BOOL knl_task_alive( TSTAT state )
  *  Use 'in_ddsp()' to refer the task dispatch status.
  *  'in_ddsp()' is a macro definition in CPU-dependent definition files.
  */
-extern INT  knl_dispatch_disabled;
 
 /*
  * Task in execution
@@ -13040,7 +12606,6 @@ extern INT  knl_dispatch_disabled;
  *  when checking information about the task that requested system call,
  *  use 'ctxtsk'. Only task dispatcher changes 'ctxtsk'.
  */
-extern TCB  *knl_ctxtsk;
 
 /*
  * Task which should be executed
@@ -13048,13 +12613,10 @@ extern TCB  *knl_ctxtsk;
  *  If a dispatch is delayed by the delayed dispatch or dispatch disable, 
  *  it does not match with 'ctxtsk.' 
  */
-extern TCB  *knl_schedtsk;
 
 /*
  * Task control information
  */
-extern TCB  knl_tcb_table[];    /* Task control block */
-extern QUEUE    knl_free_tcb;   /* FreeQue */
 
 /*
  * Get TCB from task ID.
@@ -13063,7 +12625,6 @@ extern QUEUE    knl_free_tcb;   /* FreeQue */
 /*
  * Prepare task execution.
  */
-extern void knl_make_dormant( TCB *tcb );
 
 /*
  * Make task executable.
@@ -13071,7 +12632,6 @@ extern void knl_make_dormant( TCB *tcb );
  *  make it executable. If the priority is lower, connect the task to the 
  *  ready queue.
  */
-extern void knl_make_ready( TCB *tcb );
 
 /*
  * Make task non-executable.
@@ -13080,14 +12640,12 @@ extern void knl_make_ready( TCB *tcb );
  *  task must be executable. Change 'tcb->state' on the caller side
  *  after returning from this function.
  */
-extern void knl_make_non_ready( TCB *tcb );
 
 /*
  * Change task priority.
  *  Change 'tcb' task priority to 'priority'.
  *  Then make the required task state transition occur.
  */
-extern void knl_change_task_priority( TCB *tcb, INT priority );
 
 /*
  * Rotate ready queue.
@@ -13095,8 +12653,6 @@ extern void knl_change_task_priority( TCB *tcb, INT priority );
  *  'rotate_ready_queue_run' rotates the ready queue including the highest 
  *  priority task in the ready queue.
  */
-extern void knl_rotate_ready_queue( INT priority );
-extern void knl_rotate_ready_queue_run( void );
 
 
 
@@ -13115,8 +12671,6 @@ void knl_reschedule( void )
     }
 }
 
-extern void knl_del_tsk( TCB *tcb );
-extern void knl_ter_tsk( TCB *tcb );
 
 
 /** [BEGIN Common Definitions] */
@@ -13911,7 +13465,6 @@ INT tk_can_wup_impl( ID tskid )
 /*
  * Definition of task wait specification
  */
-extern const WSPEC knl_wspec_slp;
 
 /*
  *  micro T-Kernel function code (Debugger Support)
@@ -14173,28 +13726,20 @@ SYSTIM knl_toSYSTIM( LSYSTIM ltime )
 /*
  * Current time (Software clock)
  */
-extern LSYSTIM  knl_current_time;   /* System operation time */
-extern LSYSTIM  knl_real_time_ofs;  /* Difference from actual time */
 
 /*
  * Timer event queue
  */
-extern QUEUE    knl_timer_queue;
 
 /* Actual time */
 
 /*
  * Timer initialization and stop
  */
-extern ER   knl_timer_initialize( void );
-extern void knl_timer_shutdown( void );
 
 /*
  * Register timer event onto timer queue
  */
-extern void knl_timer_insert( TMEB *evt, TMO tmout, CBACK cback, void *arg );
-extern void knl_timer_insert_reltim( TMEB *event, RELTIM tmout, CBACK callback, void *arg );
-extern void knl_timer_insert_abs( TMEB *evt, LSYSTIM time, CBACK cback, void *arg );
 
 /*
  * Delete from timer queue
@@ -14998,8 +14543,6 @@ ER td_ref_alm_impl( ID almid, TD_RALM *pk_ralm )
 
 
 
-extern CYCCB    knl_cyccb_table[];  /* Cyclic handler control block */
-extern QUEUE    knl_free_cyccb; /* FreeQue */
 
 
 
@@ -15026,7 +14569,6 @@ LSYSTIM knl_cyc_next_time( CYCCB *cyccb )
     return tm;
 }
 
-extern void knl_call_cychdr( CYCCB* cyccb );
 
 /*
  * Register timer event queue
@@ -15038,11 +14580,8 @@ void knl_cyc_timer_insert( CYCCB *cyccb, LSYSTIM tm )
 
 
 
-extern ALMCB    knl_almcb_table[];  /* Alarm handler control block */
-extern QUEUE    knl_free_almcb; /* FreeQue */
 
 
-extern void knl_call_almhdr( ALMCB *almcb );
 
 /*
  * Register onto timer event queue
@@ -15129,7 +14668,6 @@ void knl_init_hw_timer( void )
  */
 void knl_start_hw_timer( void )
 {
-extern  void    knl_timer_handler_startup( void );
 
     /* Set timer */
     knl_init_hw_timer();
@@ -15146,7 +14684,6 @@ extern  void    knl_timer_handler_startup( void );
  *  interrupt handler.
  *  Use either or both according to hardware.
  */
-extern void knl_clear_hw_timer_interrupt( void );
 
 
 void knl_end_of_hw_timer_interrupt( void )
@@ -15212,7 +14749,6 @@ static void knl_init_task_startup( T_CTSK *ctsk )
 {
     ER  ercd;
 
-    extern int _gp;
     ercd = tk_cre_tsk_impl(ctsk, 0,0,0,0,&_gp);
     ercd = tk_cre_tsk_impl(ctsk);
     if ( ercd < E_OK ) {
@@ -15429,14 +14965,6 @@ void knl_t_kernel_exit( void )
 /*
  * Monitor service function
  */
-extern void tm_monitor( void );
-extern INT  tm_getchar( INT wait );
-extern INT  tm_putchar( INT c );
-extern INT  tm_getline( UB *buff );
-extern INT  tm_putstring( const UB *buff );
-extern INT  tm_command( const UB *buff );
-extern void tm_exit( INT mode );
-extern INT  tm_printf( const UB *format, ... );
 
 
 INT tm_command ( UB *buff )
@@ -15455,7 +14983,6 @@ void tm_exit( INT mode )
 }
 
 
-extern void sio_recv_frame( UB* buf, INT size );
 
 /*
  * supported only on wait != 0 (polling not supported)
@@ -15475,8 +15002,6 @@ INT tm_getchar( INT wait )
 }
 
 
-extern void sio_send_frame( const UB* buf, INT size );
-extern void sio_recv_frame( UB* buf, INT size );
 
 /*
  * special key is not supported
@@ -15522,8 +15047,6 @@ void tm_monitor( void )
 
 /* Output Buffer size in stack */
 
-extern  int tm_putchar( int c );
-extern  int tm_putstring( UB *s );
 
 /*
  *  Output integer value
@@ -15815,7 +15338,6 @@ int tm_sprintf( UB *str, const UB *format, ... )
 }
 
 
-extern void sio_send_frame( const UB* buf, INT size );
 
 /*
  * Ctrl-C is not supported
@@ -15834,8 +15356,6 @@ INT tm_putchar( INT c )
 }
 
 
-extern void sio_send_frame( const UB* buf, INT size );
-extern void sio_recv_frame( UB* buf, INT size );
 
 /*
  * Ctrl-C is not supported
@@ -15887,17 +15407,8 @@ INT tm_putstring( UB *buff )
 
 
 
-extern ER CreateLock( FastLock *lock, const UB *name );
-extern void DeleteLock( FastLock *lock );
-extern void Lock( FastLock *lock );
-extern void Unlock( FastLock *lock );
 
 
-extern ER CreateMLock( FastMLock *lock, const UB *name );
-extern ER DeleteMLock( FastMLock *lock );
-extern ER MLockTmo( FastMLock *lock, INT no, TMO tmout );
-extern ER MLock( FastMLock *lock, INT no );
-extern ER MUnlock( FastMLock *lock, INT no );
 
 
 
@@ -16165,10 +15676,6 @@ TCB* knl_gcb_top_of_wait_queue( GCB *gcb, TCB *tcb )
  *  'wait_release_tmout' don't remove from the timer queue. Use for
  *  time out processing.
  */
-extern void knl_wait_release_ok( TCB *tcb );
-extern void knl_wait_release_ok_ercd( TCB *tcb, ER ercd );
-extern void knl_wait_release_ng( TCB *tcb, ER ercd );
-extern void knl_wait_release_tmout( TCB *tcb );
 
 /*
  * Cancel task wait state.
@@ -16185,8 +15692,6 @@ void knl_wait_cancel( TCB *tcb )
  * Change the active task to wait state and connect to the
  * timer event queue.
  */
-extern void knl_make_wait( TMO tmout, ATR atr );
-extern void knl_make_wait_reltim( RELTIM tmout, ATR atr );
 
 /*
  * Release wait state of all tasks connected to the wait queue,
@@ -16194,12 +15699,10 @@ extern void knl_make_wait_reltim( RELTIM tmout, ATR atr );
  * Use when synchronization between tasks or communication
  * object is deleted.
  */
-extern void knl_wait_delete( QUEUE *wait_queue );
 
 /*
  * Get ID of the head task in the wait queue.
  */
-extern ID knl_wait_tskid( QUEUE *wait_queue );
 
 /*
  * Connect the task to the prioritized wait queue.
@@ -16229,21 +15732,18 @@ void knl_queue_insert_tpri( TCB *tcb, QUEUE *queue )
  * Change the active task to wait state and connect to the timer event 
  * queue and the object wait queue. Also, set 'wid' in 'ctxtsk'. 
  */
-extern void knl_gcb_make_wait( GCB *gcb, TMO tmout );
 
 /*
  * When the task priority changes, adjust the task position in the
  * wait queue.
  * Do nothing if TA_TPRI is not specified in the object attribute.
  */
-extern void knl_gcb_change_priority( GCB *gcb, TCB *tcb );
 
 /*
  * Search the first task of wait queue include "tcb" with target.
  * (Not insert "tcb" into wait queue.)
  *
  */
-extern TCB* knl_gcb_top_of_wait_queue( GCB *gcb, TCB *tcb );
 
 /*
  * Update the task state to release wait. When it becomes ready state,
