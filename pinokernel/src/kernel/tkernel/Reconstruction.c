@@ -1771,7 +1771,10 @@
 #define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
 #define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
 #define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
-
+#define _pad_b(n) int :n;
+#define _pad_l(n)
+#define _pad_b(n)
+#define _pad_l(n) int :n;
 
 
 static const T_CSEM knl_pk_csem_DM = {
@@ -10340,23 +10343,23 @@ void knl_off_pow( void )
 }
 
 
-# error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."
+#error "Either TK_SUPPORT_USERBUF or TK_SUPPORT_AUTOBUF MUST be defined as TRUE."
 
-# error "TK_MAX_TSKPRI MUST be greater than or equal to 16."
+#error "TK_MAX_TSKPRI MUST be greater than or equal to 16."
 
-# error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 1."
+#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 1."
 
-# error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
+#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
 
-# error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
+#error "TK_WAKEUP_MAXCNT MUST be greater than or equal to 32767."
 
-# error "TK_MEM_RNG0 has an invalid value."
+#error "TK_MEM_RNG0 has an invalid value."
 
-# error "TK_MEM_RNG1 has an invalid value."
+#error "TK_MEM_RNG1 has an invalid value."
 
-# error "TK_MEM_RNG1 has an invalid value."
+#error "TK_MEM_RNG1 has an invalid value."
 
-# error "TK_MEM_RNG1 has an invalid value."
+#error "TK_MEM_RNG1 has an invalid value."
 
 
 
@@ -11944,10 +11947,7 @@ void sio_init(void)
 
 
 /* 32 bit alignment */
-#  define _pad_b(n) int :n;
-#  define _pad_l(n)
-#  define _pad_b(n)
-#  define _pad_l(n) int :n;
+
 
 
 /** [BEGIN Common Definitions] */
