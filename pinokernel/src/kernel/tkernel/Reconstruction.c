@@ -24,502 +24,1507 @@
 /*--------------------------------------------------------------------*/
 /*  Define definition                                                 */
 /*--------------------------------------------------------------------*/
-#define TRUE        1
-#define FALSE       0
-#define TNULL       ((TC)0)
-#define NULL        0
-#define MIN_TSKID   (1)
-#define MAX_TSKID   (CFN_MAX_TSKID)
-#define NUM_TSKID   (MAX_TSKID)
-#define MIN_SEMID   (1)
-#define MAX_SEMID   (CFN_MAX_SEMID)
-#define NUM_SEMID   (MAX_SEMID)
-#define MIN_FLGID   (1)
-#define MAX_FLGID   (CFN_MAX_FLGID)
-#define NUM_FLGID   (MAX_FLGID)
-#define MIN_MBXID   (1)
-#define MAX_MBXID   (CFN_MAX_MBXID)
-#define NUM_MBXID   (MAX_MBXID)
-#define MIN_MTXID   (1)
-#define MAX_MTXID   (CFN_MAX_MTXID)
-#define NUM_MTXID   (MAX_MTXID)
-#define MIN_MBFID   (1)
-#define MAX_MBFID   (CFN_MAX_MBFID)
-#define NUM_MBFID   (MAX_MBFID)
-#define MIN_PORID   (1)
-#define MAX_PORID   (CFN_MAX_PORID)
-#define NUM_PORID   (MAX_PORID)
-#define MIN_MPLID   (1)
-#define MAX_MPLID   (CFN_MAX_MPLID)
-#define NUM_MPLID   (MAX_MPLID)
-#define MIN_MPFID   (1)
-#define MAX_MPFID   (CFN_MAX_MPFID)
-#define NUM_MPFID   (MAX_MPFID)
-#define MIN_CYCID   (1)
-#define MAX_CYCID   (CFN_MAX_CYCID)
-#define NUM_CYCID   (MAX_CYCID)
-#define MIN_ALMID   (1)
-#define MAX_ALMID   (CFN_MAX_ALMID)
-#define NUM_ALMID   (MAX_ALMID)
-#define MIN_SSYID   (1)
-#define MAX_SSYID   (CFN_MAX_SSYID)
-#define NUM_SSYID   (MAX_SSYID)
-#define MIN_PRI     (1)
-#define MAX_PRI     (32)
-#define NUM_PRI     (32)
-#define MIN_SSYPRI  (1)
-#define MAX_SSYPRI  (CFN_MAX_SSYPRI)
-#define NUM_SSYPRI  (MAX_SSYPRI)
-#define CHK_NOSPT   (1)
-#define CHK_RSATR   (1)
-#define CHK_PAR     (1)
-#define CHK_ID      (1)
-#define CHK_OACV    (1)
+#define __size_t    unsigned long
+#define __wchar_t   int
+#define _align64
+#define _APP_RL78G13_R5F100ADASP_       1
+#define _td_acp_que_impl    _knl_no_support
+#define _td_cal_que_impl    _knl_no_support
+#define _td_flg_que_impl    _knl_no_support
+#define _td_hok_dsp_impl    _knl_no_support
+#define _td_hok_int_impl    _knl_no_support
+#define _td_hok_svc_impl    _knl_no_support
+#define _td_lst_alm_impl    _knl_no_support
+#define _td_lst_cyc_impl    _knl_no_support
+#define _td_lst_flg_impl    _knl_no_support
+#define _td_lst_mbf_impl    _knl_no_support
+#define _td_lst_mbx_impl    _knl_no_support
+#define _td_lst_mpf_impl    _knl_no_support
+#define _td_lst_mpl_impl    _knl_no_support
+#define _td_lst_mtx_impl    _knl_no_support
+#define _td_lst_por_impl    _knl_no_support
+#define _td_lst_sem_impl    _knl_no_support
+#define _td_lst_ssy_impl    _knl_no_support
+#define _td_mbx_que_impl    _knl_no_support
+#define _td_mpf_que_impl    _knl_no_support
+#define _td_mpl_que_impl    _knl_no_support
+#define _td_mtx_que_impl    _knl_no_support
+#define _td_ref_alm_impl    _knl_no_support
+#define _td_ref_cyc_impl    _knl_no_support
+#define _td_ref_flg_impl    _knl_no_support
+#define _td_ref_mbf_impl    _knl_no_support
+#define _td_ref_mbx_impl    _knl_no_support
+#define _td_ref_mpf_impl    _knl_no_support
+#define _td_ref_mpl_impl    _knl_no_support
+#define _td_ref_mtx_impl    _knl_no_support
+#define _td_ref_por_impl    _knl_no_support
+#define _td_ref_sem_impl    _knl_no_support
+#define _td_ref_ssy_impl    _knl_no_support
+#define _td_rmbf_que_impl   _knl_no_support
+#define _td_sem_que_impl    _knl_no_support
+#define _td_smbf_que_impl   _knl_no_support
+#define _tk_acp_por_impl    _knl_no_support
+#define _tk_cal_por_impl    _knl_no_support
+#define _tk_clr_flg_impl    _knl_no_support
+#define _tk_cls_dev_impl    _knl_no_support
+#define _tk_cre_alm_impl    _knl_no_support
+#define _tk_cre_cyc_impl    _knl_no_support
+#define _tk_cre_flg_impl    _knl_no_support
+#define _tk_cre_mbf_impl    _knl_no_support
+#define _tk_cre_mbx_impl    _knl_no_support
+#define _tk_cre_mpf_impl    _knl_no_support
+#define _tk_cre_mpl_impl    _knl_no_support
+#define _tk_cre_mtx_impl    _knl_no_support
+#define _tk_cre_por_impl    _knl_no_support
+#define _tk_cre_sem_impl    _knl_no_support
+#define _tk_def_dev_impl    _knl_no_support
+#define _tk_def_ssy_impl    _knl_no_support
+#define _tk_del_alm_impl    _knl_no_support
+#define _tk_del_cyc_impl    _knl_no_support
+#define _tk_del_flg_impl    _knl_no_support
+#define _tk_del_mbf_impl    _knl_no_support
+#define _tk_del_mbx_impl    _knl_no_support
+#define _tk_del_mpf_impl    _knl_no_support
+#define _tk_del_mpl_impl    _knl_no_support
+#define _tk_del_mtx_impl    _knl_no_support
+#define _tk_del_por_impl    _knl_no_support
+#define _tk_del_sem_impl    _knl_no_support
+#define _tk_evt_dev_impl    _knl_no_support
+#define _tk_fwd_por_impl    _knl_no_support
+#define _tk_get_dev_impl    _knl_no_support
+#define _tk_get_mpf_impl    _knl_no_support
+#define _tk_get_mpl_impl    _knl_no_support
+#define _tk_loc_mtx_impl    _knl_no_support
+#define _tk_lst_dev_impl    _knl_no_support
+#define _tk_opn_dev_impl    _knl_no_support
+#define _tk_oref_dev_impl   _knl_no_support
+#define _tk_rcv_mbf_impl    _knl_no_support
+#define _tk_rcv_mbx_impl    _knl_no_support
+#define _tk_rea_dev_impl    _knl_no_support
+#define _tk_ref_alm_impl    _knl_no_support
+#define _tk_ref_cyc_impl    _knl_no_support
+#define _tk_ref_dev_impl    _knl_no_support
+#define _tk_ref_flg_impl    _knl_no_support
+#define _tk_ref_idv_impl    _knl_no_support
+#define _tk_ref_mbf_impl    _knl_no_support
+#define _tk_ref_mbx_impl    _knl_no_support
+#define _tk_ref_mpf_impl    _knl_no_support
+#define _tk_ref_mpl_impl    _knl_no_support
+#define _tk_ref_mtx_impl    _knl_no_support
+#define _tk_ref_por_impl    _knl_no_support
+#define _tk_ref_sem_impl    _knl_no_support
+#define _tk_ref_ssy_impl    _knl_no_support
+#define _tk_rel_mpf_impl    _knl_no_support
+#define _tk_rel_mpl_impl    _knl_no_support
+#define _tk_rpl_rdv_impl    _knl_no_support
+#define _tk_set_flg_impl    _knl_no_support
+#define _tk_sig_sem_impl    _knl_no_support
+#define _tk_snd_mbf_impl    _knl_no_support
+#define _tk_snd_mbx_impl    _knl_no_support
+#define _tk_srea_dev_impl   _knl_no_support
+#define _tk_sta_alm_impl    _knl_no_support
+#define _tk_sta_cyc_impl    _knl_no_support
+#define _tk_stp_alm_impl    _knl_no_support
+#define _tk_stp_cyc_impl    _knl_no_support
+#define _tk_sus_dev_impl    _knl_no_support
+#define _tk_swri_dev_impl   _knl_no_support
+#define _tk_unl_mtx_impl    _knl_no_support
+#define _tk_wai_dev_impl    _knl_no_support
+#define _tk_wai_flg_impl    _knl_no_support
+#define _tk_wai_sem_impl    _knl_no_support
+#define _tk_wri_dev_impl    _knl_no_support
+#define ALLOW_MISALIGN      0
+#define APBC0_PSR_Val   0x00000001
+#define APBC1_PSR_Val   0x00000081
+#define APBC2_PSR_Val   0x00000081
+#define APPLICATION_STACK_TOP   (TMP_STACK_TOP - TMP_STACK_SIZE)
+#define AREA_MASK   0x00000001UL
+#define AREA_USE    0x00000001UL
+#define ARM_FIQ_BIT  0x40
+#define ARM_INT_MASK 0xC0
+#define ARM_IRQ_BIT  0x80
+#define ARM_THM_BIT  0x20
+#define Asm     __asm__ volatile
+#define BIGENDIAN       0
+#define BITMAPSZ    ( sizeof(UINT) * 8 )
+#define BOOT_MESSAGE     "\n"     "micro T-Kernel Version 2.00.00\n"     "\n\0"
+#define BSC_PSR_Val 0x00000000
+#define CFN_DEVT_MBFSZ0     (-1)
+#define CFN_DEVT_MBFSZ1     (-1)
+#define CFN_MAX_ALMID       8
+#define CFN_MAX_CYCID       4
+#define CFN_MAX_FLGID       16
+#define CFN_MAX_MBFID       8
+#define CFN_MAX_MBXID       8
+#define CFN_MAX_MPFID       8
+#define CFN_MAX_MPLID       2
+#define CFN_MAX_MTXID       2
+#define CFN_MAX_OPNDEV      (16)
+#define CFN_MAX_PORID       4
+#define CFN_MAX_REGDEV      (8)
+#define CFN_MAX_REQDEV      (16)
+#define CFN_MAX_SEMID       16
+#define CFN_MAX_SSYID       4
+#define CFN_MAX_SSYPRI      16
+#define CFN_MAX_TSKID       32
+#define CFN_REALMEMEND      ((void *)0x20002000)
+#define CFN_TIMER_PERIOD    10
+#define CFN_VER_MAKER       0x011C
+#define CFN_VER_PRID        0
+#define CFN_VER_PRNO1       0
+#define CFN_VER_PRNO2       0
+#define CFN_VER_PRNO3       0
+#define CFN_VER_PRNO4       0
+#define CFN_VER_PRVER       0x0101
+#define CFN_VER_SPVER       0x6101
+#define CHAR_BIT    (8)
+#define CHAR_MAX    SCHAR_MAX
+#define CHAR_MIN    SCHAR_MIN
 #define CHK_CTX     (1)
 #define CHK_CTX1    (1)
 #define CHK_CTX2    (1)
+#define CHK_ID      (1)
+#define CHK_NOSPT   (1)
+#define CHK_OACV    (1)
+#define CHK_PAR     (1)
+#define CHK_RSATR   (1)
 #define CHK_SELF    (1)
-#define USE_DBGSPT      (0)
-#define USE_OBJECT_NAME     (0)
-#define OBJECT_NAME_LENGTH  (8)
-#define USE_KERNEL_MESSAGE  (1)
-#define TA_GP       0
-#define MIN_SYS_STACK_SIZE  128
-#define DORMANT_STACK_SIZE  ( sizeof(VW) * 7 )
-#define TN_TSK 0x01
-#define TN_SEM 0x02
-#define TN_FLG 0x03
-#define TN_MBX 0x04
-#define TN_MBF 0x05
-#define TN_POR 0x06
-#define TN_MTX 0x07
-#define TN_MPL 0x08
-#define TN_MPF 0x09
-#define TN_CYC 0x0a
-#define TN_ALM 0x0b
+#define CLOCK_SETUP 1
+#define CR_TRIM_SETUP   1
+#define CSW_TMR_Val 0x0000005C
+#define CTXB_ssp    0
+#define DDS_DISABLE     (2)
+#define DDS_DISABLE_IMPLICIT    (1)
+#define DDS_ENABLE      (0)
 #define DEBUG_MODULE    ""
-#define OBJNAME_DMMBF   "DEvt"
-#define OBJNAME_DMSEM   "DMSy"
-#define OBJNAME_DMLOCK  "DMLk"
-#define MAX_UNIT    255
-#define MAX_DISSUS  INT_MAX
-#define E_OK        (0)
-#define E_SYS       (-5)
-#define E_NOCOP     (-6)
-#define E_NOSPT     (-9)
-#define E_RSFN      (-10)
-#define E_RSATR     (-11)
-#define E_PAR       (-17)
-#define E_ID        (-18)
+#define DISINT  Asm("ldr    r0, =MAX_EXTINT_PRI \n" "msr    basepri, r0")
+#define DORMANT_STACK_SIZE  ( sizeof(VW) * 7 )
+#define E_ABORT     (-66)
+#define E_BUSY      (-65)
 #define E_CTX       (-25)
-#define E_MACV      (-26)
-#define E_OACV      (-27)
+#define E_DISWAI    (-52)
+#define E_DLT       (-51)
+#define E_ID        (-18)
 #define E_ILUSE     (-28)
-#define E_NOMEM     (-33)
+#define E_IO        (-57)
 #define E_LIMIT     (-34)
-#define E_OBJ       (-41)
+#define E_MACV      (-26)
+#define E_NOCOP     (-6)
 #define E_NOEXS     (-42)
+#define E_NOMDA     (-58)
+#define E_NOMEM     (-33)
+#define E_NOSPT     (-9)
+#define E_OACV      (-27)
+#define E_OBJ       (-41)
+#define E_OK        (0)
+#define E_PAR       (-17)
 #define E_QOVR      (-43)
 #define E_RLWAI     (-49)
-#define E_TMOUT     (-50)
-#define E_DLT       (-51)
-#define E_DISWAI    (-52)
-#define E_IO        (-57)
-#define E_NOMDA     (-58)
-#define E_BUSY      (-65)
-#define E_ABORT     (-66)
 #define E_RONLY     (-67)
-#define USE_TMONITOR 0
-#define INTERNAL_RAM_SIZE       0x00004000
-#define INTERNAL_RAM_START      0x1FFFE000
-#define INTERNAL_RAM_END        (INTERNAL_RAM_START+INTERNAL_RAM_SIZE)
+#define E_RSATR     (-11)
+#define E_RSFN      (-10)
+#define E_SYS       (-5)
+#define E_TMOUT     (-50)
+#define ENAINT  Asm("ldr    r0, =0 \n" "msr    basepri, r0")
+#define EXC_STACK_SIZE      0x200
+#define EXCEPTION_STACK_TOP SYSTEMAREA_END
+#define EXP_BUS     EXP_M(5)
+#define EXP_DBG     EXP_M(12)
+#define EXP_HDF     EXP_M(3)
+#define EXP_MEM     EXP_M(4)
+#define EXP_NMI     EXP_M(2)
+#define EXP_PSV     EXP_M(14)
+#define EXP_RST     EXP_M(1)
+#define EXP_STK     EXP_M(15)
+#define EXP_SVC     EXP_M(11)
+#define EXP_USF     EXP_M(6)
+#define EXP_USR     EXP_M(0)
+#define F_LEFT      0x01
+#define F_PLUS      0x02
+#define F_PREFIX    0x08
+#define F_SPACE     0x04
+#define F_ZERO      0x10
+#define FALSE       0
 #define FLASH_BASE      0x00000000
-#define SRAM_BASE       0x1FFFE000
+#define FLASH_END       (FLASH_START+FLASH_SIZE)
 #define FLASH_SIZE      0x00020000
 #define FLASH_START     FLASH_BASE
-#define FLASH_END       (FLASH_START+FLASH_SIZE)
-#define SRAM_SIZE       0x0004000
-#define SRAM_START      SRAM_BASE
-#define SRAM_END        (SRAM_START+SRAM_SIZE)
-#define INITTASK_EXINF      (0x0)
-#define INITTASK_TSKATR     (TA_HLNG | TA_RNG0)
-#define INITTASK_ITSKPRI    (1)
-#define INITTASK_STKSZ      (1*1024)
+#define HEADERSZ    (sizeof(HEADER))
+#define HWWD_DISABLE    1
+#define ICSR_PENDSVCLR  0x08000000
+#define ICSR_PENDSVSET  0x10000000
+#define IMPORT_DEFINE   1
 #define INITTASK_DSNAME     "inittsk"
+#define INITTASK_EXINF      (0x0)
+#define INITTASK_ITSKPRI    (1)
 #define INITTASK_STACK      (NULL)
-#define INTPRI_MIN_UNIT (0x100 >> INTPRI_BITWIDTH)
-#define INTPRI_MASK (0x100 - INTPRI_MIN_UNIT)
-#define tk_cre_sem_impl knl_no_support
-#define tk_del_sem_impl knl_no_support
-#define tk_sig_sem_impl knl_no_support
-#define tk_wai_sem_impl knl_no_support
-#define tk_ref_sem_impl knl_no_support
-#define td_lst_sem_impl knl_no_support
-#define td_ref_sem_impl knl_no_support
-#define td_sem_que_impl knl_no_support
-#define tk_cre_flg_impl knl_no_support
-#define tk_del_flg_impl knl_no_support
-#define tk_set_flg_impl knl_no_support
-#define tk_clr_flg_impl knl_no_support
-#define tk_wai_flg_impl knl_no_support
-#define tk_ref_flg_impl knl_no_support
-#define td_lst_flg_impl knl_no_support
-#define td_ref_flg_impl knl_no_support
-#define td_flg_que_impl knl_no_support
-#define tk_cre_mbx_impl knl_no_support
-#define tk_del_mbx_impl knl_no_support
-#define tk_snd_mbx_impl knl_no_support
-#define tk_rcv_mbx_impl knl_no_support
-#define tk_ref_mbx_impl knl_no_support
-#define td_lst_mbx_impl knl_no_support
-#define td_ref_mbx_impl knl_no_support
-#define td_mbx_que_impl knl_no_support
-#define tk_cre_mbf_impl knl_no_support
-#define tk_del_mbf_impl knl_no_support
-#define tk_snd_mbf_impl knl_no_support
-#define tk_rcv_mbf_impl knl_no_support
-#define tk_ref_mbf_impl knl_no_support
-#define td_lst_mbf_impl knl_no_support
-#define td_ref_mbf_impl knl_no_support
-#define td_smbf_que_impl    knl_no_support
-#define td_rmbf_que_impl    knl_no_support
-#define tk_cre_por_impl knl_no_support
-#define tk_del_por_impl knl_no_support
-#define tk_cal_por_impl knl_no_support
-#define tk_acp_por_impl knl_no_support
-#define tk_fwd_por_impl knl_no_support
-#define tk_rpl_rdv_impl knl_no_support
-#define tk_ref_por_impl knl_no_support
-#define td_lst_por_impl knl_no_support
-#define td_ref_por_impl knl_no_support
-#define td_acp_que_impl knl_no_support
-#define td_cal_que_impl knl_no_support
-#define tk_cre_mtx_impl knl_no_support
-#define tk_del_mtx_impl knl_no_support
-#define tk_loc_mtx_impl knl_no_support
-#define tk_unl_mtx_impl knl_no_support
-#define tk_ref_mtx_impl knl_no_support
-#define td_lst_mtx_impl knl_no_support
-#define td_ref_mtx_impl knl_no_support
-#define td_mtx_que_impl knl_no_support
-#define tk_cre_mpl_impl knl_no_support
-#define tk_del_mpl_impl knl_no_support
-#define tk_get_mpl_impl knl_no_support
-#define tk_rel_mpl_impl knl_no_support
-#define tk_ref_mpl_impl knl_no_support
-#define td_lst_mpl_impl knl_no_support
-#define td_ref_mpl_impl knl_no_support
-#define td_mpl_que_impl knl_no_support
-#define tk_cre_mpf_impl knl_no_support
-#define tk_del_mpf_impl knl_no_support
-#define tk_get_mpf_impl knl_no_support
-#define tk_rel_mpf_impl knl_no_support
-#define tk_ref_mpf_impl knl_no_support
-#define td_lst_mpf_impl knl_no_support
-#define td_ref_mpf_impl knl_no_support
-#define td_mpf_que_impl knl_no_support
-#define tk_cre_cyc_impl knl_no_support
-#define tk_del_cyc_impl knl_no_support
-#define tk_sta_cyc_impl knl_no_support
-#define tk_stp_cyc_impl knl_no_support
-#define tk_ref_cyc_impl knl_no_support
-#define td_lst_cyc_impl knl_no_support
-#define td_ref_cyc_impl knl_no_support
-#define tk_cre_alm_impl knl_no_support
-#define tk_del_alm_impl knl_no_support
-#define tk_sta_alm_impl knl_no_support
-#define tk_stp_alm_impl knl_no_support
-#define tk_ref_alm_impl knl_no_support
-#define td_lst_alm_impl knl_no_support
-#define td_ref_alm_impl knl_no_support
-#define tk_def_ssy_impl knl_no_support
-#define tk_ref_ssy_impl knl_no_support
-#define td_lst_ssy_impl knl_no_support
-#define td_ref_ssy_impl knl_no_support
-#define tk_opn_dev_impl knl_no_support
-#define tk_cls_dev_impl knl_no_support
-#define tk_rea_dev_impl knl_no_support
-#define tk_srea_dev_impl    knl_no_support
-#define tk_wri_dev_impl knl_no_support
-#define tk_swri_dev_impl    knl_no_support
-#define tk_wai_dev_impl knl_no_support
-#define tk_sus_dev_impl knl_no_support
-#define tk_get_dev_impl knl_no_support
-#define tk_ref_dev_impl knl_no_support
-#define tk_oref_dev_impl    knl_no_support
-#define tk_lst_dev_impl knl_no_support
-#define tk_evt_dev_impl knl_no_support
-#define tk_def_dev_impl knl_no_support
-#define tk_ref_idv_impl knl_no_support
-#define td_hok_svc_impl knl_no_support
-#define td_hok_dsp_impl knl_no_support
-#define td_hok_int_impl knl_no_support
-#define _tk_cre_sem_impl    _knl_no_support
-#define _tk_del_sem_impl    _knl_no_support
-#define _tk_sig_sem_impl    _knl_no_support
-#define _tk_wai_sem_impl    _knl_no_support
-#define _tk_ref_sem_impl    _knl_no_support
-#define _td_lst_sem_impl    _knl_no_support
-#define _td_ref_sem_impl    _knl_no_support
-#define _td_sem_que_impl    _knl_no_support
-#define _tk_cre_flg_impl    _knl_no_support
-#define _tk_del_flg_impl    _knl_no_support
-#define _tk_set_flg_impl    _knl_no_support
-#define _tk_clr_flg_impl    _knl_no_support
-#define _tk_wai_flg_impl    _knl_no_support
-#define _tk_ref_flg_impl    _knl_no_support
-#define _td_lst_flg_impl    _knl_no_support
-#define _td_ref_flg_impl    _knl_no_support
-#define _td_flg_que_impl    _knl_no_support
-#define _tk_cre_mbx_impl    _knl_no_support
-#define _tk_del_mbx_impl    _knl_no_support
-#define _tk_snd_mbx_impl    _knl_no_support
-#define _tk_rcv_mbx_impl    _knl_no_support
-#define _tk_ref_mbx_impl    _knl_no_support
-#define _td_lst_mbx_impl    _knl_no_support
-#define _td_ref_mbx_impl    _knl_no_support
-#define _td_mbx_que_impl    _knl_no_support
-#define _tk_cre_mbf_impl    _knl_no_support
-#define _tk_del_mbf_impl    _knl_no_support
-#define _tk_snd_mbf_impl    _knl_no_support
-#define _tk_rcv_mbf_impl    _knl_no_support
-#define _tk_ref_mbf_impl    _knl_no_support
-#define _td_lst_mbf_impl    _knl_no_support
-#define _td_ref_mbf_impl    _knl_no_support
-#define _td_smbf_que_impl   _knl_no_support
-#define _td_rmbf_que_impl   _knl_no_support
-#define _tk_cre_por_impl    _knl_no_support
-#define _tk_del_por_impl    _knl_no_support
-#define _tk_cal_por_impl    _knl_no_support
-#define _tk_acp_por_impl    _knl_no_support
-#define _tk_fwd_por_impl    _knl_no_support
-#define _tk_rpl_rdv_impl    _knl_no_support
-#define _tk_ref_por_impl    _knl_no_support
-#define _td_lst_por_impl    _knl_no_support
-#define _td_ref_por_impl    _knl_no_support
-#define _td_acp_que_impl    _knl_no_support
-#define _td_cal_que_impl    _knl_no_support
-#define _tk_cre_mtx_impl    _knl_no_support
-#define _tk_del_mtx_impl    _knl_no_support
-#define _tk_loc_mtx_impl    _knl_no_support
-#define _tk_unl_mtx_impl    _knl_no_support
-#define _tk_ref_mtx_impl    _knl_no_support
-#define _td_lst_mtx_impl    _knl_no_support
-#define _td_ref_mtx_impl    _knl_no_support
-#define _td_mtx_que_impl    _knl_no_support
-#define _tk_cre_mpl_impl    _knl_no_support
-#define _tk_del_mpl_impl    _knl_no_support
-#define _tk_get_mpl_impl    _knl_no_support
-#define _tk_rel_mpl_impl    _knl_no_support
-#define _tk_ref_mpl_impl    _knl_no_support
-#define _td_lst_mpl_impl    _knl_no_support
-#define _td_ref_mpl_impl    _knl_no_support
-#define _td_mpl_que_impl    _knl_no_support
-#define _tk_cre_mpf_impl    _knl_no_support
-#define _tk_del_mpf_impl    _knl_no_support
-#define _tk_get_mpf_impl    _knl_no_support
-#define _tk_rel_mpf_impl    _knl_no_support
-#define _tk_ref_mpf_impl    _knl_no_support
-#define _td_lst_mpf_impl    _knl_no_support
-#define _td_ref_mpf_impl    _knl_no_support
-#define _td_mpf_que_impl    _knl_no_support
-#define _tk_cre_cyc_impl    _knl_no_support
-#define _tk_del_cyc_impl    _knl_no_support
-#define _tk_sta_cyc_impl    _knl_no_support
-#define _tk_stp_cyc_impl    _knl_no_support
-#define _tk_ref_cyc_impl    _knl_no_support
-#define _td_lst_cyc_impl    _knl_no_support
-#define _td_ref_cyc_impl    _knl_no_support
-#define _tk_cre_alm_impl    _knl_no_support
-#define _tk_del_alm_impl    _knl_no_support
-#define _tk_sta_alm_impl    _knl_no_support
-#define _tk_stp_alm_impl    _knl_no_support
-#define _tk_ref_alm_impl    _knl_no_support
-#define _td_lst_alm_impl    _knl_no_support
-#define _td_ref_alm_impl    _knl_no_support
-#define _tk_def_ssy_impl    _knl_no_support
-#define _tk_ref_ssy_impl    _knl_no_support
-#define _td_lst_ssy_impl    _knl_no_support
-#define _td_ref_ssy_impl    _knl_no_support
-#define _tk_opn_dev_impl    _knl_no_support
-#define _tk_cls_dev_impl    _knl_no_support
-#define _tk_rea_dev_impl    _knl_no_support
-#define _tk_srea_dev_impl   _knl_no_support
-#define _tk_wri_dev_impl    _knl_no_support
-#define _tk_swri_dev_impl   _knl_no_support
-#define _tk_wai_dev_impl    _knl_no_support
-#define _tk_sus_dev_impl    _knl_no_support
-#define _tk_get_dev_impl    _knl_no_support
-#define _tk_ref_dev_impl    _knl_no_support
-#define _tk_oref_dev_impl   _knl_no_support
-#define _tk_lst_dev_impl    _knl_no_support
-#define _tk_evt_dev_impl    _knl_no_support
-#define _tk_def_dev_impl    _knl_no_support
-#define _tk_ref_idv_impl    _knl_no_support
-#define _td_hok_svc_impl    _knl_no_support
-#define _td_hok_dsp_impl    _knl_no_support
-#define _td_hok_int_impl    _knl_no_support
-#define NULL        0
-#define USE_FUNC_MEMSET
-#define USE_FUNC_MEMCMP
-#define USE_FUNC_MEMCPY
-#define USE_FUNC_MEMMOVE
-#define USE_FUNC_BZERO
-#define USE_FUNC_STRLEN
-#define USE_FUNC_STRCMP
-#define USE_FUNC_STRNCMP
-#define USE_FUNC_STRCPY
-#define USE_FUNC_STRNCPY
-#define USE_FUNC_STRCAT
-#define USE_FUNC_STRNCAT
-#define USE_FUNC_STRTOL
-#define USE_FUNC_LOCK
-#define USE_FUNC_UNLOCK
-#define USE_FUNC_CREATELOCK
-#define USE_FUNC_DELETELOCK
-#define USE_FUNC_MLOCKTMO
-#define USE_FUNC_MLOCK
-#define USE_FUNC_MUNLOCK
-#define USE_FUNC_CREATEMLOCK
-#define USE_FUNC_DELETEMLOCK
-#define CHAR_BIT    (8)
-#define SCHAR_MIN   (-128)
-#define SCHAR_MAX   (+127)
-#define UCHAR_MAX   (255)
-#define CHAR_MIN    SCHAR_MIN
-#define CHAR_MAX    SCHAR_MAX
-#define MB_LEN_MAX  (2)
-#define SHRT_MIN    (-32768)
-#define SHRT_MAX    (+32767)
-#define USHRT_MAX   (65535)
-#define LONG_MIN    (-2147483648L)
-#define LONG_MAX    (+2147483647L)
-#define ULONG_MAX   (4294967295L)
-#define INT_MIN     SHRT_MIN
-#define INT_MAX     SHRT_MAX
-#define UINT_MAX    USHRT_MAX
-#define INT_MIN     LONG_MIN
-#define INT_MAX     LONG_MAX
-#define UINT_MAX    ULONG_MAX
+#define INITTASK_STKSZ      (1*1024)
+#define INITTASK_TSKATR     (TA_HLNG | TA_RNG0)
 #define Inline      inline
 #define Inline      static __inline__
-#define Asm     __asm__ volatile
-// #define _sym sym
-// #define _sym _##sym
-//#define   _APP_MB9AF312K_     1
-//#define CPU_ARMV7_M       1
-//#define CPU_ARM_CORTEX_M3 1
-//#define CPU_MB9AF     1
-#define _APP_RL78G13_R5F100ADASP_       1
-#define ALLOW_MISALIGN      0
-#define BIGENDIAN       0
-#define VIRTUAL_ADDRESS     0
-//#define ALLOCA_NOSPT      0
 #define INT_BITWIDTH        32
-// #define _Csym            1
-#define ROUNDSZ     ( sizeof(QUEUE) )
+#define INT_MAX     LONG_MAX
+#define INT_MAX     SHRT_MAX
+#define INT_MIN     LONG_MIN
+#define INT_MIN     SHRT_MIN
+#define INTERNAL_RAM_END        (INTERNAL_RAM_START+INTERNAL_RAM_SIZE)
+#define INTERNAL_RAM_SIZE       0x00004000
+#define INTERNAL_RAM_START      0x1FFFE000
+#define INTLEVEL_DI (0)
+#define INTLEVEL_EI (255)
+#define INTNO_FORCE_DISPATCH    47
+#define INTPRI_BITWIDTH     4
+#define INTPRI_MASK (0x100 - INTPRI_MIN_UNIT)
+#define INTPRI_MIN_UNIT (0x100 >> INTPRI_BITWIDTH)
+#define L_DEVNM     8
+#define LONG_MAX    (+2147483647L)
+#define LONG_MIN    (-2147483648L)
+#define MAX_ALMID   (CFN_MAX_ALMID)
+#define MAX_CYCID   (CFN_MAX_CYCID)
+#define MAX_DIGITS      14
+#define MAX_DISSUS  INT_MAX
+#define MAX_EXTINT_PRI      0x10
+#define MAX_FLGID   (CFN_MAX_FLGID)
+#define MAX_MBFID   (CFN_MAX_MBFID)
+#define MAX_MBXID   (CFN_MAX_MBXID)
+#define MAX_MPFID   (CFN_MAX_MPFID)
+#define MAX_MPLID   (CFN_MAX_MPLID)
+#define MAX_MTXID   (CFN_MAX_MTXID)
+#define MAX_PORID   (CFN_MAX_PORID)
+#define MAX_PRI     (32)
+#define MAX_SEMID   (CFN_MAX_SEMID)
+#define MAX_SSYID   (CFN_MAX_SSYID)
+#define MAX_SSYPRI  (CFN_MAX_SSYPRI)
+#define MAX_TIMER_PERIOD    50
+#define MAX_TSKID   (CFN_MAX_TSKID)
+#define MAX_UNIT    255
+#define MB_LEN_MAX  (2)
+#define MIN_ALMID   (1)
+#define MIN_CYCID   (1)
+#define MIN_FLGID   (1)
 #define MIN_FRAGMENT    ( sizeof(QUEUE) * 2 )
-#define AREA_USE    0x00000001UL
-#define AREA_MASK   0x00000001UL
+#define MIN_MBFID   (1)
+#define MIN_MBXID   (1)
+#define MIN_MPFID   (1)
+#define MIN_MPLID   (1)
+#define MIN_MTXID   (1)
+#define MIN_PORID   (1)
+#define MIN_PRI     (1)
+#define MIN_SEMID   (1)
+#define MIN_SSYID   (1)
+#define MIN_SSYPRI  (1)
+#define MIN_SYS_STACK_SIZE  128
+#define MIN_TIMER_PERIOD    1
+#define MIN_TSKID   (1)
 #define MINSIZE     ( sizeof(FREEL) )
-#define HEADERSZ    (sizeof(HEADER))
+#define N_INTVEC    48
+#define N_TDFN  46
+#define N_TFN   99
+#define NULL        0
+#define NULL        0
+#define NULL        0
+#define NUM_ALMID   (MAX_ALMID)
+#define NUM_BITMAP  ( (NUM_PRI + BITMAPSZ - 1) / BITMAPSZ )
+#define NUM_CYCID   (MAX_CYCID)
+#define NUM_FLGID   (MAX_FLGID)
+#define NUM_MBFID   (MAX_MBFID)
+#define NUM_MBXID   (MAX_MBXID)
+#define NUM_MPFID   (MAX_MPFID)
+#define NUM_MPLID   (MAX_MPLID)
+#define NUM_MTXID   (MAX_MTXID)
+#define NUM_PORID   (MAX_PORID)
+#define NUM_PRI     (32)
+#define NUM_SEMID   (MAX_SEMID)
+#define NUM_SSYID   (MAX_SSYID)
+#define NUM_SSYPRI  (MAX_SSYPRI)
+#define NUM_TSKID   (MAX_TSKID)
+#define NVIC_IABR_BASE  0xE000E300
+#define NVIC_ICER_BASE  0xE000E180
+#define NVIC_ICPR_BASE  0xE000E280
+#define NVIC_ICTR   0xE000E004
+#define NVIC_IPR_BASE   0xE000E400
+#define NVIC_IPR_FORCE_DISPATCH NVIC_IPR(INTNO_FORCE_DISPATCH)
+#define NVIC_ISER_BASE  0xE000E100
+#define NVIC_ISPR_BASE  0xE000E200
+#define OBJECT_NAME_LENGTH  (8)
+#define OBJNAME_DMLOCK  "DMLk"
+#define OBJNAME_DMMBF   "DEvt"
+#define OBJNAME_DMSEM   "DMSy"
+#define OUTBUF_SZ   0
+#define PLL_CTL1_Val    0x00000001
+#define PLL_CTL2_Val    0x00000009
+#define PSR_C       0x20000000
+#define PSR_INT_MSK 0x000000FF
+#define PSR_N       0x80000000
+#define PSR_Q       0x08000000
+#define PSR_V       0x10000000
+#define PSR_Z       0x40000000
+#define PSW_TMR_Val 0x00000000
+#define RDVNO_SHIFT (sizeof(RNO)*8/2)
+#define RI_USERAREA_TOP     0x1FFFE000
+#define RI_USERINIT     NULL
 #define ROUNDSIZE   (sizeof(HEADER))
-#define TCBSZ_POR   (4)
-#define TCBSZ_POR   (0)
-#define TCBSZ_MTX   (4)
-#define TCBSZ_MTX   (0)
-#define TCBSZ_WINFO (16)
-#define TCBSZ_WINFO (12)
-#define TCBSZ_WINFO (8)
-#define TCBSZ_WINFO (4)
-#define TCBSZ_WINFO (0)
-#define TCBSZ_EXECTIME  (8)
-#define TCBSZ_EXECTIME  (0)
-#define TCB_winfo   (60)
-#define TCB_wtmeb   _ALIGN_64(TCB_winfo+TCBSZ_WINFO)
-#define TCBsz_wtmeb2isstack (24+TCBSZ_MTX+TCBSZ_POR+TCBSZ_EXECTIME)
-#define TCBSZ_GP    (0)
+#define ROUNDSZ     ( sizeof(QUEUE) )
+#define SCB_AIRCR   0xE000ED0C
+#define SCB_CCR     0xE000ED14
+#define SCB_ICSR    0xE000ED04
+#define SCB_SCR     0xE000ED10
+#define SCB_SHPR1   0xE000ED18
+#define SCB_SHPR2   0xE000ED1C
+#define SCB_SHPR3   0xE000ED20
+#define SCB_STIR    0xE000EF00
+#define SCB_VTOR    0xE000ED08
+#define SCHAR_MAX   (+127)
+#define SCHAR_MIN   (-128)
+#define SCM_CTL_Val 0x00000052
+#define SHRT_MAX    (+32767)
+#define SHRT_MIN    (-32768)
+#define SRAM_BASE       0x1FFFE000
+#define SRAM_END        (SRAM_START+SRAM_SIZE)
+#define SRAM_SIZE       0x0004000
+#define SRAM_START      SRAM_BASE
+#define SVC_DEBUG_SUPPORT   0xFF
+#define SVC_EXTENDED_SVC    0x10
+#define SVC_SYSCALL     0x00
+#define SWC_PSR_Val 0x00000003
+#define SYST_CSR    0xE000E010
+#define SYST_CVR    0xE000E018
+#define SYST_RVR    0xE000E014
+#define SYSTEMAREA_END      0x20002000
+#define SYSTEMAREA_TOP      0x1FFFE000
+#define TA_ASM      0x00000000UL
+#define TA_ASM      0x00000000UL
+#define TA_ASM      0x00000000UL
+#define TA_ASM      0x00000000UL
+#define TA_CEILING  0x00000003UL
+#define TA_CNT      0x00000002UL
+#define TA_COP0     0x00001000U
+#define TA_COP1     0x00002000U
+#define TA_COP2     0x00004000U
+#define TA_COP3     0x00008000U
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_DSNAME   0x00000040UL
+#define TA_FIRST    0x00000000UL
+#define TA_GP       0
+#define TA_HLNG     0x00000001UL
+#define TA_HLNG     0x00000001UL
+#define TA_HLNG     0x00000001UL
+#define TA_HLNG     0x00000001UL
+#define TA_INHERIT  0x00000002UL
+#define TA_MFIFO    0x00000000UL
+#define TA_MPRI     0x00000002UL
+#define TA_NULL     0U
+#define TA_PHS      0x00000004UL
+#define TA_RNG0     0x00000000UL
+#define TA_RNG0     0x00000000UL
+#define TA_RNG0     0x00000000UL
+#define TA_RNG1     0x00000100UL
+#define TA_RNG1     0x00000100UL
+#define TA_RNG1     0x00000100UL
+#define TA_RNG2     0x00000200UL
+#define TA_RNG2     0x00000200UL
+#define TA_RNG2     0x00000200UL
+#define TA_RNG3     0x00000300UL
+#define TA_RNG3     0x00000300UL
+#define TA_RNG3     0x00000300UL
+#define TA_STA      0x00000002UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TFIFO    0x00000000UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_TPRI     0x00000001UL
+#define TA_USERBUF  0x00000020UL
+#define TA_USERBUF  0x00000020UL
+#define TA_USERBUF  0x00000020UL
+#define TA_USERBUF  0x00000020UL
+#define TA_WMUL     0x00000008UL
+#define TA_WSGL     0x00000000UL
+#define TALM_STA    0x01U
+#define TALM_STP    0x00U
 #define TCB_isstack (TCB_wtmeb+TCBsz_wtmeb2isstack)
+#define TCB_state   35
+#define TCB_tskatr  16
 #define TCB_tskctxb _ALIGN_CPU(TCB_isstack+4+TCBSZ_GP)
 #define TCB_tskid   8
-#define TCB_tskatr  16
-#define TCB_state   35
-#define CTXB_ssp    0
-#define USE_SYSDEPEND_PATCH1    0
-#define USE_SYSDEPEND_PATCH2    0
-#define TK_STDTK    FALSE
-#define TK_MICROTK  TRUE
+#define TCB_winfo   (60)
+#define TCB_wtmeb   _ALIGN_64(TCB_winfo+TCBSZ_WINFO)
+#define TCBSZ_EXECTIME  (0)
+#define TCBSZ_EXECTIME  (8)
+#define TCBSZ_GP    (0)
+#define TCBSZ_MTX   (0)
+#define TCBSZ_MTX   (4)
+#define TCBSZ_POR   (0)
+#define TCBSZ_POR   (4)
+#define TCBSZ_WINFO (0)
+#define TCBSZ_WINFO (12)
+#define TCBSZ_WINFO (16)
+#define TCBSZ_WINFO (4)
+#define TCBSZ_WINFO (8)
+#define TCBsz_wtmeb2isstack (24+TCBSZ_MTX+TCBSZ_POR+TCBSZ_EXECTIME)
+#define TCYC_STA    0x01U
+#define TCYC_STP    0x00U
+#define td_acp_que_impl knl_no_support
+#define td_acp_que_impl td_acp_que
+#define td_cal_que_impl knl_no_support
+#define td_cal_que_impl td_cal_que
+#define TD_CHECK    0x0004U
+#define TD_DEVKIND  0x00ffU
+#define TD_DEVTYPE  0x00f0U
+#define TD_DISSUS   0x0002U
+#define TD_EJECT    0x0001U
+#define TD_ENASUS   0x0003U
+#define TD_EXCL     0x0100U
+#define td_flg_que_impl knl_no_support
+#define td_flg_que_impl td_flg_que
+#define TD_FORCE    0x8000U
+#define td_get_otm_impl td_get_otm
+#define td_get_reg_impl td_get_reg
+#define td_get_tim_impl td_get_tim
+#define td_hok_dsp_impl knl_no_support
+#define td_hok_dsp_impl td_hok_dsp
+#define td_hok_int_impl knl_no_support
+#define td_hok_int_impl td_hok_int
+#define td_hok_svc_impl knl_no_support
+#define td_hok_svc_impl td_hok_svc
+#define td_inf_tsk_impl td_inf_tsk
+#define td_lst_alm_impl knl_no_support
+#define td_lst_alm_impl td_lst_alm
+#define td_lst_cyc_impl knl_no_support
+#define td_lst_cyc_impl td_lst_cyc
+#define td_lst_flg_impl knl_no_support
+#define td_lst_flg_impl td_lst_flg
+#define td_lst_mbf_impl knl_no_support
+#define td_lst_mbf_impl td_lst_mbf
+#define td_lst_mbx_impl knl_no_support
+#define td_lst_mbx_impl td_lst_mbx
+#define td_lst_mpf_impl knl_no_support
+#define td_lst_mpf_impl td_lst_mpf
+#define td_lst_mpl_impl knl_no_support
+#define td_lst_mpl_impl td_lst_mpl
+#define td_lst_mtx_impl knl_no_support
+#define td_lst_mtx_impl td_lst_mtx
+#define td_lst_por_impl knl_no_support
+#define td_lst_por_impl td_lst_por
+#define td_lst_sem_impl knl_no_support
+#define td_lst_sem_impl td_lst_sem
+#define td_lst_ssy_impl knl_no_support
+#define td_lst_ssy_impl td_lst_ssy
+#define td_lst_tsk_impl td_lst_tsk
+#define td_mbx_que_impl knl_no_support
+#define td_mbx_que_impl td_mbx_que
+#define td_mpf_que_impl knl_no_support
+#define td_mpf_que_impl td_mpf_que
+#define td_mpl_que_impl knl_no_support
+#define td_mpl_que_impl td_mpl_que
+#define td_mtx_que_impl knl_no_support
+#define td_mtx_que_impl td_mtx_que
+#define TD_PROTECT  0x8000U
+#define td_rdy_que_impl td_rdy_que
+#define TD_READ     0x0001U
+#define td_ref_alm_impl knl_no_support
+#define td_ref_alm_impl td_ref_alm
+#define td_ref_cyc_impl knl_no_support
+#define td_ref_cyc_impl td_ref_cyc
+#define td_ref_dsname_impl  td_ref_dsname
+#define td_ref_flg_impl knl_no_support
+#define td_ref_flg_impl td_ref_flg
+#define td_ref_mbf_impl knl_no_support
+#define td_ref_mbf_impl td_ref_mbf
+#define td_ref_mbx_impl knl_no_support
+#define td_ref_mbx_impl td_ref_mbx
+#define td_ref_mpf_impl knl_no_support
+#define td_ref_mpf_impl td_ref_mpf
+#define td_ref_mpl_impl knl_no_support
+#define td_ref_mpl_impl td_ref_mpl
+#define td_ref_mtx_impl knl_no_support
+#define td_ref_mtx_impl td_ref_mtx
+#define td_ref_por_impl knl_no_support
+#define td_ref_por_impl td_ref_por
+#define td_ref_sem_impl knl_no_support
+#define td_ref_sem_impl td_ref_sem
+#define td_ref_ssy_impl knl_no_support
+#define td_ref_ssy_impl td_ref_ssy
+#define td_ref_sys_impl td_ref_sys
+#define td_ref_tsk_impl td_ref_tsk
+#define TD_REMOVABLE    0x4000U
+#define TD_REXCL    0x0400U
+#define td_rmbf_que_impl    knl_no_support
+#define td_rmbf_que_impl    td_rmbf_que
+#define td_sem_que_impl knl_no_support
+#define td_sem_que_impl td_sem_que
+#define td_set_dsname_impl  td_set_dsname
+#define td_set_reg_impl td_set_reg
+#define td_smbf_que_impl    knl_no_support
+#define td_smbf_que_impl    td_smbf_que
+#define TD_SUSPEND  0x0001U
+#define TD_UPDATE   0x0003U
+#define TD_WEXCL    0x0200U
+#define TD_WRITE    0x0002U
+#define TDA_OPENREQ 0x0001U
+#define TDC_READ    1
+#define TDC_WRITE   2
+#define TDFN_ACP_QUE    0x80270300
+#define TDFN_ACP_QUE    0x8273
+#define TDFN_CAL_QUE    0x80260300
+#define TDFN_CAL_QUE    0x8263
+#define TDFN_FLG_QUE    0x80210300
+#define TDFN_FLG_QUE    0x8213
+#define TDFN_GET_OTM    0x801e0200
+#define TDFN_GET_OTM    0x81e2
+#define TDFN_GET_REG    0x801a0400
+#define TDFN_GET_REG    0x81a4
+#define TDFN_GET_TIM    0x801d0200
+#define TDFN_GET_TIM    0x81d2
+#define TDFN_HOK_DSP    0x802b0100
+#define TDFN_HOK_DSP    0x82b1
+#define TDFN_HOK_INT    0x802c0100
+#define TDFN_HOK_INT    0x82c1
+#define TDFN_HOK_SVC    0x802a0100
+#define TDFN_HOK_SVC    0x82a1
+#define TDFN_INF_TSK    0x80190300
+#define TDFN_INF_TSK    0x8193
+#define TDFN_LST_ALM    0x800b0200
+#define TDFN_LST_ALM    0x80b2
+#define TDFN_LST_CYC    0x800a0200
+#define TDFN_LST_CYC    0x80a2
+#define TDFN_LST_FLG    0x80030200
+#define TDFN_LST_FLG    0x8032
+#define TDFN_LST_MBF    0x80060200
+#define TDFN_LST_MBF    0x8062
+#define TDFN_LST_MBX    0x80040200
+#define TDFN_LST_MBX    0x8042
+#define TDFN_LST_MPF    0x80080200
+#define TDFN_LST_MPF    0x8082
+#define TDFN_LST_MPL    0x80090200
+#define TDFN_LST_MPL    0x8092
+#define TDFN_LST_MTX    0x80050200
+#define TDFN_LST_MTX    0x8052
+#define TDFN_LST_POR    0x80070200
+#define TDFN_LST_POR    0x8072
+#define TDFN_LST_SEM    0x80020200
+#define TDFN_LST_SEM    0x8022
+#define TDFN_LST_SSY    0x800c0200
+#define TDFN_LST_SSY    0x80c2
+#define TDFN_LST_TSK    0x80010200
+#define TDFN_LST_TSK    0x8012
+#define TDFN_MBX_QUE    0x80220300
+#define TDFN_MBX_QUE    0x8223
+#define TDFN_MPF_QUE    0x80280300
+#define TDFN_MPF_QUE    0x8283
+#define TDFN_MPL_QUE    0x80290300
+#define TDFN_MPL_QUE    0x8293
+#define TDFN_MTX_QUE    0x80230300
+#define TDFN_MTX_QUE    0x8233
+#define TDFN_RDY_QUE    0x801f0300
+#define TDFN_RDY_QUE    0x81f3
+#define TDFN_REF_ALM    0x80160200
+#define TDFN_REF_ALM    0x8162
+#define TDFN_REF_CYC    0x80150200
+#define TDFN_REF_CYC    0x8152
+#define TDFN_REF_DSNAME 0x802d0300
+#define TDFN_REF_DSNAME 0x82d3
+#define TDFN_REF_FLG    0x800e0200
+#define TDFN_REF_FLG    0x80e2
+#define TDFN_REF_MBF    0x80110200
+#define TDFN_REF_MBF    0x8112
+#define TDFN_REF_MBX    0x800f0200
+#define TDFN_REF_MBX    0x80f2
+#define TDFN_REF_MPF    0x80130200
+#define TDFN_REF_MPF    0x8132
+#define TDFN_REF_MPL    0x80140200
+#define TDFN_REF_MPL    0x8142
+#define TDFN_REF_MTX    0x80100200
+#define TDFN_REF_MTX    0x8102
+#define TDFN_REF_POR    0x80120200
+#define TDFN_REF_POR    0x8122
+#define TDFN_REF_SEM    0x800d0200
+#define TDFN_REF_SEM    0x80d2
+#define TDFN_REF_SSY    0x80170200
+#define TDFN_REF_SSY    0x8172
+#define TDFN_REF_SYS    0x801c0100
+#define TDFN_REF_SYS    0x81c1
+#define TDFN_REF_TSK    0x80180200
+#define TDFN_REF_TSK    0x8182
+#define TDFN_RMBF_QUE   0x80250300
+#define TDFN_RMBF_QUE   0x8253
+#define TDFN_SEM_QUE    0x80200300
+#define TDFN_SEM_QUE    0x8203
+#define TDFN_SET_DSNAME 0x802e0300
+#define TDFN_SET_DSNAME 0x82e3
+#define TDFN_SET_REG    0x801b0400
+#define TDFN_SET_REG    0x81b4
+#define TDFN_SMBF_QUE   0x80240300
+#define TDFN_SMBF_QUE   0x8243
+#define TDK_DISK    0x0010U
+#define TDK_DISK_CDROM  0x0016U
+#define TDK_DISK_FD 0x0014U
+#define TDK_DISK_FLA    0x0013U
+#define TDK_DISK_HD 0x0015U
+#define TDK_DISK_RAM    0x0011U
+#define TDK_DISK_ROM    0x0012U
+#define TDK_DISK_UNDEF  0x0010U
+#define TDK_UNDEF   0x0000U
+#define TDN_DISKINFO    (-2)
+#define TDN_DISPSPEC    (-3)
+#define TDN_EVENT   (-1)
+#define TDN_PCMCIAINFO  (-4)
+#define TDV_CARDEVT 1
+#define TDV_RESUME  (-2)
+#define TDV_SUSPEND (-1)
+#define TDV_USBEVT  2
+#define TFN_ACP_POR 0x80330500
+#define TFN_ACP_POR 0x8335
+#define TFN_CAL_POR 0x80320500
+#define TFN_CAL_POR 0x8325
+#define TFN_CAN_WUP 0x80150100
+#define TFN_CAN_WUP 0x8151
+#define TFN_CHG_PRI 0x80090200
+#define TFN_CHG_PRI 0x8092
+#define TFN_CLR_FLG 0x80230200
+#define TFN_CLR_FLG 0x8232
+#define TFN_CLS_DEV 0x80560200
+#define TFN_CLS_DEV 0x8562
+#define TFN_CRE_ALM 0x804c0100
+#define TFN_CRE_ALM 0x84c1
+#define TFN_CRE_CYC 0x80470100
+#define TFN_CRE_CYC 0x8471
+#define TFN_CRE_FLG 0x80200100
+#define TFN_CRE_FLG 0x8201
+#define TFN_CRE_MBF 0x802b0100
+#define TFN_CRE_MBF 0x82b1
+#define TFN_CRE_MBX 0x80260100
+#define TFN_CRE_MBX 0x8261
+#define TFN_CRE_MPF 0x803e0100
+#define TFN_CRE_MPF 0x83e1
+#define TFN_CRE_MPL 0x80390100
+#define TFN_CRE_MPL 0x8391
+#define TFN_CRE_MTX 0x801b0100
+#define TFN_CRE_MTX 0x81b1
+#define TFN_CRE_POR 0x80300100
+#define TFN_CRE_POR 0x8301
+#define TFN_CRE_SEM 0x80160100
+#define TFN_CRE_SEM 0x8161
+#define TFN_CRE_TSK 0x80010100
+#define TFN_CRE_TSK 0x8011
+#define TFN_DEF_DEV 0x80620300
+#define TFN_DEF_DEV 0x8623
+#define TFN_DEF_INT 0x80370200
+#define TFN_DEF_INT 0x8372
+#define TFN_DEF_SSY 0x80530200
+#define TFN_DEF_SSY 0x8532
+#define TFN_DEL_ALM 0x804d0100
+#define TFN_DEL_ALM 0x84d1
+#define TFN_DEL_CYC 0x80480100
+#define TFN_DEL_CYC 0x8481
+#define TFN_DEL_FLG 0x80210100
+#define TFN_DEL_FLG 0x8211
+#define TFN_DEL_MBF 0x802c0100
+#define TFN_DEL_MBF 0x82c1
+#define TFN_DEL_MBX 0x80270100
+#define TFN_DEL_MBX 0x8271
+#define TFN_DEL_MPF 0x803f0100
+#define TFN_DEL_MPF 0x83f1
+#define TFN_DEL_MPL 0x803a0100
+#define TFN_DEL_MPL 0x83a1
+#define TFN_DEL_MTX 0x801c0100
+#define TFN_DEL_MTX 0x81c1
+#define TFN_DEL_POR 0x80310100
+#define TFN_DEL_POR 0x8311
+#define TFN_DEL_SEM 0x80170100
+#define TFN_DEL_SEM 0x8171
+#define TFN_DEL_TSK 0x80020100
+#define TFN_DEL_TSK 0x8021
+#define TFN_DIS_DSP 0x80070000
+#define TFN_DIS_DSP 0x8070
+#define TFN_DLY_TSK 0x80460100
+#define TFN_DLY_TSK 0x8461
+#define TFN_ENA_DSP 0x80080000
+#define TFN_ENA_DSP 0x8080
+#define TFN_EVT_DEV 0x80610300
+#define TFN_EVT_DEV 0x8613
+#define TFN_EXD_TSK 0x80050000
+#define TFN_EXD_TSK 0x8050
+#define TFN_EXT_TSK 0x80040000
+#define TFN_EXT_TSK 0x8040
+#define TFN_FRSM_TSK    0x80120100
+#define TFN_FRSM_TSK    0x8121
+#define TFN_FWD_POR 0x80340500
+#define TFN_FWD_POR 0x8345
+#define TFN_GET_DEV 0x805d0200
+#define TFN_GET_DEV 0x85d2
+#define TFN_GET_MPF 0x80400300
+#define TFN_GET_MPF 0x8403
+#define TFN_GET_MPL 0x803b0400
+#define TFN_GET_MPL 0x83b4
+#define TFN_GET_OTM 0x80450100
+#define TFN_GET_OTM 0x8451
+#define TFN_GET_REG 0x800d0400
+#define TFN_GET_REG 0x80d4
+#define TFN_GET_TID 0x800c0000
+#define TFN_GET_TID 0x80c0
+#define TFN_GET_TIM 0x80440100
+#define TFN_GET_TIM 0x8441
+#define TFN_LOC_MTX 0x801d0200
+#define TFN_LOC_MTX 0x81d2
+#define TFN_LST_DEV 0x80600300
+#define TFN_LST_DEV 0x8603
+#define TFN_OPN_DEV 0x80550200
+#define TFN_OPN_DEV 0x8552
+#define TFN_OREF_DEV    0x805f0200
+#define TFN_OREF_DEV    0x85f2
+#define TFN_RCV_MBF 0x802e0300
+#define TFN_RCV_MBF 0x82e3
+#define TFN_RCV_MBX 0x80290300
+#define TFN_RCV_MBX 0x8293
+#define TFN_REA_DEV 0x80570500
+#define TFN_REA_DEV 0x8575
+#define TFN_REF_ALM 0x80500200
+#define TFN_REF_ALM 0x8502
+#define TFN_REF_CYC 0x804b0200
+#define TFN_REF_CYC 0x84b2
+#define TFN_REF_DEV 0x805e0200
+#define TFN_REF_DEV 0x85e2
+#define TFN_REF_FLG 0x80250200
+#define TFN_REF_FLG 0x8252
+#define TFN_REF_IDV 0x80630100
+#define TFN_REF_IDV 0x8631
+#define TFN_REF_MBF 0x802f0200
+#define TFN_REF_MBF 0x82f2
+#define TFN_REF_MBX 0x802a0200
+#define TFN_REF_MBX 0x82a2
+#define TFN_REF_MPF 0x80420200
+#define TFN_REF_MPF 0x8422
+#define TFN_REF_MPL 0x803d0200
+#define TFN_REF_MPL 0x83d2
+#define TFN_REF_MTX 0x801f0200
+#define TFN_REF_MTX 0x81f2
+#define TFN_REF_POR 0x80360200
+#define TFN_REF_POR 0x8362
+#define TFN_REF_SEM 0x801a0200
+#define TFN_REF_SEM 0x81a2
+#define TFN_REF_SSY 0x80540200
+#define TFN_REF_SSY 0x8542
+#define TFN_REF_SYS 0x80520100
+#define TFN_REF_SYS 0x8521
+#define TFN_REF_TSK 0x800f0200
+#define TFN_REF_TSK 0x80f2
+#define TFN_REF_VER 0x80510100
+#define TFN_REF_VER 0x8511
+#define TFN_REL_MPF 0x80410200
+#define TFN_REL_MPF 0x8412
+#define TFN_REL_MPL 0x803c0200
+#define TFN_REL_MPL 0x83c2
+#define TFN_REL_WAI 0x800b0100
+#define TFN_REL_WAI 0x80b1
+#define TFN_RET_INT 0x80380000
+#define TFN_RET_INT 0x8380
+#define TFN_ROT_RDQ 0x800a0100
+#define TFN_ROT_RDQ 0x80a1
+#define TFN_RPL_RDV 0x80350300
+#define TFN_RPL_RDV 0x8353
+#define TFN_RSM_TSK 0x80110100
+#define TFN_RSM_TSK 0x8111
+#define TFN_SET_FLG 0x80220200
+#define TFN_SET_FLG 0x8222
+#define TFN_SET_REG 0x800e0400
+#define TFN_SET_REG 0x80e4
+#define TFN_SET_TIM 0x80430100
+#define TFN_SET_TIM 0x8431
+#define TFN_SIG_SEM 0x80180200
+#define TFN_SIG_SEM 0x8182
+#define TFN_SLP_TSK 0x80130100
+#define TFN_SLP_TSK 0x8131
+#define TFN_SND_MBF 0x802d0400
+#define TFN_SND_MBF 0x82d4
+#define TFN_SND_MBX 0x80280200
+#define TFN_SND_MBX 0x8282
+#define TFN_SREA_DEV    0x80580500
+#define TFN_SREA_DEV    0x8585
+#define TFN_STA_ALM 0x804e0200
+#define TFN_STA_ALM 0x84e2
+#define TFN_STA_CYC 0x80490100
+#define TFN_STA_CYC 0x8491
+#define TFN_STA_TSK 0x80030200
+#define TFN_STA_TSK 0x8032
+#define TFN_STP_ALM 0x804f0100
+#define TFN_STP_ALM 0x84f1
+#define TFN_STP_CYC 0x804a0100
+#define TFN_STP_CYC 0x84a1
+#define TFN_SUS_DEV 0x805c0100
+#define TFN_SUS_DEV 0x85c1
+#define TFN_SUS_TSK 0x80100100
+#define TFN_SUS_TSK 0x8101
+#define TFN_SWRI_DEV    0x805a0500
+#define TFN_SWRI_DEV    0x85a5
+#define TFN_TER_TSK 0x80060100
+#define TFN_TER_TSK 0x8061
+#define TFN_UNL_MTX 0x801e0100
+#define TFN_UNL_MTX 0x81e1
+#define TFN_WAI_DEV 0x805b0500
+#define TFN_WAI_DEV 0x85b5
+#define TFN_WAI_FLG 0x80240500
+#define TFN_WAI_FLG 0x8245
+#define TFN_WAI_SEM 0x80190300
+#define TFN_WAI_SEM 0x8193
+#define TFN_WRI_DEV 0x80590500
+#define TFN_WRI_DEV 0x8595
+#define TFN_WUP_TSK 0x80140100
+#define TFN_WUP_TSK 0x8141
+#define TIMER_INTLEVEL      0
+#define tk_acp_por_impl knl_no_support
+#define tk_acp_por_impl tk_acp_por
 #define TK_ALLOW_MISALIGN   (ALLOW_MISALIGN)
 #define TK_BIGENDIAN        (BIGENDIAN)
-#define TK_VIRTUAL_ADDRESS  (VIRTUAL_ADDRESS)
-#define TK_VIRTUAL_MEMORY   FALSE
-#define TK_TRAP_SVC     (USE_TRAP)
+#define tk_cal_por_impl knl_no_support
+#define tk_cal_por_impl tk_cal_por
+#define tk_can_wup_impl tk_can_wup
+#define tk_chg_pri_impl tk_chg_pri
+#define tk_clr_flg_impl knl_no_support
+#define tk_clr_flg_impl tk_clr_flg
+#define tk_cls_dev_impl knl_no_support
+#define tk_cls_dev_impl tk_cls_dev
+#define tk_cre_alm_impl knl_no_support
+#define tk_cre_alm_impl tk_cre_alm
+#define tk_cre_cyc_impl knl_no_support
+#define tk_cre_cyc_impl tk_cre_cyc
+#define tk_cre_flg_impl knl_no_support
+#define tk_cre_flg_impl tk_cre_flg
+#define tk_cre_mbf_impl knl_no_support
+#define tk_cre_mbf_impl tk_cre_mbf
+#define tk_cre_mbx_impl knl_no_support
+#define tk_cre_mbx_impl tk_cre_mbx
+#define tk_cre_mpf_impl knl_no_support
+#define tk_cre_mpf_impl tk_cre_mpf
+#define tk_cre_mpl_impl knl_no_support
+#define tk_cre_mpl_impl tk_cre_mpl
+#define tk_cre_mtx_impl knl_no_support
+#define tk_cre_mtx_impl tk_cre_mtx
+#define tk_cre_por_impl knl_no_support
+#define tk_cre_por_impl tk_cre_por
+#define tk_cre_sem_impl knl_no_support
+#define tk_cre_sem_impl tk_cre_sem
+#define tk_cre_tsk_impl tk_cre_tsk
+#define tk_def_dev_impl knl_no_support
+#define tk_def_dev_impl tk_def_dev
+#define tk_def_int_impl tk_def_int
+#define tk_def_ssy_impl knl_no_support
+#define tk_def_ssy_impl tk_def_ssy
+#define tk_del_alm_impl knl_no_support
+#define tk_del_alm_impl tk_del_alm
+#define tk_del_cyc_impl knl_no_support
+#define tk_del_cyc_impl tk_del_cyc
+#define tk_del_flg_impl knl_no_support
+#define tk_del_flg_impl tk_del_flg
+#define tk_del_mbf_impl knl_no_support
+#define tk_del_mbf_impl tk_del_mbf
+#define tk_del_mbx_impl knl_no_support
+#define tk_del_mbx_impl tk_del_mbx
+#define tk_del_mpf_impl knl_no_support
+#define tk_del_mpf_impl tk_del_mpf
+#define tk_del_mpl_impl knl_no_support
+#define tk_del_mpl_impl tk_del_mpl
+#define tk_del_mtx_impl knl_no_support
+#define tk_del_mtx_impl tk_del_mtx
+#define tk_del_por_impl knl_no_support
+#define tk_del_por_impl tk_del_por
+#define tk_del_sem_impl knl_no_support
+#define tk_del_sem_impl tk_del_sem
+#define tk_del_tsk_impl tk_del_tsk
+#define tk_dis_dsp_impl tk_dis_dsp
+#define tk_dly_tsk_impl tk_dly_tsk
+#define tk_ena_dsp_impl tk_ena_dsp
+#define tk_evt_dev_impl knl_no_support
+#define tk_evt_dev_impl tk_evt_dev
+#define tk_exd_tsk_impl tk_exd_tsk
+#define tk_ext_tsk_impl tk_ext_tsk
+#define tk_frsm_tsk_impl    tk_frsm_tsk
+#define tk_fwd_por_impl knl_no_support
+#define tk_fwd_por_impl tk_fwd_por
+#define tk_get_dev_impl knl_no_support
+#define tk_get_dev_impl tk_get_dev
+#define tk_get_mpf_impl knl_no_support
+#define tk_get_mpf_impl tk_get_mpf
+#define tk_get_mpl_impl knl_no_support
+#define tk_get_mpl_impl tk_get_mpl
+#define tk_get_otm_impl tk_get_otm
+#define tk_get_reg_impl tk_get_reg
+#define tk_get_tid_impl tk_get_tid
+#define tk_get_tim_impl tk_get_tim
 #define TK_HAS_DOUBLEWORD   FALSE
-#define TK_SUPPORT_SERCD    FALSE
-#define TK_HAS_SYSSTACK     FALSE
-#define TK_SUPPORT_FPU      FALSE
-#define TK_SUPPORT_COP0     FALSE
-#define TK_SUPPORT_COP1     FALSE
-#define TK_SUPPORT_COP2     FALSE
-#define TK_SUPPORT_COP3     FALSE
-#define TK_SUPPORT_RESOURCE FALSE
-#define TK_SUPPORT_USERBUF  TRUE
-#define TK_SUPPORT_AUTOBUF  TRUE
-#define TK_SUPPORT_SLICETIME    FALSE
-#define TK_SUPPORT_TASKINF  FALSE
-#define TK_SUPPORT_USEC     FALSE
-#define TK_SUPPORT_TASKSPACE    FALSE
-#define TK_SUPPORT_TASKEVENT    FALSE
-#define TK_SUPPORT_DISWAI   FALSE
-#define TK_SUPPORT_REGOPS   TRUE
-#define TK_SUPPORT_ASM      FALSE
-#define TK_SUPPORT_DSNAME   (USE_OBJECT_NAME)
-#define TK_SUPPORT_TASKEXCEPTION    FALSE
-#define TK_SUPPORT_LOWPOWER FALSE
-#define TK_SUPPORT_SSYEVENT FALSE
-#define TK_SUPPORT_LARGEDEV FALSE
-#define TK_SUPPORT_INTCTRL  TRUE
 #define TK_HAS_ENAINTLEVEL  TRUE
-#define TK_SUPPORT_CPUINTLEVEL  TRUE
-#define TK_SUPPORT_CTRLINTLEVEL FALSE
-#define TK_SUPPORT_INTMODE  FALSE
-#define TK_SUPPORT_SYSCONF  FALSE
-#define TK_SUPPORT_IOPORT   TRUE
-#define TK_SUPPORT_MICROWAIT    FALSE
-#define TK_SUPPORT_CACHECTRL    FALSE
-#define TK_SUPPORT_WBCACHE  FALSE
-#define TK_SUPPORT_WTCACHE  FALSE
-#define TK_SUPPORT_SYSMEMBLK    FALSE
-#define TK_SUPPORT_MEMLIB   FALSE
-#define TK_SUPPORT_ADDRSPACE    FALSE
-#define TK_SUPPORT_PTIMER   FALSE
-#define TK_SUPPORT_DBGSPT   (USE_DBGSPT)
-#define TK_SPECVER_MAJOR    (CFN_VER_MAJOR)
-#define TK_SPECVER_MINOR    (CFN_VER_MINOR)
-#define TK_SPECVER      ((TK_SPECVER_MAJOR << 8) | TK_SPECVER_MINOR)
+#define TK_HAS_SYSSTACK     FALSE
+#define tk_loc_mtx_impl knl_no_support
+#define tk_loc_mtx_impl tk_loc_mtx
+#define tk_lst_dev_impl knl_no_support
+#define tk_lst_dev_impl tk_lst_dev
+#define TK_MAX_PTIMER       0
 #define TK_MAX_TSKPRI       (MAX_PRI)
-#define TK_WAKEUP_MAXCNT    (+2147483647L)
-#define TK_SEMAPHORE_MAXCNT (+2147483647L)
-#define TK_SUSPEND_MAXCNT   (+2147483647L)
 #define TK_MEM_RNG0     0
 #define TK_MEM_RNG1     0
 #define TK_MEM_RNG2     0
 #define TK_MEM_RNG3     0
-#define TK_MAX_PTIMER       0
-#define BITMAPSZ    ( sizeof(UINT) * 8 )
-#define NUM_BITMAP  ( (NUM_PRI + BITMAPSZ - 1) / BITMAPSZ )
-#define RDVNO_SHIFT (sizeof(RNO)*8/2)
+#define TK_MICROTK  TRUE
+#define tk_opn_dev_impl knl_no_support
+#define tk_opn_dev_impl tk_opn_dev
+#define tk_oref_dev_impl    knl_no_support
+#define tk_oref_dev_impl    tk_oref_dev
+#define tk_rcv_mbf_impl knl_no_support
+#define tk_rcv_mbf_impl tk_rcv_mbf
+#define tk_rcv_mbx_impl knl_no_support
+#define tk_rcv_mbx_impl tk_rcv_mbx
+#define tk_rea_dev_impl knl_no_support
+#define tk_rea_dev_impl tk_rea_dev
+#define tk_ref_alm_impl knl_no_support
+#define tk_ref_alm_impl tk_ref_alm
+#define tk_ref_cyc_impl knl_no_support
+#define tk_ref_cyc_impl tk_ref_cyc
+#define tk_ref_dev_impl knl_no_support
+#define tk_ref_dev_impl tk_ref_dev
+#define tk_ref_flg_impl knl_no_support
+#define tk_ref_flg_impl tk_ref_flg
+#define tk_ref_idv_impl knl_no_support
+#define tk_ref_idv_impl tk_ref_idv
+#define tk_ref_mbf_impl knl_no_support
+#define tk_ref_mbf_impl tk_ref_mbf
+#define tk_ref_mbx_impl knl_no_support
+#define tk_ref_mbx_impl tk_ref_mbx
+#define tk_ref_mpf_impl knl_no_support
+#define tk_ref_mpf_impl tk_ref_mpf
+#define tk_ref_mpl_impl knl_no_support
+#define tk_ref_mpl_impl tk_ref_mpl
+#define tk_ref_mtx_impl knl_no_support
+#define tk_ref_mtx_impl tk_ref_mtx
+#define tk_ref_por_impl knl_no_support
+#define tk_ref_por_impl tk_ref_por
+#define tk_ref_sem_impl knl_no_support
+#define tk_ref_sem_impl tk_ref_sem
+#define tk_ref_ssy_impl knl_no_support
+#define tk_ref_ssy_impl tk_ref_ssy
+#define tk_ref_sys_impl tk_ref_sys
+#define tk_ref_tsk_impl tk_ref_tsk
+#define tk_ref_ver_impl tk_ref_ver
+#define tk_rel_mpf_impl knl_no_support
+#define tk_rel_mpf_impl tk_rel_mpf
+#define tk_rel_mpl_impl knl_no_support
+#define tk_rel_mpl_impl tk_rel_mpl
+#define tk_rel_wai_impl tk_rel_wai
+#define tk_ret_int_impl tk_ret_int
+#define tk_rot_rdq_impl tk_rot_rdq
+#define tk_rpl_rdv_impl knl_no_support
+#define tk_rpl_rdv_impl tk_rpl_rdv
+#define tk_rsm_tsk_impl tk_rsm_tsk
+#define TK_SEMAPHORE_MAXCNT (+2147483647L)
+#define tk_set_flg_impl knl_no_support
+#define tk_set_flg_impl tk_set_flg
+#define tk_set_reg_impl tk_set_reg
+#define tk_set_tim_impl tk_set_tim
+#define tk_sig_sem_impl knl_no_support
+#define tk_sig_sem_impl tk_sig_sem
+#define tk_slp_tsk_impl tk_slp_tsk
+#define tk_snd_mbf_impl knl_no_support
+#define tk_snd_mbf_impl tk_snd_mbf
+#define tk_snd_mbx_impl knl_no_support
+#define tk_snd_mbx_impl tk_snd_mbx
+#define TK_SPECVER      ((TK_SPECVER_MAJOR << 8) | TK_SPECVER_MINOR)
+#define TK_SPECVER_MAJOR    (CFN_VER_MAJOR)
+#define TK_SPECVER_MINOR    (CFN_VER_MINOR)
+#define tk_srea_dev_impl    knl_no_support
+#define tk_srea_dev_impl    tk_srea_dev
+#define tk_sta_alm_impl knl_no_support
+#define tk_sta_alm_impl tk_sta_alm
+#define tk_sta_cyc_impl knl_no_support
+#define tk_sta_cyc_impl tk_sta_cyc
+#define tk_sta_tsk_impl tk_sta_tsk
+#define TK_STDTK    FALSE
+#define tk_stp_alm_impl knl_no_support
+#define tk_stp_alm_impl tk_stp_alm
+#define tk_stp_cyc_impl knl_no_support
+#define tk_stp_cyc_impl tk_stp_cyc
+#define TK_SUPPORT_ADDRSPACE    FALSE
+#define TK_SUPPORT_ASM      FALSE
+#define TK_SUPPORT_AUTOBUF  TRUE
+#define TK_SUPPORT_CACHECTRL    FALSE
+#define TK_SUPPORT_COP0     FALSE
+#define TK_SUPPORT_COP1     FALSE
+#define TK_SUPPORT_COP2     FALSE
+#define TK_SUPPORT_COP3     FALSE
+#define TK_SUPPORT_CPUINTLEVEL  TRUE
+#define TK_SUPPORT_CTRLINTLEVEL FALSE
+#define TK_SUPPORT_DBGSPT   (USE_DBGSPT)
+#define TK_SUPPORT_DISWAI   FALSE
+#define TK_SUPPORT_DSNAME   (USE_OBJECT_NAME)
+#define TK_SUPPORT_FPU      FALSE
+#define TK_SUPPORT_INTCTRL  TRUE
+#define TK_SUPPORT_INTMODE  FALSE
+#define TK_SUPPORT_IOPORT   TRUE
+#define TK_SUPPORT_LARGEDEV FALSE
+#define TK_SUPPORT_LOWPOWER FALSE
+#define TK_SUPPORT_MEMLIB   FALSE
+#define TK_SUPPORT_MICROWAIT    FALSE
+#define TK_SUPPORT_PTIMER   FALSE
+#define TK_SUPPORT_REGOPS   TRUE
+#define TK_SUPPORT_RESOURCE FALSE
+#define TK_SUPPORT_SERCD    FALSE
+#define TK_SUPPORT_SLICETIME    FALSE
+#define TK_SUPPORT_SSYEVENT FALSE
+#define TK_SUPPORT_SYSCONF  FALSE
+#define TK_SUPPORT_SYSMEMBLK    FALSE
+#define TK_SUPPORT_TASKEVENT    FALSE
+#define TK_SUPPORT_TASKEXCEPTION    FALSE
+#define TK_SUPPORT_TASKINF  FALSE
+#define TK_SUPPORT_TASKSPACE    FALSE
+#define TK_SUPPORT_USEC     FALSE
+#define TK_SUPPORT_USERBUF  TRUE
+#define TK_SUPPORT_WBCACHE  FALSE
+#define TK_SUPPORT_WTCACHE  FALSE
+#define tk_sus_dev_impl knl_no_support
+#define tk_sus_dev_impl tk_sus_dev
+#define tk_sus_tsk_impl tk_sus_tsk
+#define TK_SUSPEND_MAXCNT   (+2147483647L)
+#define tk_swri_dev_impl    knl_no_support
+#define tk_swri_dev_impl    tk_swri_dev
+#define tk_ter_tsk_impl tk_ter_tsk
+#define TK_TRAP_SVC     (USE_TRAP)
+#define tk_unl_mtx_impl knl_no_support
+#define tk_unl_mtx_impl tk_unl_mtx
+#define TK_VIRTUAL_ADDRESS  (VIRTUAL_ADDRESS)
+#define TK_VIRTUAL_MEMORY   FALSE
+#define tk_wai_dev_impl knl_no_support
+#define tk_wai_dev_impl tk_wai_dev
+#define tk_wai_flg_impl knl_no_support
+#define tk_wai_flg_impl tk_wai_flg
+#define tk_wai_sem_impl knl_no_support
+#define tk_wai_sem_impl tk_wai_sem
+#define TK_WAKEUP_MAXCNT    (+2147483647L)
+#define tk_wri_dev_impl knl_no_support
+#define tk_wri_dev_impl tk_wri_dev
+#define tk_wup_tsk_impl tk_wup_tsk
+#define TMCLK       40
+#define TMO_FEVR    (-1)
+#define TMO_POL     0
+#define TMP_STACK_SIZE      0x80
+#define TMP_STACK_TOP       (EXCEPTION_STACK_TOP - EXC_STACK_SIZE)
+#define TN_ALM 0x0b
+#define TN_CYC 0x0a
+#define TN_FLG 0x03
+#define TN_MBF 0x05
+#define TN_MBX 0x04
+#define TN_MPF 0x09
+#define TN_MPL 0x08
+#define TN_MTX 0x07
+#define TN_POR 0x06
+#define TN_SEM 0x02
+#define TN_TSK 0x01
+#define TNULL       ((TC)0)
+#define TPRI_INI    0
+#define TPRI_RUN    0
+#define TRUE        1
+#define TSK_SELF    0
+#define TSS_DDSP    0x01U
+#define TSS_DINT    0x02U
+#define TSS_INDP    0x04U
+#define TSS_QTSK    0x08U
+#define TSS_TSK     0x00U
+#define TTC_PSR_Val 0x00000000
+#define TTS_DMT     0x00000010U
+#define TTS_NODISWAI    0x00000080U
+#define TTS_RDY     0x00000002U
+#define TTS_RUN     0x00000001U
+#define TTS_SUS     0x00000008U
+#define TTS_WAI     0x00000004U
+#define TTS_WAS     0x0000000cU
+#define TTW_ACP     0x00000800UL
+#define TTW_CAL     0x00000400UL
+#define TTW_DLY     0x00000002UL
+#define TTW_FLG     0x00000008UL
+#define TTW_MBX     0x00000040UL
+#define TTW_MPF     0x00002000UL
+#define TTW_MPL     0x00004000UL
+#define TTW_MTX     0x00000080UL
+#define TTW_RDV     0x00001000UL
+#define TTW_RMBF    0x00000200UL
+#define TTW_SEM     0x00000004UL
+#define TTW_SLP     0x00000001UL
+#define TTW_SMBF    0x00000100UL
+#define TWF_ANDW    0x00000000U
+#define TWF_BITCLR  0x00000020U
+#define TWF_CLR     0x00000010U
+#define TWF_ORW     0x00000001U
+#define UCHAR_MAX   (255)
+#define UINT_MAX    ULONG_MAX
+#define UINT_MAX    USHRT_MAX
+#define ULONG_MAX   (4294967295L)
+#define USE_CLEANUP     (1)
+#define USE_DBGSPT      (0)
+#define USE_FUNC_ALARMHANDLER_GETNAME
+#define USE_FUNC_ALARMHANDLER_INITIALIZE
+#define USE_FUNC_ALMCB_TABLE
+#define USE_FUNC_APPENDFREEAREA
+#define USE_FUNC_APPENDFREEAREABOUND
+#define USE_FUNC_BZERO
+#define USE_FUNC_CALL_ALMHDR
+#define USE_FUNC_CALL_CYCHDR
+#define USE_FUNC_CHANGE_TASK_PRIORITY
+#define USE_FUNC_CHECK_DEVDESC
+#define USE_FUNC_CHG_PRI_MUTEX
+#define USE_FUNC_CHKOPEN
+#define USE_FUNC_CLOSE_DEVICE
+#define USE_FUNC_CREATELOCK
+#define USE_FUNC_CREATEMLOCK
+#define USE_FUNC_CTXTSK
+#define USE_FUNC_CYCCB_TABLE
+#define USE_FUNC_CYCLICHANDLER_GETNAME
+#define USE_FUNC_CYCLICHANDLER_INITIALIZE
+#define USE_FUNC_DEFAULTIDEV
+#define USE_FUNC_DEL_TSK
+#define USE_FUNC_DELETELOCK
+#define USE_FUNC_DELETEMLOCK
+#define USE_FUNC_DELOPNCB
+#define USE_FUNC_DELREQCB
+#define USE_FUNC_DEVCBTBL
+#define USE_FUNC_DEVMGR_CLEANUP
+#define USE_FUNC_DEVMGR_STARTUP
+#define USE_FUNC_DEVMGRLOCK
+#define USE_FUNC_DISSUSCNT
+#define USE_FUNC_EVENTFLAG_GETNAME
+#define USE_FUNC_EVENTFLAG_INITIALIZE
+#define USE_FUNC_FINISH_DEVMGR
+#define USE_FUNC_FINISHDEVIO
+#define USE_FUNC_FIX_MEMORYPOOL_GETNAME
+#define USE_FUNC_FIX_MEMORYPOOL_INITIALIZE
+#define USE_FUNC_FLGCB_TABLE
+#define USE_FUNC_GCB_CHANGE_PRIORITY
+#define USE_FUNC_GCB_MAKE_WAIT
+#define USE_FUNC_GCB_TOP_OF_WAIT_QUEUE
+#define USE_FUNC_GET_BLK
+#define USE_FUNC_GET_REG
+#define USE_FUNC_GETRESCB
+#define USE_FUNC_HLL_INTHDR
+#define USE_FUNC_HOOK_ENTERFN
+#define USE_FUNC_HOOK_EXECFN
+#define USE_FUNC_HOOK_IENTERFN
+#define USE_FUNC_ICALLOC
+#define USE_FUNC_IFREE
+#define USE_FUNC_IMACB
+#define USE_FUNC_IMALLOC
+#define USE_FUNC_INIT_IMALLOC
+#define USE_FUNC_INITDEVIO
+#define USE_FUNC_INITIALIZE_DEVMGR
+#define USE_FUNC_INSERTAREAQUE
+#define USE_FUNC_LOCK
+#define USE_FUNC_LOWPOW_DISCNT
+#define USE_FUNC_MAILBOX_GETNAME
+#define USE_FUNC_MAILBOX_INITIALIZE
+#define USE_FUNC_MAKE_DORMANT
+#define USE_FUNC_MAKE_NON_READY
+#define USE_FUNC_MAKE_READY
+#define USE_FUNC_MAKE_WAIT
+#define USE_FUNC_MAKE_WAIT_RELTIM
+#define USE_FUNC_MBF_WAKEUP
+#define USE_FUNC_MBFCB_TABLE
+#define USE_FUNC_MBXCB_TABLE
+#define USE_FUNC_MEMCMP
+#define USE_FUNC_MEMCPY
+#define USE_FUNC_MEMMOVE
+#define USE_FUNC_MEMORYPOOL_GETNAME
+#define USE_FUNC_MEMORYPOOL_INITIALIZE
+#define USE_FUNC_MEMSET
+#define USE_FUNC_MESSAGEBUFFER_GETNAME
+#define USE_FUNC_MESSAGEBUFFER_INITIALIZE
+#define USE_FUNC_MLOCK
+#define USE_FUNC_MLOCKTMO
+#define USE_FUNC_MPFCB_TABLE
+#define USE_FUNC_MPL_WAKEUP
+#define USE_FUNC_MPLCB_TABLE
+#define USE_FUNC_MSG_TO_MBF
+#define USE_FUNC_MTXCB_TABLE
+#define USE_FUNC_MUNLOCK
+#define USE_FUNC_MUTEX_GETNAME
+#define USE_FUNC_MUTEX_INITIALIZE
+#define USE_FUNC_OBJECT_GETNAME
+#define USE_FUNC_OPNCBTBL
+#define USE_FUNC_PHYDEVNM
+#define USE_FUNC_PORCB_TABLE
+#define USE_FUNC_REL_BLK
+#define USE_FUNC_RELEASE_MUTEX
+#define USE_FUNC_REMOVEAREAQUE
+#define USE_FUNC_REMOVEFREEQUE
+#define USE_FUNC_RENDEZVOUS_GETNAME
+#define USE_FUNC_RENDEZVOUS_INITIALIZE
+#define USE_FUNC_REQCBTBL
+#define USE_FUNC_REQUEST
+#define USE_FUNC_RESOURCE_CONTROL_BLOCK
+#define USE_FUNC_ROTATE_READY_QUEUE
+#define USE_FUNC_ROTATE_READY_QUEUE_RUN
+#define USE_FUNC_SEARCHDEVCB
+#define USE_FUNC_SEARCHFREEAREA
+#define USE_FUNC_SEMAPHORE_GETNAME
+#define USE_FUNC_SEMAPHORE_INITIALIZE
+#define USE_FUNC_SEMCB_TABLE
+#define USE_FUNC_SET_REG
+#define USE_FUNC_SIGNAL_ALL_MUTEX
+#define USE_FUNC_SSYCB_TABLE
+#define USE_FUNC_STRCAT
+#define USE_FUNC_STRCMP
+#define USE_FUNC_STRCPY
+#define USE_FUNC_STRLEN
+#define USE_FUNC_STRNCAT
+#define USE_FUNC_STRNCMP
+#define USE_FUNC_STRNCPY
+#define USE_FUNC_STRTOL
+#define USE_FUNC_SUBSYSTEM_INITIALIZE
+#define USE_FUNC_SVC_IENTRY
+#define USE_FUNC_TASK_GETNAME
+#define USE_FUNC_TASK_INITIALIZE
+#define USE_FUNC_TCB_TABLE
+#define USE_FUNC_TD_ACP_QUE
+#define USE_FUNC_TD_CAL_QUE
+#define USE_FUNC_TD_FLG_QUE
+#define USE_FUNC_TD_GET_OTM
+#define USE_FUNC_TD_GET_REG
+#define USE_FUNC_TD_GET_TIM
+#define USE_FUNC_TD_HOK_DSP
+#define USE_FUNC_TD_HOK_INT
+#define USE_FUNC_TD_HOK_SVC
+#define USE_FUNC_TD_INF_TSK
+#define USE_FUNC_TD_LST_ALM
+#define USE_FUNC_TD_LST_CYC
+#define USE_FUNC_TD_LST_FLG
+#define USE_FUNC_TD_LST_MBF
+#define USE_FUNC_TD_LST_MBX
+#define USE_FUNC_TD_LST_MPF
+#define USE_FUNC_TD_LST_MPL
+#define USE_FUNC_TD_LST_MTX
+#define USE_FUNC_TD_LST_POR
+#define USE_FUNC_TD_LST_SEM
+#define USE_FUNC_TD_LST_SSY
+#define USE_FUNC_TD_LST_TSK
+#define USE_FUNC_TD_MBX_QUE
+#define USE_FUNC_TD_MPF_QUE
+#define USE_FUNC_TD_MPL_QUE
+#define USE_FUNC_TD_MTX_QUE
+#define USE_FUNC_TD_RDY_QUE
+#define USE_FUNC_TD_REF_ALM
+#define USE_FUNC_TD_REF_CYC
+#define USE_FUNC_TD_REF_DSNAME
+#define USE_FUNC_TD_REF_FLG
+#define USE_FUNC_TD_REF_MBF
+#define USE_FUNC_TD_REF_MBX
+#define USE_FUNC_TD_REF_MPF
+#define USE_FUNC_TD_REF_MPL
+#define USE_FUNC_TD_REF_MTX
+#define USE_FUNC_TD_REF_POR
+#define USE_FUNC_TD_REF_SEM
+#define USE_FUNC_TD_REF_SSY
+#define USE_FUNC_TD_REF_SYS
+#define USE_FUNC_TD_REF_TSK
+#define USE_FUNC_TD_RMBF_QUE
+#define USE_FUNC_TD_SEM_QUE
+#define USE_FUNC_TD_SET_DSNAME
+#define USE_FUNC_TD_SET_REG
+#define USE_FUNC_TD_SMBF_QUE
+#define USE_FUNC_TER_TSK
+#define USE_FUNC_TK_ACP_POR
+#define USE_FUNC_TK_CAL_POR
+#define USE_FUNC_TK_CAN_WUP
+#define USE_FUNC_TK_CHG_PRI
+#define USE_FUNC_TK_CLR_FLG
+#define USE_FUNC_TK_CLS_DEV
+#define USE_FUNC_TK_CRE_ALM
+#define USE_FUNC_TK_CRE_CYC
+#define USE_FUNC_TK_CRE_FLG
+#define USE_FUNC_TK_CRE_MBF
+#define USE_FUNC_TK_CRE_MBX
+#define USE_FUNC_TK_CRE_MPF
+#define USE_FUNC_TK_CRE_MPL
+#define USE_FUNC_TK_CRE_MTX
+#define USE_FUNC_TK_CRE_POR
+#define USE_FUNC_TK_CRE_SEM
+#define USE_FUNC_TK_CRE_TSK
+#define USE_FUNC_TK_DEF_DEV
+#define USE_FUNC_TK_DEF_INT
+#define USE_FUNC_TK_DEF_SSY
+#define USE_FUNC_TK_DEL_ALM
+#define USE_FUNC_TK_DEL_CYC
+#define USE_FUNC_TK_DEL_FLG
+#define USE_FUNC_TK_DEL_MBF
+#define USE_FUNC_TK_DEL_MBX
+#define USE_FUNC_TK_DEL_MPF
+#define USE_FUNC_TK_DEL_MPL
+#define USE_FUNC_TK_DEL_MTX
+#define USE_FUNC_TK_DEL_POR
+#define USE_FUNC_TK_DEL_SEM
+#define USE_FUNC_TK_DEL_TSK
+#define USE_FUNC_TK_DIS_DSP
+#define USE_FUNC_TK_DLY_TSK
+#define USE_FUNC_TK_ENA_DSP
+#define USE_FUNC_TK_EVT_DEV
+#define USE_FUNC_TK_EXD_TSK
+#define USE_FUNC_TK_EXT_TSK
+#define USE_FUNC_TK_FRSM_TSK
+#define USE_FUNC_TK_FWD_POR
+#define USE_FUNC_TK_GET_DEV
+#define USE_FUNC_TK_GET_MPF
+#define USE_FUNC_TK_GET_MPL
+#define USE_FUNC_TK_GET_OTM
+#define USE_FUNC_TK_GET_REG
+#define USE_FUNC_TK_GET_TID
+#define USE_FUNC_TK_GET_TIM
+#define USE_FUNC_TK_LOC_MTX
+#define USE_FUNC_TK_LST_DEV
+#define USE_FUNC_TK_OPN_DEV
+#define USE_FUNC_TK_OREF_DEV
+#define USE_FUNC_TK_RCV_MBF
+#define USE_FUNC_TK_RCV_MBX
+#define USE_FUNC_TK_REA_DEV
+#define USE_FUNC_TK_REF_ALM
+#define USE_FUNC_TK_REF_CYC
+#define USE_FUNC_TK_REF_DEV
+#define USE_FUNC_TK_REF_FLG
+#define USE_FUNC_TK_REF_IDV
+#define USE_FUNC_TK_REF_MBF
+#define USE_FUNC_TK_REF_MBX
+#define USE_FUNC_TK_REF_MPF
+#define USE_FUNC_TK_REF_MPL
+#define USE_FUNC_TK_REF_MTX
+#define USE_FUNC_TK_REF_POR
+#define USE_FUNC_TK_REF_SEM
+#define USE_FUNC_TK_REF_SSY
+#define USE_FUNC_TK_REF_SYS
+#define USE_FUNC_TK_REF_TSK
+#define USE_FUNC_TK_REF_VER
+#define USE_FUNC_TK_REL_MPF
+#define USE_FUNC_TK_REL_MPL
+#define USE_FUNC_TK_REL_WAI
+#define USE_FUNC_TK_RET_INT
+#define USE_FUNC_TK_ROT_RDQ
+#define USE_FUNC_TK_RPL_RDV
+#define USE_FUNC_TK_RSM_TSK
+#define USE_FUNC_TK_SET_FLG
+#define USE_FUNC_TK_SET_REG
+#define USE_FUNC_TK_SET_TIM
+#define USE_FUNC_TK_SIG_SEM
+#define USE_FUNC_TK_SLP_TSK
+#define USE_FUNC_TK_SND_MBF
+#define USE_FUNC_TK_SND_MBX
+#define USE_FUNC_TK_SREA_DEV
+#define USE_FUNC_TK_STA_ALM
+#define USE_FUNC_TK_STA_CYC
+#define USE_FUNC_TK_STA_TSK
+#define USE_FUNC_TK_STP_ALM
+#define USE_FUNC_TK_STP_CYC
+#define USE_FUNC_TK_SUS_DEV
+#define USE_FUNC_TK_SUS_TSK
+#define USE_FUNC_TK_SWRI_DEV
+#define USE_FUNC_TK_TER_TSK
+#define USE_FUNC_TK_UNL_MTX
+#define USE_FUNC_TK_WAI_DEV
+#define USE_FUNC_TK_WAI_FLG
+#define USE_FUNC_TK_WAI_SEM
+#define USE_FUNC_TK_WRI_DEV
+#define USE_FUNC_TK_WUP_TSK
+#define USE_FUNC_TSTDLIB_BITCLR
+#define USE_FUNC_TSTDLIB_BITSEARCH1
+#define USE_FUNC_TSTDLIB_BITSET
+#define USE_FUNC_UNLOCK
+#define USE_FUNC_WAIT_DELETE
+#define USE_FUNC_WAIT_RELEASE_NG
+#define USE_FUNC_WAIT_RELEASE_OK
+#define USE_FUNC_WAIT_RELEASE_OK_ERCD
+#define USE_FUNC_WAIT_RELEASE_TMOUT
+#define USE_FUNC_WAIT_TSKID
+#define USE_FUNC_WSPEC_CAL
+#define USE_FUNC_WSPEC_RDV
+#define USE_FUNC_WSPEC_SLP
+#define USE_HLL_INTHDR      (1)
+#define USE_HOOK_TRACE      (0)
+#define USE_IMALLOC     (1)
+#define USE_KERNEL_MESSAGE  (1)
+#define USE_NOINIT      (0)
+#define USE_OBJECT_NAME     (0)
+#define USE_SYSDEPEND_PATCH1    0
+#define USE_SYSDEPEND_PATCH2    0
+#define USE_TMONITOR 0
+#define USHRT_MAX   (65535)
+#define USR_STACK_SIZE      0
+#define VIRTUAL_ADDRESS     0
+// #define  GPIO_ADE        ((_UW*)(GPIO_BASE + 0x0500UL))
 // #define  TERM_PORT       0
-// #define CPU_CLOCK        (20000000UL)
+// #define _Csym            1
+// #define _sym _##sym
+// #define _sym sym
 // #define BAUD_RATE        (115200UL)
+// #define CPU_CLOCK        (20000000UL)
+// #define FM3_CRG_APBC0_PSR    (*(volatile UW*)(FM3_CRG_BASE + 0x14))
+// #define FM3_CRG_APBC1_PSR    (*(volatile UW*)(FM3_CRG_BASE + 0x18))
+// #define FM3_CRG_APBC2_PSR    (*(volatile UW*)(FM3_CRG_BASE + 0x1C))
+// #define FM3_CRG_BASE     0x40010000
+// #define FM3_CRG_BSC_PSR      (*(volatile UW*)(FM3_CRG_BASE + 0x10))
+// #define FM3_CRG_CSV_CTL      (*(volatile UW*)(FM3_CRG_BASE + 0x40))
+// #define FM3_CRG_CSV_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x44))
+// #define FM3_CRG_CSW_TMR      (*(volatile UW*)(FM3_CRG_BASE + 0x30))
+// #define FM3_CRG_DBWDT_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x54))
+// #define FM3_CRG_FCSWD_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x50))
+// #define FM3_CRG_FCSWH_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x48))
+// #define FM3_CRG_FCSWL_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x4C))
+// #define FM3_CRG_INT_CLR      (*(volatile UW*)(FM3_CRG_BASE + 0x68))
+// #define FM3_CRG_INT_ENR      (*(volatile UW*)(FM3_CRG_BASE + 0x60))
+// #define FM3_CRG_INT_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x64))
+// #define FM3_CRG_PLL_CTL1 (*(volatile UW*)(FM3_CRG_BASE + 0x38))
+// #define FM3_CRG_PLL_CTL2 (*(volatile UW*)(FM3_CRG_BASE + 0x3C))
+// #define FM3_CRG_PSW_TMR      (*(volatile UW*)(FM3_CRG_BASE + 0x34))
+// #define FM3_CRG_RST_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x0C))
+// #define FM3_CRG_SCM_CTL      (*(volatile UW*)(FM3_CRG_BASE + 0x00))
+// #define FM3_CRG_SCM_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x04))
+// #define FM3_CRG_STB_CTL      (*(volatile UW*)(FM3_CRG_BASE + 0x08))
+// #define FM3_CRG_SWC_PSR      (*(volatile UW*)(FM3_CRG_BASE + 0x20))
+// #define FM3_CRG_TTC_PSR      (*(volatile UW*)(FM3_CRG_BASE + 0x28))
+// #define FM3_CRTRIM_BASE      0x4002E000
+// #define FM3_CRTRIM_MCR_FTRM  (*(volatile UW*)(FM3_CRTRIM_BASE + 0x04))
+// #define FM3_CRTRIM_MCR_PSR   (*(volatile UW*)(FM3_CRTRIM_BASE + 0x00))
+// #define FM3_CRTRIM_MCR_RLR   (*(volatile UW*)(FM3_CRTRIM_BASE + 0x0C))
+// #define FM3_FLASH_IF_BASE    0x40000000
+// #define FM3_FLASH_IF_CRTRMM  (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x100))
+// #define FM3_FLASH_IF_FASZR   (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x00))
+// #define FM3_FLASH_IF_FRWTR   (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x04))
+// #define FM3_FLASH_IF_FSTR    (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x08))
+// #define FM3_FLASH_IF_FSYNDN  (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x10))
+// #define FM3_HWWDT_BASE       0x40011000
+// #define FM3_HWWDT_WDG_CTL    (*(volatile UW*)(FM3_HWWDT_BASE + 0x08))
+// #define FM3_HWWDT_WDG_ICL    (*(volatile UW*)(FM3_HWWDT_BASE + 0x0C))
+// #define FM3_HWWDT_WDG_LCK    (*(volatile UW*)(FM3_HWWDT_BASE + 0xC00))
+// #define FM3_HWWDT_WDG_LDR    (*(volatile UW*)(FM3_HWWDT_BASE + 0x00))
+// #define FM3_HWWDT_WDG_RIS    (*(volatile UW*)(FM3_HWWDT_BASE + 0x10))
+// #define FM3_HWWDT_WDG_VLR    (*(volatile UW*)(FM3_HWWDT_BASE + 0x04))
 // #define GPIO_BASE        (0x40033000UL)
+// #define GPIO_EPFR07      ((_UW*)(GPIO_BASE + 0x061cUL))
+// #define GPIO_EPFR08      ((_UW*)(GPIO_BASE + 0x0620UL))
 // #define GPIO_PFR1        ((_UW*)(GPIO_BASE + 0x0004UL))
 // #define GPIO_PFR2        ((_UW*)(GPIO_BASE + 0x0008UL))
 // #define GPIO_PFR3        ((_UW*)(GPIO_BASE + 0x000cUL))
 // #define GPIO_PFR4        ((_UW*)(GPIO_BASE + 0x0010UL))
-// #define GPIO_EPFR07      ((_UW*)(GPIO_BASE + 0x061cUL))
-// #define GPIO_EPFR08      ((_UW*)(GPIO_BASE + 0x0620UL))
-// #define  GPIO_ADE        ((_UW*)(GPIO_BASE + 0x0500UL))
+// #define UART_BASE        (0x40038000UL)
+// #define UART_BASE        (0x40038000UL)
 // #define UART_BASE        (0x40038000UL)
 // #define UART_BASE        (0x40038100UL)
 // #define UART_BASE        (0x40038200UL)
@@ -528,1027 +1533,17 @@
 // #define UART_BASE        (0x40038500UL)
 // #define UART_BASE        (0x40038600UL)
 // #define UART_BASE        (0x40038700UL)
-// #define UART_BASE        (0x40038000UL)
-// #define UART_BASE        (0x40038000UL)
-// #define UART_SMR     ((_UB*)(UART_BASE + 0x00UL))
-// #define UART_SCR     ((_UB*)(UART_BASE + 0x01UL))
-// #define UART_ESCR        ((_UB*)(UART_BASE + 0x04UL))
-// #define UART_SSR     ((_UB*)(UART_BASE + 0x05UL))
-// #define UART_DR          ((_UB*)(UART_BASE + 0x08UL))
 // #define UART_BGR     ((_UH*)(UART_BASE + 0x0cUL))
-#define __size_t    unsigned long
-#define __wchar_t   int
-#define _align64
-#define TSK_SELF    0
-#define TPRI_INI    0
-#define TPRI_RUN    0
-#define TA_ASM      0x00000000UL
-#define TA_HLNG     0x00000001UL
-#define TA_USERBUF  0x00000020UL
-#define TA_DSNAME   0x00000040UL
-#define TA_RNG0     0x00000000UL
-#define TA_RNG1     0x00000100UL
-#define TA_RNG2     0x00000200UL
-#define TA_RNG3     0x00000300UL
-#define TA_COP0     0x00001000U
-#define TA_COP1     0x00002000U
-#define TA_COP2     0x00004000U
-#define TA_COP3     0x00008000U
-#define TTS_RUN     0x00000001U
-#define TTS_RDY     0x00000002U
-#define TTS_WAI     0x00000004U
-#define TTS_SUS     0x00000008U
-#define TTS_WAS     0x0000000cU
-#define TTS_DMT     0x00000010U
-#define TTS_NODISWAI    0x00000080U
-#define TTW_SLP     0x00000001UL
-#define TTW_DLY     0x00000002UL
-#define TTW_SEM     0x00000004UL
-#define TTW_FLG     0x00000008UL
-#define TTW_MBX     0x00000040UL
-#define TTW_MTX     0x00000080UL
-#define TTW_SMBF    0x00000100UL
-#define TTW_RMBF    0x00000200UL
-#define TTW_CAL     0x00000400UL
-#define TTW_ACP     0x00000800UL
-#define TTW_RDV     0x00001000UL
-#define TTW_MPF     0x00002000UL
-#define TTW_MPL     0x00004000UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_FIRST    0x00000000UL
-#define TA_CNT      0x00000002UL
-#define TA_DSNAME   0x00000040UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_INHERIT  0x00000002UL
-#define TA_CEILING  0x00000003UL
-#define TA_DSNAME   0x00000040UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_WSGL     0x00000000UL
-#define TA_WMUL     0x00000008UL
-#define TA_DSNAME   0x00000040UL
-#define TWF_ANDW    0x00000000U
-#define TWF_ORW     0x00000001U
-#define TWF_CLR     0x00000010U
-#define TWF_BITCLR  0x00000020U
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_MFIFO    0x00000000UL
-#define TA_MPRI     0x00000002UL
-#define TA_DSNAME   0x00000040UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_USERBUF  0x00000020UL
-#define TA_DSNAME   0x00000040UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_DSNAME   0x00000040UL
-#define TA_ASM      0x00000000UL
-#define TA_HLNG     0x00000001UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_USERBUF  0x00000020UL
-#define TA_DSNAME   0x00000040UL
-#define TA_RNG0     0x00000000UL
-#define TA_RNG1     0x00000100UL
-#define TA_RNG2     0x00000200UL
-#define TA_RNG3     0x00000300UL
-#define TA_TFIFO    0x00000000UL
-#define TA_TPRI     0x00000001UL
-#define TA_USERBUF  0x00000020UL
-#define TA_DSNAME   0x00000040UL
-#define TA_RNG0     0x00000000UL
-#define TA_RNG1     0x00000100UL
-#define TA_RNG2     0x00000200UL
-#define TA_RNG3     0x00000300UL
-#define TA_ASM      0x00000000UL
-#define TA_HLNG     0x00000001UL
-#define TA_STA      0x00000002UL
-#define TA_PHS      0x00000004UL
-#define TA_DSNAME   0x00000040UL
-#define TCYC_STP    0x00U
-#define TCYC_STA    0x01U
-#define TA_ASM      0x00000000UL
-#define TA_HLNG     0x00000001UL
-#define TA_DSNAME   0x00000040UL
-#define TALM_STP    0x00U
-#define TALM_STA    0x01U
-#define TSS_TSK     0x00U
-#define TSS_DDSP    0x01U
-#define TSS_DINT    0x02U
-#define TSS_INDP    0x04U
-#define TSS_QTSK    0x08U
-#define L_DEVNM     8
-#define TD_PROTECT  0x8000U
-#define TD_REMOVABLE    0x4000U
-#define TD_DEVKIND  0x00ffU
-#define TD_DEVTYPE  0x00f0U
-#define TDK_UNDEF   0x0000U
-#define TDK_DISK    0x0010U
-#define TDK_DISK_UNDEF  0x0010U
-#define TDK_DISK_RAM    0x0011U
-#define TDK_DISK_ROM    0x0012U
-#define TDK_DISK_FLA    0x0013U
-#define TDK_DISK_FD 0x0014U
-#define TDK_DISK_HD 0x0015U
-#define TDK_DISK_CDROM  0x0016U
-#define TD_READ     0x0001U
-#define TD_WRITE    0x0002U
-#define TD_UPDATE   0x0003U
-#define TD_EXCL     0x0100U
-#define TD_WEXCL    0x0200U
-#define TD_REXCL    0x0400U
-#define TD_EJECT    0x0001U
-#define TD_SUSPEND  0x0001U
-#define TD_DISSUS   0x0002U
-#define TD_ENASUS   0x0003U
-#define TD_CHECK    0x0004U
-#define TD_FORCE    0x8000U
-#define TDN_EVENT   (-1)
-#define TDN_DISKINFO    (-2)
-#define TDN_DISPSPEC    (-3)
-#define TDN_PCMCIAINFO  (-4)
-#define TDA_OPENREQ 0x0001U
-#define TDC_READ    1
-#define TDC_WRITE   2
-#define TDV_SUSPEND (-1)
-#define TDV_RESUME  (-2)
-#define TDV_CARDEVT 1
-#define TDV_USBEVT  2
-#define PSR_N       0x80000000
-#define PSR_Z       0x40000000
-#define PSR_C       0x20000000
-#define PSR_V       0x10000000
-#define PSR_Q       0x08000000
-#define PSR_INT_MSK 0x000000FF
-#define EXP_USR     EXP_M(0)
-#define EXP_RST     EXP_M(1)
-#define EXP_NMI     EXP_M(2)
-#define EXP_HDF     EXP_M(3)
-#define EXP_MEM     EXP_M(4)
-#define EXP_BUS     EXP_M(5)
-#define EXP_USF     EXP_M(6)
-#define EXP_SVC     EXP_M(11)
-#define EXP_DBG     EXP_M(12)
-#define EXP_PSV     EXP_M(14)
-#define EXP_STK     EXP_M(15)
-#define SVC_SYSCALL     0x00
-#define SVC_EXTENDED_SVC    0x10
-#define SVC_DEBUG_SUPPORT   0xFF
-#define SCB_ICSR    0xE000ED04
-#define SCB_VTOR    0xE000ED08
-#define SCB_AIRCR   0xE000ED0C
-#define SCB_SCR     0xE000ED10
-#define SCB_CCR     0xE000ED14
-#define SCB_SHPR1   0xE000ED18
-#define SCB_SHPR2   0xE000ED1C
-#define SCB_SHPR3   0xE000ED20
-#define SCB_STIR    0xE000EF00
-#define ICSR_PENDSVSET  0x10000000
-#define ICSR_PENDSVCLR  0x08000000
-#define SYST_CSR    0xE000E010
-#define SYST_RVR    0xE000E014
-#define SYST_CVR    0xE000E018
-// #define FM3_CRG_BASE     0x40010000
-// #define FM3_CRG_SCM_CTL      (*(volatile UW*)(FM3_CRG_BASE + 0x00))
-// #define FM3_CRG_SCM_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x04))
-// #define FM3_CRG_STB_CTL      (*(volatile UW*)(FM3_CRG_BASE + 0x08))
-// #define FM3_CRG_RST_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x0C))
-// #define FM3_CRG_BSC_PSR      (*(volatile UW*)(FM3_CRG_BASE + 0x10))
-// #define FM3_CRG_APBC0_PSR    (*(volatile UW*)(FM3_CRG_BASE + 0x14))
-// #define FM3_CRG_APBC1_PSR    (*(volatile UW*)(FM3_CRG_BASE + 0x18))
-// #define FM3_CRG_APBC2_PSR    (*(volatile UW*)(FM3_CRG_BASE + 0x1C))
-// #define FM3_CRG_SWC_PSR      (*(volatile UW*)(FM3_CRG_BASE + 0x20))
-// #define FM3_CRG_TTC_PSR      (*(volatile UW*)(FM3_CRG_BASE + 0x28))
-// #define FM3_CRG_CSW_TMR      (*(volatile UW*)(FM3_CRG_BASE + 0x30))
-// #define FM3_CRG_PSW_TMR      (*(volatile UW*)(FM3_CRG_BASE + 0x34))
-// #define FM3_CRG_PLL_CTL1 (*(volatile UW*)(FM3_CRG_BASE + 0x38))
-// #define FM3_CRG_PLL_CTL2 (*(volatile UW*)(FM3_CRG_BASE + 0x3C))
-// #define FM3_CRG_CSV_CTL      (*(volatile UW*)(FM3_CRG_BASE + 0x40))
-// #define FM3_CRG_CSV_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x44))
-// #define FM3_CRG_FCSWH_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x48))
-// #define FM3_CRG_FCSWL_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x4C))
-// #define FM3_CRG_FCSWD_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x50))
-// #define FM3_CRG_DBWDT_CTL    (*(volatile UW*)(FM3_CRG_BASE + 0x54))
-// #define FM3_CRG_INT_ENR      (*(volatile UW*)(FM3_CRG_BASE + 0x60))
-// #define FM3_CRG_INT_STR      (*(volatile UW*)(FM3_CRG_BASE + 0x64))
-// #define FM3_CRG_INT_CLR      (*(volatile UW*)(FM3_CRG_BASE + 0x68))
-#define CLOCK_SETUP 1
-#define HWWD_DISABLE    1
-#define CR_TRIM_SETUP   1
-#define SCM_CTL_Val 0x00000052
-#define CSW_TMR_Val 0x0000005C
-#define PSW_TMR_Val 0x00000000
-#define PLL_CTL1_Val    0x00000001
-#define PLL_CTL2_Val    0x00000009
-#define BSC_PSR_Val 0x00000000
-#define APBC0_PSR_Val   0x00000001
-#define APBC1_PSR_Val   0x00000081
-#define APBC2_PSR_Val   0x00000081
-#define SWC_PSR_Val 0x00000003
-#define TTC_PSR_Val 0x00000000
-// #define FM3_FLASH_IF_BASE    0x40000000
-// #define FM3_FLASH_IF_FASZR   (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x00))
-// #define FM3_FLASH_IF_FRWTR   (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x04))
-// #define FM3_FLASH_IF_FSTR    (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x08))
-// #define FM3_FLASH_IF_FSYNDN  (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x10))
-// #define FM3_FLASH_IF_CRTRMM  (*(volatile UW*)(FM3_FLASH_IF_BASE + 0x100))
-// #define FM3_HWWDT_BASE       0x40011000
-// #define FM3_HWWDT_WDG_LDR    (*(volatile UW*)(FM3_HWWDT_BASE + 0x00))
-// #define FM3_HWWDT_WDG_VLR    (*(volatile UW*)(FM3_HWWDT_BASE + 0x04))
-// #define FM3_HWWDT_WDG_CTL    (*(volatile UW*)(FM3_HWWDT_BASE + 0x08))
-// #define FM3_HWWDT_WDG_ICL    (*(volatile UW*)(FM3_HWWDT_BASE + 0x0C))
-// #define FM3_HWWDT_WDG_RIS    (*(volatile UW*)(FM3_HWWDT_BASE + 0x10))
-// #define FM3_HWWDT_WDG_LCK    (*(volatile UW*)(FM3_HWWDT_BASE + 0xC00))
-// #define FM3_CRTRIM_BASE      0x4002E000
-// #define FM3_CRTRIM_MCR_PSR   (*(volatile UW*)(FM3_CRTRIM_BASE + 0x00))
-// #define FM3_CRTRIM_MCR_FTRM  (*(volatile UW*)(FM3_CRTRIM_BASE + 0x04))
-// #define FM3_CRTRIM_MCR_RLR   (*(volatile UW*)(FM3_CRTRIM_BASE + 0x0C))
-#define NVIC_ICTR   0xE000E004
-#define NVIC_ISER_BASE  0xE000E100
-#define NVIC_ICER_BASE  0xE000E180
-#define NVIC_ISPR_BASE  0xE000E200
-#define NVIC_ICPR_BASE  0xE000E280
-#define NVIC_IABR_BASE  0xE000E300
-#define NVIC_IPR_BASE   0xE000E400
-#define INTPRI_BITWIDTH     4
-#define INTNO_FORCE_DISPATCH    47
-#define NVIC_IPR_FORCE_DISPATCH NVIC_IPR(INTNO_FORCE_DISPATCH)
-#define MAX_EXTINT_PRI      0x10
-#define N_INTVEC    48
-#define INTLEVEL_DI (0)
-#define INTLEVEL_EI (255)
-#define BOOT_MESSAGE     "\n"     "micro T-Kernel Version 2.00.00\n"     "\n\0"
-#define IMPORT_DEFINE   1
-#define DDS_ENABLE      (0)
-#define DDS_DISABLE_IMPLICIT    (1)
-#define DDS_DISABLE     (2)
-#define TDFN_LST_TSK    0x8012
-#define TDFN_LST_SEM    0x8022
-#define TDFN_LST_FLG    0x8032
-#define TDFN_LST_MBX    0x8042
-#define TDFN_LST_MTX    0x8052
-#define TDFN_LST_MBF    0x8062
-#define TDFN_LST_POR    0x8072
-#define TDFN_LST_MPF    0x8082
-#define TDFN_LST_MPL    0x8092
-#define TDFN_LST_CYC    0x80a2
-#define TDFN_LST_ALM    0x80b2
-#define TDFN_LST_SSY    0x80c2
-#define TDFN_REF_SEM    0x80d2
-#define TDFN_REF_FLG    0x80e2
-#define TDFN_REF_MBX    0x80f2
-#define TDFN_REF_MTX    0x8102
-#define TDFN_REF_MBF    0x8112
-#define TDFN_REF_POR    0x8122
-#define TDFN_REF_MPF    0x8132
-#define TDFN_REF_MPL    0x8142
-#define TDFN_REF_CYC    0x8152
-#define TDFN_REF_ALM    0x8162
-#define TDFN_REF_SSY    0x8172
-#define TDFN_REF_TSK    0x8182
-#define TDFN_INF_TSK    0x8193
-#define TDFN_GET_REG    0x81a4
-#define TDFN_SET_REG    0x81b4
-#define TDFN_REF_SYS    0x81c1
-#define TDFN_GET_TIM    0x81d2
-#define TDFN_GET_OTM    0x81e2
-#define TDFN_RDY_QUE    0x81f3
-#define TDFN_SEM_QUE    0x8203
-#define TDFN_FLG_QUE    0x8213
-#define TDFN_MBX_QUE    0x8223
-#define TDFN_MTX_QUE    0x8233
-#define TDFN_SMBF_QUE   0x8243
-#define TDFN_RMBF_QUE   0x8253
-#define TDFN_CAL_QUE    0x8263
-#define TDFN_ACP_QUE    0x8273
-#define TDFN_MPF_QUE    0x8283
-#define TDFN_MPL_QUE    0x8293
-#define TDFN_HOK_SVC    0x82a1
-#define TDFN_HOK_DSP    0x82b1
-#define TDFN_HOK_INT    0x82c1
-#define TDFN_REF_DSNAME 0x82d3
-#define TDFN_SET_DSNAME 0x82e3
-#define TDFN_LST_TSK    0x80010200
-#define TDFN_LST_SEM    0x80020200
-#define TDFN_LST_FLG    0x80030200
-#define TDFN_LST_MBX    0x80040200
-#define TDFN_LST_MTX    0x80050200
-#define TDFN_LST_MBF    0x80060200
-#define TDFN_LST_POR    0x80070200
-#define TDFN_LST_MPF    0x80080200
-#define TDFN_LST_MPL    0x80090200
-#define TDFN_LST_CYC    0x800a0200
-#define TDFN_LST_ALM    0x800b0200
-#define TDFN_LST_SSY    0x800c0200
-#define TDFN_REF_SEM    0x800d0200
-#define TDFN_REF_FLG    0x800e0200
-#define TDFN_REF_MBX    0x800f0200
-#define TDFN_REF_MTX    0x80100200
-#define TDFN_REF_MBF    0x80110200
-#define TDFN_REF_POR    0x80120200
-#define TDFN_REF_MPF    0x80130200
-#define TDFN_REF_MPL    0x80140200
-#define TDFN_REF_CYC    0x80150200
-#define TDFN_REF_ALM    0x80160200
-#define TDFN_REF_SSY    0x80170200
-#define TDFN_REF_TSK    0x80180200
-#define TDFN_INF_TSK    0x80190300
-#define TDFN_GET_REG    0x801a0400
-#define TDFN_SET_REG    0x801b0400
-#define TDFN_REF_SYS    0x801c0100
-#define TDFN_GET_TIM    0x801d0200
-#define TDFN_GET_OTM    0x801e0200
-#define TDFN_RDY_QUE    0x801f0300
-#define TDFN_SEM_QUE    0x80200300
-#define TDFN_FLG_QUE    0x80210300
-#define TDFN_MBX_QUE    0x80220300
-#define TDFN_MTX_QUE    0x80230300
-#define TDFN_SMBF_QUE   0x80240300
-#define TDFN_RMBF_QUE   0x80250300
-#define TDFN_CAL_QUE    0x80260300
-#define TDFN_ACP_QUE    0x80270300
-#define TDFN_MPF_QUE    0x80280300
-#define TDFN_MPL_QUE    0x80290300
-#define TDFN_HOK_SVC    0x802a0100
-#define TDFN_HOK_DSP    0x802b0100
-#define TDFN_HOK_INT    0x802c0100
-#define TDFN_REF_DSNAME 0x802d0300
-#define TDFN_SET_DSNAME 0x802e0300
-#define td_lst_tsk_impl td_lst_tsk
-#define td_lst_sem_impl td_lst_sem
-#define td_lst_flg_impl td_lst_flg
-#define td_lst_mbx_impl td_lst_mbx
-#define td_lst_mtx_impl td_lst_mtx
-#define td_lst_mbf_impl td_lst_mbf
-#define td_lst_por_impl td_lst_por
-#define td_lst_mpf_impl td_lst_mpf
-#define td_lst_mpl_impl td_lst_mpl
-#define td_lst_cyc_impl td_lst_cyc
-#define td_lst_alm_impl td_lst_alm
-#define td_lst_ssy_impl td_lst_ssy
-#define td_ref_sem_impl td_ref_sem
-#define td_ref_flg_impl td_ref_flg
-#define td_ref_mbx_impl td_ref_mbx
-#define td_ref_mtx_impl td_ref_mtx
-#define td_ref_mbf_impl td_ref_mbf
-#define td_ref_por_impl td_ref_por
-#define td_ref_mpf_impl td_ref_mpf
-#define td_ref_mpl_impl td_ref_mpl
-#define td_ref_cyc_impl td_ref_cyc
-#define td_ref_alm_impl td_ref_alm
-#define td_ref_ssy_impl td_ref_ssy
-#define td_ref_tsk_impl td_ref_tsk
-#define td_inf_tsk_impl td_inf_tsk
-#define td_get_reg_impl td_get_reg
-#define td_set_reg_impl td_set_reg
-#define td_ref_sys_impl td_ref_sys
-#define td_get_tim_impl td_get_tim
-#define td_get_otm_impl td_get_otm
-#define td_rdy_que_impl td_rdy_que
-#define td_sem_que_impl td_sem_que
-#define td_flg_que_impl td_flg_que
-#define td_mbx_que_impl td_mbx_que
-#define td_mtx_que_impl td_mtx_que
-#define td_smbf_que_impl    td_smbf_que
-#define td_rmbf_que_impl    td_rmbf_que
-#define td_cal_que_impl td_cal_que
-#define td_acp_que_impl td_acp_que
-#define td_mpf_que_impl td_mpf_que
-#define td_mpl_que_impl td_mpl_que
-#define td_hok_svc_impl td_hok_svc
-#define td_hok_dsp_impl td_hok_dsp
-#define td_hok_int_impl td_hok_int
-#define td_ref_dsname_impl  td_ref_dsname
-#define td_set_dsname_impl  td_set_dsname
-#define N_TDFN  46
-#define ARM_INT_MASK 0xC0
-#define ARM_IRQ_BIT  0x80
-#define ARM_FIQ_BIT  0x40
-#define ARM_THM_BIT  0x20
-#define TMCLK       40
-#define TIMER_INTLEVEL      0
-#define ENAINT  Asm("ldr    r0, =0 \n" "msr    basepri, r0")
-#define DISINT  Asm("ldr    r0, =MAX_EXTINT_PRI \n" "msr    basepri, r0")
-#define MIN_TIMER_PERIOD    1
-#define MAX_TIMER_PERIOD    50
-#define TFN_CRE_TSK 0x8011
-#define TFN_DEL_TSK 0x8021
-#define TFN_STA_TSK 0x8032
-#define TFN_EXT_TSK 0x8040
-#define TFN_EXD_TSK 0x8050
-#define TFN_TER_TSK 0x8061
-#define TFN_DIS_DSP 0x8070
-#define TFN_ENA_DSP 0x8080
-#define TFN_CHG_PRI 0x8092
-#define TFN_ROT_RDQ 0x80a1
-#define TFN_REL_WAI 0x80b1
-#define TFN_GET_TID 0x80c0
-#define TFN_GET_REG 0x80d4
-#define TFN_SET_REG 0x80e4
-#define TFN_REF_TSK 0x80f2
-#define TFN_SUS_TSK 0x8101
-#define TFN_RSM_TSK 0x8111
-#define TFN_FRSM_TSK    0x8121
-#define TFN_SLP_TSK 0x8131
-#define TFN_WUP_TSK 0x8141
-#define TFN_CAN_WUP 0x8151
-#define TFN_CRE_SEM 0x8161
-#define TFN_DEL_SEM 0x8171
-#define TFN_SIG_SEM 0x8182
-#define TFN_WAI_SEM 0x8193
-#define TFN_REF_SEM 0x81a2
-#define TFN_CRE_MTX 0x81b1
-#define TFN_DEL_MTX 0x81c1
-#define TFN_LOC_MTX 0x81d2
-#define TFN_UNL_MTX 0x81e1
-#define TFN_REF_MTX 0x81f2
-#define TFN_CRE_FLG 0x8201
-#define TFN_DEL_FLG 0x8211
-#define TFN_SET_FLG 0x8222
-#define TFN_CLR_FLG 0x8232
-#define TFN_WAI_FLG 0x8245
-#define TFN_REF_FLG 0x8252
-#define TFN_CRE_MBX 0x8261
-#define TFN_DEL_MBX 0x8271
-#define TFN_SND_MBX 0x8282
-#define TFN_RCV_MBX 0x8293
-#define TFN_REF_MBX 0x82a2
-#define TFN_CRE_MBF 0x82b1
-#define TFN_DEL_MBF 0x82c1
-#define TFN_SND_MBF 0x82d4
-#define TFN_RCV_MBF 0x82e3
-#define TFN_REF_MBF 0x82f2
-#define TFN_CRE_POR 0x8301
-#define TFN_DEL_POR 0x8311
-#define TFN_CAL_POR 0x8325
-#define TFN_ACP_POR 0x8335
-#define TFN_FWD_POR 0x8345
-#define TFN_RPL_RDV 0x8353
-#define TFN_REF_POR 0x8362
-#define TFN_DEF_INT 0x8372
-#define TFN_RET_INT 0x8380
-#define TFN_CRE_MPL 0x8391
-#define TFN_DEL_MPL 0x83a1
-#define TFN_GET_MPL 0x83b4
-#define TFN_REL_MPL 0x83c2
-#define TFN_REF_MPL 0x83d2
-#define TFN_CRE_MPF 0x83e1
-#define TFN_DEL_MPF 0x83f1
-#define TFN_GET_MPF 0x8403
-#define TFN_REL_MPF 0x8412
-#define TFN_REF_MPF 0x8422
-#define TFN_SET_TIM 0x8431
-#define TFN_GET_TIM 0x8441
-#define TFN_GET_OTM 0x8451
-#define TFN_DLY_TSK 0x8461
-#define TFN_CRE_CYC 0x8471
-#define TFN_DEL_CYC 0x8481
-#define TFN_STA_CYC 0x8491
-#define TFN_STP_CYC 0x84a1
-#define TFN_REF_CYC 0x84b2
-#define TFN_CRE_ALM 0x84c1
-#define TFN_DEL_ALM 0x84d1
-#define TFN_STA_ALM 0x84e2
-#define TFN_STP_ALM 0x84f1
-#define TFN_REF_ALM 0x8502
-#define TFN_REF_VER 0x8511
-#define TFN_REF_SYS 0x8521
-#define TFN_DEF_SSY 0x8532
-#define TFN_REF_SSY 0x8542
-#define TFN_OPN_DEV 0x8552
-#define TFN_CLS_DEV 0x8562
-#define TFN_REA_DEV 0x8575
-#define TFN_SREA_DEV    0x8585
-#define TFN_WRI_DEV 0x8595
-#define TFN_SWRI_DEV    0x85a5
-#define TFN_WAI_DEV 0x85b5
-#define TFN_SUS_DEV 0x85c1
-#define TFN_GET_DEV 0x85d2
-#define TFN_REF_DEV 0x85e2
-#define TFN_OREF_DEV    0x85f2
-#define TFN_LST_DEV 0x8603
-#define TFN_EVT_DEV 0x8613
-#define TFN_DEF_DEV 0x8623
-#define TFN_REF_IDV 0x8631
-#define TFN_CRE_TSK 0x80010100
-#define TFN_DEL_TSK 0x80020100
-#define TFN_STA_TSK 0x80030200
-#define TFN_EXT_TSK 0x80040000
-#define TFN_EXD_TSK 0x80050000
-#define TFN_TER_TSK 0x80060100
-#define TFN_DIS_DSP 0x80070000
-#define TFN_ENA_DSP 0x80080000
-#define TFN_CHG_PRI 0x80090200
-#define TFN_ROT_RDQ 0x800a0100
-#define TFN_REL_WAI 0x800b0100
-#define TFN_GET_TID 0x800c0000
-#define TFN_GET_REG 0x800d0400
-#define TFN_SET_REG 0x800e0400
-#define TFN_REF_TSK 0x800f0200
-#define TFN_SUS_TSK 0x80100100
-#define TFN_RSM_TSK 0x80110100
-#define TFN_FRSM_TSK    0x80120100
-#define TFN_SLP_TSK 0x80130100
-#define TFN_WUP_TSK 0x80140100
-#define TFN_CAN_WUP 0x80150100
-#define TFN_CRE_SEM 0x80160100
-#define TFN_DEL_SEM 0x80170100
-#define TFN_SIG_SEM 0x80180200
-#define TFN_WAI_SEM 0x80190300
-#define TFN_REF_SEM 0x801a0200
-#define TFN_CRE_MTX 0x801b0100
-#define TFN_DEL_MTX 0x801c0100
-#define TFN_LOC_MTX 0x801d0200
-#define TFN_UNL_MTX 0x801e0100
-#define TFN_REF_MTX 0x801f0200
-#define TFN_CRE_FLG 0x80200100
-#define TFN_DEL_FLG 0x80210100
-#define TFN_SET_FLG 0x80220200
-#define TFN_CLR_FLG 0x80230200
-#define TFN_WAI_FLG 0x80240500
-#define TFN_REF_FLG 0x80250200
-#define TFN_CRE_MBX 0x80260100
-#define TFN_DEL_MBX 0x80270100
-#define TFN_SND_MBX 0x80280200
-#define TFN_RCV_MBX 0x80290300
-#define TFN_REF_MBX 0x802a0200
-#define TFN_CRE_MBF 0x802b0100
-#define TFN_DEL_MBF 0x802c0100
-#define TFN_SND_MBF 0x802d0400
-#define TFN_RCV_MBF 0x802e0300
-#define TFN_REF_MBF 0x802f0200
-#define TFN_CRE_POR 0x80300100
-#define TFN_DEL_POR 0x80310100
-#define TFN_CAL_POR 0x80320500
-#define TFN_ACP_POR 0x80330500
-#define TFN_FWD_POR 0x80340500
-#define TFN_RPL_RDV 0x80350300
-#define TFN_REF_POR 0x80360200
-#define TFN_DEF_INT 0x80370200
-#define TFN_RET_INT 0x80380000
-#define TFN_CRE_MPL 0x80390100
-#define TFN_DEL_MPL 0x803a0100
-#define TFN_GET_MPL 0x803b0400
-#define TFN_REL_MPL 0x803c0200
-#define TFN_REF_MPL 0x803d0200
-#define TFN_CRE_MPF 0x803e0100
-#define TFN_DEL_MPF 0x803f0100
-#define TFN_GET_MPF 0x80400300
-#define TFN_REL_MPF 0x80410200
-#define TFN_REF_MPF 0x80420200
-#define TFN_SET_TIM 0x80430100
-#define TFN_GET_TIM 0x80440100
-#define TFN_GET_OTM 0x80450100
-#define TFN_DLY_TSK 0x80460100
-#define TFN_CRE_CYC 0x80470100
-#define TFN_DEL_CYC 0x80480100
-#define TFN_STA_CYC 0x80490100
-#define TFN_STP_CYC 0x804a0100
-#define TFN_REF_CYC 0x804b0200
-#define TFN_CRE_ALM 0x804c0100
-#define TFN_DEL_ALM 0x804d0100
-#define TFN_STA_ALM 0x804e0200
-#define TFN_STP_ALM 0x804f0100
-#define TFN_REF_ALM 0x80500200
-#define TFN_REF_VER 0x80510100
-#define TFN_REF_SYS 0x80520100
-#define TFN_DEF_SSY 0x80530200
-#define TFN_REF_SSY 0x80540200
-#define TFN_OPN_DEV 0x80550200
-#define TFN_CLS_DEV 0x80560200
-#define TFN_REA_DEV 0x80570500
-#define TFN_SREA_DEV    0x80580500
-#define TFN_WRI_DEV 0x80590500
-#define TFN_SWRI_DEV    0x805a0500
-#define TFN_WAI_DEV 0x805b0500
-#define TFN_SUS_DEV 0x805c0100
-#define TFN_GET_DEV 0x805d0200
-#define TFN_REF_DEV 0x805e0200
-#define TFN_OREF_DEV    0x805f0200
-#define TFN_LST_DEV 0x80600300
-#define TFN_EVT_DEV 0x80610300
-#define TFN_DEF_DEV 0x80620300
-#define TFN_REF_IDV 0x80630100
-#define tk_cre_tsk_impl tk_cre_tsk
-#define tk_del_tsk_impl tk_del_tsk
-#define tk_sta_tsk_impl tk_sta_tsk
-#define tk_ext_tsk_impl tk_ext_tsk
-#define tk_exd_tsk_impl tk_exd_tsk
-#define tk_ter_tsk_impl tk_ter_tsk
-#define tk_dis_dsp_impl tk_dis_dsp
-#define tk_ena_dsp_impl tk_ena_dsp
-#define tk_chg_pri_impl tk_chg_pri
-#define tk_rot_rdq_impl tk_rot_rdq
-#define tk_rel_wai_impl tk_rel_wai
-#define tk_get_tid_impl tk_get_tid
-#define tk_get_reg_impl tk_get_reg
-#define tk_set_reg_impl tk_set_reg
-#define tk_ref_tsk_impl tk_ref_tsk
-#define tk_sus_tsk_impl tk_sus_tsk
-#define tk_rsm_tsk_impl tk_rsm_tsk
-#define tk_frsm_tsk_impl    tk_frsm_tsk
-#define tk_slp_tsk_impl tk_slp_tsk
-#define tk_wup_tsk_impl tk_wup_tsk
-#define tk_can_wup_impl tk_can_wup
-#define tk_cre_sem_impl tk_cre_sem
-#define tk_del_sem_impl tk_del_sem
-#define tk_sig_sem_impl tk_sig_sem
-#define tk_wai_sem_impl tk_wai_sem
-#define tk_ref_sem_impl tk_ref_sem
-#define tk_cre_mtx_impl tk_cre_mtx
-#define tk_del_mtx_impl tk_del_mtx
-#define tk_loc_mtx_impl tk_loc_mtx
-#define tk_unl_mtx_impl tk_unl_mtx
-#define tk_ref_mtx_impl tk_ref_mtx
-#define tk_cre_flg_impl tk_cre_flg
-#define tk_del_flg_impl tk_del_flg
-#define tk_set_flg_impl tk_set_flg
-#define tk_clr_flg_impl tk_clr_flg
-#define tk_wai_flg_impl tk_wai_flg
-#define tk_ref_flg_impl tk_ref_flg
-#define tk_cre_mbx_impl tk_cre_mbx
-#define tk_del_mbx_impl tk_del_mbx
-#define tk_snd_mbx_impl tk_snd_mbx
-#define tk_rcv_mbx_impl tk_rcv_mbx
-#define tk_ref_mbx_impl tk_ref_mbx
-#define tk_cre_mbf_impl tk_cre_mbf
-#define tk_del_mbf_impl tk_del_mbf
-#define tk_snd_mbf_impl tk_snd_mbf
-#define tk_rcv_mbf_impl tk_rcv_mbf
-#define tk_ref_mbf_impl tk_ref_mbf
-#define tk_cre_por_impl tk_cre_por
-#define tk_del_por_impl tk_del_por
-#define tk_cal_por_impl tk_cal_por
-#define tk_acp_por_impl tk_acp_por
-#define tk_fwd_por_impl tk_fwd_por
-#define tk_rpl_rdv_impl tk_rpl_rdv
-#define tk_ref_por_impl tk_ref_por
-#define tk_def_int_impl tk_def_int
-#define tk_ret_int_impl tk_ret_int
-#define tk_cre_mpl_impl tk_cre_mpl
-#define tk_del_mpl_impl tk_del_mpl
-#define tk_get_mpl_impl tk_get_mpl
-#define tk_rel_mpl_impl tk_rel_mpl
-#define tk_ref_mpl_impl tk_ref_mpl
-#define tk_cre_mpf_impl tk_cre_mpf
-#define tk_del_mpf_impl tk_del_mpf
-#define tk_get_mpf_impl tk_get_mpf
-#define tk_rel_mpf_impl tk_rel_mpf
-#define tk_ref_mpf_impl tk_ref_mpf
-#define tk_set_tim_impl tk_set_tim
-#define tk_get_tim_impl tk_get_tim
-#define tk_get_otm_impl tk_get_otm
-#define tk_dly_tsk_impl tk_dly_tsk
-#define tk_cre_cyc_impl tk_cre_cyc
-#define tk_del_cyc_impl tk_del_cyc
-#define tk_sta_cyc_impl tk_sta_cyc
-#define tk_stp_cyc_impl tk_stp_cyc
-#define tk_ref_cyc_impl tk_ref_cyc
-#define tk_cre_alm_impl tk_cre_alm
-#define tk_del_alm_impl tk_del_alm
-#define tk_sta_alm_impl tk_sta_alm
-#define tk_stp_alm_impl tk_stp_alm
-#define tk_ref_alm_impl tk_ref_alm
-#define tk_ref_ver_impl tk_ref_ver
-#define tk_ref_sys_impl tk_ref_sys
-#define tk_def_ssy_impl tk_def_ssy
-#define tk_ref_ssy_impl tk_ref_ssy
-#define tk_opn_dev_impl tk_opn_dev
-#define tk_cls_dev_impl tk_cls_dev
-#define tk_rea_dev_impl tk_rea_dev
-#define tk_srea_dev_impl    tk_srea_dev
-#define tk_wri_dev_impl tk_wri_dev
-#define tk_swri_dev_impl    tk_swri_dev
-#define tk_wai_dev_impl tk_wai_dev
-#define tk_sus_dev_impl tk_sus_dev
-#define tk_get_dev_impl tk_get_dev
-#define tk_ref_dev_impl tk_ref_dev
-#define tk_oref_dev_impl    tk_oref_dev
-#define tk_lst_dev_impl tk_lst_dev
-#define tk_evt_dev_impl tk_evt_dev
-#define tk_def_dev_impl tk_def_dev
-#define tk_ref_idv_impl tk_ref_idv
-#define N_TFN   99
-#define NULL        0
-#define TA_NULL     0U
-#define TMO_POL     0
-#define TMO_FEVR    (-1)
-#define OUTBUF_SZ   0
-#define MAX_DIGITS      14
-#define F_LEFT      0x01
-#define F_PLUS      0x02
-#define F_SPACE     0x04
-#define F_PREFIX    0x08
-#define F_ZERO      0x10
-#define SYSTEMAREA_TOP      0x1FFFE000
-#define SYSTEMAREA_END      0x20002000
-#define RI_USERAREA_TOP     0x1FFFE000
-#define RI_USERINIT     NULL
-#define CFN_TIMER_PERIOD    10
-#define CFN_MAX_TSKID       32
-#define CFN_MAX_SEMID       16
-#define CFN_MAX_FLGID       16
-#define CFN_MAX_MBXID       8
-#define CFN_MAX_MTXID       2
-#define CFN_MAX_MBFID       8
-#define CFN_MAX_PORID       4
-#define CFN_MAX_MPLID       2
-#define CFN_MAX_MPFID       8
-#define CFN_MAX_CYCID       4
-#define CFN_MAX_ALMID       8
-#define CFN_MAX_SSYID       4
-#define CFN_MAX_SSYPRI      16
-#define CFN_MAX_REGDEV      (8)
-#define CFN_MAX_OPNDEV      (16)
-#define CFN_MAX_REQDEV      (16)
-#define CFN_DEVT_MBFSZ0     (-1)
-#define CFN_DEVT_MBFSZ1     (-1)
-#define CFN_VER_MAKER       0x011C
-#define CFN_VER_PRID        0
-#define CFN_VER_SPVER       0x6101
-#define CFN_VER_PRVER       0x0101
-#define CFN_VER_PRNO1       0
-#define CFN_VER_PRNO2       0
-#define CFN_VER_PRNO3       0
-#define CFN_VER_PRNO4       0
-#define CFN_REALMEMEND      ((void *)0x20002000)
-#define USE_NOINIT      (0)
-#define EXC_STACK_SIZE      0x200
-#define TMP_STACK_SIZE      0x80
-#define USR_STACK_SIZE      0
-#define EXCEPTION_STACK_TOP SYSTEMAREA_END
-#define TMP_STACK_TOP       (EXCEPTION_STACK_TOP - EXC_STACK_SIZE)
-#define APPLICATION_STACK_TOP   (TMP_STACK_TOP - TMP_STACK_SIZE)
-#define USE_IMALLOC     (1)
-#define USE_HOOK_TRACE      (0)
-#define USE_CLEANUP     (1)
-#define USE_HLL_INTHDR      (1)
-#define USE_FUNC_TK_CRE_TSK
-#define USE_FUNC_TK_DEL_TSK
-#define USE_FUNC_TK_STA_TSK
-#define USE_FUNC_TK_EXT_TSK
-#define USE_FUNC_TK_EXD_TSK
-#define USE_FUNC_TK_TER_TSK
-#define USE_FUNC_TK_DIS_DSP
-#define USE_FUNC_TK_ENA_DSP
-#define USE_FUNC_TK_CHG_PRI
-#define USE_FUNC_TK_ROT_RDQ
-#define USE_FUNC_TK_REL_WAI
-#define USE_FUNC_TK_GET_TID
-#define USE_FUNC_TK_GET_REG
-#define USE_FUNC_TK_SET_REG
-#define USE_FUNC_TK_REF_TSK
-#define USE_FUNC_TK_SUS_TSK
-#define USE_FUNC_TK_RSM_TSK
-#define USE_FUNC_TK_FRSM_TSK
-#define USE_FUNC_TK_SLP_TSK
-#define USE_FUNC_TK_WUP_TSK
-#define USE_FUNC_TK_CAN_WUP
-#define USE_FUNC_TK_CRE_SEM
-#define USE_FUNC_TK_DEL_SEM
-#define USE_FUNC_TK_SIG_SEM
-#define USE_FUNC_TK_WAI_SEM
-#define USE_FUNC_TK_REF_SEM
-#define USE_FUNC_SEMAPHORE_INITIALIZE
-#define USE_FUNC_SEMCB_TABLE
-#define USE_FUNC_TD_LST_SEM
-#define USE_FUNC_TD_REF_SEM
-#define USE_FUNC_TD_SEM_QUE
-#define USE_FUNC_SEMAPHORE_GETNAME
-#define USE_FUNC_TK_CRE_MTX
-#define USE_FUNC_TK_DEL_MTX
-#define USE_FUNC_TK_LOC_MTX
-#define USE_FUNC_TK_UNL_MTX
-#define USE_FUNC_TK_REF_MTX
-#define USE_FUNC_MUTEX_INITIALIZE
-#define USE_FUNC_MTXCB_TABLE
-#define USE_FUNC_RELEASE_MUTEX
-#define USE_FUNC_SIGNAL_ALL_MUTEX
-#define USE_FUNC_CHG_PRI_MUTEX
-#define USE_FUNC_TD_LST_MTX
-#define USE_FUNC_TD_REF_MTX
-#define USE_FUNC_TD_MTX_QUE
-#define USE_FUNC_MUTEX_GETNAME
-#define USE_FUNC_TK_CRE_FLG
-#define USE_FUNC_TK_DEL_FLG
-#define USE_FUNC_TK_SET_FLG
-#define USE_FUNC_TK_CLR_FLG
-#define USE_FUNC_TK_WAI_FLG
-#define USE_FUNC_TK_REF_FLG
-#define USE_FUNC_EVENTFLAG_INITIALIZE
-#define USE_FUNC_FLGCB_TABLE
-#define USE_FUNC_TD_LST_FLG
-#define USE_FUNC_TD_REF_FLG
-#define USE_FUNC_TD_FLG_QUE
-#define USE_FUNC_EVENTFLAG_GETNAME
-#define USE_FUNC_TK_CRE_MBX
-#define USE_FUNC_TK_DEL_MBX
-#define USE_FUNC_TK_SND_MBX
-#define USE_FUNC_TK_RCV_MBX
-#define USE_FUNC_TK_REF_MBX
-#define USE_FUNC_MAILBOX_INITIALIZE
-#define USE_FUNC_MBXCB_TABLE
-#define USE_FUNC_TD_LST_MBX
-#define USE_FUNC_TD_REF_MBX
-#define USE_FUNC_TD_MBX_QUE
-#define USE_FUNC_MAILBOX_GETNAME
-#define USE_FUNC_TK_CRE_MBF
-#define USE_FUNC_TK_DEL_MBF
-#define USE_FUNC_TK_SND_MBF
-#define USE_FUNC_TK_RCV_MBF
-#define USE_FUNC_TK_REF_MBF
-#define USE_FUNC_MESSAGEBUFFER_INITIALIZE
-#define USE_FUNC_MBFCB_TABLE
-#define USE_FUNC_MSG_TO_MBF
-#define USE_FUNC_MBF_WAKEUP
-#define USE_FUNC_TD_LST_MBF
-#define USE_FUNC_TD_REF_MBF
-#define USE_FUNC_TD_SMBF_QUE
-#define USE_FUNC_TD_RMBF_QUE
-#define USE_FUNC_MESSAGEBUFFER_GETNAME
-#define USE_FUNC_TK_CRE_POR
-#define USE_FUNC_TK_DEL_POR
-#define USE_FUNC_TK_CAL_POR
-#define USE_FUNC_TK_ACP_POR
-#define USE_FUNC_TK_FWD_POR
-#define USE_FUNC_TK_RPL_RDV
-#define USE_FUNC_TK_REF_POR
-#define USE_FUNC_RENDEZVOUS_INITIALIZE
-#define USE_FUNC_PORCB_TABLE
-#define USE_FUNC_WSPEC_CAL
-#define USE_FUNC_WSPEC_RDV
-#define USE_FUNC_TD_LST_POR
-#define USE_FUNC_TD_REF_POR
-#define USE_FUNC_TD_CAL_QUE
-#define USE_FUNC_TD_ACP_QUE
-#define USE_FUNC_RENDEZVOUS_GETNAME
-#define USE_FUNC_HLL_INTHDR
-#define USE_FUNC_TK_DEF_INT
-#define USE_FUNC_TK_RET_INT
-#define USE_FUNC_TK_CRE_MPL
-#define USE_FUNC_TK_DEL_MPL
-#define USE_FUNC_TK_GET_MPL
-#define USE_FUNC_TK_REL_MPL
-#define USE_FUNC_TK_REF_MPL
-#define USE_FUNC_MEMORYPOOL_INITIALIZE
-#define USE_FUNC_MPLCB_TABLE
-#define USE_FUNC_MPL_WAKEUP
-#define USE_FUNC_TD_LST_MPL
-#define USE_FUNC_TD_REF_MPL
-#define USE_FUNC_TD_MPL_QUE
-#define USE_FUNC_MEMORYPOOL_GETNAME
-#define USE_FUNC_TK_CRE_MPF
-#define USE_FUNC_TK_DEL_MPF
-#define USE_FUNC_TK_GET_MPF
-#define USE_FUNC_TK_REL_MPF
-#define USE_FUNC_TK_REF_MPF
-#define USE_FUNC_FIX_MEMORYPOOL_INITIALIZE
-#define USE_FUNC_MPFCB_TABLE
-#define USE_FUNC_TD_LST_MPF
-#define USE_FUNC_TD_REF_MPF
-#define USE_FUNC_TD_MPF_QUE
-#define USE_FUNC_FIX_MEMORYPOOL_GETNAME
-#define USE_FUNC_TK_SET_TIM
-#define USE_FUNC_TK_GET_TIM
-#define USE_FUNC_TK_GET_OTM
-#define USE_FUNC_TK_DLY_TSK
-#define USE_FUNC_TK_CRE_CYC
-#define USE_FUNC_TK_DEL_CYC
-#define USE_FUNC_TK_STA_CYC
-#define USE_FUNC_TK_STP_CYC
-#define USE_FUNC_TK_REF_CYC
-#define USE_FUNC_CYCLICHANDLER_INITIALIZE
-#define USE_FUNC_CYCCB_TABLE
-#define USE_FUNC_CALL_CYCHDR
-#define USE_FUNC_TD_LST_CYC
-#define USE_FUNC_TD_REF_CYC
-#define USE_FUNC_CYCLICHANDLER_GETNAME
-#define USE_FUNC_TK_CRE_ALM
-#define USE_FUNC_TK_DEL_ALM
-#define USE_FUNC_TK_STA_ALM
-#define USE_FUNC_TK_STP_ALM
-#define USE_FUNC_TK_REF_ALM
-#define USE_FUNC_ALARMHANDLER_INITIALIZE
-#define USE_FUNC_ALMCB_TABLE
-#define USE_FUNC_CALL_ALMHDR
-#define USE_FUNC_TD_LST_ALM
-#define USE_FUNC_TD_REF_ALM
-#define USE_FUNC_ALARMHANDLER_GETNAME
-#define USE_FUNC_TK_REF_VER
-#define USE_FUNC_TK_REF_SYS
-#define USE_FUNC_LOWPOW_DISCNT
-#define USE_FUNC_TK_DEF_SSY
-#define USE_FUNC_TK_REF_SSY
-#define USE_FUNC_SUBSYSTEM_INITIALIZE
-#define USE_FUNC_SSYCB_TABLE
-#define USE_FUNC_SVC_IENTRY
-#define USE_FUNC_TD_LST_SSY
-#define USE_FUNC_TD_REF_SSY
-#define USE_FUNC_TK_OPN_DEV
-#define USE_FUNC_TK_CLS_DEV
-#define USE_FUNC_TK_REA_DEV
-#define USE_FUNC_TK_SREA_DEV
-#define USE_FUNC_TK_WRI_DEV
-#define USE_FUNC_TK_SWRI_DEV
-#define USE_FUNC_TK_WAI_DEV
-#define USE_FUNC_TK_SUS_DEV
-#define USE_FUNC_TK_GET_DEV
-#define USE_FUNC_TK_REF_DEV
-#define USE_FUNC_TK_OREF_DEV
-#define USE_FUNC_TK_LST_DEV
-#define USE_FUNC_TK_EVT_DEV
-#define USE_FUNC_TK_DEF_DEV
-#define USE_FUNC_TK_REF_IDV
-#define USE_FUNC_INITIALIZE_DEVMGR
-#define USE_FUNC_FINISH_DEVMGR
-#define USE_FUNC_SEARCHDEVCB
-#define USE_FUNC_GETRESCB
-#define USE_FUNC_CHECK_DEVDESC
-#define USE_FUNC_DELOPNCB
-#define USE_FUNC_DELREQCB
-#define USE_FUNC_CHKOPEN
-#define USE_FUNC_CLOSE_DEVICE
-#define USE_FUNC_DEVMGR_STARTUP
-#define USE_FUNC_DEVMGR_CLEANUP
-#define USE_FUNC_INITDEVIO
-#define USE_FUNC_FINISHDEVIO
-#define USE_FUNC_REQUEST
-#define USE_FUNC_DEVCBTBL
-#define USE_FUNC_OPNCBTBL
-#define USE_FUNC_REQCBTBL
-#define USE_FUNC_RESOURCE_CONTROL_BLOCK
-#define USE_FUNC_DISSUSCNT
-#define USE_FUNC_DEVMGRLOCK
-#define USE_FUNC_DEFAULTIDEV
-#define USE_FUNC_PHYDEVNM
-#define USE_FUNC_TD_LST_TSK
-#define USE_FUNC_TD_REF_TSK
-#define USE_FUNC_TD_INF_TSK
-#define USE_FUNC_TD_GET_REG
-#define USE_FUNC_TD_SET_REG
-#define USE_FUNC_TASK_GETNAME
-#define USE_FUNC_TD_REF_SYS
-#define USE_FUNC_TD_GET_TIM
-#define USE_FUNC_TD_GET_OTM
-#define USE_FUNC_TD_RDY_QUE
-#define USE_FUNC_TD_HOK_SVC
-#define USE_FUNC_TD_HOK_DSP
-#define USE_FUNC_TD_HOK_INT
-#define USE_FUNC_HOOK_ENTERFN
-#define USE_FUNC_HOOK_EXECFN
-#define USE_FUNC_HOOK_IENTERFN
-#define USE_FUNC_OBJECT_GETNAME
-#define USE_FUNC_TD_REF_DSNAME
-#define USE_FUNC_TD_SET_DSNAME
-#define USE_FUNC_TSTDLIB_BITCLR
-#define USE_FUNC_TSTDLIB_BITSET
-#define USE_FUNC_TSTDLIB_BITSEARCH1
-#define USE_FUNC_WSPEC_SLP
-#define USE_FUNC_CTXTSK
-#define USE_FUNC_TCB_TABLE
-#define USE_FUNC_TASK_INITIALIZE
-#define USE_FUNC_MAKE_DORMANT
-#define USE_FUNC_MAKE_READY
-#define USE_FUNC_MAKE_NON_READY
-#define USE_FUNC_CHANGE_TASK_PRIORITY
-#define USE_FUNC_ROTATE_READY_QUEUE
-#define USE_FUNC_ROTATE_READY_QUEUE_RUN
-#define USE_FUNC_DEL_TSK
-#define USE_FUNC_TER_TSK
-#define USE_FUNC_WAIT_RELEASE_OK
-#define USE_FUNC_WAIT_RELEASE_OK_ERCD
-#define USE_FUNC_WAIT_RELEASE_NG
-#define USE_FUNC_WAIT_RELEASE_TMOUT
-#define USE_FUNC_MAKE_WAIT
-#define USE_FUNC_MAKE_WAIT_RELTIM
-#define USE_FUNC_WAIT_DELETE
-#define USE_FUNC_WAIT_TSKID
-#define USE_FUNC_GCB_MAKE_WAIT
-#define USE_FUNC_GCB_CHANGE_PRIORITY
-#define USE_FUNC_GCB_TOP_OF_WAIT_QUEUE
-#define USE_FUNC_SET_REG
-#define USE_FUNC_GET_REG
-#define USE_FUNC_APPENDFREEAREABOUND
-#define USE_FUNC_GET_BLK
-#define USE_FUNC_REL_BLK
-#define USE_FUNC_SEARCHFREEAREA
-#define USE_FUNC_APPENDFREEAREA
-#define USE_FUNC_REMOVEFREEQUE
-#define USE_FUNC_INSERTAREAQUE
-#define USE_FUNC_REMOVEAREAQUE
-#define USE_FUNC_IMACB
-#define USE_FUNC_IMALLOC
-#define USE_FUNC_ICALLOC
-#define USE_FUNC_IFREE
-#define USE_FUNC_INIT_IMALLOC
-
-
-
-
-
+// #define UART_DR          ((_UB*)(UART_BASE + 0x08UL))
+// #define UART_ESCR        ((_UB*)(UART_BASE + 0x04UL))
+// #define UART_SCR     ((_UB*)(UART_BASE + 0x01UL))
+// #define UART_SMR     ((_UB*)(UART_BASE + 0x00UL))
+// #define UART_SSR     ((_UB*)(UART_BASE + 0x05UL))
+//#define   _APP_MB9AF312K_     1
+//#define ALLOCA_NOSPT      0
+//#define CPU_ARM_CORTEX_M3 1
+//#define CPU_ARMV7_M       1
+//#define CPU_MB9AF     1
 
 
 /*--------------------------------------------------------------------*/
@@ -2032,12 +2027,12 @@ typedef struct t_rtsk {
 } T_RTSK;
 
 
-typedef	struct t_csem {
-	void	*exinf;		/* Extended information */
-	ATR	sematr;		/* Semaphore attribute */
-	INT	isemcnt;	/* Semaphore initial count value */
-	INT	maxsem;		/* Semaphore maximum count value */
-	UB	dsname[OBJECT_NAME_LENGTH];	/* Object name */
+typedef struct t_csem {
+    void    *exinf;     /* Extended information */
+    ATR sematr;     /* Semaphore attribute */
+    INT isemcnt;    /* Semaphore initial count value */
+    INT maxsem;     /* Semaphore maximum count value */
+    UB  dsname[OBJECT_NAME_LENGTH]; /* Object name */
 } T_CSEM;
 
 typedef struct t_rsem {
@@ -2781,249 +2776,248 @@ QUEUE knl_free_almcb;    /* FreeQue */
 
 void* gp;
 
-FP	knl_intvec[];
+FP  knl_intvec[];
 
 /*--------------------------------------------------------------------*/
 /*  Macro definition                                                  */
 /*--------------------------------------------------------------------*/
-#define _BIT_SET_N(n) ( (UB)0x80 >> ((n) & 7) )
-#define _BIT_SHIFT(n) ( (UB)n >> 1 )
-#define _BIT_SET_N(n) ( (UB)0x01 << ((n) & 7) )
-#define _BIT_SHIFT(n) ( (UB)n << 1 )
-#define CHECK_TSKID(tskid) { if (!in_indp() && ((tskid) == TSK_SELF)) { return E_OBJ; } else if (!CHK_TSKID(tskid)) { return E_ID; } }
-#define CHECK_TSKID_SELF(tskid) { if ( !( (!in_indp() && (tskid) == TSK_SELF) || CHK_TSKID(tskid) ) ) { return E_ID; } }
-#define CHECK_SEMID(semid) { if (!CHK_SEMID(semid)) { return E_ID; } }
-#define CHECK_FLGID(flgid) { if (!CHK_FLGID(flgid)) { return E_ID; } }
-#define CHECK_MBXID(mbxid) { if (!CHK_MBXID(mbxid)) { return E_ID; } }
-#define CHECK_MBFID(mbfid) { if (!CHK_MBFID(mbfid)) { return E_ID; } }
-#define CHECK_PORID(porid) { if (!CHK_PORID(porid)) { return E_ID; } }
-#define CHECK_MTXID(pisid) { if (!CHK_MTXID(pisid)) { return E_ID; } }
-#define CHECK_MPLID(mplid) { if (!CHK_MPLID(mplid)) { return E_ID; } }
-#define CHECK_MPFID(mpfid) { if (!CHK_MPFID(mpfid)) { return E_ID; } }
-#define CHECK_CYCID(cycid) { if (!CHK_CYCID(cycid)) { return E_ID; } }
-#define CHECK_ALMID(almid) { if (!CHK_ALMID(almid)) { return E_ID; } }
-#define CHECK_SSYID(ssid) { if (!CHK_SSYID(ssid)) { return E_ID; } }
-#define CHECK_SSYID_ALL(ssid) { if (!(CHK_SSYID(ssid) || (ssid) == 0)) { return E_ID; } }
-#define CHECK_TSKID(tskid)
-#define CHECK_TSKID_SELF(tskid)
-#define CHECK_SEMID(semid)
-#define CHECK_FLGID(flgid)
-#define CHECK_MBXID(mbxid)
-#define CHECK_MBFID(mbfid)
-#define CHECK_PORID(porid)
-#define CHECK_MTXID(pisid)
-#define CHECK_MPLID(mplid)
-#define CHECK_MPFID(mpfid)
-#define CHECK_CYCID(cycid)
-#define CHECK_ALMID(almid)
-#define CHECK_SSYID(ssid)
-#define CHECK_SSYID_ALL(ssid)
-#define CHECK_NONSELF(tskid) { if (!in_indp() && (tskid) == knl_ctxtsk->tskid) { return E_OBJ; } }
-#define CHECK_NONSELF(tskid)
-#define CHECK_PRI(pri) { if (!CHK_PRI(pri)) { return E_PAR; } }
-#define CHECK_PRI_INI(pri) { if ((pri) != TPRI_INI && !CHK_PRI(pri)) { return E_PAR; } }
-#define CHECK_PRI_RUN(pri) { if ((pri) != TPRI_RUN && !CHK_PRI(pri)) { return E_PAR; } }
-#define CHECK_PRI(pri)
-#define CHECK_PRI_INI(pri)
-#define CHECK_PRI_RUN(pri)
-#define CHECK_SSYPRI(ssypri) { if (!CHK_SSYPRI(ssypri)) { return E_PAR; } }
-#define CHECK_SSYPRI(ssypri)
-#define CHECK_TMOUT(tmout) { if (!((tmout) >= TMO_FEVR)) { return E_PAR; } }
-#define CHECK_TMOUT(tmout)
-#define CHECK_PAR(exp) { if (!(exp)) { return E_PAR; } }
-#define CHECK_PAR(exp)
-#define CHECK_RSATR(atr, maxatr) { if ((atr) & ~(maxatr)) { return E_RSATR; } }
-#define CHECK_RSATR(atr, maxatr)
-#define CHECK_NOSPT(exp) { if (!(exp)) { return E_NOSPT; } }
-#define CHECK_NOSPT(exp)
-#define CHECK_INTSK() { if (in_indp()) { return E_CTX; } }
-#define CHECK_INTSK()
-#define CHECK_DISPATCH() { if (in_ddsp()) { return E_CTX; } }
-#define CHECK_DISPATCH_POL(tmout) { if ((tmout) != TMO_POL && in_ddsp()) { return E_CTX; } }
-#define CHECK_DISPATCH()
-#define CHECK_DISPATCH_POL(tmout)
-#define CHECK_CTX(exp) { if (!(exp)) { return E_CTX; } }
-#define CHECK_CTX(exp)
-#define CHK_TSKID(id)   ((MIN_TSKID) <= (id) && (id) <= (MAX_TSKID))
-#define INDEX_TSK(id)   ((id)-(MIN_TSKID))
-#define ID_TSK(index)   ((index)+(MIN_TSKID))
-#define CHK_SEMID(id)   ((MIN_SEMID) <= (id) && (id) <= (MAX_SEMID))
-#define INDEX_SEM(id)   ((id)-(MIN_SEMID))
-#define ID_SEM(index)   ((index)+(MIN_SEMID))
-#define CHK_FLGID(id)   ((MIN_FLGID) <= (id) && (id) <= (MAX_FLGID))
-#define INDEX_FLG(id)   ((id)-(MIN_FLGID))
-#define ID_FLG(index)   ((index)+(MIN_FLGID))
-#define CHK_MBXID(id)   ((MIN_MBXID) <= (id) && (id) <= (MAX_MBXID))
-#define INDEX_MBX(id)   ((id)-(MIN_MBXID))
-#define ID_MBX(index)   ((index)+(MIN_MBXID))
-#define CHK_MTXID(id)   ((MIN_MTXID) <= (id) && (id) <= (MAX_MTXID))
-#define INDEX_MTX(id)   ((id)-(MIN_MTXID))
-#define ID_MTX(index)   ((index)+(MIN_MTXID))
-#define CHK_MBFID(id)   ((MIN_MBFID) <= (id) && (id) <= (MAX_MBFID))
-#define INDEX_MBF(id)   ((id)-(MIN_MBFID))
-#define ID_MBF(index)   ((index)+(MIN_MBFID))
-#define CHK_PORID(id)   ((MIN_PORID) <= (id) && (id) <= (MAX_PORID))
-#define INDEX_POR(id)   ((id)-(MIN_PORID))
-#define ID_POR(index)   ((index)+(MIN_PORID))
-#define CHK_MPLID(id)   ((MIN_MPLID) <= (id) && (id) <= (MAX_MPLID))
-#define INDEX_MPL(id)   ((id)-(MIN_MPLID))
-#define ID_MPL(index)   ((index)+(MIN_MPLID))
-#define CHK_MPFID(id)   ((MIN_MPFID) <= (id) && (id) <= (MAX_MPFID))
-#define INDEX_MPF(id)   ((id)-(MIN_MPFID))
-#define ID_MPF(index)   ((index)+(MIN_MPFID))
-#define CHK_CYCID(id)   ((MIN_CYCID) <= (id) && (id) <= (MAX_CYCID))
-#define INDEX_CYC(id)   ((id)-(MIN_CYCID))
-#define ID_CYC(index)   ((index)+(MIN_CYCID))
-#define CHK_ALMID(id)   ((MIN_ALMID) <= (id) && (id) <= (MAX_ALMID))
-#define INDEX_ALM(id)   ((id)-(MIN_ALMID))
-#define ID_ALM(index)   ((index)+(MIN_ALMID))
-#define CHK_SSYID(id)   ((MIN_SSYID) <= (id) && (id) <= (MAX_SSYID))
-#define INDEX_SSY(id)   ((id)-(MIN_SSYID))
-#define ID_SSY(index)   ((index)+(MIN_SSYID))
-#define CHK_PRI(pri)    ((MIN_PRI) <= (pri) && (pri) <= (MAX_PRI))
-#define CHK_SSYPRI(pri) ((MIN_SSYPRI) <= (pri) && (pri) <= (MAX_SSYPRI))
-#define BEGIN_CRITICAL_SECTION  { UINT _basepri_ = disint();
-#define END_CRITICAL_SECTION    if ( !isDI(_basepri_) && knl_ctxtsk != knl_schedtsk && !knl_dispatch_disabled ) { knl_dispatch(); } enaint(_basepri_); }
-#define BEGIN_DISABLE_INTERRUPT { UINT _basepri_ = disint();
-#define END_DISABLE_INTERRUPT   enaint(_basepri_); }
-#define ENABLE_INTERRUPT    { enaint(0); }
-#define DISABLE_INTERRUPT   { disint(); }
-#define ENABLE_INTERRUPT_UPTO(level)    { enaint(0); }
-#define ENTER_TASK_INDEPENDENT  { knl_EnterTaskIndependent(); }
-#define LEAVE_TASK_INDEPENDENT  { knl_LeaveTaskIndependent(); }
-#define in_indp()   ( knl_isTaskIndependent() || knl_ctxtsk == NULL )
-#define in_ddsp()   ( knl_dispatch_disabled || in_indp() || isDI(knl_getBASEPRI()) )
-#define in_loc()    ( isDI(knl_getBASEPRI()) || in_indp() )
-#define in_qtsk()   ( knl_ctxtsk->sysmode > knl_ctxtsk->isysmode )
-#define knl_dispatch_request()
-#define DEBUG_PRINT(arg)
-#define DO_DEBUG(exp)   { exp }
-#define DEBUG_PRINT(arg)
-#define DO_DEBUG(exp)
-#define DD(opncb)       ( (opncb) - knl_OpnCBtbl + 1 )
-#define OPNCB(dd)       ( knl_OpnCBtbl + ((dd) - 1) )
-#define REQID(reqcb)        ( (reqcb) - knl_ReqCBtbl + 1 )
-#define REQCB(reqid)        ( knl_ReqCBtbl + ((reqid) - 1) )
-#define DEVREQ_REQCB(devreq)    ((ReqCB*)((B*)(devreq) - offsetof(ReqCB, req)))
-#define MERCD(er)   ( (ER)(er) >> 16 )
-#define SERCD(er)   ( (H)(er) )
-#define ERCD(mer, ser)  ( (ER)(((UW)(mer) << 16) | ((UW)(ser) & 0x0000FFFF)) )
-#define ERCD(mer, ser)  ( ((mer) << 16) | ((ser) & 0xffff) )
-#define get_flgcb(id)   ( &knl_flgcb_table[INDEX_FLG(id)] )
-#define P0(void)        ( int _1,int _2,int _3,int _4,int _5, void *gp )
-#define P1(p1)          ( p1,    int _2,int _3,int _4,int _5, void *gp )
-#define P2(p1, p2)      ( p1, p2,       int _3,int _4,int _5, void *gp )
-#define P3(p1, p2, p3)      ( p1, p2, p3,          int _4,int _5, void *gp )
-#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4,             int _5, void *gp )
-#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5,                 void *gp )
-#define P2GP(p1, p2)        ( p1, p2,                 void *gp )
-#define P0(void)        ( void )
-#define P1(p1)          ( p1 )
-#define P2(p1, p2)      ( p1, p2 )
-#define P3(p1, p2, p3)      ( p1, p2, p3 )
-#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4 )
-#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5 )
-#define P2GP(p1, p2)        ( p1, p2 )
-#define ltoll(a)    ( (longlong)(a) )
-#define ultoll(a)   ( (longlong)(a) )
-#define uitoll(a)   ( (longlong)(a) )
-#define lltol(a)    ( (long)(a) )
-#define lltoul(a)   ( (unsigned long)(a) )
-#define ll_add(a,b) ( (a) + (b) )
-#define ll_sub(a,b) ( (a) - (b) )
-#define ll_mul(a,b) ( (a) * (b) )
-#define li_mul(a,b) ( (a) * (b) )
-#define lui_mul(a,b)    ( (a) * (b) )
-#define ll_div(a,b) ( (a) / (b) )
-#define li_div(a,b) ( (a) / (b) )
-#define lui_div(a,b)    ( (a) / (b) )
-#define ll_mod(a,b) ( (a) % (b) )
-#define li_mod(a,b) ( (a) % (b) )
-#define lui_mod(a,b)    ( (a) % (b) )
-#define ll_cmp(a,b) ( (a) - (b) )
-#define ll_sign(a)  ( (a) )
-#define ll_neg(a)   ( -(a) )
-#define ll_inc(a)   ( (*(a))++ )
-#define ll_dec(a)   ( (*(a))-- )
-#define hilo_ll(ll, h, l)   ( (ll) = ((longlong)(h) << 32) | (l) )
-#define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), (l) = (unsigned long)(ll) )
-#define hilo_ll(ll, h, l)   ( (ll).hi = (h), (ll).lo = (l) )
-#define ll_hilo(h, l, ll)   ( (h) = (ll).hi, (l) = (ll).lo )
-#define get_mbxcb(id)   ( &knl_mbxcb_table[INDEX_MBX(id)] )
-#define headmsg(mbxcb)  ( (mbxcb)->mq_head.msgque[0] )
-#define nextmsg(msg)    ( ((T_MSG*)(msg))->msgque[0] )
-#define AlignIMACB(imacb)   ( (IMACB*)((UW)(imacb) & ~0x00000001UL) )
-#define ROUND(sz)   ( ((UW)(sz) + (UW)(ROUNDSZ-1)) & ~(UW)(ROUNDSZ-1) )
-#define setAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev |  (UW)(f)) )
-#define clrAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev & ~(UW)(f)) )
-#define chkAreaFlag(q, f)   ( ((UW)(q)->prev & (UW)(f)) != 0 )
-#define Mask(x)     ( (QUEUE*)((UW)(x) & ~AREA_MASK) )
-#define Assign(x, y)    ( (x) = (QUEUE*)(((UW)(x) & AREA_MASK) | (UW)(y)) )
-#define AreaSize(aq)    ( (VB*)(aq)->next - (VB*)((aq) + 1) )
-#define FreeSize(fq)    ( (W)((fq) + 1)->prev )
-#define get_mpfcb(id)   ( &knl_mpfcb_table[INDEX_MPF(id)] )
-#define MINSZ(sz)   ( ((UW)(sz) + (UW)(MINSIZE-1)) & ~(UW)(MINSIZE-1) )
-#define get_mplcb(id)   ( &knl_mplcb_table[INDEX_MPL(id)] )
-#define get_mbfcb(id)   ( &knl_mbfcb_table[INDEX_MBF(id)] )
-#define ROUNDSZ(sz) (((UW)(sz) + (UW)(ROUNDSIZE-1)) & ~(UW)(ROUNDSIZE-1))
-#define get_mtxcb(id)   ( &knl_mtxcb_table[INDEX_MTX(id)] )
-#define mtx_waited(mtxcb)   ( !isQueEmpty(&(mtxcb)->wait_queue) )
-#define mtx_head_pri(mtxcb) ( ((TCB*)(mtxcb)->wait_queue.next)->priority )
-#define reset_priority(tcb) knl_release_mutex((tcb), NULL)
-#define _ALIGN_CPU(x)   (((x)+3)&0xFFFFFFFC)
 #define _ALIGN_64(x)    (((x)+7)&0xFFFFFFF8)
-#define get_porcb(id)   ( &knl_porcb_table[INDEX_POR(id)] )
-#define CHECK_RDVNO(rdvno) { if ( !CHK_TSKID(knl_get_tskid_rdvno(rdvno)) ) { return E_OBJ; } }
-#define get_semcb(id)   ( &knl_semcb_table[INDEX_SEM(id)] )
-#define get_ssycb(id)   ( &knl_ssycb_table[INDEX_SSY(id)] )
-#define EXP_M(n)    (n)
-#define EXP_EXT(n)  (EXP_M(16) + n)
-#define NVIC_ISER(x)    (NVIC_ISER_BASE + (((x) / 32) << 2))
-#define NVIC_ICER(x)    (NVIC_ICER_BASE + (((x) / 32) << 2))
-#define NVIC_ISPR(x)    (NVIC_ISPR_BASE + (((x) / 32) << 2))
-#define NVIC_ICPR(x)    (NVIC_ICPR_BASE + (((x) / 32) << 2))
-#define NVIC_IABR(x)    (NVIC_IABR_BASE + (((x) / 32) << 2))
-#define NVIC_IPR(x) (NVIC_IPR_BASE  + (x))
-#define DI(intsts)  ( (intsts) = disint() )
-#define EI(intsts)  ( enaint(intsts) )
-#define isDI(intsts)    ( (intsts) != 0 )
-#define DINTNO(intvec)  (intvec)
-#define INTPRI_GROUP(pri, subpri)   (((pri) << (8-INTPRI_BITWIDTH)) | (subpri))
-#define ClearInt(intno) ClearPendingInt(intno)
-#define EndOfInt(intno)
-#define LockDM()    MLock(&knl_DevMgrLock, 0)
-#define UnlockDM()  MUnlock(&knl_DevMgrLock, 0)
-#define LockREG()   MLock(&knl_DevMgrLock, 1)
-#define UnlockREG() MUnlock(&knl_DevMgrLock, 1)
-#define DID(devcb)      ( ((devcb) - knl_DevCBtbl + 1) << 8 )
-#define DEVID(devcb, unitno)    ( DID(devcb) + (unitno) )
-#define DEVCB(devid)        ( knl_DevCBtbl + (((devid) >> 8) - 1) )
-#define UNITNO(devid)       ( (devid) & 0xff )
-#define RESQ_OPNCB(rq)      ( (OpnCB*)((B*)(rq) - offsetof(OpnCB, resq)) )
-#define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4),                             (FP)(drv), (gp))
-#define int_priority(x)     ( (INT)((x) - MIN_PRI) )
-#define ext_tskpri(x)       ( (PRI)((x) + MIN_PRI) )
-#define get_tcb(id)     ( &knl_tcb_table[INDEX_TSK(id)] )
-#define get_tcb_self(id)    ( ( (id) == TSK_SELF )? knl_ctxtsk: get_tcb(id) )
-#define _TDSC_ENTRY(name)   .long   _name##_impl
-#define real_time() ( ll_add(knl_current_time, knl_real_time_ofs) )
-#define get_cyccb(id)   ( &knl_cyccb_table[INDEX_CYC(id)] )
-#define get_almcb(id)   ( &knl_almcb_table[INDEX_ALM(id)] )
-#define InitModule(name)    knl_init_module( knl_##name##_initialize, (UB*)#name )
+#define _ALIGN_CPU(x)   (((x)+3)&0xFFFFFFFC)
+#define _BIT_SET_N(n) ( (UB)0x01 << ((n) & 7) )
+#define _BIT_SET_N(n) ( (UB)0x80 >> ((n) & 7) )
+#define _BIT_SHIFT(n) ( (UB)n << 1 )
+#define _BIT_SHIFT(n) ( (UB)n >> 1 )
 #define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
-#define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
-#define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
-#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
-#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
-#define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
-#define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
-#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
-#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+#define _pad_b(n)
 #define _pad_b(n) int :n;
 #define _pad_l(n)
-#define _pad_b(n)
 #define _pad_l(n) int :n;
-
+#define _TDSC_ENTRY(name)   .long   _name##_impl
+#define AlignIMACB(imacb)   ( (IMACB*)((UW)(imacb) & ~0x00000001UL) )
+#define AreaSize(aq)    ( (VB*)(aq)->next - (VB*)((aq) + 1) )
+#define Assign(x, y)    ( (x) = (QUEUE*)(((UW)(x) & AREA_MASK) | (UW)(y)) )
+#define BEGIN_CRITICAL_SECTION  { UINT _basepri_ = disint();
+#define BEGIN_DISABLE_INTERRUPT { UINT _basepri_ = disint();
+#define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4),                             (FP)(drv), (gp))
+#define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
+#define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
+#define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+#define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
+#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
+#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
+#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
+#define CHECK_ALMID(almid)
+#define CHECK_ALMID(almid) { if (!CHK_ALMID(almid)) { return E_ID; } }
+#define CHECK_CTX(exp)
+#define CHECK_CTX(exp) { if (!(exp)) { return E_CTX; } }
+#define CHECK_CYCID(cycid)
+#define CHECK_CYCID(cycid) { if (!CHK_CYCID(cycid)) { return E_ID; } }
+#define CHECK_DISPATCH()
+#define CHECK_DISPATCH() { if (in_ddsp()) { return E_CTX; } }
+#define CHECK_DISPATCH_POL(tmout)
+#define CHECK_DISPATCH_POL(tmout) { if ((tmout) != TMO_POL && in_ddsp()) { return E_CTX; } }
+#define CHECK_FLGID(flgid)
+#define CHECK_FLGID(flgid) { if (!CHK_FLGID(flgid)) { return E_ID; } }
+#define CHECK_INTSK()
+#define CHECK_INTSK() { if (in_indp()) { return E_CTX; } }
+#define CHECK_MBFID(mbfid)
+#define CHECK_MBFID(mbfid) { if (!CHK_MBFID(mbfid)) { return E_ID; } }
+#define CHECK_MBXID(mbxid)
+#define CHECK_MBXID(mbxid) { if (!CHK_MBXID(mbxid)) { return E_ID; } }
+#define CHECK_MPFID(mpfid)
+#define CHECK_MPFID(mpfid) { if (!CHK_MPFID(mpfid)) { return E_ID; } }
+#define CHECK_MPLID(mplid)
+#define CHECK_MPLID(mplid) { if (!CHK_MPLID(mplid)) { return E_ID; } }
+#define CHECK_MTXID(pisid)
+#define CHECK_MTXID(pisid) { if (!CHK_MTXID(pisid)) { return E_ID; } }
+#define CHECK_NONSELF(tskid)
+#define CHECK_NONSELF(tskid) { if (!in_indp() && (tskid) == knl_ctxtsk->tskid) { return E_OBJ; } }
+#define CHECK_NOSPT(exp)
+#define CHECK_NOSPT(exp) { if (!(exp)) { return E_NOSPT; } }
+#define CHECK_PAR(exp)
+#define CHECK_PAR(exp) { if (!(exp)) { return E_PAR; } }
+#define CHECK_PORID(porid)
+#define CHECK_PORID(porid) { if (!CHK_PORID(porid)) { return E_ID; } }
+#define CHECK_PRI(pri)
+#define CHECK_PRI(pri) { if (!CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI_INI(pri)
+#define CHECK_PRI_INI(pri) { if ((pri) != TPRI_INI && !CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI_RUN(pri)
+#define CHECK_PRI_RUN(pri) { if ((pri) != TPRI_RUN && !CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_RDVNO(rdvno) { if ( !CHK_TSKID(knl_get_tskid_rdvno(rdvno)) ) { return E_OBJ; } }
+#define CHECK_RSATR(atr, maxatr)
+#define CHECK_RSATR(atr, maxatr) { if ((atr) & ~(maxatr)) { return E_RSATR; } }
+#define CHECK_SEMID(semid)
+#define CHECK_SEMID(semid) { if (!CHK_SEMID(semid)) { return E_ID; } }
+#define CHECK_SSYID(ssid)
+#define CHECK_SSYID(ssid) { if (!CHK_SSYID(ssid)) { return E_ID; } }
+#define CHECK_SSYID_ALL(ssid)
+#define CHECK_SSYID_ALL(ssid) { if (!(CHK_SSYID(ssid) || (ssid) == 0)) { return E_ID; } }
+#define CHECK_SSYPRI(ssypri)
+#define CHECK_SSYPRI(ssypri) { if (!CHK_SSYPRI(ssypri)) { return E_PAR; } }
+#define CHECK_TMOUT(tmout)
+#define CHECK_TMOUT(tmout) { if (!((tmout) >= TMO_FEVR)) { return E_PAR; } }
+#define CHECK_TSKID(tskid)
+#define CHECK_TSKID(tskid) { if (!in_indp() && ((tskid) == TSK_SELF)) { return E_OBJ; } else if (!CHK_TSKID(tskid)) { return E_ID; } }
+#define CHECK_TSKID_SELF(tskid)
+#define CHECK_TSKID_SELF(tskid) { if ( !( (!in_indp() && (tskid) == TSK_SELF) || CHK_TSKID(tskid) ) ) { return E_ID; } }
+#define CHK_ALMID(id)   ((MIN_ALMID) <= (id) && (id) <= (MAX_ALMID))
+#define CHK_CYCID(id)   ((MIN_CYCID) <= (id) && (id) <= (MAX_CYCID))
+#define CHK_FLGID(id)   ((MIN_FLGID) <= (id) && (id) <= (MAX_FLGID))
+#define CHK_MBFID(id)   ((MIN_MBFID) <= (id) && (id) <= (MAX_MBFID))
+#define CHK_MBXID(id)   ((MIN_MBXID) <= (id) && (id) <= (MAX_MBXID))
+#define CHK_MPFID(id)   ((MIN_MPFID) <= (id) && (id) <= (MAX_MPFID))
+#define CHK_MPLID(id)   ((MIN_MPLID) <= (id) && (id) <= (MAX_MPLID))
+#define CHK_MTXID(id)   ((MIN_MTXID) <= (id) && (id) <= (MAX_MTXID))
+#define CHK_PORID(id)   ((MIN_PORID) <= (id) && (id) <= (MAX_PORID))
+#define CHK_PRI(pri)    ((MIN_PRI) <= (pri) && (pri) <= (MAX_PRI))
+#define CHK_SEMID(id)   ((MIN_SEMID) <= (id) && (id) <= (MAX_SEMID))
+#define CHK_SSYID(id)   ((MIN_SSYID) <= (id) && (id) <= (MAX_SSYID))
+#define CHK_SSYPRI(pri) ((MIN_SSYPRI) <= (pri) && (pri) <= (MAX_SSYPRI))
+#define CHK_TSKID(id)   ((MIN_TSKID) <= (id) && (id) <= (MAX_TSKID))
+#define chkAreaFlag(q, f)   ( ((UW)(q)->prev & (UW)(f)) != 0 )
+#define ClearInt(intno) ClearPendingInt(intno)
+#define clrAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev & ~(UW)(f)) )
+#define DD(opncb)       ( (opncb) - knl_OpnCBtbl + 1 )
+#define DEBUG_PRINT(arg)
+#define DEBUG_PRINT(arg)
+#define DEVCB(devid)        ( knl_DevCBtbl + (((devid) >> 8) - 1) )
+#define DEVID(devcb, unitno)    ( DID(devcb) + (unitno) )
+#define DEVREQ_REQCB(devreq)    ((ReqCB*)((B*)(devreq) - offsetof(ReqCB, req)))
+#define DI(intsts)  ( (intsts) = disint() )
+#define DID(devcb)      ( ((devcb) - knl_DevCBtbl + 1) << 8 )
+#define DINTNO(intvec)  (intvec)
+#define DISABLE_INTERRUPT   { disint(); }
+#define DO_DEBUG(exp)
+#define DO_DEBUG(exp)   { exp }
+#define EI(intsts)  ( enaint(intsts) )
+#define ENABLE_INTERRUPT    { enaint(0); }
+#define ENABLE_INTERRUPT_UPTO(level)    { enaint(0); }
+#define END_CRITICAL_SECTION    if ( !isDI(_basepri_) && knl_ctxtsk != knl_schedtsk && !knl_dispatch_disabled ) { knl_dispatch(); } enaint(_basepri_); }
+#define END_DISABLE_INTERRUPT   enaint(_basepri_); }
+#define EndOfInt(intno)
+#define ENTER_TASK_INDEPENDENT  { knl_EnterTaskIndependent(); }
+#define ERCD(mer, ser)  ( ((mer) << 16) | ((ser) & 0xffff) )
+#define ERCD(mer, ser)  ( (ER)(((UW)(mer) << 16) | ((UW)(ser) & 0x0000FFFF)) )
+#define EXP_EXT(n)  (EXP_M(16) + n)
+#define EXP_M(n)    (n)
+#define ext_tskpri(x)       ( (PRI)((x) + MIN_PRI) )
+#define FreeSize(fq)    ( (W)((fq) + 1)->prev )
+#define get_almcb(id)   ( &knl_almcb_table[INDEX_ALM(id)] )
+#define get_cyccb(id)   ( &knl_cyccb_table[INDEX_CYC(id)] )
+#define get_flgcb(id)   ( &knl_flgcb_table[INDEX_FLG(id)] )
+#define get_mbfcb(id)   ( &knl_mbfcb_table[INDEX_MBF(id)] )
+#define get_mbxcb(id)   ( &knl_mbxcb_table[INDEX_MBX(id)] )
+#define get_mpfcb(id)   ( &knl_mpfcb_table[INDEX_MPF(id)] )
+#define get_mplcb(id)   ( &knl_mplcb_table[INDEX_MPL(id)] )
+#define get_mtxcb(id)   ( &knl_mtxcb_table[INDEX_MTX(id)] )
+#define get_porcb(id)   ( &knl_porcb_table[INDEX_POR(id)] )
+#define get_semcb(id)   ( &knl_semcb_table[INDEX_SEM(id)] )
+#define get_ssycb(id)   ( &knl_ssycb_table[INDEX_SSY(id)] )
+#define get_tcb(id)     ( &knl_tcb_table[INDEX_TSK(id)] )
+#define get_tcb_self(id)    ( ( (id) == TSK_SELF )? knl_ctxtsk: get_tcb(id) )
+#define headmsg(mbxcb)  ( (mbxcb)->mq_head.msgque[0] )
+#define hilo_ll(ll, h, l)   ( (ll) = ((longlong)(h) << 32) | (l) )
+#define hilo_ll(ll, h, l)   ( (ll).hi = (h), (ll).lo = (l) )
+#define ID_ALM(index)   ((index)+(MIN_ALMID))
+#define ID_CYC(index)   ((index)+(MIN_CYCID))
+#define ID_FLG(index)   ((index)+(MIN_FLGID))
+#define ID_MBF(index)   ((index)+(MIN_MBFID))
+#define ID_MBX(index)   ((index)+(MIN_MBXID))
+#define ID_MPF(index)   ((index)+(MIN_MPFID))
+#define ID_MPL(index)   ((index)+(MIN_MPLID))
+#define ID_MTX(index)   ((index)+(MIN_MTXID))
+#define ID_POR(index)   ((index)+(MIN_PORID))
+#define ID_SEM(index)   ((index)+(MIN_SEMID))
+#define ID_SSY(index)   ((index)+(MIN_SSYID))
+#define ID_TSK(index)   ((index)+(MIN_TSKID))
+#define in_ddsp()   ( knl_dispatch_disabled || in_indp() || isDI(knl_getBASEPRI()) )
+#define in_indp()   ( knl_isTaskIndependent() || knl_ctxtsk == NULL )
+#define in_loc()    ( isDI(knl_getBASEPRI()) || in_indp() )
+#define in_qtsk()   ( knl_ctxtsk->sysmode > knl_ctxtsk->isysmode )
+#define INDEX_ALM(id)   ((id)-(MIN_ALMID))
+#define INDEX_CYC(id)   ((id)-(MIN_CYCID))
+#define INDEX_FLG(id)   ((id)-(MIN_FLGID))
+#define INDEX_MBF(id)   ((id)-(MIN_MBFID))
+#define INDEX_MBX(id)   ((id)-(MIN_MBXID))
+#define INDEX_MPF(id)   ((id)-(MIN_MPFID))
+#define INDEX_MPL(id)   ((id)-(MIN_MPLID))
+#define INDEX_MTX(id)   ((id)-(MIN_MTXID))
+#define INDEX_POR(id)   ((id)-(MIN_PORID))
+#define INDEX_SEM(id)   ((id)-(MIN_SEMID))
+#define INDEX_SSY(id)   ((id)-(MIN_SSYID))
+#define INDEX_TSK(id)   ((id)-(MIN_TSKID))
+#define InitModule(name)    knl_init_module( knl_##name##_initialize, (UB*)#name )
+#define int_priority(x)     ( (INT)((x) - MIN_PRI) )
+#define INTPRI_GROUP(pri, subpri)   (((pri) << (8-INTPRI_BITWIDTH)) | (subpri))
+#define isDI(intsts)    ( (intsts) != 0 )
+#define knl_dispatch_request()
+#define LEAVE_TASK_INDEPENDENT  { knl_LeaveTaskIndependent(); }
+#define li_div(a,b) ( (a) / (b) )
+#define li_mod(a,b) ( (a) % (b) )
+#define li_mul(a,b) ( (a) * (b) )
+#define ll_add(a,b) ( (a) + (b) )
+#define ll_cmp(a,b) ( (a) - (b) )
+#define ll_dec(a)   ( (*(a))-- )
+#define ll_div(a,b) ( (a) / (b) )
+#define ll_hilo(h, l, ll)   ( (h) = (ll).hi, (l) = (ll).lo )
+#define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), (l) = (unsigned long)(ll) )
+#define ll_inc(a)   ( (*(a))++ )
+#define ll_mod(a,b) ( (a) % (b) )
+#define ll_mul(a,b) ( (a) * (b) )
+#define ll_neg(a)   ( -(a) )
+#define ll_sign(a)  ( (a) )
+#define ll_sub(a,b) ( (a) - (b) )
+#define lltol(a)    ( (long)(a) )
+#define lltoul(a)   ( (unsigned long)(a) )
+#define LockDM()    MLock(&knl_DevMgrLock, 0)
+#define LockREG()   MLock(&knl_DevMgrLock, 1)
+#define ltoll(a)    ( (longlong)(a) )
+#define lui_div(a,b)    ( (a) / (b) )
+#define lui_mod(a,b)    ( (a) % (b) )
+#define lui_mul(a,b)    ( (a) * (b) )
+#define Mask(x)     ( (QUEUE*)((UW)(x) & ~AREA_MASK) )
+#define MERCD(er)   ( (ER)(er) >> 16 )
+#define MINSZ(sz)   ( ((UW)(sz) + (UW)(MINSIZE-1)) & ~(UW)(MINSIZE-1) )
+#define mtx_head_pri(mtxcb) ( ((TCB*)(mtxcb)->wait_queue.next)->priority )
+#define mtx_waited(mtxcb)   ( !isQueEmpty(&(mtxcb)->wait_queue) )
+#define nextmsg(msg)    ( ((T_MSG*)(msg))->msgque[0] )
+#define NVIC_IABR(x)    (NVIC_IABR_BASE + (((x) / 32) << 2))
+#define NVIC_ICER(x)    (NVIC_ICER_BASE + (((x) / 32) << 2))
+#define NVIC_ICPR(x)    (NVIC_ICPR_BASE + (((x) / 32) << 2))
+#define NVIC_IPR(x) (NVIC_IPR_BASE  + (x))
+#define NVIC_ISER(x)    (NVIC_ISER_BASE + (((x) / 32) << 2))
+#define NVIC_ISPR(x)    (NVIC_ISPR_BASE + (((x) / 32) << 2))
+#define OPNCB(dd)       ( knl_OpnCBtbl + ((dd) - 1) )
+#define P0(void)        ( int _1,int _2,int _3,int _4,int _5, void *gp )
+#define P0(void)        ( void )
+#define P1(p1)          ( p1 )
+#define P1(p1)          ( p1,    int _2,int _3,int _4,int _5, void *gp )
+#define P2(p1, p2)      ( p1, p2 )
+#define P2(p1, p2)      ( p1, p2,       int _3,int _4,int _5, void *gp )
+#define P2GP(p1, p2)        ( p1, p2 )
+#define P2GP(p1, p2)        ( p1, p2,                 void *gp )
+#define P3(p1, p2, p3)      ( p1, p2, p3 )
+#define P3(p1, p2, p3)      ( p1, p2, p3,          int _4,int _5, void *gp )
+#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4 )
+#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4,             int _5, void *gp )
+#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5 )
+#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5,                 void *gp )
+#define real_time() ( ll_add(knl_current_time, knl_real_time_ofs) )
+#define REQCB(reqid)        ( knl_ReqCBtbl + ((reqid) - 1) )
+#define REQID(reqcb)        ( (reqcb) - knl_ReqCBtbl + 1 )
+#define reset_priority(tcb) knl_release_mutex((tcb), NULL)
+#define RESQ_OPNCB(rq)      ( (OpnCB*)((B*)(rq) - offsetof(OpnCB, resq)) )
+#define ROUND(sz)   ( ((UW)(sz) + (UW)(ROUNDSZ-1)) & ~(UW)(ROUNDSZ-1) )
+#define ROUNDSZ(sz) (((UW)(sz) + (UW)(ROUNDSIZE-1)) & ~(UW)(ROUNDSIZE-1))
+#define SERCD(er)   ( (H)(er) )
+#define setAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev |  (UW)(f)) )
+#define uitoll(a)   ( (longlong)(a) )
+#define ultoll(a)   ( (longlong)(a) )
+#define UNITNO(devid)       ( (devid) & 0xff )
+#define UnlockDM()  MUnlock(&knl_DevMgrLock, 0)
+#define UnlockREG() MUnlock(&knl_DevMgrLock, 1)
 
 
 /*--------------------------------------------------------------------*/
