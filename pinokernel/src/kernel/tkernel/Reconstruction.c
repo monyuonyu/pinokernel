@@ -562,8 +562,6 @@
 #define Asm     __asm__ volatile
 // #define _sym sym
 // #define _sym _##sym
-#define Noinit(decl)    decl __attribute__ ((section (".noinit")))
-#define Noinit(decl)    decl
 //#define   _APP_MB9AF312K_     1
 //#define CPU_ARMV7_M       1
 //#define CPU_ARM_CORTEX_M3 1
@@ -3260,7 +3258,7 @@ ER tk_ena_dsp_impl( void )
  */
 
 /* High level programming language interrupt handler entry */
-Noinit(FP knl_hll_inthdr[N_INTVEC]);
+FP knl_hll_inthdr[N_INTVEC];
 
 extern FP knl_hll_inthdr[];
 
@@ -3814,19 +3812,19 @@ extern ER td_set_dsname( UINT type, ID id, const UB *dsname );
 
 
 /* Lock for device management exclusive control */
-Noinit(  FastMLock   knl_DevMgrLock);
+  FastMLock   knl_DevMgrLock;
 
 /* Device initial setting information */
-Noinit(  T_IDEV      knl_DefaultIDev);
+  T_IDEV      knl_DefaultIDev;
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Device registration management
  */
 
-Noinit(  DevCB       knl_DevCBtbl[CFN_MAX_REGDEV]);  /* Device registration information table */
-Noinit(  QUEUE       knl_UsedDevCB); /* In-use queue */
-Noinit(  QUEUE       knl_FreeDevCB); /* Unused queue */
+  DevCB       knl_DevCBtbl[CFN_MAX_REGDEV];  /* Device registration information table */
+  QUEUE       knl_UsedDevCB; /* In-use queue */
+  QUEUE       knl_FreeDevCB; /* Unused queue */
 
 
 /*
@@ -4478,13 +4476,13 @@ extern ER knl_close_device( OpnCB *opncb, UINT option );
 /** [END Common Definitions] */
 
 
-Noinit(OpnCB knl_OpnCBtbl[CFN_MAX_OPNDEV]);  /* Open management information table */
-Noinit(QUEUE knl_FreeOpnCB); /* Unused queue */
+OpnCB knl_OpnCBtbl[CFN_MAX_OPNDEV];  /* Open management information table */
+QUEUE knl_FreeOpnCB; /* Unused queue */
 
-Noinit(ReqCB knl_ReqCBtbl[CFN_MAX_REQDEV]);  /* Request management information table */
-Noinit(QUEUE knl_FreeReqCB); /* Unused queue */
+ReqCB knl_ReqCBtbl[CFN_MAX_REQDEV];  /* Request management information table */
+QUEUE knl_FreeReqCB; /* Unused queue */
 
-Noinit(ResCB knl_resource_control_block);
+ResCB knl_resource_control_block;
 
 
 /*
@@ -5556,10 +5554,10 @@ ER knl_finishDevIO( void )
 
 
  W   knl_taskindp = 0;
-Noinit(  UW  knl_taskmode);
+  UW  knl_taskmode;
 /* Low level memory manager information */
-Noinit(  void    *knl_lowmem_top);   /* Head of area (Low address) */
-Noinit(  void    *knl_lowmem_limit); /* End of area (High address) */
+  void    *knl_lowmem_top);   /* Head of area (Low address */
+  void    *knl_lowmem_limit); /* End of area (High address */
 
 /* ------------------------------------------------------------------------ */
 
@@ -5649,8 +5647,8 @@ ER knl_restart_device( W mode )
 /** [END Common Definitions] */
 
 
-Noinit(FLGCB knl_flgcb_table[NUM_FLGID]);    /* Event flag control block */
-Noinit(QUEUE knl_free_flgcb);    /* FreeQue */
+FLGCB knl_flgcb_table[NUM_FLGID];    /* Event flag control block */
+QUEUE knl_free_flgcb;    /* FreeQue */
 
 
 /*
@@ -6845,8 +6843,8 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
 /** [END Common Definitions] */
 
 
-Noinit(MBXCB knl_mbxcb_table[NUM_MBXID]);    /* Mailbox control block */
-Noinit(QUEUE knl_free_mbxcb);    /* FreeQue */
+MBXCB knl_mbxcb_table[NUM_MBXID];    /* Mailbox control block */
+QUEUE knl_free_mbxcb;    /* FreeQue */
 
 
 /*
@@ -7352,7 +7350,7 @@ void knl_removeAreaQue( QUEUE *aq )
 
 /* ------------------------------------------------------------------------ */
 
-Noinit(IMACB *knl_imacb);
+IMACB *knl_imacb;
 
 /* ------------------------------------------------------------------------ */
 
@@ -7562,8 +7560,8 @@ extern ER knl_init_Imalloc( void );
 /** [END Common Definitions] */
 
 
-Noinit(MPFCB knl_mpfcb_table[NUM_MPFID]);    /* Fixed size memory pool control block */
-Noinit(QUEUE knl_free_mpfcb);    /* FreeQue */
+MPFCB knl_mpfcb_table[NUM_MPFID];    /* Fixed size memory pool control block */
+QUEUE knl_free_mpfcb;    /* FreeQue */
 
 
 /*
@@ -7992,8 +7990,8 @@ void *knl_mempool_end( MPFCB *mpfcb )
 
 
 
-Noinit(MPLCB knl_mplcb_table[NUM_MPLID]);    /* Variable size memory pool control block */
-Noinit(QUEUE knl_free_mplcb);    /* FreeQue */
+MPLCB knl_mplcb_table[NUM_MPLID];    /* Variable size memory pool control block */
+QUEUE knl_free_mplcb;    /* FreeQue */
 
 
 /*
@@ -8623,8 +8621,8 @@ extern void knl_mpl_wakeup( MPLCB *mplcb );
 
 
 
-Noinit(MBFCB knl_mbfcb_table[NUM_MBFID]);    /* Message buffer control block */
-Noinit(QUEUE knl_free_mbfcb);    /* FreeQue */
+MBFCB knl_mbfcb_table[NUM_MBFID];    /* Message buffer control block */
+QUEUE knl_free_mbfcb;    /* FreeQue */
 
 
 /*
@@ -9295,17 +9293,17 @@ UINT knl_lowpow_discnt = 0;
 /*
  * Hook routine address
  */
-Noinit(FP knl_hook_enterfn);
-Noinit(FP knl_hook_leavefn);
-Noinit(void *knl_hook_svc_gp);
+FP knl_hook_enterfn;
+FP knl_hook_leavefn;
+void *knl_hook_svc_gp;
 
-Noinit(FP knl_hook_execfn);
-Noinit(FP knl_hook_stopfn);
-Noinit(void *knl_hook_dsp_gp);
+FP knl_hook_execfn;
+FP knl_hook_stopfn;
+void *knl_hook_dsp_gp;
 
-Noinit(FP knl_hook_ienterfn);
-Noinit(FP knl_hook_ileavefn);
-Noinit(void *knl_hook_int_gp);
+FP knl_hook_ienterfn;
+FP knl_hook_ileavefn;
+void *knl_hook_int_gp;
 
 
 /*
@@ -9430,8 +9428,8 @@ extern void knl_unhook_int( void );
 /** [END Common Definitions] */
 
 
-Noinit(MTXCB knl_mtxcb_table[NUM_MTXID]);    /* Mutex control block */
-Noinit(QUEUE knl_free_mtxcb);    /* FreeQue */
+MTXCB knl_mtxcb_table[NUM_MTXID];    /* Mutex control block */
+QUEUE knl_free_mtxcb;    /* FreeQue */
 
 
 /*
@@ -10666,8 +10664,8 @@ TCB* knl_ready_queue_move_last( RDYQUE *rq, TCB *tcb )
 
 
 
-Noinit(PORCB knl_porcb_table[NUM_PORID]);    /* Rendezvous port control block */
-Noinit(QUEUE knl_free_porcb);    /* FreeQue */
+PORCB knl_porcb_table[NUM_PORID];    /* Rendezvous port control block */
+QUEUE knl_free_porcb;    /* FreeQue */
 
 
 /* 
@@ -11299,8 +11297,8 @@ extern const WSPEC knl_wspec_rdv;
 /** [END Common Definitions] */
 
 
-Noinit(SEMCB knl_semcb_table[NUM_SEMID]);    /* Semaphore control block */
-Noinit(QUEUE knl_free_semcb);    /* FreeQue */
+SEMCB knl_semcb_table[NUM_SEMID];    /* Semaphore control block */
+QUEUE knl_free_semcb;    /* FreeQue */
 
 
 /* 
@@ -11856,7 +11854,7 @@ void sio_init(void)
 
 
 
-Noinit(SSYCB knl_ssycb_table[NUM_SSYID]);    /* Subsystem control block */
+SSYCB knl_ssycb_table[NUM_SSYID];    /* Subsystem control block */
 
 
 /*
@@ -12719,20 +12717,20 @@ void knl_shutdown_system( INT fin )
 /*
  * Task dispatch disable state
  */
-Noinit(INT   knl_dispatch_disabled); /* DDS_XXX see task.h */
+INT   knl_dispatch_disabled; /* DDS_XXX see task.h */
 
 /*
  * Task execution control 
  */
-Noinit(TCB   *knl_ctxtsk);   /* Task in execution */
-Noinit(TCB   *knl_schedtsk); /* Task which should be executed */
-Noinit(RDYQUE    knl_ready_queue);   /* Ready queue */
+TCB   *knl_ctxtsk;   /* Task in execution */
+TCB   *knl_schedtsk; /* Task which should be executed */
+RDYQUE    knl_ready_queue;   /* Ready queue */
 
 /*
  * Task control information
  */
-Noinit(TCB   knl_tcb_table[NUM_TSKID]);  /* Task control block */
-Noinit(QUEUE knl_free_tcb);  /* FreeQue */
+TCB   knl_tcb_table[NUM_TSKID];  /* Task control block */
+QUEUE knl_free_tcb;  /* FreeQue */
 
 /*
  * TCB Initialization
@@ -13903,13 +13901,13 @@ extern const WSPEC knl_wspec_slp;
  *  Therefore 'current_time' does not affect with time change
  *  and it increases simply.
  */
-Noinit(LSYSTIM   knl_current_time);  /* System operation time */
-Noinit(LSYSTIM   knl_real_time_ofs); /* Actual time - System operation time */
+LSYSTIM   knl_current_time;  /* System operation time */
+LSYSTIM   knl_real_time_ofs; /* Actual time - System operation time */
 
 /* 
  * Timer event queue
  */
-Noinit(QUEUE knl_timer_queue);
+QUEUE knl_timer_queue;
 
 /*
  * Initialization of timer module
@@ -14213,8 +14211,8 @@ ER tk_dly_tsk_impl( RELTIM dlytim )
  */
 
 
-Noinit(CYCCB knl_cyccb_table[NUM_CYCID]);    /* Cyclic handler control block */
-Noinit(QUEUE knl_free_cyccb);    /* FreeQue */
+CYCCB knl_cyccb_table[NUM_CYCID];    /* Cyclic handler control block */
+QUEUE knl_free_cyccb;    /* FreeQue */
 
 
 /*
@@ -14586,8 +14584,8 @@ ER td_ref_cyc_impl( ID cycid, TD_RCYC* pk_rcyc )
  */
 
 
-Noinit(ALMCB knl_almcb_table[NUM_ALMID]);    /* Alarm handler control block */
-Noinit(QUEUE knl_free_almcb);    /* FreeQue */
+ALMCB knl_almcb_table[NUM_ALMID];    /* Alarm handler control block */
+QUEUE knl_free_almcb;    /* FreeQue */
 
 
 /*
