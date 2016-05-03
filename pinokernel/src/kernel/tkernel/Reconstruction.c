@@ -27,145 +27,49 @@
 #define TRUE        1
 #define FALSE       0
 #define TNULL       ((TC)0)
-#define _BIT_SET_N(n) ( (UB)0x80 >> ((n) & 7) )
-#define _BIT_SHIFT(n) ( (UB)n >> 1 )
-#define _BIT_SET_N(n) ( (UB)0x01 << ((n) & 7) )
-#define _BIT_SHIFT(n) ( (UB)n << 1 )
 #define NULL        0
-#define CHECK_TSKID(tskid) { if (!in_indp() && ((tskid) == TSK_SELF)) { return E_OBJ; } else if (!CHK_TSKID(tskid)) { return E_ID; } }
-#define CHECK_TSKID_SELF(tskid) { if ( !( (!in_indp() && (tskid) == TSK_SELF) || CHK_TSKID(tskid) ) ) { return E_ID; } }
-#define CHECK_SEMID(semid) { if (!CHK_SEMID(semid)) { return E_ID; } }
-#define CHECK_FLGID(flgid) { if (!CHK_FLGID(flgid)) { return E_ID; } }
-#define CHECK_MBXID(mbxid) { if (!CHK_MBXID(mbxid)) { return E_ID; } }
-#define CHECK_MBFID(mbfid) { if (!CHK_MBFID(mbfid)) { return E_ID; } }
-#define CHECK_PORID(porid) { if (!CHK_PORID(porid)) { return E_ID; } }
-#define CHECK_MTXID(pisid) { if (!CHK_MTXID(pisid)) { return E_ID; } }
-#define CHECK_MPLID(mplid) { if (!CHK_MPLID(mplid)) { return E_ID; } }
-#define CHECK_MPFID(mpfid) { if (!CHK_MPFID(mpfid)) { return E_ID; } }
-#define CHECK_CYCID(cycid) { if (!CHK_CYCID(cycid)) { return E_ID; } }
-#define CHECK_ALMID(almid) { if (!CHK_ALMID(almid)) { return E_ID; } }
-#define CHECK_SSYID(ssid) { if (!CHK_SSYID(ssid)) { return E_ID; } }
-#define CHECK_SSYID_ALL(ssid) { if (!(CHK_SSYID(ssid) || (ssid) == 0)) { return E_ID; } }
-#define CHECK_TSKID(tskid)
-#define CHECK_TSKID_SELF(tskid)
-#define CHECK_SEMID(semid)
-#define CHECK_FLGID(flgid)
-#define CHECK_MBXID(mbxid)
-#define CHECK_MBFID(mbfid)
-#define CHECK_PORID(porid)
-#define CHECK_MTXID(pisid)
-#define CHECK_MPLID(mplid)
-#define CHECK_MPFID(mpfid)
-#define CHECK_CYCID(cycid)
-#define CHECK_ALMID(almid)
-#define CHECK_SSYID(ssid)
-#define CHECK_SSYID_ALL(ssid)
-#define CHECK_NONSELF(tskid) { if (!in_indp() && (tskid) == knl_ctxtsk->tskid) { return E_OBJ; } }
-#define CHECK_NONSELF(tskid)
-#define CHECK_PRI(pri) { if (!CHK_PRI(pri)) { return E_PAR; } }
-#define CHECK_PRI_INI(pri) { if ((pri) != TPRI_INI && !CHK_PRI(pri)) { return E_PAR; } }
-#define CHECK_PRI_RUN(pri) { if ((pri) != TPRI_RUN && !CHK_PRI(pri)) { return E_PAR; } }
-#define CHECK_PRI(pri)
-#define CHECK_PRI_INI(pri)
-#define CHECK_PRI_RUN(pri)
-#define CHECK_SSYPRI(ssypri) { if (!CHK_SSYPRI(ssypri)) { return E_PAR; } }
-#define CHECK_SSYPRI(ssypri)
-#define CHECK_TMOUT(tmout) { if (!((tmout) >= TMO_FEVR)) { return E_PAR; } }
-#define CHECK_TMOUT(tmout)
-#define CHECK_PAR(exp) { if (!(exp)) { return E_PAR; } }
-#define CHECK_PAR(exp)
-#define CHECK_RSATR(atr, maxatr) { if ((atr) & ~(maxatr)) { return E_RSATR; } }
-#define CHECK_RSATR(atr, maxatr)
-#define CHECK_NOSPT(exp) { if (!(exp)) { return E_NOSPT; } }
-#define CHECK_NOSPT(exp)
-#define CHECK_INTSK() { if (in_indp()) { return E_CTX; } }
-#define CHECK_INTSK()
-#define CHECK_DISPATCH() { if (in_ddsp()) { return E_CTX; } }
-#define CHECK_DISPATCH_POL(tmout) { if ((tmout) != TMO_POL && in_ddsp()) { return E_CTX; } }
-#define CHECK_DISPATCH()
-#define CHECK_DISPATCH_POL(tmout)
-#define CHECK_CTX(exp) { if (!(exp)) { return E_CTX; } }
-#define CHECK_CTX(exp)
 #define MIN_TSKID   (1)
 #define MAX_TSKID   (CFN_MAX_TSKID)
 #define NUM_TSKID   (MAX_TSKID)
-#define CHK_TSKID(id)   ((MIN_TSKID) <= (id) && (id) <= (MAX_TSKID))
-#define INDEX_TSK(id)   ((id)-(MIN_TSKID))
-#define ID_TSK(index)   ((index)+(MIN_TSKID))
 #define MIN_SEMID   (1)
 #define MAX_SEMID   (CFN_MAX_SEMID)
 #define NUM_SEMID   (MAX_SEMID)
-#define CHK_SEMID(id)   ((MIN_SEMID) <= (id) && (id) <= (MAX_SEMID))
-#define INDEX_SEM(id)   ((id)-(MIN_SEMID))
-#define ID_SEM(index)   ((index)+(MIN_SEMID))
 #define MIN_FLGID   (1)
 #define MAX_FLGID   (CFN_MAX_FLGID)
 #define NUM_FLGID   (MAX_FLGID)
-#define CHK_FLGID(id)   ((MIN_FLGID) <= (id) && (id) <= (MAX_FLGID))
-#define INDEX_FLG(id)   ((id)-(MIN_FLGID))
-#define ID_FLG(index)   ((index)+(MIN_FLGID))
 #define MIN_MBXID   (1)
 #define MAX_MBXID   (CFN_MAX_MBXID)
 #define NUM_MBXID   (MAX_MBXID)
-#define CHK_MBXID(id)   ((MIN_MBXID) <= (id) && (id) <= (MAX_MBXID))
-#define INDEX_MBX(id)   ((id)-(MIN_MBXID))
-#define ID_MBX(index)   ((index)+(MIN_MBXID))
 #define MIN_MTXID   (1)
 #define MAX_MTXID   (CFN_MAX_MTXID)
 #define NUM_MTXID   (MAX_MTXID)
-#define CHK_MTXID(id)   ((MIN_MTXID) <= (id) && (id) <= (MAX_MTXID))
-#define INDEX_MTX(id)   ((id)-(MIN_MTXID))
-#define ID_MTX(index)   ((index)+(MIN_MTXID))
 #define MIN_MBFID   (1)
 #define MAX_MBFID   (CFN_MAX_MBFID)
 #define NUM_MBFID   (MAX_MBFID)
-#define CHK_MBFID(id)   ((MIN_MBFID) <= (id) && (id) <= (MAX_MBFID))
-#define INDEX_MBF(id)   ((id)-(MIN_MBFID))
-#define ID_MBF(index)   ((index)+(MIN_MBFID))
 #define MIN_PORID   (1)
 #define MAX_PORID   (CFN_MAX_PORID)
 #define NUM_PORID   (MAX_PORID)
-#define CHK_PORID(id)   ((MIN_PORID) <= (id) && (id) <= (MAX_PORID))
-#define INDEX_POR(id)   ((id)-(MIN_PORID))
-#define ID_POR(index)   ((index)+(MIN_PORID))
 #define MIN_MPLID   (1)
 #define MAX_MPLID   (CFN_MAX_MPLID)
 #define NUM_MPLID   (MAX_MPLID)
-#define CHK_MPLID(id)   ((MIN_MPLID) <= (id) && (id) <= (MAX_MPLID))
-#define INDEX_MPL(id)   ((id)-(MIN_MPLID))
-#define ID_MPL(index)   ((index)+(MIN_MPLID))
 #define MIN_MPFID   (1)
 #define MAX_MPFID   (CFN_MAX_MPFID)
 #define NUM_MPFID   (MAX_MPFID)
-#define CHK_MPFID(id)   ((MIN_MPFID) <= (id) && (id) <= (MAX_MPFID))
-#define INDEX_MPF(id)   ((id)-(MIN_MPFID))
-#define ID_MPF(index)   ((index)+(MIN_MPFID))
 #define MIN_CYCID   (1)
 #define MAX_CYCID   (CFN_MAX_CYCID)
 #define NUM_CYCID   (MAX_CYCID)
-#define CHK_CYCID(id)   ((MIN_CYCID) <= (id) && (id) <= (MAX_CYCID))
-#define INDEX_CYC(id)   ((id)-(MIN_CYCID))
-#define ID_CYC(index)   ((index)+(MIN_CYCID))
 #define MIN_ALMID   (1)
 #define MAX_ALMID   (CFN_MAX_ALMID)
 #define NUM_ALMID   (MAX_ALMID)
-#define CHK_ALMID(id)   ((MIN_ALMID) <= (id) && (id) <= (MAX_ALMID))
-#define INDEX_ALM(id)   ((id)-(MIN_ALMID))
-#define ID_ALM(index)   ((index)+(MIN_ALMID))
 #define MIN_SSYID   (1)
 #define MAX_SSYID   (CFN_MAX_SSYID)
 #define NUM_SSYID   (MAX_SSYID)
-#define CHK_SSYID(id)   ((MIN_SSYID) <= (id) && (id) <= (MAX_SSYID))
-#define INDEX_SSY(id)   ((id)-(MIN_SSYID))
-#define ID_SSY(index)   ((index)+(MIN_SSYID))
 #define MIN_PRI     (1)
 #define MAX_PRI     (32)
 #define NUM_PRI     (32)
-#define CHK_PRI(pri)    ((MIN_PRI) <= (pri) && (pri) <= (MAX_PRI))
 #define MIN_SSYPRI  (1)
 #define MAX_SSYPRI  (CFN_MAX_SSYPRI)
 #define NUM_SSYPRI  (MAX_SSYPRI)
-#define CHK_SSYPRI(pri) ((MIN_SSYPRI) <= (pri) && (pri) <= (MAX_SSYPRI))
 #define CHK_NOSPT   (1)
 #define CHK_RSATR   (1)
 #define CHK_PAR     (1)
@@ -181,20 +85,6 @@
 #define USE_KERNEL_MESSAGE  (1)
 #define TA_GP       0
 #define MIN_SYS_STACK_SIZE  128
-#define BEGIN_CRITICAL_SECTION  { UINT _basepri_ = disint();
-#define END_CRITICAL_SECTION    if ( !isDI(_basepri_) && knl_ctxtsk != knl_schedtsk && !knl_dispatch_disabled ) { knl_dispatch(); } enaint(_basepri_); }
-#define BEGIN_DISABLE_INTERRUPT { UINT _basepri_ = disint();
-#define END_DISABLE_INTERRUPT   enaint(_basepri_); }
-#define ENABLE_INTERRUPT    { enaint(0); }
-#define DISABLE_INTERRUPT   { disint(); }
-#define ENABLE_INTERRUPT_UPTO(level)    { enaint(0); }
-#define ENTER_TASK_INDEPENDENT  { knl_EnterTaskIndependent(); }
-#define LEAVE_TASK_INDEPENDENT  { knl_LeaveTaskIndependent(); }
-#define in_indp()   ( knl_isTaskIndependent() || knl_ctxtsk == NULL )
-#define in_ddsp()   ( knl_dispatch_disabled || in_indp() || isDI(knl_getBASEPRI()) )
-#define in_loc()    ( isDI(knl_getBASEPRI()) || in_indp() )
-#define in_qtsk()   ( knl_ctxtsk->sysmode > knl_ctxtsk->isysmode )
-#define knl_dispatch_request()
 #define DORMANT_STACK_SIZE  ( sizeof(VW) * 7 )
 #define TN_TSK 0x01
 #define TN_SEM 0x02
@@ -208,24 +98,11 @@
 #define TN_CYC 0x0a
 #define TN_ALM 0x0b
 #define DEBUG_MODULE    ""
-#define DEBUG_PRINT(arg)
-#define DO_DEBUG(exp)   { exp }
-#define DEBUG_PRINT(arg)
-#define DO_DEBUG(exp)
 #define OBJNAME_DMMBF   "DEvt"
 #define OBJNAME_DMSEM   "DMSy"
 #define OBJNAME_DMLOCK  "DMLk"
 #define MAX_UNIT    255
-#define DD(opncb)       ( (opncb) - knl_OpnCBtbl + 1 )
-#define OPNCB(dd)       ( knl_OpnCBtbl + ((dd) - 1) )
-#define REQID(reqcb)        ( (reqcb) - knl_ReqCBtbl + 1 )
-#define REQCB(reqid)        ( knl_ReqCBtbl + ((reqid) - 1) )
-#define DEVREQ_REQCB(devreq)    ((ReqCB*)((B*)(devreq) - offsetof(ReqCB, req)))
 #define MAX_DISSUS  INT_MAX
-#define MERCD(er)   ( (ER)(er) >> 16 )
-#define SERCD(er)   ( (H)(er) )
-#define ERCD(mer, ser)  ( (ER)(((UW)(mer) << 16) | ((UW)(ser) & 0x0000FFFF)) )
-#define ERCD(mer, ser)  ( ((mer) << 16) | ((ser) & 0xffff) )
 #define E_OK        (0)
 #define E_SYS       (-5)
 #define E_NOCOP     (-6)
@@ -252,7 +129,6 @@
 #define E_BUSY      (-65)
 #define E_ABORT     (-66)
 #define E_RONLY     (-67)
-#define get_flgcb(id)   ( &knl_flgcb_table[INDEX_FLG(id)] )
 #define USE_TMONITOR 0
 #define INTERNAL_RAM_SIZE       0x00004000
 #define INTERNAL_RAM_START      0x1FFFE000
@@ -273,20 +149,6 @@
 #define INITTASK_STACK      (NULL)
 #define INTPRI_MIN_UNIT (0x100 >> INTPRI_BITWIDTH)
 #define INTPRI_MASK (0x100 - INTPRI_MIN_UNIT)
-#define P0(void)        ( int _1,int _2,int _3,int _4,int _5, void *gp )
-#define P1(p1)          ( p1,    int _2,int _3,int _4,int _5, void *gp )
-#define P2(p1, p2)      ( p1, p2,       int _3,int _4,int _5, void *gp )
-#define P3(p1, p2, p3)      ( p1, p2, p3,          int _4,int _5, void *gp )
-#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4,             int _5, void *gp )
-#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5,                 void *gp )
-#define P2GP(p1, p2)        ( p1, p2,                 void *gp )
-#define P0(void)        ( void )
-#define P1(p1)          ( p1 )
-#define P2(p1, p2)      ( p1, p2 )
-#define P3(p1, p2, p3)      ( p1, p2, p3 )
-#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4 )
-#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5 )
-#define P2GP(p1, p2)        ( p1, p2 )
 #define tk_cre_sem_impl knl_no_support
 #define tk_del_sem_impl knl_no_support
 #define tk_sig_sem_impl knl_no_support
@@ -539,31 +401,6 @@
 #define INT_MIN     LONG_MIN
 #define INT_MAX     LONG_MAX
 #define UINT_MAX    ULONG_MAX
-#define ltoll(a)    ( (longlong)(a) )
-#define ultoll(a)   ( (longlong)(a) )
-#define uitoll(a)   ( (longlong)(a) )
-#define lltol(a)    ( (long)(a) )
-#define lltoul(a)   ( (unsigned long)(a) )
-#define ll_add(a,b) ( (a) + (b) )
-#define ll_sub(a,b) ( (a) - (b) )
-#define ll_mul(a,b) ( (a) * (b) )
-#define li_mul(a,b) ( (a) * (b) )
-#define lui_mul(a,b)    ( (a) * (b) )
-#define ll_div(a,b) ( (a) / (b) )
-#define li_div(a,b) ( (a) / (b) )
-#define lui_div(a,b)    ( (a) / (b) )
-#define ll_mod(a,b) ( (a) % (b) )
-#define li_mod(a,b) ( (a) % (b) )
-#define lui_mod(a,b)    ( (a) % (b) )
-#define ll_cmp(a,b) ( (a) - (b) )
-#define ll_sign(a)  ( (a) )
-#define ll_neg(a)   ( -(a) )
-#define ll_inc(a)   ( (*(a))++ )
-#define ll_dec(a)   ( (*(a))-- )
-#define hilo_ll(ll, h, l)   ( (ll) = ((longlong)(h) << 32) | (l) )
-#define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), (l) = (unsigned long)(ll) )
-#define hilo_ll(ll, h, l)   ( (ll).hi = (h), (ll).lo = (l) )
-#define ll_hilo(h, l, ll)   ( (h) = (ll).hi, (l) = (ll).lo )
 #define Inline      inline
 #define Inline      static __inline__
 #define Asm     __asm__ volatile
@@ -580,34 +417,13 @@
 //#define ALLOCA_NOSPT      0
 #define INT_BITWIDTH        32
 // #define _Csym            1
-#define get_mbxcb(id)   ( &knl_mbxcb_table[INDEX_MBX(id)] )
-#define headmsg(mbxcb)  ( (mbxcb)->mq_head.msgque[0] )
-#define nextmsg(msg)    ( ((T_MSG*)(msg))->msgque[0] )
-#define AlignIMACB(imacb)   ( (IMACB*)((UW)(imacb) & ~0x00000001UL) )
 #define ROUNDSZ     ( sizeof(QUEUE) )
-#define ROUND(sz)   ( ((UW)(sz) + (UW)(ROUNDSZ-1)) & ~(UW)(ROUNDSZ-1) )
 #define MIN_FRAGMENT    ( sizeof(QUEUE) * 2 )
 #define AREA_USE    0x00000001UL
 #define AREA_MASK   0x00000001UL
-#define setAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev |  (UW)(f)) )
-#define clrAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev & ~(UW)(f)) )
-#define chkAreaFlag(q, f)   ( ((UW)(q)->prev & (UW)(f)) != 0 )
-#define Mask(x)     ( (QUEUE*)((UW)(x) & ~AREA_MASK) )
-#define Assign(x, y)    ( (x) = (QUEUE*)(((UW)(x) & AREA_MASK) | (UW)(y)) )
-#define AreaSize(aq)    ( (VB*)(aq)->next - (VB*)((aq) + 1) )
-#define FreeSize(fq)    ( (W)((fq) + 1)->prev )
-#define get_mpfcb(id)   ( &knl_mpfcb_table[INDEX_MPF(id)] )
 #define MINSIZE     ( sizeof(FREEL) )
-#define MINSZ(sz)   ( ((UW)(sz) + (UW)(MINSIZE-1)) & ~(UW)(MINSIZE-1) )
-#define get_mplcb(id)   ( &knl_mplcb_table[INDEX_MPL(id)] )
-#define get_mbfcb(id)   ( &knl_mbfcb_table[INDEX_MBF(id)] )
 #define HEADERSZ    (sizeof(HEADER))
 #define ROUNDSIZE   (sizeof(HEADER))
-#define ROUNDSZ(sz) (((UW)(sz) + (UW)(ROUNDSIZE-1)) & ~(UW)(ROUNDSIZE-1))
-#define get_mtxcb(id)   ( &knl_mtxcb_table[INDEX_MTX(id)] )
-#define mtx_waited(mtxcb)   ( !isQueEmpty(&(mtxcb)->wait_queue) )
-#define mtx_head_pri(mtxcb) ( ((TCB*)(mtxcb)->wait_queue.next)->priority )
-#define reset_priority(tcb) knl_release_mutex((tcb), NULL)
 #define TCBSZ_POR   (4)
 #define TCBSZ_POR   (0)
 #define TCBSZ_MTX   (4)
@@ -619,8 +435,6 @@
 #define TCBSZ_WINFO (0)
 #define TCBSZ_EXECTIME  (8)
 #define TCBSZ_EXECTIME  (0)
-#define _ALIGN_CPU(x)   (((x)+3)&0xFFFFFFFC)
-#define _ALIGN_64(x)    (((x)+7)&0xFFFFFFF8)
 #define TCB_winfo   (60)
 #define TCB_wtmeb   _ALIGN_64(TCB_winfo+TCBSZ_WINFO)
 #define TCBsz_wtmeb2isstack (24+TCBSZ_MTX+TCBSZ_POR+TCBSZ_EXECTIME)
@@ -694,10 +508,7 @@
 #define TK_MAX_PTIMER       0
 #define BITMAPSZ    ( sizeof(UINT) * 8 )
 #define NUM_BITMAP  ( (NUM_PRI + BITMAPSZ - 1) / BITMAPSZ )
-#define get_porcb(id)   ( &knl_porcb_table[INDEX_POR(id)] )
 #define RDVNO_SHIFT (sizeof(RNO)*8/2)
-#define CHECK_RDVNO(rdvno) { if ( !CHK_TSKID(knl_get_tskid_rdvno(rdvno)) ) { return E_OBJ; } }
-#define get_semcb(id)   ( &knl_semcb_table[INDEX_SEM(id)] )
 // #define  TERM_PORT       0
 // #define CPU_CLOCK        (20000000UL)
 // #define BAUD_RATE        (115200UL)
@@ -728,7 +539,6 @@
 #define __size_t    unsigned long
 #define __wchar_t   int
 #define _align64
-#define get_ssycb(id)   ( &knl_ssycb_table[INDEX_SSY(id)] )
 #define TSK_SELF    0
 #define TPRI_INI    0
 #define TPRI_RUN    0
@@ -873,7 +683,6 @@
 #define PSR_V       0x10000000
 #define PSR_Q       0x08000000
 #define PSR_INT_MSK 0x000000FF
-#define EXP_M(n)    (n)
 #define EXP_USR     EXP_M(0)
 #define EXP_RST     EXP_M(1)
 #define EXP_NMI     EXP_M(2)
@@ -885,7 +694,6 @@
 #define EXP_DBG     EXP_M(12)
 #define EXP_PSV     EXP_M(14)
 #define EXP_STK     EXP_M(15)
-#define EXP_EXT(n)  (EXP_M(16) + n)
 #define SVC_SYSCALL     0x00
 #define SVC_EXTENDED_SVC    0x10
 #define SVC_DEBUG_SUPPORT   0xFF
@@ -960,50 +768,23 @@
 // #define FM3_CRTRIM_MCR_RLR   (*(volatile UW*)(FM3_CRTRIM_BASE + 0x0C))
 #define NVIC_ICTR   0xE000E004
 #define NVIC_ISER_BASE  0xE000E100
-#define NVIC_ISER(x)    (NVIC_ISER_BASE + (((x) / 32) << 2))
 #define NVIC_ICER_BASE  0xE000E180
-#define NVIC_ICER(x)    (NVIC_ICER_BASE + (((x) / 32) << 2))
 #define NVIC_ISPR_BASE  0xE000E200
-#define NVIC_ISPR(x)    (NVIC_ISPR_BASE + (((x) / 32) << 2))
 #define NVIC_ICPR_BASE  0xE000E280
-#define NVIC_ICPR(x)    (NVIC_ICPR_BASE + (((x) / 32) << 2))
 #define NVIC_IABR_BASE  0xE000E300
-#define NVIC_IABR(x)    (NVIC_IABR_BASE + (((x) / 32) << 2))
 #define NVIC_IPR_BASE   0xE000E400
-#define NVIC_IPR(x) (NVIC_IPR_BASE  + (x))
 #define INTPRI_BITWIDTH     4
 #define INTNO_FORCE_DISPATCH    47
 #define NVIC_IPR_FORCE_DISPATCH NVIC_IPR(INTNO_FORCE_DISPATCH)
 #define MAX_EXTINT_PRI      0x10
 #define N_INTVEC    48
-#define DI(intsts)  ( (intsts) = disint() )
-#define EI(intsts)  ( enaint(intsts) )
-#define isDI(intsts)    ( (intsts) != 0 )
-#define DINTNO(intvec)  (intvec)
 #define INTLEVEL_DI (0)
 #define INTLEVEL_EI (255)
-#define INTPRI_GROUP(pri, subpri)   (((pri) << (8-INTPRI_BITWIDTH)) | (subpri))
-#define ClearInt(intno) ClearPendingInt(intno)
-#define EndOfInt(intno)
 #define BOOT_MESSAGE     "\n"     "micro T-Kernel Version 2.00.00\n"     "\n\0"
-#define LockDM()    MLock(&knl_DevMgrLock, 0)
-#define UnlockDM()  MUnlock(&knl_DevMgrLock, 0)
-#define LockREG()   MLock(&knl_DevMgrLock, 1)
-#define UnlockREG() MUnlock(&knl_DevMgrLock, 1)
-#define DID(devcb)      ( ((devcb) - knl_DevCBtbl + 1) << 8 )
-#define DEVID(devcb, unitno)    ( DID(devcb) + (unitno) )
-#define DEVCB(devid)        ( knl_DevCBtbl + (((devid) >> 8) - 1) )
-#define UNITNO(devid)       ( (devid) & 0xff )
-#define RESQ_OPNCB(rq)      ( (OpnCB*)((B*)(rq) - offsetof(OpnCB, resq)) )
-#define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4),                             (FP)(drv), (gp))
 #define IMPORT_DEFINE   1
-#define int_priority(x)     ( (INT)((x) - MIN_PRI) )
-#define ext_tskpri(x)       ( (PRI)((x) + MIN_PRI) )
 #define DDS_ENABLE      (0)
 #define DDS_DISABLE_IMPLICIT    (1)
 #define DDS_DISABLE     (2)
-#define get_tcb(id)     ( &knl_tcb_table[INDEX_TSK(id)] )
-#define get_tcb_self(id)    ( ( (id) == TSK_SELF )? knl_ctxtsk: get_tcb(id) )
 #define TDFN_LST_TSK    0x8012
 #define TDFN_LST_SEM    0x8022
 #define TDFN_LST_FLG    0x8032
@@ -1142,11 +923,7 @@
 #define td_hok_int_impl td_hok_int
 #define td_ref_dsname_impl  td_ref_dsname
 #define td_set_dsname_impl  td_set_dsname
-#define _TDSC_ENTRY(name)   .long   _name##_impl
 #define N_TDFN  46
-#define real_time() ( ll_add(knl_current_time, knl_real_time_ofs) )
-#define get_cyccb(id)   ( &knl_cyccb_table[INDEX_CYC(id)] )
-#define get_almcb(id)   ( &knl_almcb_table[INDEX_ALM(id)] )
 #define ARM_INT_MASK 0xC0
 #define ARM_IRQ_BIT  0x80
 #define ARM_FIQ_BIT  0x40
@@ -1355,7 +1132,6 @@
 #define TFN_EVT_DEV 0x80610300
 #define TFN_DEF_DEV 0x80620300
 #define TFN_REF_IDV 0x80630100
-#define InitModule(name)    knl_init_module( knl_##name##_initialize, (UB*)#name )
 #define tk_cre_tsk_impl tk_cre_tsk
 #define tk_del_tsk_impl tk_del_tsk
 #define tk_sta_tsk_impl tk_sta_tsk
@@ -1768,19 +1544,6 @@
 #define USE_FUNC_ICALLOC
 #define USE_FUNC_IFREE
 #define USE_FUNC_INIT_IMALLOC
-#define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
-#define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
-#define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
-#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
-#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
-#define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
-#define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
-#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
-#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
-#define _pad_b(n) int :n;
-#define _pad_l(n)
-#define _pad_b(n)
-#define _pad_l(n) int :n;
 
 
 
@@ -3023,6 +2786,246 @@ FP	knl_intvec[];
 /*--------------------------------------------------------------------*/
 /*  Macro definition                                                  */
 /*--------------------------------------------------------------------*/
+#define _BIT_SET_N(n) ( (UB)0x80 >> ((n) & 7) )
+#define _BIT_SHIFT(n) ( (UB)n >> 1 )
+#define _BIT_SET_N(n) ( (UB)0x01 << ((n) & 7) )
+#define _BIT_SHIFT(n) ( (UB)n << 1 )
+#define CHECK_TSKID(tskid) { if (!in_indp() && ((tskid) == TSK_SELF)) { return E_OBJ; } else if (!CHK_TSKID(tskid)) { return E_ID; } }
+#define CHECK_TSKID_SELF(tskid) { if ( !( (!in_indp() && (tskid) == TSK_SELF) || CHK_TSKID(tskid) ) ) { return E_ID; } }
+#define CHECK_SEMID(semid) { if (!CHK_SEMID(semid)) { return E_ID; } }
+#define CHECK_FLGID(flgid) { if (!CHK_FLGID(flgid)) { return E_ID; } }
+#define CHECK_MBXID(mbxid) { if (!CHK_MBXID(mbxid)) { return E_ID; } }
+#define CHECK_MBFID(mbfid) { if (!CHK_MBFID(mbfid)) { return E_ID; } }
+#define CHECK_PORID(porid) { if (!CHK_PORID(porid)) { return E_ID; } }
+#define CHECK_MTXID(pisid) { if (!CHK_MTXID(pisid)) { return E_ID; } }
+#define CHECK_MPLID(mplid) { if (!CHK_MPLID(mplid)) { return E_ID; } }
+#define CHECK_MPFID(mpfid) { if (!CHK_MPFID(mpfid)) { return E_ID; } }
+#define CHECK_CYCID(cycid) { if (!CHK_CYCID(cycid)) { return E_ID; } }
+#define CHECK_ALMID(almid) { if (!CHK_ALMID(almid)) { return E_ID; } }
+#define CHECK_SSYID(ssid) { if (!CHK_SSYID(ssid)) { return E_ID; } }
+#define CHECK_SSYID_ALL(ssid) { if (!(CHK_SSYID(ssid) || (ssid) == 0)) { return E_ID; } }
+#define CHECK_TSKID(tskid)
+#define CHECK_TSKID_SELF(tskid)
+#define CHECK_SEMID(semid)
+#define CHECK_FLGID(flgid)
+#define CHECK_MBXID(mbxid)
+#define CHECK_MBFID(mbfid)
+#define CHECK_PORID(porid)
+#define CHECK_MTXID(pisid)
+#define CHECK_MPLID(mplid)
+#define CHECK_MPFID(mpfid)
+#define CHECK_CYCID(cycid)
+#define CHECK_ALMID(almid)
+#define CHECK_SSYID(ssid)
+#define CHECK_SSYID_ALL(ssid)
+#define CHECK_NONSELF(tskid) { if (!in_indp() && (tskid) == knl_ctxtsk->tskid) { return E_OBJ; } }
+#define CHECK_NONSELF(tskid)
+#define CHECK_PRI(pri) { if (!CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI_INI(pri) { if ((pri) != TPRI_INI && !CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI_RUN(pri) { if ((pri) != TPRI_RUN && !CHK_PRI(pri)) { return E_PAR; } }
+#define CHECK_PRI(pri)
+#define CHECK_PRI_INI(pri)
+#define CHECK_PRI_RUN(pri)
+#define CHECK_SSYPRI(ssypri) { if (!CHK_SSYPRI(ssypri)) { return E_PAR; } }
+#define CHECK_SSYPRI(ssypri)
+#define CHECK_TMOUT(tmout) { if (!((tmout) >= TMO_FEVR)) { return E_PAR; } }
+#define CHECK_TMOUT(tmout)
+#define CHECK_PAR(exp) { if (!(exp)) { return E_PAR; } }
+#define CHECK_PAR(exp)
+#define CHECK_RSATR(atr, maxatr) { if ((atr) & ~(maxatr)) { return E_RSATR; } }
+#define CHECK_RSATR(atr, maxatr)
+#define CHECK_NOSPT(exp) { if (!(exp)) { return E_NOSPT; } }
+#define CHECK_NOSPT(exp)
+#define CHECK_INTSK() { if (in_indp()) { return E_CTX; } }
+#define CHECK_INTSK()
+#define CHECK_DISPATCH() { if (in_ddsp()) { return E_CTX; } }
+#define CHECK_DISPATCH_POL(tmout) { if ((tmout) != TMO_POL && in_ddsp()) { return E_CTX; } }
+#define CHECK_DISPATCH()
+#define CHECK_DISPATCH_POL(tmout)
+#define CHECK_CTX(exp) { if (!(exp)) { return E_CTX; } }
+#define CHECK_CTX(exp)
+#define CHK_TSKID(id)   ((MIN_TSKID) <= (id) && (id) <= (MAX_TSKID))
+#define INDEX_TSK(id)   ((id)-(MIN_TSKID))
+#define ID_TSK(index)   ((index)+(MIN_TSKID))
+#define CHK_SEMID(id)   ((MIN_SEMID) <= (id) && (id) <= (MAX_SEMID))
+#define INDEX_SEM(id)   ((id)-(MIN_SEMID))
+#define ID_SEM(index)   ((index)+(MIN_SEMID))
+#define CHK_FLGID(id)   ((MIN_FLGID) <= (id) && (id) <= (MAX_FLGID))
+#define INDEX_FLG(id)   ((id)-(MIN_FLGID))
+#define ID_FLG(index)   ((index)+(MIN_FLGID))
+#define CHK_MBXID(id)   ((MIN_MBXID) <= (id) && (id) <= (MAX_MBXID))
+#define INDEX_MBX(id)   ((id)-(MIN_MBXID))
+#define ID_MBX(index)   ((index)+(MIN_MBXID))
+#define CHK_MTXID(id)   ((MIN_MTXID) <= (id) && (id) <= (MAX_MTXID))
+#define INDEX_MTX(id)   ((id)-(MIN_MTXID))
+#define ID_MTX(index)   ((index)+(MIN_MTXID))
+#define CHK_MBFID(id)   ((MIN_MBFID) <= (id) && (id) <= (MAX_MBFID))
+#define INDEX_MBF(id)   ((id)-(MIN_MBFID))
+#define ID_MBF(index)   ((index)+(MIN_MBFID))
+#define CHK_PORID(id)   ((MIN_PORID) <= (id) && (id) <= (MAX_PORID))
+#define INDEX_POR(id)   ((id)-(MIN_PORID))
+#define ID_POR(index)   ((index)+(MIN_PORID))
+#define CHK_MPLID(id)   ((MIN_MPLID) <= (id) && (id) <= (MAX_MPLID))
+#define INDEX_MPL(id)   ((id)-(MIN_MPLID))
+#define ID_MPL(index)   ((index)+(MIN_MPLID))
+#define CHK_MPFID(id)   ((MIN_MPFID) <= (id) && (id) <= (MAX_MPFID))
+#define INDEX_MPF(id)   ((id)-(MIN_MPFID))
+#define ID_MPF(index)   ((index)+(MIN_MPFID))
+#define CHK_CYCID(id)   ((MIN_CYCID) <= (id) && (id) <= (MAX_CYCID))
+#define INDEX_CYC(id)   ((id)-(MIN_CYCID))
+#define ID_CYC(index)   ((index)+(MIN_CYCID))
+#define CHK_ALMID(id)   ((MIN_ALMID) <= (id) && (id) <= (MAX_ALMID))
+#define INDEX_ALM(id)   ((id)-(MIN_ALMID))
+#define ID_ALM(index)   ((index)+(MIN_ALMID))
+#define CHK_SSYID(id)   ((MIN_SSYID) <= (id) && (id) <= (MAX_SSYID))
+#define INDEX_SSY(id)   ((id)-(MIN_SSYID))
+#define ID_SSY(index)   ((index)+(MIN_SSYID))
+#define CHK_PRI(pri)    ((MIN_PRI) <= (pri) && (pri) <= (MAX_PRI))
+#define CHK_SSYPRI(pri) ((MIN_SSYPRI) <= (pri) && (pri) <= (MAX_SSYPRI))
+#define BEGIN_CRITICAL_SECTION  { UINT _basepri_ = disint();
+#define END_CRITICAL_SECTION    if ( !isDI(_basepri_) && knl_ctxtsk != knl_schedtsk && !knl_dispatch_disabled ) { knl_dispatch(); } enaint(_basepri_); }
+#define BEGIN_DISABLE_INTERRUPT { UINT _basepri_ = disint();
+#define END_DISABLE_INTERRUPT   enaint(_basepri_); }
+#define ENABLE_INTERRUPT    { enaint(0); }
+#define DISABLE_INTERRUPT   { disint(); }
+#define ENABLE_INTERRUPT_UPTO(level)    { enaint(0); }
+#define ENTER_TASK_INDEPENDENT  { knl_EnterTaskIndependent(); }
+#define LEAVE_TASK_INDEPENDENT  { knl_LeaveTaskIndependent(); }
+#define in_indp()   ( knl_isTaskIndependent() || knl_ctxtsk == NULL )
+#define in_ddsp()   ( knl_dispatch_disabled || in_indp() || isDI(knl_getBASEPRI()) )
+#define in_loc()    ( isDI(knl_getBASEPRI()) || in_indp() )
+#define in_qtsk()   ( knl_ctxtsk->sysmode > knl_ctxtsk->isysmode )
+#define knl_dispatch_request()
+#define DEBUG_PRINT(arg)
+#define DO_DEBUG(exp)   { exp }
+#define DEBUG_PRINT(arg)
+#define DO_DEBUG(exp)
+#define DD(opncb)       ( (opncb) - knl_OpnCBtbl + 1 )
+#define OPNCB(dd)       ( knl_OpnCBtbl + ((dd) - 1) )
+#define REQID(reqcb)        ( (reqcb) - knl_ReqCBtbl + 1 )
+#define REQCB(reqid)        ( knl_ReqCBtbl + ((reqid) - 1) )
+#define DEVREQ_REQCB(devreq)    ((ReqCB*)((B*)(devreq) - offsetof(ReqCB, req)))
+#define MERCD(er)   ( (ER)(er) >> 16 )
+#define SERCD(er)   ( (H)(er) )
+#define ERCD(mer, ser)  ( (ER)(((UW)(mer) << 16) | ((UW)(ser) & 0x0000FFFF)) )
+#define ERCD(mer, ser)  ( ((mer) << 16) | ((ser) & 0xffff) )
+#define get_flgcb(id)   ( &knl_flgcb_table[INDEX_FLG(id)] )
+#define P0(void)        ( int _1,int _2,int _3,int _4,int _5, void *gp )
+#define P1(p1)          ( p1,    int _2,int _3,int _4,int _5, void *gp )
+#define P2(p1, p2)      ( p1, p2,       int _3,int _4,int _5, void *gp )
+#define P3(p1, p2, p3)      ( p1, p2, p3,          int _4,int _5, void *gp )
+#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4,             int _5, void *gp )
+#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5,                 void *gp )
+#define P2GP(p1, p2)        ( p1, p2,                 void *gp )
+#define P0(void)        ( void )
+#define P1(p1)          ( p1 )
+#define P2(p1, p2)      ( p1, p2 )
+#define P3(p1, p2, p3)      ( p1, p2, p3 )
+#define P4(p1, p2, p3, p4)  ( p1, p2, p3, p4 )
+#define P5(p1, p2, p3, p4, p5)  ( p1, p2, p3, p4, p5 )
+#define P2GP(p1, p2)        ( p1, p2 )
+#define ltoll(a)    ( (longlong)(a) )
+#define ultoll(a)   ( (longlong)(a) )
+#define uitoll(a)   ( (longlong)(a) )
+#define lltol(a)    ( (long)(a) )
+#define lltoul(a)   ( (unsigned long)(a) )
+#define ll_add(a,b) ( (a) + (b) )
+#define ll_sub(a,b) ( (a) - (b) )
+#define ll_mul(a,b) ( (a) * (b) )
+#define li_mul(a,b) ( (a) * (b) )
+#define lui_mul(a,b)    ( (a) * (b) )
+#define ll_div(a,b) ( (a) / (b) )
+#define li_div(a,b) ( (a) / (b) )
+#define lui_div(a,b)    ( (a) / (b) )
+#define ll_mod(a,b) ( (a) % (b) )
+#define li_mod(a,b) ( (a) % (b) )
+#define lui_mod(a,b)    ( (a) % (b) )
+#define ll_cmp(a,b) ( (a) - (b) )
+#define ll_sign(a)  ( (a) )
+#define ll_neg(a)   ( -(a) )
+#define ll_inc(a)   ( (*(a))++ )
+#define ll_dec(a)   ( (*(a))-- )
+#define hilo_ll(ll, h, l)   ( (ll) = ((longlong)(h) << 32) | (l) )
+#define ll_hilo(h, l, ll)   ( (h) = (long)((ll) >> 32), (l) = (unsigned long)(ll) )
+#define hilo_ll(ll, h, l)   ( (ll).hi = (h), (ll).lo = (l) )
+#define ll_hilo(h, l, ll)   ( (h) = (ll).hi, (l) = (ll).lo )
+#define get_mbxcb(id)   ( &knl_mbxcb_table[INDEX_MBX(id)] )
+#define headmsg(mbxcb)  ( (mbxcb)->mq_head.msgque[0] )
+#define nextmsg(msg)    ( ((T_MSG*)(msg))->msgque[0] )
+#define AlignIMACB(imacb)   ( (IMACB*)((UW)(imacb) & ~0x00000001UL) )
+#define ROUND(sz)   ( ((UW)(sz) + (UW)(ROUNDSZ-1)) & ~(UW)(ROUNDSZ-1) )
+#define setAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev |  (UW)(f)) )
+#define clrAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev & ~(UW)(f)) )
+#define chkAreaFlag(q, f)   ( ((UW)(q)->prev & (UW)(f)) != 0 )
+#define Mask(x)     ( (QUEUE*)((UW)(x) & ~AREA_MASK) )
+#define Assign(x, y)    ( (x) = (QUEUE*)(((UW)(x) & AREA_MASK) | (UW)(y)) )
+#define AreaSize(aq)    ( (VB*)(aq)->next - (VB*)((aq) + 1) )
+#define FreeSize(fq)    ( (W)((fq) + 1)->prev )
+#define get_mpfcb(id)   ( &knl_mpfcb_table[INDEX_MPF(id)] )
+#define MINSZ(sz)   ( ((UW)(sz) + (UW)(MINSIZE-1)) & ~(UW)(MINSIZE-1) )
+#define get_mplcb(id)   ( &knl_mplcb_table[INDEX_MPL(id)] )
+#define get_mbfcb(id)   ( &knl_mbfcb_table[INDEX_MBF(id)] )
+#define ROUNDSZ(sz) (((UW)(sz) + (UW)(ROUNDSIZE-1)) & ~(UW)(ROUNDSIZE-1))
+#define get_mtxcb(id)   ( &knl_mtxcb_table[INDEX_MTX(id)] )
+#define mtx_waited(mtxcb)   ( !isQueEmpty(&(mtxcb)->wait_queue) )
+#define mtx_head_pri(mtxcb) ( ((TCB*)(mtxcb)->wait_queue.next)->priority )
+#define reset_priority(tcb) knl_release_mutex((tcb), NULL)
+#define _ALIGN_CPU(x)   (((x)+3)&0xFFFFFFFC)
+#define _ALIGN_64(x)    (((x)+7)&0xFFFFFFF8)
+#define get_porcb(id)   ( &knl_porcb_table[INDEX_POR(id)] )
+#define CHECK_RDVNO(rdvno) { if ( !CHK_TSKID(knl_get_tskid_rdvno(rdvno)) ) { return E_OBJ; } }
+#define get_semcb(id)   ( &knl_semcb_table[INDEX_SEM(id)] )
+#define get_ssycb(id)   ( &knl_ssycb_table[INDEX_SSY(id)] )
+#define EXP_M(n)    (n)
+#define EXP_EXT(n)  (EXP_M(16) + n)
+#define NVIC_ISER(x)    (NVIC_ISER_BASE + (((x) / 32) << 2))
+#define NVIC_ICER(x)    (NVIC_ICER_BASE + (((x) / 32) << 2))
+#define NVIC_ISPR(x)    (NVIC_ISPR_BASE + (((x) / 32) << 2))
+#define NVIC_ICPR(x)    (NVIC_ICPR_BASE + (((x) / 32) << 2))
+#define NVIC_IABR(x)    (NVIC_IABR_BASE + (((x) / 32) << 2))
+#define NVIC_IPR(x) (NVIC_IPR_BASE  + (x))
+#define DI(intsts)  ( (intsts) = disint() )
+#define EI(intsts)  ( enaint(intsts) )
+#define isDI(intsts)    ( (intsts) != 0 )
+#define DINTNO(intvec)  (intvec)
+#define INTPRI_GROUP(pri, subpri)   (((pri) << (8-INTPRI_BITWIDTH)) | (subpri))
+#define ClearInt(intno) ClearPendingInt(intno)
+#define EndOfInt(intno)
+#define LockDM()    MLock(&knl_DevMgrLock, 0)
+#define UnlockDM()  MUnlock(&knl_DevMgrLock, 0)
+#define LockREG()   MLock(&knl_DevMgrLock, 1)
+#define UnlockREG() MUnlock(&knl_DevMgrLock, 1)
+#define DID(devcb)      ( ((devcb) - knl_DevCBtbl + 1) << 8 )
+#define DEVID(devcb, unitno)    ( DID(devcb) + (unitno) )
+#define DEVCB(devid)        ( knl_DevCBtbl + (((devid) >> 8) - 1) )
+#define UNITNO(devid)       ( (devid) & 0xff )
+#define RESQ_OPNCB(rq)      ( (OpnCB*)((B*)(rq) - offsetof(OpnCB, resq)) )
+#define CallDeviceDriver(p1, p2, p3, p4, drv, gp ) knl_CallDeviceDriver((INT)(p1), (INT)(p2), (INT)(p3), (INT)(p4),                             (FP)(drv), (gp))
+#define int_priority(x)     ( (INT)((x) - MIN_PRI) )
+#define ext_tskpri(x)       ( (PRI)((x) + MIN_PRI) )
+#define get_tcb(id)     ( &knl_tcb_table[INDEX_TSK(id)] )
+#define get_tcb_self(id)    ( ( (id) == TSK_SELF )? knl_ctxtsk: get_tcb(id) )
+#define _TDSC_ENTRY(name)   .long   _name##_impl
+#define real_time() ( ll_add(knl_current_time, knl_real_time_ofs) )
+#define get_cyccb(id)   ( &knl_cyccb_table[INDEX_CYC(id)] )
+#define get_almcb(id)   ( &knl_almcb_table[INDEX_ALM(id)] )
+#define InitModule(name)    knl_init_module( knl_##name##_initialize, (UB*)#name )
+#define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
+#define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
+#define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
+#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
+#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
+#define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
+#define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
+#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+#define _pad_b(n) int :n;
+#define _pad_l(n)
+#define _pad_b(n)
+#define _pad_l(n) int :n;
+
+
+
 /*--------------------------------------------------------------------*/
 /*  Prototype declaration                                             */
 /*--------------------------------------------------------------------*/
@@ -3439,12 +3442,10 @@ const ATR VALID_FLGATR = {
 const T_CTSK knl_c_init_task = {
     (void *)INITTASK_EXINF,     /* exinf */
     INITTASK_TSKATR,        /* tskatr */
-    INITTASK_TSKATR|TA_USERBUF, /* tskatr */
     (FP)&knl_init_task,     /* task */
     INITTASK_ITSKPRI,       /* itskpri */
     INITTASK_STKSZ,         /* stksz */
     INITTASK_DSNAME,        /* dsname */
-    INITTASK_STACK,         /* bufptr */
     init_task_stack,        /* bufptr */
 };
 
