@@ -1762,7 +1762,15 @@
 #define USE_FUNC_ICALLOC
 #define USE_FUNC_IFREE
 #define USE_FUNC_INIT_IMALLOC
-
+#define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
+#define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
+#define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
+#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
+#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
+#define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
+#define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+#define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
+#define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
 
 
 
@@ -1908,7 +1916,11 @@ static const UB  digits[32] = "0123456789abcdef0123456789ABCDEF";
 
 
 
-
+/*
+ * Definition of event flag wait specification
+ */
+static const WSPEC knl_wspec_flg_tfifo = { TTW_FLG, NULL, NULL };
+static const WSPEC knl_wspec_flg_tpri  = { TTW_FLG, flg_chg_pri, NULL };
 
 
 
@@ -2900,6 +2912,8 @@ typedef struct {
     void    (*rel_wai_hook)(TCB *);     /* Process at task wait release */
 } WSPEC;
 
+typedef INT     HEADER;
+
 /*--------------------------------------------------------------------*/
 /*  Struct definition                                                 */
 /*--------------------------------------------------------------------*/
@@ -2978,6 +2992,197 @@ struct task_control_block {
 /*--------------------------------------------------------------------*/
 /*  Variable definition                                               */
 /*--------------------------------------------------------------------*/
+/* High level programming language interrupt handler entry */
+FP knl_hll_inthdr[N_INTVEC];
+
+extern FP knl_hll_inthdr[];
+
+
+/* Lock for device management exclusive control */
+  FastMLock   knl_DevMgrLock;
+
+
+/* Device initial setting information */
+  T_IDEV      knl_DefaultIDev;
+
+
+  DevCB       knl_DevCBtbl[CFN_MAX_REGDEV];  /* Device registration information table */
+  QUEUE       knl_UsedDevCB; /* In-use queue */
+  QUEUE       knl_FreeDevCB; /* Unused queue */
+
+extern  T_IDEV      knl_DefaultIDev;
+
+extern DevCB knl_DevCBtbl[];    /* Device registration information table */
+extern QUEUE knl_UsedDevCB; /* In-use queue */
+extern QUEUE knl_FreeDevCB; /* Unused queue */
+
+
+extern OpnCB knl_OpnCBtbl[];    /* Open management information table */
+extern QUEUE knl_FreeOpnCB; /* Unused queue */
+
+
+extern ReqCB knl_ReqCBtbl[];    /* Request management information table */
+extern QUEUE knl_FreeReqCB; /* Unused queue */
+
+
+
+extern ResCB knl_resource_control_block;
+
+
+
+/* Suspend disable request count */
+extern  INT knl_DisSusCnt;
+
+
+OpnCB knl_OpnCBtbl[CFN_MAX_OPNDEV];  /* Open management information table */
+QUEUE knl_FreeOpnCB; /* Unused queue */
+
+ReqCB knl_ReqCBtbl[CFN_MAX_REQDEV];  /* Request management information table */
+QUEUE knl_FreeReqCB; /* Unused queue */
+
+ResCB knl_resource_control_block;
+
+
+/* Suspend disable request count */
+INT  knl_DisSusCnt = 0;
+
+
+ W   knl_taskindp = 0;
+  UW  knl_taskmode;
+
+
+/* Low level memory manager information */
+  void    *knl_lowmem_top   /* Head of area (Low address */
+  void    *knl_lowmem_limit /* End of area (High address */
+
+
+FLGCB knl_flgcb_table[NUM_FLGID];    /* Event flag control block */
+QUEUE knl_free_flgcb;    /* FreeQue */
+
+
+extern FLGCB knl_flgcb_table[]; /* Event flag control block */
+extern QUEUE knl_free_flgcb;    /* FreeQue */
+
+
+INT init_task_stack[INITTASK_STKSZ/sizeof(INT)];
+
+
+MBXCB knl_mbxcb_table[NUM_MBXID];    /* Mailbox control block */
+QUEUE knl_free_mbxcb;    /* FreeQue */
+
+extern MBXCB knl_mbxcb_table[]; /* Mailbox control block */
+extern QUEUE knl_free_mbxcb;    /* FreeQue */
+
+
+
+IMACB *knl_imacb;
+
+
+extern IMACB *knl_imacb;
+
+
+MPFCB knl_mpfcb_table[NUM_MPFID];    /* Fixed size memory pool control block */
+QUEUE knl_free_mpfcb;    /* FreeQue */
+
+
+extern MPFCB knl_mpfcb_table[]; /* Fixed size memory pool control block */
+extern QUEUE knl_free_mpfcb;    /* FreeQue */
+
+
+MPLCB knl_mplcb_table[NUM_MPLID];    /* Variable size memory pool control block */
+QUEUE knl_free_mplcb;    /* FreeQue */
+
+extern MPLCB knl_mplcb_table[]; /* Variable size memory pool control block */
+extern QUEUE knl_free_mplcb;    /* FreeQue */
+
+
+
+MBFCB knl_mbfcb_table[NUM_MBFID];    /* Message buffer control block */
+QUEUE knl_free_mbfcb;    /* FreeQue */
+
+extern MBFCB knl_mbfcb_table[]; /* Message buffer control block */
+extern QUEUE knl_free_mbfcb;    /* FreeQue */
+
+
+UINT knl_lowpow_discnt = 0;
+
+FP knl_hook_enterfn;
+FP knl_hook_leavefn;
+void *knl_hook_svc_gp;
+
+FP knl_hook_execfn;
+FP knl_hook_stopfn;
+void *knl_hook_dsp_gp;
+
+FP knl_hook_ienterfn;
+FP knl_hook_ileavefn;
+void *knl_hook_int_gp;
+
+extern UINT knl_lowpow_discnt;
+
+extern FP knl_hook_enterfn;
+extern FP knl_hook_leavefn;
+extern FP knl_hook_execfn;
+extern FP knl_hook_stopfn;
+extern FP knl_hook_ienterfn;
+extern FP knl_hook_ileavefn;
+
+extern void *knl_hook_svc_gp;
+extern void *knl_hook_dsp_gp;
+extern void *knl_hook_int_gp;
+
+
+MTXCB knl_mtxcb_table[NUM_MTXID];    /* Mutex control block */
+QUEUE knl_free_mtxcb;    /* FreeQue */
+
+
+extern MTXCB knl_mtxcb_table[]; /* Mutex control block */
+extern QUEUE knl_free_mtxcb;    /* FreeQue */
+
+
+extern RDYQUE   knl_ready_queue;
+
+
+PORCB knl_porcb_table[NUM_PORID];    /* Rendezvous port control block */
+QUEUE knl_free_porcb;    /* FreeQue */
+
+extern PORCB knl_porcb_table[]; /* Rendezvous port control block */
+extern QUEUE knl_free_porcb;    /* FreeQue */
+
+
+SEMCB knl_semcb_table[NUM_SEMID];    /* Semaphore control block */
+QUEUE knl_free_semcb;    /* FreeQue */
+
+
+SSYCB knl_ssycb_table[NUM_SSYID];    /* Subsystem control block */
+
+INT   knl_dispatch_disabled; /* DDS_XXX see task.h */
+
+
+TCB   *knl_ctxtsk;   /* Task in execution */
+TCB   *knl_schedtsk; /* Task which should be executed */
+RDYQUE    knl_ready_queue;   /* Ready queue */
+
+
+TCB   knl_tcb_table[NUM_TSKID];  /* Task control block */
+QUEUE knl_free_tcb;  /* FreeQue */
+
+
+LSYSTIM   knl_current_time;  /* System operation time */
+LSYSTIM   knl_real_time_ofs; /* Actual time - System operation time */
+
+QUEUE knl_timer_queue;
+
+
+CYCCB knl_cyccb_table[NUM_CYCID];    /* Cyclic handler control block */
+QUEUE knl_free_cyccb;    /* FreeQue */
+
+
+
+ALMCB knl_almcb_table[NUM_ALMID];    /* Alarm handler control block */
+QUEUE knl_free_almcb;    /* FreeQue */
+
+
 /*--------------------------------------------------------------------*/
 /*  Macro definition                                                  */
 /*--------------------------------------------------------------------*/
@@ -3257,10 +3462,7 @@ ER tk_ena_dsp_impl( void )
  * High level programming language
  */
 
-/* High level programming language interrupt handler entry */
-FP knl_hll_inthdr[N_INTVEC];
 
-extern FP knl_hll_inthdr[];
 
 /* High level programming language routine (Interrupt) */
 extern void knl_inthdr_startup();
@@ -3811,20 +4013,14 @@ extern ER td_set_dsname( UINT type, ID id, const UB *dsname );
 /** [END Common Definitions] */
 
 
-/* Lock for device management exclusive control */
-  FastMLock   knl_DevMgrLock;
 
-/* Device initial setting information */
-  T_IDEV      knl_DefaultIDev;
+
 
 /* ------------------------------------------------------------------------ */
 /*
  *  Device registration management
  */
 
-  DevCB       knl_DevCBtbl[CFN_MAX_REGDEV];  /* Device registration information table */
-  QUEUE       knl_UsedDevCB; /* In-use queue */
-  QUEUE       knl_FreeDevCB; /* Unused queue */
 
 
 /*
@@ -4395,15 +4591,13 @@ ER knl_finish_devmgr( void )
 
 /* Set Object Name in .exinf for DEBUG */
 
-extern  T_IDEV      knl_DefaultIDev;
+
 
 /*
  *  Device registration management
  */
 
-extern DevCB knl_DevCBtbl[];    /* Device registration information table */
-extern QUEUE knl_UsedDevCB; /* In-use queue */
-extern QUEUE knl_FreeDevCB; /* Unused queue */
+
 
 
 /*
@@ -4421,21 +4615,7 @@ ER knl_check_devid( ID devid )
 /*
  * Device Management: Input/Output
  */
-extern OpnCB knl_OpnCBtbl[];    /* Open management information table */
-extern QUEUE knl_FreeOpnCB; /* Unused queue */
 
-
-extern ReqCB knl_ReqCBtbl[];    /* Request management information table */
-extern QUEUE knl_FreeReqCB; /* Unused queue */
-
-
-
-extern ResCB knl_resource_control_block;
-
-
-
-/* Suspend disable request count */
-extern  INT knl_DisSusCnt;
 
 /* Maximum number of suspend disable request counts */
 
@@ -4476,13 +4656,6 @@ extern ER knl_close_device( OpnCB *opncb, UINT option );
 /** [END Common Definitions] */
 
 
-OpnCB knl_OpnCBtbl[CFN_MAX_OPNDEV];  /* Open management information table */
-QUEUE knl_FreeOpnCB; /* Unused queue */
-
-ReqCB knl_ReqCBtbl[CFN_MAX_REQDEV];  /* Request management information table */
-QUEUE knl_FreeReqCB; /* Unused queue */
-
-ResCB knl_resource_control_block;
 
 
 /*
@@ -5300,8 +5473,6 @@ err_ret2:
 
 /* ------------------------------------------------------------------------ */
 
-/* Suspend disable request count */
-INT  knl_DisSusCnt = 0;
 
 /*
  * Send driver request event to each device
@@ -5552,13 +5723,6 @@ ER knl_finishDevIO( void )
 }
 
 
-
- W   knl_taskindp = 0;
-  UW  knl_taskmode;
-/* Low level memory manager information */
-  void    *knl_lowmem_top);   /* Head of area (Low address */
-  void    *knl_lowmem_limit); /* End of area (High address */
-
 /* ------------------------------------------------------------------------ */
 
 /*
@@ -5647,8 +5811,7 @@ ER knl_restart_device( W mode )
 /** [END Common Definitions] */
 
 
-FLGCB knl_flgcb_table[NUM_FLGID];    /* Event flag control block */
-QUEUE knl_free_flgcb;    /* FreeQue */
+
 
 
 /*
@@ -5831,11 +5994,6 @@ static void flg_chg_pri( TCB *tcb, INT oldpri )
     knl_gcb_change_priority((GCB*)flgcb, tcb);
 }
 
-/*
- * Definition of event flag wait specification
- */
-static const WSPEC knl_wspec_flg_tfifo = { TTW_FLG, NULL, NULL };
-static const WSPEC knl_wspec_flg_tpri  = { TTW_FLG, flg_chg_pri, NULL };
 
 /*
  * Event flag wait
@@ -6028,13 +6186,6 @@ INT td_flg_que_impl( ID flgid, ID list[], INT nent )
 
     return ercd;
 }
-
-
-
-
-extern FLGCB knl_flgcb_table[]; /* Event flag control block */
-extern QUEUE knl_free_flgcb;    /* FreeQue */
-
 
 
 /*
@@ -6315,7 +6466,7 @@ extern void  knl_Ifree( void *ptr );
 
 extern void knl_init_task(void);
 
-INT init_task_stack[INITTASK_STKSZ/sizeof(INT)];
+
 
 /*
  * Initial task creation parameter
@@ -6440,15 +6591,7 @@ BOOL CheckInt( UINT intno )
 
 /* ------------------------------------------------------------------------ */
 
-# define _CALL(p1, p2, p3, hdr, cb)         CallUserHandler((INT)(p1), (INT)(p2), (INT)(p3), (FP)(hdr), (cb)->gp)
-# define CallUserHandlerP1(   p1,         hdr, cb)  _CALL(p1, 0,  0,  hdr, cb)
-# define CallUserHandlerP2(   p1, p2,     hdr, cb)  _CALL(p1, p2, 0,  hdr, cb)
-# define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  _CALL(p1, p2, p3, hdr, cb)
-# define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  _CALL(p1, p2, gp, hdr, cb)
-# define CallUserHandlerP1(   p1,         hdr, cb)  (*(hdr))(p1)
-# define CallUserHandlerP2(   p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
-# define CallUserHandlerP3(   p1, p2, p3, hdr, cb)  (*(hdr))(p1, p2, p3)
-# define CallUserHandlerP2_GP(p1, p2,     hdr, cb)  (*(hdr))(p1, p2)
+
 
 /* ------------------------------------------------------------------------ */
 
@@ -6843,8 +6986,7 @@ extern void ll_dec( longlong *a );          /* (*a)-- */
 /** [END Common Definitions] */
 
 
-MBXCB knl_mbxcb_table[NUM_MBXID];    /* Mailbox control block */
-QUEUE knl_free_mbxcb;    /* FreeQue */
+
 
 
 /*
@@ -7184,8 +7326,7 @@ INT td_mbx_que_impl( ID mbxid, ID list[], INT nent )
 
 
 
-extern MBXCB knl_mbxcb_table[]; /* Mailbox control block */
-extern QUEUE knl_free_mbxcb;    /* FreeQue */
+
 
 
 /*
@@ -7350,7 +7491,6 @@ void knl_removeAreaQue( QUEUE *aq )
 
 /* ------------------------------------------------------------------------ */
 
-IMACB *knl_imacb;
 
 /* ------------------------------------------------------------------------ */
 
@@ -7552,7 +7692,7 @@ extern void knl_removeFreeQue( QUEUE *fq );
 extern void knl_insertAreaQue( QUEUE *que, QUEUE *ent );
 extern void knl_removeAreaQue( QUEUE *aq );
 
-extern IMACB *knl_imacb;
+
 extern ER knl_init_Imalloc( void );
 
 
@@ -7560,8 +7700,7 @@ extern ER knl_init_Imalloc( void );
 /** [END Common Definitions] */
 
 
-MPFCB knl_mpfcb_table[NUM_MPFID];    /* Fixed size memory pool control block */
-QUEUE knl_free_mpfcb;    /* FreeQue */
+
 
 
 /*
@@ -7969,8 +8108,7 @@ INT td_mpf_que_impl( ID mpfid, ID list[], INT nent )
 
 
 
-extern MPFCB knl_mpfcb_table[]; /* Fixed size memory pool control block */
-extern QUEUE knl_free_mpfcb;    /* FreeQue */
+
 
 
 
@@ -7990,8 +8128,7 @@ void *knl_mempool_end( MPFCB *mpfcb )
 
 
 
-MPLCB knl_mplcb_table[NUM_MPLID];    /* Variable size memory pool control block */
-QUEUE knl_free_mplcb;    /* FreeQue */
+
 
 
 /*
@@ -8592,8 +8729,7 @@ INT td_mpl_que_impl( ID mplid, ID list[], INT nent )
 
 
 
-extern MPLCB knl_mplcb_table[]; /* Variable size memory pool control block */
-extern QUEUE knl_free_mplcb;    /* FreeQue */
+
 
 
 
@@ -8621,8 +8757,6 @@ extern void knl_mpl_wakeup( MPLCB *mplcb );
 
 
 
-MBFCB knl_mbfcb_table[NUM_MBFID];    /* Message buffer control block */
-QUEUE knl_free_mbfcb;    /* FreeQue */
 
 
 /*
@@ -9195,17 +9329,9 @@ INT td_rmbf_que_impl( ID mbfid, ID list[], INT nent )
 }
 
 
-
-extern MBFCB knl_mbfcb_table[]; /* Message buffer control block */
-extern QUEUE knl_free_mbfcb;    /* FreeQue */
-
-
-
 /*
  * Message header format
  */
-typedef INT     HEADER;
-
 
 /*
  * Check message buffer free space
@@ -9284,7 +9410,7 @@ ER tk_ref_ver_impl( T_RVER *pk_rver )
  * Number of times for disabling power-saving mode switch
  *  If it is 0, the mode switch is enabled.
  */
-UINT knl_lowpow_discnt = 0;
+
 /* ------------------------------------------------------------------------ */
 /*
  *  Debugger support function
@@ -9293,17 +9419,7 @@ UINT knl_lowpow_discnt = 0;
 /*
  * Hook routine address
  */
-FP knl_hook_enterfn;
-FP knl_hook_leavefn;
-void *knl_hook_svc_gp;
 
-FP knl_hook_execfn;
-FP knl_hook_stopfn;
-void *knl_hook_dsp_gp;
-
-FP knl_hook_ienterfn;
-FP knl_hook_ileavefn;
-void *knl_hook_int_gp;
 
 
 /*
@@ -9397,21 +9513,12 @@ ER td_ref_sys_impl( TD_RSYS *pk_rsys )
 }
 
 
-extern UINT knl_lowpow_discnt;
+
 
 /*
  * Hook routine address
  */
-extern FP knl_hook_enterfn;
-extern FP knl_hook_leavefn;
-extern FP knl_hook_execfn;
-extern FP knl_hook_stopfn;
-extern FP knl_hook_ienterfn;
-extern FP knl_hook_ileavefn;
 
-extern void *knl_hook_svc_gp;
-extern void *knl_hook_dsp_gp;
-extern void *knl_hook_int_gp;
 
 /*
  * Hook enable/disable setting
@@ -9428,8 +9535,6 @@ extern void knl_unhook_int( void );
 /** [END Common Definitions] */
 
 
-MTXCB knl_mtxcb_table[NUM_MTXID];    /* Mutex control block */
-QUEUE knl_free_mtxcb;    /* FreeQue */
 
 
 /*
@@ -10025,8 +10130,7 @@ INT td_mtx_que_impl( ID mtxid, ID list[], INT nent )
 }
 
 
-extern MTXCB knl_mtxcb_table[]; /* Mutex control block */
-extern QUEUE knl_free_mtxcb;    /* FreeQue */
+
 
 
 
@@ -10508,7 +10612,7 @@ QUEUE* QueRemoveNext( QUEUE *que )
  */
 
 
-extern RDYQUE   knl_ready_queue;
+
 
 /*
  * Ready queue initialization
@@ -10664,8 +10768,7 @@ TCB* knl_ready_queue_move_last( RDYQUE *rq, TCB *tcb )
 
 
 
-PORCB knl_porcb_table[NUM_PORID];    /* Rendezvous port control block */
-QUEUE knl_free_porcb;    /* FreeQue */
+
 
 
 /* 
@@ -11250,8 +11353,7 @@ INT td_acp_que_impl( ID porid, ID list[], INT nent )
 
 /** [END Common Definitions] */
 
-extern PORCB knl_porcb_table[]; /* Rendezvous port control block */
-extern QUEUE knl_free_porcb;    /* FreeQue */
+
 
 
 
@@ -11297,8 +11399,7 @@ extern const WSPEC knl_wspec_rdv;
 /** [END Common Definitions] */
 
 
-SEMCB knl_semcb_table[NUM_SEMID];    /* Semaphore control block */
-QUEUE knl_free_semcb;    /* FreeQue */
+
 
 
 /* 
@@ -11854,7 +11955,6 @@ void sio_init(void)
 
 
 
-SSYCB knl_ssycb_table[NUM_SSYID];    /* Subsystem control block */
 
 
 /*
@@ -12717,20 +12817,17 @@ void knl_shutdown_system( INT fin )
 /*
  * Task dispatch disable state
  */
-INT   knl_dispatch_disabled; /* DDS_XXX see task.h */
+
 
 /*
  * Task execution control 
  */
-TCB   *knl_ctxtsk;   /* Task in execution */
-TCB   *knl_schedtsk; /* Task which should be executed */
-RDYQUE    knl_ready_queue;   /* Ready queue */
+
 
 /*
  * Task control information
  */
-TCB   knl_tcb_table[NUM_TSKID];  /* Task control block */
-QUEUE knl_free_tcb;  /* FreeQue */
+
 
 /*
  * TCB Initialization
@@ -13841,7 +13938,6 @@ extern const WSPEC knl_wspec_slp;
 
 
 
-
     _TDSC_ENTRY(td_lst_tsk)
     _TDSC_ENTRY(td_lst_sem)
     _TDSC_ENTRY(td_lst_flg)
@@ -13901,13 +13997,12 @@ extern const WSPEC knl_wspec_slp;
  *  Therefore 'current_time' does not affect with time change
  *  and it increases simply.
  */
-LSYSTIM   knl_current_time;  /* System operation time */
-LSYSTIM   knl_real_time_ofs; /* Actual time - System operation time */
+
 
 /* 
  * Timer event queue
  */
-QUEUE knl_timer_queue;
+
 
 /*
  * Initialization of timer module
@@ -14211,8 +14306,7 @@ ER tk_dly_tsk_impl( RELTIM dlytim )
  */
 
 
-CYCCB knl_cyccb_table[NUM_CYCID];    /* Cyclic handler control block */
-QUEUE knl_free_cyccb;    /* FreeQue */
+
 
 
 /*
@@ -14584,8 +14678,6 @@ ER td_ref_cyc_impl( ID cycid, TD_RCYC* pk_rcyc )
  */
 
 
-ALMCB knl_almcb_table[NUM_ALMID];    /* Alarm handler control block */
-QUEUE knl_free_almcb;    /* FreeQue */
 
 
 /*
