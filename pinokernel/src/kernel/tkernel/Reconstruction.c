@@ -24,9 +24,8 @@
 /*--------------------------------------------------------------------*/
 /*  Define definition                                                 */
 /*--------------------------------------------------------------------*/
-#define __size_t                   (unsigned long)
-#define __wchar_t                  (int)
-#define _align64                   ()
+#define __size_t                   unsigned long
+#define __wchar_t                  int
 #define _APP_RL78G13_R5F100ADASP_  (1)
 #define ALLOW_MISALIGN             (0)
 #define APBC0_PSR_Val              (0x00000001)
@@ -248,8 +247,6 @@
 #define RDVNO_SHIFT                (sizeof(RNO)*8/2)
 #define RI_USERAREA_TOP            (0x1FFFE000)
 #define RI_USERINIT                (NULL)
-#define ROUNDSIZE                  (sizeof(HEADER))
-#define ROUNDSZ                    ( sizeof(QUEUE) )
 #define SCB_AIRCR                  (0xE000ED0C)
 #define SCB_CCR                    (0xE000ED14)
 #define SCB_ICSR                   (0xE000ED04)
@@ -648,10 +645,6 @@ typedef INT     (*FUNCP)(); /* Function address general */
 typedef UINT        BOOL;
 
 typedef UH      TC;     /* TRON character code */
-
-typedef __size_t    size_t;
-
-typedef __wchar_t   wchar_t;
 
 typedef INT     FN;     /* Function code */
 typedef INT     RNO;        /* Rendezvous number */
@@ -1660,7 +1653,6 @@ struct task_control_block {
 
     void    *isstack;   /* stack pointer initial value */
     void    *gp;        /* Global pointer */
-    _align64        /* alignment for CTXB.ssp */
     CTXB    tskctxb;    /* Task context block */
     UB  name[OBJECT_NAME_LENGTH];   /* name */
 };
@@ -1929,7 +1921,6 @@ FP  knl_intvec[];
 #define clrAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev & ~(UW)(f)) )
 #define DD(opncb)       ( (opncb) - knl_OpnCBtbl + 1 )
 #define DEBUG_PRINT(arg)
-#define DEBUG_PRINT(arg)
 #define DEVCB(devid)        ( knl_DevCBtbl + (((devid) >> 8) - 1) )
 #define DEVID(devcb, unitno)    ( DID(devcb) + (unitno) )
 #define DEVREQ_REQCB(devreq)    ((ReqCB*)((B*)(devreq) - offsetof(ReqCB, req)))
@@ -2058,6 +2049,8 @@ FP  knl_intvec[];
 #define reset_priority(tcb) knl_release_mutex((tcb), NULL)
 #define RESQ_OPNCB(rq)      ( (OpnCB*)((B*)(rq) - offsetof(OpnCB, resq)) )
 #define ROUND(sz)   ( ((UW)(sz) + (UW)(ROUNDSZ-1)) & ~(UW)(ROUNDSZ-1) )
+#define ROUNDSIZE                  (sizeof(HEADER))
+#define ROUNDSZ                    ( sizeof(QUEUE) )
 #define ROUNDSZ(sz) (((UW)(sz) + (UW)(ROUNDSIZE-1)) & ~(UW)(ROUNDSIZE-1))
 #define SERCD(er)   ( (H)(er) )
 #define setAreaFlag(q, f)   ( (q)->prev = (QUEUE*)((UW)(q)->prev |  (UW)(f)) )
@@ -2066,6 +2059,7 @@ FP  knl_intvec[];
 #define UNITNO(devid)       ( (devid) & 0xff )
 #define UnlockDM()  MUnlock(&knl_DevMgrLock, 0)
 #define UnlockREG() MUnlock(&knl_DevMgrLock, 1)
+
 
 
 /*--------------------------------------------------------------------*/
@@ -2462,7 +2456,8 @@ W knl_MaxFreeSize( MPLCB *mplcb );
 W knl_tstdlib_bitsearch1( void *base, W offset, W width );
 W roundSize( W sz );
 
-extern knl_inthdr_startup(void);
+extern void knl_inthdr_startup(void);
+extern INT  knl_no_support( void *pk_para, FN fncd );
 
 /*--------------------------------------------------------------------*/
 /*  Constant definition                                               */
@@ -9333,77 +9328,66 @@ ER knl_object_getname( UINT objtype, ID objid, UB **name)
     switch (objtype) {
       case TN_TSK:
         {
-            IMPORT ER knl_task_getname(ID id, UB **name);
-            ercd = knl_task_getname(objid, name);
+             ercd = knl_task_getname(objid, name);
             break;
         }
 
       case TN_SEM:
         {
-            IMPORT ER knl_semaphore_getname(ID id, UB **name);
             ercd = knl_semaphore_getname(objid, name);
             break;
         }
 
       case TN_FLG:
         {
-            IMPORT ER knl_eventflag_getname(ID id, UB **name);
             ercd = knl_eventflag_getname(objid, name);
             break;
         }
 
       case TN_MBX:
         {
-            IMPORT ER knl_mailbox_getname(ID id, UB **name);
             ercd = knl_mailbox_getname(objid, name);
             break;
         }
 
       case TN_MBF:
         {
-            IMPORT ER knl_messagebuffer_getname(ID id, UB **name);
             ercd = knl_messagebuffer_getname(objid, name);
             break;
         }
 
       case TN_POR:
         {
-            IMPORT ER knl_rendezvous_getname(ID id, UB **name);
             ercd = knl_rendezvous_getname(objid, name);
             break;
         }
 
       case TN_MTX:
         {
-            IMPORT ER knl_mutex_getname(ID id, UB **name);
             ercd = knl_mutex_getname(objid, name);
             break;
         }
 
       case TN_MPL:
         {
-            IMPORT ER knl_memorypool_getname(ID id, UB **name);
             ercd = knl_memorypool_getname(objid, name);
             break;
         }
 
       case TN_MPF:
         {
-            IMPORT ER knl_fix_memorypool_getname(ID id, UB **name);
             ercd = knl_fix_memorypool_getname(objid, name);
             break;
         }
 
       case TN_CYC:
         {
-            IMPORT ER knl_cyclichandler_getname(ID id, UB **name);
             ercd = knl_cyclichandler_getname(objid, name);
             break;
         }
 
       case TN_ALM:
         {
-            IMPORT ER knl_alarmhandler_getname(ID id, UB **name);
             ercd = knl_alarmhandler_getname(objid, name);
             break;
         }
