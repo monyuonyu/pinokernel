@@ -96,19 +96,13 @@ Inline UW knl_getEFLAGS( void )
 /*
  * ディスパッチャの起動（dispatch.S のエントリを直接呼び出す）
  */
-/* 切替えの回数（CPU の予算の見張りが「切り替わらずに走り続けたか」を知る
- * ため。cpu_cntl.c、docs/architecture/30-module/cpu-budget.md） */
-IMPORT UW knl_dispatch_count;
-
 Inline void knl_force_dispatch( void )
 {
-	knl_dispatch_count++;
 	knl_dispatch_to_schedtsk();
 }
 
 Inline void knl_dispatch( void )
 {
-	knl_dispatch_count++;
 	knl_dispatch_entry();
 }
 

@@ -40,6 +40,7 @@
     .globl  knl_dispatch_to_schedtsk
 knl_dispatch_to_schedtsk:
     cli
+    incl    (knl_dispatch_count)          /* 切替えの回数（cpu_cntl.c の CPU の予算） */
     movl    $1, (knl_dispatch_disabled)   /* ディスパッチ中 */
     movl    $0, (knl_ctxtsk)              /* ctxtsk = NULL（保存なし） */
     jmp     .Ldispatch_loop
@@ -53,6 +54,7 @@ knl_dispatch_to_schedtsk:
     .globl  knl_dispatch_entry
 knl_dispatch_entry:
     cli
+    incl    (knl_dispatch_count)          /* 切替えの回数（cpu_cntl.c の CPU の予算） */
     movl    $1, (knl_dispatch_disabled)
 
     /* callee-saved レジスタ + 予約スロットを退避

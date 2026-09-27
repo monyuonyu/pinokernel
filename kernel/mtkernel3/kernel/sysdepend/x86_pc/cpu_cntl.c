@@ -101,7 +101,8 @@ EXPORT void knl_irq_exit_dispatch( void )
 /*
  * CPU の予算の見張り・段階1（記録だけ。docs/architecture/30-module/cpu-budget.md）
  *	boot/x86/idt.c の irq_handler から、タイマの割込み（IRQ0）のたびに
- *	呼ばれる。同じタスクが切り替わらずに（knl_dispatch_count が動かずに）
+ *	呼ばれる。同じタスクが切り替わらずに（dispatch.S の knl_dispatch_entry・
+ *	knl_dispatch_to_schedtsk の入口で数える knl_dispatch_count が動かずに）
  *	走り続けた時間を数え、予算を超えたら、そのタスクについて1回だけ
  *	記録する。振る舞い（スケジューリング）は変えない。idle（ctxtsk が
  *	NULL）は数えない。-DPK_NO_CPU_BUDGET で外せる（陰性コントロール用）。

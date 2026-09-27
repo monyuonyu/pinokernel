@@ -8,7 +8,7 @@
 - 今ある予算は selfc の子プロセスの RLIMIT_CPU 30秒だけ（arch/linux/selfc_proc.c）。ベアメタルと hosted のタスクには無い。heal の watchdog は死んだ ELF を起こし直すだけで、走りすぎは見ない
 
 ## 作るもの（段階）
-1. **見張り（記録だけ）**: 割込みの出口（`knl_irq_exit_dispatch` の隣）で、タイマの割込みのたびに「同じタスクが切り替わらずに走っている tick 数」を数える。切り替わったら0に戻す。予算（既定 2000ms、idle は数えない）を超えたら、そのタスクについて1回だけ `[budget] task <id> ran <ms> ms without a switch` を出す。「切り替わらずに」は `knl_dispatch()`／`knl_force_dispatch()` で増える回数が tick の間に動かなかったこと。**振る舞いは変えない**。interocept（内受容）の軸に載せるのは次の一手
+1. **見張り（記録だけ）**: 割込みの出口（`knl_irq_exit_dispatch` の隣）で、タイマの割込みのたびに「同じタスクが切り替わらずに走っている tick 数」を数える。切り替わったら0に戻す。予算（既定 2000ms、idle は数えない）を超えたら、そのタスクについて1回だけ `[budget] task <id> ran <ms> ms without a switch` を出す。「切り替わらずに」は dispatch.S の `knl_dispatch_entry`／`knl_dispatch_to_schedtsk` の入口で増える回数が tick の間に動かなかったこと。**振る舞いは変えない**。interocept（内受容）の軸に載せるのは次の一手
 2. **ring3 の ELF には罰**: 予算を超えた ring3 のタスクは heal と同じ経路で終わらせて起こし直す（selfc の RLIMIT_CPU と同じ考え方。ring3 は信頼しない側）。ring0 のタスクは記録だけ（カーネルの一部なので止めると系が壊れうる）
 3. hosted（Linux）は同じ数え方を tick のスレッドで。数える場所だけ違う
 
