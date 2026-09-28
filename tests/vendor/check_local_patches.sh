@@ -113,6 +113,10 @@ check D5K-X86PC    ../sysdepend/x86_pc/dispatch.S        1 'movl    $knl_idle_st
 #     通る。カーネルを呼ばないタスクが、時限待ちの高い優先度のタスクを飢えさせる
 #     状態に黙って戻る。tests/x86/run_rng0_regression.sh の positive の腕が赤になる。
 check RNG0-X86PC   ../sysdepend/x86_pc/cpu_cntl.c        1 'knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk'
+# --- RNG0 の AArch64 版（2026-09-29）: 判定の関数が消えると cpu_support.S の bl で
+#     リンクが落ちるが、中身だけ消えても通る。tests/aarch64/run_rng0_regression.sh
+#     の positive の腕が赤になる。
+check RNG0-A64     ../sysdepend/aarch64_virt/cpu_cntl.c  1 'knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk'
 
 echo
 echo "pass=$pass lost=$fail"

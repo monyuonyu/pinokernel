@@ -60,7 +60,7 @@ jobs:
   vendor-patch-inventory:
     # gap-ledger 行 VENDOR-PATCH-LOSS への第2の梯子段(2026-08-12 のゲートは
     # 9クラス中1クラスしか見ない)。kernel/mtkernel3/ 上の「ビルドは通るのに
-    # 挙動だけ壊れる」ローカルパッチのアンカー（2026-09-29 時点で24個。x86pc の D5-k 修正で D5K-LX64・D5K-X86PC の2つ、RNG0 の割込みの出口の遅延ディスパッチで RNG0-X86PC を足した）を固定文字列で数える。
+    # 挙動だけ壊れる」ローカルパッチのアンカー（2026-09-29 時点で25個。x86pc の D5-k 修正で D5K-LX64・D5K-X86PC の2つ、RNG0 の割込みの出口の遅延ディスパッチで RNG0-X86PC と RNG0-A64 を足した）を固定文字列で数える。
     # Pure-shell, no toolchain。2026-09-27 に BLOCKING へ（inbox #3 の 8①）。
     # それまでは非BLOCKINGで、CI 35420393619・36200060907 とも緑。陰性コント
     # ロールはコンテナで示した（アンカーを消した木で exit 1）。GitHub Actions
@@ -116,9 +116,13 @@ jobs:
     # v2 took ~26 min per arch there with ~14 other jobs sharing 4 cores
     # (2026-09-27). Both arches run one after the other here -> timeout 45.
     # -nic none on aarch64 (no efi-virtio.rom without ipxe-qemu), as run_smp0.sh.
+    # 2026-09-29: the AArch64 RNG0 regression (tests/aarch64/run_rng0_regression.sh,
+    # gap-ledger RNG0-AARCH64-NO-IRQ-EXIT-DISPATCH) rides here too, as three short
+    # steps (~30 s each): this is the one BLOCKING job that already has the
+    # AArch64 toolchain and QEMU. timeout 45 -> 55 for them and for 12 arms/arch.
     name: "約束ごとの試験 v2 (ベアメタル x86 + AArch64, QEMU)"
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchains + QEMU
@@ -127,6 +131,12 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             gcc-i686-linux-gnu gcc-aarch64-linux-gnu make \
             qemu-system-x86 qemu-system-arm python3
+      - name: RNG0 on bare AArch64 — positive arm, expect GREEN (IRQ-exit switch)
+        run: ARM=positive sh tests/aarch64/run_rng0_regression.sh
+      - name: RNG0 on bare AArch64 — control arm, expect GREEN (probe is sound)
+        run: ARM=control sh tests/aarch64/run_rng0_regression.sh
+      - name: RNG0 on bare AArch64 — nofix arm, expect RED (switch compiled out)
+        run: ARM=nofix sh tests/aarch64/run_rng0_regression.sh
       - name: contract suite v2 on bare x86 (plain green, 11 NCs red)
         run: bash tests/x86/run_tk_conform.sh
       - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
