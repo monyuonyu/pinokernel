@@ -527,6 +527,10 @@ static void run_t16_rng0_regression(void)
 /*     while init sleeps -> the watchdog must log "[budget]" once.     */
 /*   yield arm (-DPK_CPU_BUDGET_YIELD): the same task sleeps 10 ms     */
 /*     every iteration -> no "[budget]" line.                          */
+/*   preempt arm (-DPK_CPU_BUDGET_PREEMPT): the task spins as in spin, */
+/*     but init wakes every 10 ms (300 times) and preempts it at the   */
+/*     IRQ exit -> switches happen, so no "[budget]" line. This is the */
+/*     arm that tests the switch count (yield resets via idle anyway). */
 /* ------------------------------------------------------------------ */
 static volatile int st_bud_stop = 0;
 static volatile UW  st_bud_count = 0;
@@ -554,7 +558,11 @@ static void run_t18_cpu_budget(void)
     }
     st_puts("[T18] busy task id="); st_puti(busy); st_puts(", init sleeps 3000 ms\r\n");
     tk_sta_tsk(busy, 0);
+#ifdef PK_CPU_BUDGET_PREEMPT
+    { int k; for (k = 0; k < 300; k++) tk_dly_tsk(10); }
+#else
     tk_dly_tsk(3000);
+#endif
     st_bud_stop = 1;
     tk_dly_tsk(50);
     tk_del_tsk(busy);

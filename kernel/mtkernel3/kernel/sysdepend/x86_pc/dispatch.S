@@ -54,7 +54,9 @@ knl_dispatch_to_schedtsk:
     .globl  knl_dispatch_entry
 knl_dispatch_entry:
     cli
+#ifndef PK_CPU_BUDGET_NO_ENTRY_COUNT       /* 陰性コントロール（tests/x86/run_cpu_budget.sh の noentrycount） */
     incl    (knl_dispatch_count)          /* 切替えの回数（cpu_cntl.c の CPU の予算） */
+#endif
     movl    $1, (knl_dispatch_disabled)
 
     /* callee-saved レジスタ + 予約スロットを退避
