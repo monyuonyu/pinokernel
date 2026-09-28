@@ -87,14 +87,16 @@ chk remote-A-ask      "$A" '^\[mind\]   conflict history: key [0-9]+ "sky": "blu
 chk remote-B-ask      "$B" '^\[mind\]   conflict history: key [0-9]+ "sky": "blue"'
 
 # ---- rule arm (1-3b) --------------------------------------------------------
-# Concurrent teaches in a partition, then the LOSER arrives LAST at an
-# observer, so last-arrival-wins and the stamp rule give different answers.
-#   A (id 1) on "R1,RH": sky blue            -> stamp 1, node 0
-#   B (id 2) on "R2,RH": fire warm, sky green -> green stamp 2, node 1
-#   C (id 3) on RH only (the observer)
-# kill R2 first (B -> RH; C gets green), then R1 (A -> RH; C gets blue last).
-# Rule: green (stamp 2) beats blue (stamp 1) everywhere. Last-arrival-wins
-# would leave C on blue.
+# Concurrent teaches in a partition, then the LOSER arrives LAST at the
+# observer C, so last-arrival-wins and the stamp rule give different answers.
+#   A (id 1) on "R1,RH": sky blue             -> stamp 1, node 0
+#   B (id 2) on "R2"   : fire warm, sky green -> green stamp 2, node 1
+#   C (id 3) on "R2,RH": learns green from B (the only one it holds)
+# then B is killed and R2, R1 die: A and C meet on RH, and A re-drives blue.
+# Rule: C refuses blue (stamp 1 < 2) and pushes green back, so A moves to
+# green. Last-arrival-wins: C moves to blue and A never hears green.
+# (The first shape, 8d609377, let B stay: A got green from B before its blue
+# reached C, so C never saw blue under either rule — not discriminating.)
 for p in "$PA" "$PB" "$RELAY"; do kill -9 "$p" 2>/dev/null; done
 PA=0; PB=0; RELAY=0
 P1=$((PORT + 1)); P2=$((PORT + 2)); PH=$((PORT + 3))
@@ -107,10 +109,10 @@ mkfifo "$WORK/qa" "$WORK/qb" "$WORK/qc"; mkdir -p "$WORK/eqa" "$WORK/eqb" "$WORK
 env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/eqa" PKERNEL_RELAY="127.0.0.1:$P1,127.0.0.1:$PH" \
     "$BOOT/p-kernel" < "$WORK/qa" > "$QAL" 2>&1 &
 QA=$!; exec 5<>"$WORK/qa"
-env PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/eqb" PKERNEL_RELAY="127.0.0.1:$P2,127.0.0.1:$PH" \
+env PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/eqb" PKERNEL_RELAY="127.0.0.1:$P2" \
     "$BOOT/p-kernel" < "$WORK/qb" > "$QBL" 2>&1 &
 QB=$!; exec 6<>"$WORK/qb"
-env PKERNEL_NODE_ID=3 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/eqc" PKERNEL_RELAY="127.0.0.1:$PH" \
+env PKERNEL_NODE_ID=3 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/eqc" PKERNEL_RELAY="127.0.0.1:$P2,127.0.0.1:$PH" \
     "$BOOT/p-kernel" < "$WORK/qc" > "$QCL" 2>&1 &
 QC=$!; exec 9<>"$WORK/qc"
 for f in "$QAL" "$QBL" "$QCL"; do wait_for "$f" 'mind_net_task up' 90 || echo "[mind-conflicts] note: $f mind_net_task not seen"; done
@@ -120,18 +122,18 @@ wait_for "$QBL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=1 ' 60 || echo "[min
 printf 'mind teach sky green\n' >&6
 wait_for "$QAL" 'published mind/teach' 60 || echo "[mind-conflicts] note: A blue not published"
 wait_for "$QBL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=2 ' 60 || echo "[mind-conflicts] note: B green not published at seq 2"
-grep -aq 'remote teach arrived: "sky"' "$QCL" && echo "[mind-conflicts] note: C saw sky before any heal (partition leaked)"
-kill -9 "$R2"; R2=0
 wait_for "$QCL" 'remote teach arrived: "sky"->"green"' 150 || echo "[mind-conflicts] note: green never reached C"
+grep -aq 'remote teach arrived: "sky"->"blue"' "$QCL" && echo "[mind-conflicts] note: C saw blue before the heal (partition leaked)"
+kill -9 "$QB"; QB=0
+kill -9 "$R2"; R2=0
 kill -9 "$R1"; R1=0
-wait_for "$QCL" 'conflict rule: incoming stamp [0-9]+ node 0|remote REVISE key [0-9]+ "sky": "green"->"blue"' 150 || echo "[mind-conflicts] note: blue never reached C"
+wait_for "$QCL" 'conflict rule: incoming stamp [0-9]+ node 0|remote REVISE key [0-9]+ "sky": "green"->"blue"' 180 || echo "[mind-conflicts] note: blue never reached C"
 wait_for "$QAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"' 90 || echo "[mind-conflicts] note: A never took green"
 sleep 5
-printf 'mind conflicts\n' >&5; printf 'mind conflicts\n' >&6; printf 'mind conflicts\n' >&9
+printf 'mind conflicts\n' >&5; printf 'mind conflicts\n' >&9
 sleep 3
 chk rule-C-refused "$QCL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught by node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" taught by node 1, stamp 2'
 if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$QCL"; then res rule-C-kept-green FAIL; else res rule-C-kept-green PASS; fi
-if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$QBL"; then res rule-B-kept-green FAIL; else res rule-B-kept-green PASS; fi
 chk rule-A-took-green "$QAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"'
 chk rule-A-recorded   "$QAL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), stamp 1, .*superseded by "green" taught by node 1, stamp 2'
 echo "[mind-conflicts] logs: $WORK"
