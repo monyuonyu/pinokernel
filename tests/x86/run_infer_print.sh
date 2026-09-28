@@ -5,10 +5,23 @@
 # line reads exactly "(t=25C)", "(t=-5C)", "(t=38C)". Before 191f752b the
 # digits were passed to tm_putstring without a 0 terminator and the line
 # carried stack bytes ("t=-5<junk>C", measured 2026-09-28).
-# Exit 0 = three clean lines, 1 = not (or build/boot failed).
+# The boot check alone depends on the stack layout: audit-18 put back only
+# one of the two lines (either one) and the three lines still came out clean
+# (the next stack byte happened to be 0). So a source check comes first: no
+# tm_putstring(&<plain variable>) anywhere in arch/ or boot/ — the address of
+# a lone variable is not a 0-terminated string (&buf[i] is not matched).
+# Exit 0 = no such call and three clean lines, 1 = not (or build/boot failed).
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
+SRC=$(grep -rnE 'tm_putstring\( *(\(UB *\* *\))? *&[A-Za-z_][A-Za-z0-9_]* *\)' \
+      --include='*.c' "$ROOT/arch" "$ROOT/boot" || true)
+if [ -n "$SRC" ]; then
+    echo "$SRC" | sed 's/^/[infer-print]   source: /'
+    echo "[infer-print] FAIL: tm_putstring is given the address of a lone variable (not 0-terminated)" >&2
+    exit 1
+fi
+echo "[infer-print] source check: no tm_putstring(&<variable>)"
 BOOT="$ROOT/boot/x86"
 QEMU="${QEMU:-qemu-system-x86_64}"
 WAIT="${INFER_BOOT_WAIT:-30}"
