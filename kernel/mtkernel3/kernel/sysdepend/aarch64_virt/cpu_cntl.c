@@ -37,12 +37,16 @@ EXPORT W knl_taskindp = 0;
  *	いちばん外側の割込み（knl_taskindp == 0）、ディスパッチ禁止でない、
  *	タスクを割り込んだ（ctxtsk != NULL。ディスパッチャの idle の wfe 中は
  *	ctxtsk が NULL）、切り替えが要る。
+ *	SMP 自己試験のビルドは smp_irq_need_resched を使うので、ここは入れない
+ *	（そのビルドの .text を1バイトも変えないため）。
  */
+#ifndef SMP_SELFTEST
 EXPORT INT knl_irq_exit_need_dispatch( void )
 {
 	return ( knl_taskindp == 0 && !knl_dispatch_disabled
 	      && knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk ) ? 1 : 0;
 }
+#endif
 
 /*
  * offset.h（アセンブラ用オフセット定数）と実際の TCB レイアウトの
