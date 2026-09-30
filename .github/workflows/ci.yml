@@ -1260,6 +1260,10 @@ jobs:
           grep -aF '[ring3-mind] PASS' ring3.log
           grep -aF '[dproc-teardown] PASS' ring3.log
           grep -aF '[fpu-ctx] PASS' ring3.log
+      - name: "[ai] infer line prints clean digits (source check + three sensor frames; tests/x86/run_infer_print.sh)"
+        # 2026-09-28 fix of arch/common/pipeline.c (stack bytes leaked into the
+        # temperature). Rebuilds boot/x86 default, so it runs last in this job.
+        run: sh tests/x86/run_infer_print.sh
 
   relay-tests:
     name: "リレー往復スイート (6 シナリオ)"

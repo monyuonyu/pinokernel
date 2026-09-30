@@ -136,8 +136,11 @@ void ai_infer_task(INT stacd, void *exinf)
         /* Simple integer print for temperature */
         W tv = (W)f.temp / 2 + 20;   /* reverse normalization */
         if (tv < 0) { tm_putstring((UB *)"-"); tv = -tv; }
-        UB d = (UB)(tv / 10); if (d) { UB c = '0'+d; tm_putstring(&c); }
-        UB u = '0' + (UB)(tv % 10); tm_putstring(&u);
+        /* tm_putstring wants a 0-terminated string: passing &c of a lone
+         * UB printed the stack after it up to the first 0 byte (garbled
+         * "t=0<junk>C" on bare metal). */
+        UB d = (UB)(tv / 10); if (d) { UB c[2] = { (UB)('0' + d), 0 }; tm_putstring(c); }
+        UB u[2] = { (UB)('0' + (UB)(tv % 10)), 0 }; tm_putstring(u);
         tm_putstring((UB *)"C)\r\np-kernel> ");
     }
 }
