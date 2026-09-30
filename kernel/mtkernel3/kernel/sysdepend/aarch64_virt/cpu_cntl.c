@@ -29,6 +29,26 @@
 EXPORT W knl_taskindp = 0;
 
 /*
+ * 割込みの出口での遅延ディスパッチの判定（RNG0 の AArch64 版、2026-09-29。
+ * gap-ledger RNG0-AARCH64-NO-IRQ-EXIT-DISPATCH）
+ *	arch/aarch64/cpu_support.S の _vec_el1_irq が EOI の後に呼び、1 なら
+ *	knl_dispatch で切り替える（SMP 自己試験と同じ切替えの道と
+ *	.Lirq_resume_tramp）。条件は x86 の knl_irq_exit_dispatch と同じ:
+ *	いちばん外側の割込み（knl_taskindp == 0）、ディスパッチ禁止でない、
+ *	タスクを割り込んだ（ctxtsk != NULL。ディスパッチャの idle の wfe 中は
+ *	ctxtsk が NULL）、切り替えが要る。
+ *	SMP 自己試験のビルドは smp_irq_need_resched を使うので、ここは入れない
+ *	（そのビルドの .text を1バイトも変えないため）。
+ */
+#ifndef SMP_SELFTEST
+EXPORT INT knl_irq_exit_need_dispatch( void )
+{
+	return ( knl_taskindp == 0 && !knl_dispatch_disabled
+	      && knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk ) ? 1 : 0;
+}
+#endif
+
+/*
  * offset.h（アセンブラ用オフセット定数）と実際の TCB レイアウトの
  * ビルド時照合。
  */
