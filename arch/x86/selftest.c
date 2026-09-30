@@ -518,6 +518,58 @@ static void run_t16_rng0_regression(void)
 }
 #endif /* PK_RNG0_REGR_TEST */
 
+#ifdef PK_CPU_BUDGET_TEST
+/* ------------------------------------------------------------------ */
+/* T18: CPU budget watchdog probe (docs/architecture/30-module/        */
+/* cpu-budget.md, stage 1; NOT built by default — only under           */
+/* -DPK_CPU_BUDGET_TEST, tests/x86/run_cpu_budget.sh).                 */
+/*   spin arm: a pri-20 ring0 task spins with no kernel call for ~3 s  */
+/*     while init sleeps -> the watchdog must log "[budget]" once.     */
+/*   yield arm (-DPK_CPU_BUDGET_YIELD): the same task sleeps 10 ms     */
+/*     every iteration -> no "[budget]" line.                          */
+/*   preempt arm (-DPK_CPU_BUDGET_PREEMPT): the task spins as in spin, */
+/*     but init wakes every 10 ms (300 times) and preempts it at the   */
+/*     IRQ exit -> switches happen, so no "[budget]" line. This is the */
+/*     arm that tests the switch count (yield resets via idle anyway). */
+/* ------------------------------------------------------------------ */
+static volatile int st_bud_stop = 0;
+static volatile UW  st_bud_count = 0;
+
+static void st_bud_busy(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    while (!st_bud_stop) {
+        st_bud_count++;
+#ifdef PK_CPU_BUDGET_YIELD
+        tk_dly_tsk(10);
+#endif
+    }
+    tk_ext_tsk();
+}
+
+static void run_t18_cpu_budget(void)
+{
+    T_CTSK ct = { .exinf = NULL, .tskatr = TA_HLNG | TA_RNG0,
+                  .task = st_bud_busy, .itskpri = 20, .stksz = 2048 };
+    ID busy = tk_cre_tsk(&ct);
+    if (busy < E_OK) {
+        st_puts("[T18] FAIL: cre_tsk er="); st_puti(busy); st_puts("\r\n");
+        return;
+    }
+    st_puts("[T18] busy task id="); st_puti(busy); st_puts(", init sleeps 3000 ms\r\n");
+    tk_sta_tsk(busy, 0);
+#ifdef PK_CPU_BUDGET_PREEMPT
+    { int k; for (k = 0; k < 300; k++) tk_dly_tsk(10); }
+#else
+    tk_dly_tsk(3000);
+#endif
+    st_bud_stop = 1;
+    tk_dly_tsk(50);
+    tk_del_tsk(busy);
+    st_puts("[T18] DONE count="); st_puti((W)st_bud_count); st_puts("\r\n");
+}
+#endif /* PK_CPU_BUDGET_TEST */
+
 /* ================================================================== */
 /* Entry point                                                         */
 /* ================================================================== */
@@ -552,5 +604,8 @@ EXPORT void kernel_selftest(void)
 
 #ifdef PK_RNG0_REGR_TEST
     run_t16_rng0_regression();
+#endif
+#ifdef PK_CPU_BUDGET_TEST
+    run_t18_cpu_budget();
 #endif
 }

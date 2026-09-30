@@ -98,4 +98,63 @@ EXPORT void knl_irq_exit_dispatch( void )
 #endif
 }
 
+/*
+ * CPU の予算の見張り・段階1（記録だけ。docs/architecture/30-module/cpu-budget.md）
+ *	boot/x86/idt.c の irq_handler から、タイマの割込み（IRQ0）のたびに
+ *	呼ばれる。同じタスクが切り替わらずに（dispatch.S の knl_dispatch_entry・
+ *	knl_dispatch_to_schedtsk の入口で数える knl_dispatch_count が動かずに）
+ *	走り続けた時間を数え、予算を超えたら、そのタスクについて1回だけ
+ *	記録する。振る舞い（スケジューリング）は変えない。idle（ctxtsk が
+ *	NULL）は数えない。-DPK_NO_CPU_BUDGET で外せる（陰性コントロール用）。
+ */
+EXPORT UW knl_dispatch_count = 0;
+
+#ifndef PK_NO_CPU_BUDGET
+#ifndef PK_CPU_BUDGET_MS
+#define PK_CPU_BUDGET_MS	2000
+#endif
+LOCAL TCB	*bud_tcb = NULL;
+LOCAL UW	bud_seen = 0;
+LOCAL UW	bud_ms = 0;
+LOCAL BOOL	bud_warned = FALSE;
+
+LOCAL INT bud_putdec( char *p, UW v )
+{
+	char	t[10];
+	INT	n = 0, i;
+	do { t[n++] = (char)('0' + v % 10); v /= 10; } while ( v != 0 && n < 10 );
+	for ( i = 0; i < n; i++ ) p[i] = t[n - 1 - i];
+	return n;
+}
+
+EXPORT void knl_cpu_budget_tick( void )
+{
+	static const char s1[] = "[budget] task ";
+	static const char s2[] = " ran ";
+	static const char s3[] = " ms without a switch\r\n";
+	char	buf[64];
+	INT	n = 0, i;
+	TCB	*t = knl_ctxtsk;
+
+	if ( t == NULL || t != bud_tcb || knl_dispatch_count != bud_seen ) {
+		bud_tcb = t;
+		bud_seen = knl_dispatch_count;
+		bud_ms = 0;
+		bud_warned = FALSE;
+		return;
+	}
+	bud_ms += CFN_TIMER_PERIOD;
+	if ( bud_warned || bud_ms < PK_CPU_BUDGET_MS ) {
+		return;
+	}
+	bud_warned = TRUE;
+	for ( i = 0; s1[i] != '\0'; i++ ) buf[n++] = s1[i];
+	n += bud_putdec(buf + n, (UW)t->tskid);
+	for ( i = 0; s2[i] != '\0'; i++ ) buf[n++] = s2[i];
+	n += bud_putdec(buf + n, bud_ms);
+	for ( i = 0; s3[i] != '\0'; i++ ) buf[n++] = s3[i];
+	sio_send_frame((const UB *)buf, n);
+}
+#endif /* PK_NO_CPU_BUDGET */
+
 #endif /* X86_PC */

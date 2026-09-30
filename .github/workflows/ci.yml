@@ -84,9 +84,14 @@ jobs:
     #   nofix（positive を -DPK_RNG0_NO_EXIT_DISPATCH で＝直す前の振る舞い）
     #     -> RED を期待（陰性コントロール。positive の緑が直しから来ることの確認）。
     # ジョブ名 id は履歴のために変えていない。
+    # 同じジョブに CPU の予算（段階1、記録だけ。docs/architecture/30-module/
+    # cpu-budget.md、tests/x86/run_cpu_budget.sh）の5腕も載せた（ジョブ数を
+    # 動かさないため。ジョブ名の「3 arms」は RNG0 の腕の数）:
+    #   spin -> [budget] 1行、yield・nobudget・preempt -> 0行、
+    #   noentrycount（preempt から knl_dispatch_entry の数えを外す）-> 1行。
     name: "RNG0 busy-task starvation 回帰試験 (x86, 3 arms)"
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install i686 cross toolchain + qemu-system-x86
@@ -100,6 +105,16 @@ jobs:
         run: ARM=control sh tests/x86/run_rng0_regression.sh
       - name: nofix arm — expect RED (fix compiled out)
         run: ARM=nofix sh tests/x86/run_rng0_regression.sh
+      - name: CPU budget spin arm — expect one [budget] line
+        run: ARM=spin sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget yield arm — expect no [budget] line
+        run: ARM=yield sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget nobudget arm — expect no [budget] line (watchdog compiled out)
+        run: ARM=nobudget sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget preempt arm — expect no [budget] line (preempted every 10 ms)
+        run: ARM=preempt sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget noentrycount arm — expect one [budget] line (switch count removed)
+        run: ARM=noentrycount sh tests/x86/run_cpu_budget.sh
 
   tk-conform-bare:
     # The contract suite v2 on bare-metal x86 AND AArch64 under QEMU (inbox #5,
