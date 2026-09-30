@@ -1840,6 +1840,31 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — CPU budget stage 1 + infer print by value + RNG0 on bare-metal AArch64, one
+  re-bless for three merges (2026-10-01, merges `dee5d819` of `feat/cpu-budget` 3219a5df (audit-18
+  PASS), `aa8e2c2e` of `feat/infer-print` ff30ae99 (audit-19 PASS) and `99a307c9` of
+  `feat/a64-exit-dispatch` f8fc06fc (audit-19 PASS), in that order, `--no-ff` onto `8ae32aba`;
+  R-CPUBUDGET / R-INFER / R-A64 were put to mk_pino with a recommendation on 2026-09-28T22:16 –
+  2026-09-29T06:30 and, with no answer in 24 h, landed on the recommendation under the inbox #3 rule).
+  The bare-metal `.text` changes DELIBERATELY: cpu-budget on x86 (`x86_pc/cpu_cntl.c` watch, `idt.c`,
+  `dispatch.S` switch count), infer-print on both (`arch/common/pipeline.c`), a64 on aarch64
+  (`cpu_support.S` IRQ-exit switch, `aarch64_virt/cpu_cntl.c` `knl_irq_exit_need_dispatch`). Crown
+  measured at every point (fresh clone of a bundle of local master, gcc 13.3.0, `make clean` first,
+  same `objcopy -O binary -j .text` as `crown-text-identity`; script `pk-scratch/rb1001.sh`, evidence
+  `pkernel_audit_ss:/build/rb1001/summary.txt`):
+    base `8ae32aba`      aarch64 81d5b883… 358904 B   x86 f12d805d… 369447 B  (= the 2026-09-29 crown)
+    + cpu-budget        aarch64 81d5b883… 358904 B   x86 9747ad42… 369843 B  (+396, as audit-18)
+    + infer-print       aarch64 0b59622b… 358912 B   x86 b2e9f34b… 369855 B  (+8 / +12)
+    + a64-exit-dispatch
+      aarch64  0a541605b08a946b8e92e1a9ed99a3ef56ac76fd24fb0ad0fd6a30ed579e8574  359080 B  (+168)
+      x86      b2e9f34b21884f1c8935ab788e89819b8791d104cedbbabf2131e596a89d5158  369855 B
+  The final pair agrees to the last digit with audit-19's trial merge on `b183b69f`
+  (`/build/aud19-trial/summary.txt`); master moved only in docs between the two. On `99a307c9`: ci.yml
+  YAML OK, `check_script_modes.py` PASS, `check_readme_counts.py` PASS (49 jobs), vendor inventory
+  25/25 GREEN. RNG0 3 arms on `99a307c9`, x86 and AArch64 alike: positive GREEN, control GREEN, nofix
+  RED (expected), all rc=0. Not repeated here: tk_conform
+  (audit-19 ran both targets PASS on the trial merge), the CPU-budget 5 arms, infer-print 3/3 (same trial).
+  This entry was written by the run that merged; an independent re-measure is for a different run.
 - CROWN RE-BLESS — RNG0 delayed dispatch at the outermost IRQ exit, x86 only (2026-09-29, merge
   `29a9d5d5` of `feat/rng0-exit-dispatch`, audit-17 PASS on 2026-09-28; R-RNG0 was put to mk_pino with a
   recommendation on 2026-09-28 05:19 and, with no answer in 24 h, landed on the recommendation under the

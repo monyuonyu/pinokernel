@@ -1981,9 +1981,11 @@ jobs:
     # bare-metal arch backends) flips .text and FAILS this gate.
     #
     # WHY RELATIVE, NOT AN ABSOLUTE PINNED HASH: the .text bytes are
-    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 81d5b883…,
-    # x86 f12d805d… after the RNG0 IRQ-exit dispatch 2026-09-29, x86 only,
-    # audit-container gcc 13.3.0; was aarch64 81d5b883…/x86 10a4c009… after
+    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 0a541605…,
+    # x86 b2e9f34b… after CPU budget stage 1 + infer print + the AArch64 RNG0
+    # IRQ-exit dispatch 2026-10-01, audit-container gcc 13.3.0; was aarch64
+    # 81d5b883…/x86 f12d805d… after the RNG0 IRQ-exit dispatch 2026-09-29, x86
+    # only; was aarch64 81d5b883…/x86 10a4c009… after
     # F1 id-order fold + x86_pc idle stack 2026-09-28; was aarch64 dea715dd…/x86 1c8e6d16… after
     # self-access R1 2026-09-24;
     # was aarch64 c4e255f1…/x86 d71839d1… after the IRQ-stub SS reload
