@@ -8,7 +8,9 @@
 #   explain-current     : "current: "sky" -> "green""
 #   explain-learned     : taught here, prov kept, with the local seq
 #   explain-consolidated: PENDING|RETAINED n/N sleep rounds, salience 1
-#   explain-revised     : the 1-3a record: blue (taught here) superseded by green
+#   explain-revised     : the 1-3a record ("revision:", not "revised:" — that
+#                         prefix is mind teach's own revise line): blue
+#                         (taught here) superseded by green
 #   explain-count       : "revisions kept: 1"
 #   explain-readonly    : the ask after three explains reports salience=2
 #                         (default 1 + this ask). Explain touching salience
@@ -38,7 +40,7 @@ chk explain-none         "$L" '^\[mind\]   current: none held'
 chk explain-current      "$L" '^\[mind\]   current: "sky" -> "green"'
 chk explain-learned      "$L" '^\[mind\]   learned: taught here( \(node [0-9]+\))?, prov kept, local seq [0-9]+'
 chk explain-consolidated "$L" '^\[mind\]   consolidated: (PENDING|RETAINED) [0-9]+/[0-9]+ sleep rounds, salience 1/'
-chk explain-revised      "$L" '^\[mind\]   revised: key [0-9]+ "sky": "blue" \(taught here.*superseded by "green" taught here'
+chk explain-revised      "$L" '^\[mind\]   revision: key [0-9]+ "sky": "blue" \(taught here.*superseded by "green" taught here'
 chk explain-count        "$L" '^\[mind\]   revisions kept: 1 '
 chk explain-readonly     "$L" '^\[mind\]   salience=2/'
 echo "[mind-explain] log: $L"

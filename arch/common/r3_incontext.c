@@ -3626,7 +3626,7 @@ static void m_explain(const UB *p, const UB *end)
     UW nrev = 0;
     for (UW j = 0; j < MC_MAX; j++) {
         MC_REC *r = &mc_hist[(mc_next + j) % MC_MAX];
-        if (r->used && r->key == (UB)k) { mc_print(r, "[mind]   revised: "); nrev++; }
+        if (r->used && r->key == (UB)k) { mc_print(r, "[mind]   revision: "); nrev++; }
     }
     r_puts("[mind]   revisions kept: "); r_putdec(nrev);
     r_puts(" (ring of "); r_putdec(MC_MAX); r_puts(" across all keys, ");

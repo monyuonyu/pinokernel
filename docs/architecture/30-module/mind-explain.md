@@ -6,7 +6,7 @@
 - current: 今の答え（engram の値）。持っていなければ「none held」（教わっていない、または追い出した。重みは答えうるので `mind ask` を案内する）
 - learned: 誰から（別のノードなら番号と名前、ここで教えたなら「taught here」）、prov が残っているか、ローカルの seq
 - consolidated: PENDING／RETAINED と睡眠の回数、salience
-- revised: 1-3a の履歴（`mc_hist`）のうち、この鍵の行。あわせて残っている数と落ちた数
+- revision: 1-3a の履歴（`mc_hist`）のうち、この鍵の行。あわせて残っている数と落ちた数（「revised:」は `mind teach` の書き換えの行がすでに使っているので避けた）
 
 ## 決めたこと
 - **読むだけ。** `mind ask` は投票（乱数を進める）・salience の加算（LM-13）・want の加算（LM-14）・DMN の起動・galaxy と内受容のイベントを起こす。監査のための読みが「何を忘れるか」を変えてはいけないので、explain はどれもしない。`m_quiesce` で睡眠の回の途中を読まないことだけはする
