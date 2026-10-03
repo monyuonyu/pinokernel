@@ -10,12 +10,30 @@
 # (the next stack byte happened to be 0). So a source check comes first: no
 # tm_putstring(&<plain variable>) anywhere in arch/ or boot/ — the address of
 # a lone variable is not a 0-terminated string (&buf[i] is not matched).
+# Since 2026-10-04 any cast and any blanks/tabs are matched too: audit-19 put
+# a line back as tm_putstring((const UB *)&u) and the old pattern, which only
+# knew "(UB *)" and spaces, let it through. Not matched (by design): &s.m
+# (a char-array member is a valid string), wrappers around tm_putstring.
+# The pattern is first checked on fixed samples, so a broken edit of it
+# fails here instead of silently matching nothing.
 # Exit 0 = no such call and three clean lines, 1 = not (or build/boot failed).
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-SRC=$(grep -rnE 'tm_putstring\( *(\(UB *\* *\))? *&[A-Za-z_][A-Za-z0-9_]* *\)' \
-      --include='*.c' "$ROOT/arch" "$ROOT/boot" || true)
+PAT='tm_putstring\([[:space:]]*(\([^()]*\)[[:space:]]*)?&[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\)'
+SELF="$(mktemp "${TMPDIR:-/tmp}/inferpat.XXXXXX")"
+printf '%s\n' 'tm_putstring(&u);' 'tm_putstring((UB *)&u);' \
+    'tm_putstring((const UB *)&u);' 'tm_putstring(	(UB*)	& u );' > "$SELF"
+NHIT=$(grep -cE "$PAT" "$SELF" || true)
+printf '%s\n' 'tm_putstring((UB *)&b[i]);' 'tm_putstring((UB *)buf);' \
+    'tm_putstring((UB *)"x");' 'tm_putstring((UB *)&s.name);' > "$SELF"
+NMISS=$(grep -cE "$PAT" "$SELF" || true)
+rm -f "$SELF"
+if [ "$NHIT" != 4 ] || [ "$NMISS" != 0 ]; then
+    echo "[infer-print] FAIL: pattern self-check (must-match $NHIT/4, must-not-match $NMISS/0)" >&2
+    exit 1
+fi
+SRC=$(grep -rnE "$PAT" --include='*.c' "$ROOT/arch" "$ROOT/boot" || true)
 if [ -n "$SRC" ]; then
     echo "$SRC" | sed 's/^/[infer-print]   source: /'
     echo "[infer-print] FAIL: tm_putstring is given the address of a lone variable (not 0-terminated)" >&2
