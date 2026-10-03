@@ -957,6 +957,14 @@ jobs:
           timeout 400 tests/host/run_mind_conflicts.sh | tee mind_conflicts.log
           grep -aF '[mind-conflicts] ALL PASS' mind_conflicts.log
 
+      # ROADMAP 1-4: `mind explain <key>` reads a belief, its teacher and its
+      # 1-3a revisions without changing the mind (explain-readonly: the ask
+      # after three explains still sees salience 2). One node, ~10 s.
+      - name: mind explain, read-only (ROADMAP 1-4)
+        run: |
+          timeout 200 tests/host/run_mind_explain.sh | tee mind_explain.log
+          grep -aF '[mind-explain] ALL PASS' mind_explain.log
+
       # LLM core host certs (tests/llm/). Each is deterministic and self-
       # contained — the SYNTHETIC core runs with NO gguf model file and NO
       # network. They build their own harness with cc (the x86_64 runner's
