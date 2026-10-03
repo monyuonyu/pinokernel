@@ -961,6 +961,14 @@ jobs:
           timeout 400 tests/host/run_mind_conflicts.sh | tee mind_conflicts.log
           grep -aF '[mind-conflicts] ALL PASS' mind_conflicts.log
 
+      # ROADMAP 1-2b: a node that keeps re-driving its own last teach must
+      # still deliver pull answers (mind/teach is LATEST_ONLY; the answer was
+      # overwritten in the same tick). Red with -DMQ_NO_ANSWER_SKIP. ~1 min.
+      - name: pull answer while re-driving (ROADMAP 1-2b)
+        run: |
+          timeout 300 tests/host/run_pull_while_redriving.sh | tee pull_redrive.log
+          grep -aF '[pull-redrive] ALL PASS' pull_redrive.log
+
       # LLM core host certs (tests/llm/). Each is deterministic and self-
       # contained — the SYNTHETIC core runs with NO gguf model file and NO
       # network. They build their own harness with cc (the x86_64 runner's
