@@ -135,8 +135,11 @@ void knl_idle_wait(void)
  * returns to the task stack and `ret`s to the interrupted instruction.
  * The side stack (one per task id, its top word = "this task is inside the
  * trampoline") keeps the task stack's extra use to the 8-byte return
- * address: a first version saved ~800 B on the task stack and a 4 KB task
- * overflowed into its neighbour (SIGSEGV in `handoff stream`, 2026-10-04).
+ * address (hosted tasks run on 2-4 KB stacks; ~800 B more per preemption
+ * was judged too close — a precaution, not a measured overflow). The final
+ * `ret $128` gives back the red zone skipped below the interrupted RSP: the
+ * first two versions used a plain `ret`, left RSP 128 B low, and the resumed
+ * function crashed (SIGSEGV in `handoff stream`, 2026-10-04).
  *
  * Only when the interrupted RIP is in p-kernel's own text and not in the
  * trampoline: inside libc the task may hold a libc lock (malloc's is not
@@ -202,7 +205,7 @@ __asm__(
     "    popfq\n"
     "    movq  $0, 8(%rsp)\n"                          /* busy word = 0 (no flags) */
     "    popq  %rsp\n"                                  /* back on the task stack */
-    "    ret\n"
+    "    ret   $128\n"          /* pop the RIP, then give back the skipped red zone */
     "arch_preempt_tramp_end:\n"
     "    .size arch_preempt_tramp, . - arch_preempt_tramp\n"
 );
