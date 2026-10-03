@@ -9,6 +9,7 @@
 #           (taught here), in `mind conflicts` and in `mind ask sky`. (With no
 #           networking the node has no id yet, so no "(node N)".)
 #   rule  : (1-3b) see the rule arm below — the stamp rule, not arrival order.
+#   bump  : (1-3b) see the bump arm at the end — the Lamport clock step.
 #   remote: node A (id 1) teaches sky blue; once node B (id 2) has it, B
 #           teaches sky green. B keeps "blue" from node 0 (the remote
 #           teacher, with its prov) superseded by green "taught here
@@ -16,7 +17,8 @@
 #           (node 0)") superseded by "green" from node 1.
 # Since 1-3b every record also carries the Lamport stamps of both values.
 # Output: "[mind-conflicts] <check> PASS|FAIL", then ALL PASS (exit 0) or
-# RED (exit 1). Env: MC_PORT (default 7481; the rule arm uses PORT+1..+3).
+# RED (exit 1). Env: MC_PORT (default 7481; the rule arm uses PORT+1..+3,
+# the bump arm PORT+4).
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
@@ -30,11 +32,11 @@ export PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456
 unset PKERNEL_RELAY_HOST PKERNEL_RELAY_PORT PKERNEL_LAN
 PORT="${MC_PORT:-7481}"
 WORK="$(mktemp -d /tmp/mconf.XXXXXX)"
-REDS=""; RELAY=0; PA=0; PB=0; QA=0; QB=0; QC=0; R1=0; R2=0; RH=0
+REDS=""; RELAY=0; PA=0; PB=0; QA=0; QB=0; QC=0; R1=0; R2=0; RH=0; RS=0; SA=0; SB=0
 res() { echo "[mind-conflicts] $1 $2"; [ "$2" = FAIL ] && REDS="$REDS $1"; return 0; }
 cleanup() {
-    for p in "$PA" "$PB" "$RELAY" "$QA" "$QB" "$QC" "$R1" "$R2" "$RH"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
-    exec 5>&- 6>&- 7>&- 8>&- 9>&- 2>/dev/null; wait 2>/dev/null
+    for p in "$PA" "$PB" "$RELAY" "$QA" "$QB" "$QC" "$R1" "$R2" "$RH" "$RS" "$SA" "$SB"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
+    exec 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&- 2>/dev/null; wait 2>/dev/null
 }
 trap cleanup EXIT
 wait_for() {  # <file> <ERE> <secs>
@@ -136,6 +138,58 @@ chk rule-C-refused "$QCL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue"
 if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$QCL"; then res rule-C-kept-green FAIL; else res rule-C-kept-green PASS; fi
 chk rule-A-took-green "$QAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"'
 chk rule-A-recorded   "$QAL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), stamp 1, .*superseded by "green" from node 1, stamp 2'
+
+# ---- bump arm (1-3b, the Lamport step) --------------------------------------
+# The rule arm's green wins because B taught twice; it stays green with the
+# clock step (mind_net_task: r3_fq_seq up to every fact_seq it receives)
+# deleted (audit-18). Here only the step can make B's correction win:
+#   A (id 1) alone: fire warm, snow white, sea deep -> stamps 1..3
+#   B (id 2) joins; A teaches sky blue               -> stamp 4
+#   B, having seen blue (and at most the re-driven sea), teaches sky green.
+# With the step B's clock is >= 4 when it sees blue, so green carries >= 5
+# and A takes it. Without it B's clock counts only what B learned (<= 2), so
+# green carries <= 3, A refuses it and pushes blue back: the correction made
+# after seeing the value loses — what the rule promises never happens.
+for p in "$QA" "$QC" "$RH"; do kill -9 "$p" 2>/dev/null; done
+QA=0; QC=0; RH=0
+PS=$((PORT + 4))
+"$ROOT/relay/relay" -p "$PS" > "$WORK/rs.log" 2>&1 & RS=$!
+sleep 1
+SAL="$WORK/sa.log"; SBL="$WORK/sb.log"
+mkfifo "$WORK/sa" "$WORK/sb"; mkdir -p "$WORK/esa" "$WORK/esb"
+env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/esa" PKERNEL_RELAY="127.0.0.1:$PS" \
+    "$BOOT/p-kernel" < "$WORK/sa" > "$SAL" 2>&1 &
+SA=$!; exec 3<>"$WORK/sa"
+wait_for "$SAL" 'mind_net_task up' 90 || echo "[mind-conflicts] note: bump A mind_net_task not seen"
+printf 'mind teach fire warm\n' >&3
+wait_for "$SAL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=1 ' 60 || echo "[mind-conflicts] note: bump A fire not published"
+printf 'mind teach snow white\n' >&3
+wait_for "$SAL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=2 ' 60 || echo "[mind-conflicts] note: bump A snow not published"
+printf 'mind teach sea deep\n' >&3
+wait_for "$SAL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=3 ' 60 || echo "[mind-conflicts] note: bump A sea not published"
+env PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/esb" PKERNEL_RELAY="127.0.0.1:$PS" \
+    "$BOOT/p-kernel" < "$WORK/sb" > "$SBL" 2>&1 &
+SB=$!; exec 4<>"$WORK/sb"
+wait_for "$SBL" 'mind_net_task up' 90 || echo "[mind-conflicts] note: bump B mind_net_task not seen"
+t=0
+while [ "$t" -lt 150 ] && ! grep -aq 'size=2' "$SAL"; do printf 'region\n' >&3; sleep 2; t=$((t + 2)); done
+printf 'mind teach sky blue\n' >&3
+wait_for "$SAL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=4 ' 60 || echo "[mind-conflicts] note: bump A blue not published at seq 4"
+wait_for "$SBL" 'remote teach arrived: "sky"->"blue"' 150 || echo "[mind-conflicts] note: blue never reached bump B"
+cp "$SBL" "$WORK/sb-before-green.log"
+printf 'mind teach sky green\n' >&4
+wait_for "$SAL" 'conflict rule: incoming stamp [0-9]+ node 1' 90 || echo "[mind-conflicts] note: green never reached bump A"
+sleep 5
+printf 'mind ask sky\n' >&3; printf 'mind ask sky\n' >&4
+wait_for "$SAL" 'ask "sky" ->' 60; wait_for "$SBL" 'ask "sky" ->' 60; sleep 2
+# precondition: B must not have learned fire/snow from A, or B's own count
+# alone could lift green past 4 and the arm would not test the step.
+if grep -aqE 'remote teach arrived: "(fire|snow)"' "$WORK/sb-before-green.log"; then
+    res bump-precondition FAIL; else res bump-precondition PASS; fi
+chk bump-A-rule       "$SAL" '^\[mind\] conflict rule: incoming stamp ([5-9]|[1-9][0-9]+) node 1 beats held stamp 4 node 0'
+chk bump-A-took-green "$SAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"'
+if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$SBL"; then
+    res bump-B-kept-green FAIL; else res bump-B-kept-green PASS; fi
 echo "[mind-conflicts] logs: $WORK"
 if [ -z "$REDS" ]; then echo "[mind-conflicts] ALL PASS"; exit 0; fi
 echo "[mind-conflicts] RED:$REDS"; exit 1
