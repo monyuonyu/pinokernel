@@ -1720,6 +1720,14 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc make python3
       - name: Run ARK crash fuzzer (0 BUG required)
         run: timeout 400 bash samples/30_ark_crash/run.sh
+      # ROADMAP 0-8: cut the power at EVERY device write (BEFORE and TORN) of
+      # 8 kinds of operation (220 points); the remounted state must be exactly
+      # the before- or the after-state, and the store must take a new write.
+      # Red with -DARK_FAULT_TRUST_COMMIT_HEADER (34 points). ~10 s.
+      - name: ARK power cut at every write point (ROADMAP 0-8)
+        run: |
+          timeout 300 bash samples/25_survival_fs/allpoints.sh | tee ark_allpoints.log
+          grep -aF '[ark-allpoints] ALL PASS' ark_allpoints.log
 
   composite-loop:
     name: "複合ループ (kill ∧ 並行 ∧ メモリ, ボーナス)"
