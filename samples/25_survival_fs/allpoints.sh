@@ -15,9 +15,13 @@
 # Operations: create, overwrite, multi-block create, grow (rewrite longer,
 # shared first block = dedup), unlink, mkdir, checkpoint, compact. ARK has no
 # rename, so there is nothing to cut there (printed as SKIP).
-# Negative control: ARK_EXTRA_CFLAGS=-DARK_FAULT_COMMIT_FIRST builds an ARK
-# that commits before writing the blocks — must go RED, and the report names
-# the scenario, mode and write number where it broke.
+# Negative control: ARK_EXTRA_CFLAGS=-DARK_FAULT_TRUST_COMMIT_HEADER builds
+# an ARK whose mount believes a commit with a valid header even when its
+# payload is torn or missing (correct when nothing is cut) — must go RED, and
+# the report names the scenario, mode and write number where it broke.
+# (A first control, "commit before the blocks", was dropped: mount discards
+# everything after the last valid commit, so that ARK lost every write even
+# uncut and only the wedge probe noticed — not a test of the cut points.)
 # Output: one "[ark-allpoints] <scenario> ..." line each, then ALL PASS
 # (exit 0) or RED (exit 1).
 # ---------------------------------------------------------------------------
