@@ -1199,12 +1199,23 @@ INT ark_write_file(const char *path, const void *buf, U4 len)
 
     /* 1. write content blocks (dedup'd). Uncommitted until the commit below. */
     U1 ids[ARK_MAX_BLK][ARK_ID_LEN];
+#ifndef ARK_FAULT_COMMIT_FIRST
     for (U4 i = 0; i < nblk; i++) {
         U4 off = i * ARK_BLOCK_MAX;
         U4 chunk = (len - off < ARK_BLOCK_MAX) ? (len - off) : ARK_BLOCK_MAX;
         INT r = ark_block_put((const U1 *)buf + off, chunk, ids[i]);
         if (r != ARK_OK) return r;
     }
+#else
+    /* ROADMAP 0-8 NEGATIVE CONTROL ONLY (samples/25_survival_fs/allpoints.sh):
+     * the WRONG order — the commit lands before the blocks it names, so a
+     * power cut between them leaves a version whose content is not on disk. */
+    for (U4 i = 0; i < nblk; i++) {
+        U4 off = i * ARK_BLOCK_MAX;
+        U4 chunk = (len - off < ARK_BLOCK_MAX) ? (len - off) : ARK_BLOCK_MAX;
+        sha256((const U1 *)buf + off, (size_t)chunk, ids[i]);
+    }
+#endif
 
     /* 2. build the new live snapshot (does not touch disk yet). */
     INT e = live_find(path);
@@ -1224,7 +1235,19 @@ INT ark_write_file(const char *path, const void *buf, U4 len)
         ark_memcpy(g_live[e].blk[i], ids[i], ARK_ID_LEN);
 
     /* 3. ATOMIC COMMIT: the new version is live iff this record lands valid. */
+#ifndef ARK_FAULT_COMMIT_FIRST
     return commit_live();
+#else
+    INT cr = commit_live();
+    if (cr != ARK_OK) return cr;
+    for (U4 i = 0; i < nblk; i++) {
+        U4 off = i * ARK_BLOCK_MAX;
+        U4 chunk = (len - off < ARK_BLOCK_MAX) ? (len - off) : ARK_BLOCK_MAX;
+        INT r = ark_block_put((const U1 *)buf + off, chunk, ids[i]);
+        if (r != ARK_OK) return r;
+    }
+    return ARK_OK;
+#endif
 }
 
 /* Read every block of a directory entry into buf (whole-file). Returns the
