@@ -4087,6 +4087,24 @@ static INT mq_answer_build(U1 asker, UB k, INT *forgotten_out)
  * packet, gates it in the mind/teach order, and answers ONE new key I hold this
  * tick (after the stagger), or re-drives the last answer while still wanted +
  * budget. Serialized behind m_gate for the r3_fq / prov reads. */
+#ifdef _TK_HOSTED_LIBC_
+/* ROADMAP 1-2b (MIND-GEN-0-B E1, second half): mind/teach is LATEST_ONLY, and
+ * every tick ran mq_poll_wants (an answer) and then m_republish_last (my own
+ * last teach) back to back, so a node still re-driving its own teach
+ * overwrote every answer it sent: a peer could pull nothing from it. A tick
+ * that sent an answer skips my own re-drive (at most MQ_ANS_REDRIVE_MAX
+ * ticks per asker, then mine resumes). -DMQ_NO_ANSWER_SKIP: the old order. */
+static UB mq_answer_sent = 0;
+#ifndef MQ_NO_ANSWER_SKIP
+#define M_REDRIVE_OWN() do { if (mq_answer_sent) mq_answer_sent = 0; \
+                             else m_republish_last(); } while (0)
+#else
+#define M_REDRIVE_OWN() do { mq_answer_sent = 0; m_republish_last(); } while (0)
+#endif
+#else
+#define M_REDRIVE_OWN() m_republish_last()
+#endif
+
 static void mq_poll_wants(void)
 {
     if (mq_want_sub_h() < 0) return;
@@ -4146,6 +4164,9 @@ static void mq_poll_wants(void)
             if (!mq_answer_build(o, k, &forgotten)) continue;  /* refuse: not held */
             (void)mq_mark_answer(o, S, k);     /* now MARK (answer-once)         */
             (void)mt_wire_send(&mq_ans_pkt);   /* the ONE wire-writer            */
+#ifdef _TK_HOSTED_LIBC_
+            mq_answer_sent = 1;                /* 1-2b: no own re-drive this tick */
+#endif
             s->redrive_key = k; s->redrive_ticks = 0;
             r_puts("[mind] answering want key "); r_putdec((UW)k);
             r_puts(" (\""); r_puts(r3_vocab_key_word((INT)k));
@@ -4178,6 +4199,9 @@ static void mq_poll_wants(void)
             INT fg = 0;
             if (mq_answer_build(o, s->redrive_key, &fg)) {
                 (void)mt_wire_send(&mq_ans_pkt);
+#ifdef _TK_HOSTED_LIBC_
+                mq_answer_sent = 1;
+#endif
                 s->redrive_ticks++;
             } else {
                 s->redrive_key = 0xFF;         /* no longer hold it — stop      */
@@ -4334,7 +4358,7 @@ void mind_net_task(INT stacd, void *exinf)
                     r_puts("[lang-wire-verdrop] PASS\r\n");
                 }
                 mq_poll_wants();            /* LM-15: answer region wants       */
-                m_republish_last();
+                M_REDRIVE_OWN();     /* 1-2b */
                 mq_publish_wants();         /* LM-15: publish my own wonders    */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
@@ -4355,7 +4379,7 @@ void mind_net_task(INT stacd, void *exinf)
                     r_puts("[lang-vocab-refuse] PASS\r\n");
                 }
                 mq_poll_wants();            /* LM-15: answer region wants       */
-                m_republish_last();
+                M_REDRIVE_OWN();     /* 1-2b */
                 mq_publish_wants();         /* LM-15: publish my own wonders    */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
@@ -4471,7 +4495,7 @@ void mind_net_task(INT stacd, void *exinf)
          * became measurable after my first publish still receives it
          * (best-effort, idempotent at the receiver — VIII.3). */
         mq_poll_wants();       /* LM-15: answer region wants I can serve       */
-        m_republish_last();
+        M_REDRIVE_OWN();     /* 1-2b */
         mq_publish_wants();    /* LM-15: publish my own unanswered wonders     */
         tk_dly_tsk(MT_POLL_MS);
     }
