@@ -38,7 +38,11 @@ trap 'rm -rf "$WORK"' EXIT
 
 run() { "$BIN" "$@"; }
 apply() {  # <ops separated by |>; each op = "<cmd> <args...>"
-    local IFS='|' o
+    # c/a1..a3 MUST be local: scenario() holds its operation in variables of
+    # the same names, and bash scoping is dynamic (the first version of this
+    # script replayed the setup's last op as "the operation" and reported 182
+    # false breaks).
+    local IFS='|' o c a1 a2 a3
     for o in $1; do
         IFS=' ' read -r c a1 a2 a3 <<< "$o"
         run "$c" "$IMG" $a1 $a2 $a3 > /dev/null || return 1
