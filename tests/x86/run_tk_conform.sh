@@ -19,7 +19,7 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-EXPECT=110
+EXPECT=111
 BOOT_TIMEOUT="${TKC_BOOT_TIMEOUT:-60}"
 QEMU="${QEMU:-qemu-system-x86_64}"
 command -v "$QEMU" >/dev/null 2>&1 || { echo "[tk-conform-x86] FAIL: $QEMU not found"; exit 1; }

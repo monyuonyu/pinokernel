@@ -118,9 +118,96 @@ void knl_idle_wait(void)
     sigprocmask(SIG_SETMASK, &prev, NULL);
 }
 
-static void sigalrm_handler(int sig)
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+/* ---- ROADMAP 0-1, RNG0 on hosted Linux: switch at the "interrupt" exit ----
+ * (ledger RNG0-HOSTED-NO-SIGNAL-EXIT-DISPATCH). Before this, a tick that made
+ * a higher-priority task ready only took effect at the running task's next
+ * END_CRITICAL_SECTION, so a task spinning without kernel calls starved it
+ * (bare x86 / AArch64 switch at the IRQ exit since 2026-09-29 / 10-01).
+ *
+ * knl_dispatch must still be entered from task context, never inside the
+ * handler. So the handler only REWRITES the interrupted context: it pushes
+ * the interrupted RIP below the 128-byte red zone and resumes the task at
+ * arch_preempt_tramp. After sigreturn (task stack, normal mask) the
+ * trampoline saves every register the C ABI does not (rax..r11, flags,
+ * x87/SSE via fxsave64), calls arch_preempt_dispatch, restores them and
+ * `ret`s to the interrupted instruction.
+ *
+ * Only when the interrupted RIP is in p-kernel's own text: if the task was
+ * inside libc it may hold a libc lock (malloc's is not recursive) and the
+ * next task would deadlock on it — that case keeps the old behaviour
+ * (switch at the next END_CRITICAL_SECTION). Limits: AVX upper halves are
+ * not saved (the hosted build does not use -mavx); x86_64 only (the
+ * aarch64 / Android sibling is still the old behaviour).
+ * -DPK_HOSTED_NO_EXIT_DISPATCH: the old behaviour (negative control). */
+#include <ucontext.h>
+#include <stdint.h>
+
+extern void * volatile knl_ctxtsk;
+extern volatile int knl_dispatch_disabled;
+extern volatile int knl_taskindp;            /* low 32 bits; dispatch.S uses incl */
+extern void knl_dispatch_entry(void);
+extern char __executable_start[], __etext[];
+void arch_preempt_tramp(void);
+static volatile sig_atomic_t preempt_injected = 0;
+
+/* called by arch_preempt_tramp, in task context */
+void arch_preempt_dispatch(void)
 {
-    (void)sig;
+    arch_irq_disabled_flag = 1;
+    preempt_injected = 0;
+    if (knl_ctxtsk != 0 && knl_ctxtsk != knl_schedtsk &&
+        !knl_dispatch_disabled && knl_taskindp == 0)
+        knl_dispatch_entry();               /* returns here when rescheduled */
+    arch_irq_enable_with_drain();
+}
+
+__asm__(
+    "    .text\n"
+    "    .globl arch_preempt_tramp\n"
+    "    .type  arch_preempt_tramp, @function\n"
+    "    .balign 16\n"
+    "arch_preempt_tramp:\n"
+    "    pushfq\n"
+    "    pushq %rax\n    pushq %rcx\n    pushq %rdx\n    pushq %rsi\n"
+    "    pushq %rdi\n    pushq %r8\n     pushq %r9\n     pushq %r10\n"
+    "    pushq %r11\n"
+    "    pushq %rbp\n"
+    "    movq  %rsp, %rbp\n"
+    "    subq  $512, %rsp\n"
+    "    andq  $-64, %rsp\n"
+    "    fxsave64 (%rsp)\n"
+    "    call  arch_preempt_dispatch\n"
+    "    fxrstor64 (%rsp)\n"
+    "    movq  %rbp, %rsp\n"
+    "    popq  %rbp\n"
+    "    popq %r11\n"
+    "    popq %r10\n    popq %r9\n      popq %r8\n      popq %rdi\n"
+    "    popq %rsi\n    popq %rdx\n     popq %rcx\n     popq %rax\n"
+    "    popfq\n"
+    "    ret\n"
+    "    .size arch_preempt_tramp, . - arch_preempt_tramp\n"
+);
+
+static void maybe_preempt(ucontext_t *uc)
+{
+    if (preempt_injected || arch_irq_disabled_flag || knl_taskindp != 0 ||
+        knl_dispatch_disabled || knl_ctxtsk == 0 || knl_ctxtsk == knl_schedtsk)
+        return;
+    greg_t rip = uc->uc_mcontext.gregs[REG_RIP];
+    if (rip < (greg_t)(uintptr_t)__executable_start || rip >= (greg_t)(uintptr_t)__etext)
+        return;                              /* in libc etc.: not here */
+    greg_t rsp = uc->uc_mcontext.gregs[REG_RSP] - 128 - 8;   /* skip the red zone */
+    *(greg_t *)(uintptr_t)rsp = rip;
+    uc->uc_mcontext.gregs[REG_RSP] = rsp;
+    uc->uc_mcontext.gregs[REG_RIP] = (greg_t)(uintptr_t)arch_preempt_tramp;
+    preempt_injected = 1;
+}
+#endif
+
+static void sigalrm_handler(int sig, siginfo_t *si, void *ucv)
+{
+    (void)sig; (void)si; (void)ucv;
     /* Linux collapses missed expirations of a periodic POSIX timer
      * into a single signal delivery and exposes the count via
      * timer_getoverrun(). Replay all of them so tick count tracks
@@ -136,6 +223,9 @@ static void sigalrm_handler(int sig)
     while (to_run-- > 0) {
         knl_timer_handler_startup();
     }
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+    maybe_preempt((ucontext_t *)ucv);
+#endif
 }
 
 #define SIGSTACK_SZ (64 * 1024)
@@ -149,8 +239,8 @@ void arch_signals_init(void)
     if (sigaltstack(&ss, NULL) < 0) { perror("sigaltstack"); exit(1); }
 
     struct sigaction sa = { 0 };
-    sa.sa_handler = sigalrm_handler;
-    sa.sa_flags = SA_ONSTACK | SA_RESTART;
+    sa.sa_sigaction = sigalrm_handler;
+    sa.sa_flags = SA_ONSTACK | SA_RESTART | SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
     if (sigaction(SIGALRM, &sa, NULL) < 0) { perror("sigaction"); exit(1); }
 }

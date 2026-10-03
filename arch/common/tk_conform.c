@@ -700,6 +700,31 @@ static void suite_dds(PRI me)
     check(f_dis == 0 && dt >= 40, "K7", "a task whose 20 ms delay ends while disabled does not run (~150 ms busy, no kernel call)", f_dis);
     check(f_ena == 2, "K8", "... and runs as soon as tk_ena_dsp", f_ena);
     tk_del_tsk(t);
+
+    /* K9 (2026-10-04, ROADMAP 0-1): the same no-call spin with dispatch
+     * ENABLED — the higher-priority task whose delay ends during the spin
+     * must run during it (at the interrupt exit). The other side of K7.
+     * Red before RNG0 was fixed on each target: bare x86 before 29a9d5d5,
+     * bare AArch64 before 99a307c9, hosted Linux x86_64 before the SIGALRM
+     * exit dispatch (measured 2026-09-29 with a scratch copy of this check). */
+    {
+        UW chunks = 0, i;
+        t0 = now_ms();
+        while (now_ms() - t0 < 50 && chunks < 20000) {
+            for (i = 0; i < 65536; i++) spin++;
+            chunks++;
+        }
+        t = mk_task(t_delay_then_flag, me - 1);
+        h_flag = 0;
+        tk_sta_tsk(t, 9);                 /* runs at once, sleeps 20 ms */
+        t0 = now_ms();
+        for (i = 0; i < chunks * 3 * 65536; i++) spin++;
+        f_ena = h_flag;                   /* read before any kernel call */
+        dt = now_ms() - t0;
+    }
+    check(f_ena == 9 && dt >= 40, "K9", "dispatch enabled: a task whose 20 ms delay ends during the ~150 ms no-call spin runs during it", f_ena);
+    tk_dly_tsk(30);
+    tk_del_tsk(t);
 }
 
 /* The suite runs in its own task at TKC_PRI, so helpers can sit one above
