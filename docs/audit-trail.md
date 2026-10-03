@@ -1865,6 +1865,16 @@ N-4 cross-host deferred to the ThinkPad).
   RED (expected), all rc=0. Not repeated here: tk_conform
   (audit-19 ran both targets PASS on the trial merge), the CPU-budget 5 arms, infer-print 3/3 (same trial).
   This entry was written by the run that merged; an independent re-measure is for a different run.
+  INDEPENDENTLY RE-MEASURED (2026-10-04 04:15 run; own script `pk-scratch/irm1004.sh`, fresh clone of
+  a new bundle of local master `f070a2c0`, gcc 13.3.0 on both targets, evidence
+  `pkernel_audit_ss:/build/irm1004/summary.txt`): all eight full hashes and sizes at `8ae32aba` /
+  `dee5d819` / `aa8e2c2e` / `99a307c9` agree to the last digit with the values above; `tkc_` symbols
+  0 in all eight ELFs. WHERE THE BYTES WENT (`nm -S`, text symbols): cpu-budget x86 `irq_handler`
+  55→72, new `knl_cpu_budget_tick` 256 and `bud_putdec` 111 (+384; the other 12 B of +396 are in
+  unsized asm, the `dispatch.S` switch count), aarch64 none. infer-print: only `ai_infer_task`
+  (`arch/common/pipeline.c`) on both, aarch64 324→332 (= +8), x86 326→336 (+10 against `.text` +12,
+  alignment, not examined). a64: aarch64 new `knl_irq_exit_need_dispatch` 64, the other 104 B in
+  unsized asm (`cpu_support.S`), as the implementer stated; x86 no symbol moved.
 - CROWN RE-BLESS — RNG0 delayed dispatch at the outermost IRQ exit, x86 only (2026-09-29, merge
   `29a9d5d5` of `feat/rng0-exit-dispatch`, audit-17 PASS on 2026-09-28; R-RNG0 was put to mk_pino with a
   recommendation on 2026-09-28 05:19 and, with no answer in 24 h, landed on the recommendation under the
