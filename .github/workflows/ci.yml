@@ -60,7 +60,7 @@ jobs:
   vendor-patch-inventory:
     # gap-ledger 行 VENDOR-PATCH-LOSS への第2の梯子段(2026-08-12 のゲートは
     # 9クラス中1クラスしか見ない)。kernel/mtkernel3/ 上の「ビルドは通るのに
-    # 挙動だけ壊れる」ローカルパッチのアンカー（2026-09-28 時点で23個。x86pc の D5-k 修正で D5K-LX64・D5K-X86PC の2つを足した）を固定文字列で数える。
+    # 挙動だけ壊れる」ローカルパッチのアンカー（2026-09-29 時点で25個。x86pc の D5-k 修正で D5K-LX64・D5K-X86PC の2つ、RNG0 の割込みの出口の遅延ディスパッチで RNG0-X86PC と RNG0-A64 を足した）を固定文字列で数える。
     # Pure-shell, no toolchain。2026-09-27 に BLOCKING へ（inbox #3 の 8①）。
     # それまでは非BLOCKINGで、CI 35420393619・36200060907 とも緑。陰性コント
     # ロールはコンテナで示した（アンカーを消した木で exit 1）。GitHub Actions
@@ -74,24 +74,24 @@ jobs:
         run: sh tests/vendor/check_local_patches.sh .
 
   rng0-regression-monitor:
-    # gap-ledger.md 行 RNG0-BUSY-TASK-STALLS-DISPATCH の監視のみ (2026-09-20
-    # `feat/rng0-regression-test`/`f8b0abd2` でmasterへ既にマージ済みの
-    # tests/x86/run_rng0_regression.sh を初めてCIに繋ぐ)。この行のバグ自体は
-    # 直っていない — 直すには gap-ledger 自身が挙げる (a)/(b)/(c)/(d) のどれかを
-    # 人間が選ぶ必要がある(判断待ち)。このジョブはそれを決めない。やることは
-    # 「まだ RED のままか」を毎回の push で機械的に確認するだけ:
-    #   positive アーム(busy ring0 task が一切 yield しない) -> 既知バグにより
-    #     tk_dly_tsk(500) が戻らずタイムアウト -> RED を期待。
-    #   control アーム(同じタスクだが tk_dly_tsk(10) で自発的に再入する) ->
-    #     正常に戻る -> GREEN を期待(=プローブ自体は壊れていないことの確認)。
-    # 非BLOCKING: positive アームが「意図して RED になる」ことを確認するジョブ
-    # なので、そのまま BLOCKING にすると「バグが直っていない」ことそのものが
-    # 毎回 CI を落とす。GREEN に変わったら(NEWS終了コード2)ジョブは失敗表示に
-    # なるので気づける — gap-ledger.md 側の更新は人間 or 次runの仕事。
-    name: "RNG0 busy-task starvation 監視 (非BLOCKING, バグ自体は未修正)"
+    # gap-ledger.md 行 RNG0-BUSY-TASK-STALLS-DISPATCH の回帰試験（ROADMAP 0-1）。
+    # 2026-09-20 に監視（非BLOCKING、positive が RED のままかを見る）として
+    # 繋いだ。2026-09-28 に直した（割込みの出口での遅延ディスパッチ、
+    # kernel/mtkernel3/kernel/sysdepend/x86_pc/cpu_cntl.c の
+    # knl_irq_exit_dispatch）ので BLOCKING の回帰試験にした:
+    #   positive（busy ring0 task が一切 yield しない）-> GREEN を期待。
+    #   control（同じタスクが tk_dly_tsk(10) で再入する）-> GREEN（プローブの健全性）。
+    #   nofix（positive を -DPK_RNG0_NO_EXIT_DISPATCH で＝直す前の振る舞い）
+    #     -> RED を期待（陰性コントロール。positive の緑が直しから来ることの確認）。
+    # ジョブ名 id は履歴のために変えていない。
+    # 同じジョブに CPU の予算（段階1、記録だけ。docs/architecture/30-module/
+    # cpu-budget.md、tests/x86/run_cpu_budget.sh）の5腕も載せた（ジョブ数を
+    # 動かさないため。ジョブ名の「3 arms」は RNG0 の腕の数）:
+    #   spin -> [budget] 1行、yield・nobudget・preempt -> 0行、
+    #   noentrycount（preempt から knl_dispatch_entry の数えを外す）-> 1行。
+    name: "RNG0 busy-task starvation 回帰試験 (x86, 3 arms)"
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    continue-on-error: true
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install i686 cross toolchain + qemu-system-x86
@@ -99,24 +99,45 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             gcc-i686-linux-gnu make qemu-system-x86
-      - name: positive arm — expect RED (known bug, unfixed)
+      - name: positive arm — expect GREEN (the fix)
         run: ARM=positive sh tests/x86/run_rng0_regression.sh
       - name: control arm — expect GREEN (probe itself is sound)
         run: ARM=control sh tests/x86/run_rng0_regression.sh
+      - name: nofix arm — expect RED (fix compiled out)
+        run: ARM=nofix sh tests/x86/run_rng0_regression.sh
+      - name: CPU budget spin arm — expect one [budget] line
+        run: ARM=spin sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget yield arm — expect no [budget] line
+        run: ARM=yield sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget nobudget arm — expect no [budget] line (watchdog compiled out)
+        run: ARM=nobudget sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget preempt arm — expect no [budget] line (preempted every 10 ms)
+        run: ARM=preempt sh tests/x86/run_cpu_budget.sh
+      - name: CPU budget noentrycount arm — expect one [budget] line (switch count removed)
+        run: ARM=noentrycount sh tests/x86/run_cpu_budget.sh
 
   tk-conform-bare:
-    # The contract suite v1 on bare-metal x86 AND AArch64 under QEMU (inbox #5,
+    # The contract suite v2 on bare-metal x86 AND AArch64 under QEMU (inbox #5,
     # arch/common/tk_conform.c; hosted twin in the UMP x86_64 job). Linked only
     # into -DPK_TKCONF test builds, so the default .text (crown) is unchanged
     # (measured 2026-09-27: dea715dd / 1c8e6d16, 0 tk_conform symbols).
-    # Per arch: plain must be 62 PASS / 0 FAIL; five kernel-breaking negative
+    # Per arch: plain must be 110 PASS / 0 FAIL; eleven kernel-breaking negative
     # controls (semaphore off-by-one, tk_wai_sem without its E_PAR check, a
-    # halved tk_dly_tsk, TWF_BITCLR clearing every bit, no TA_INHERIT) must
-    # each go RED. ~8 min per arch on the dev box (6 builds + 6 boots).
+    # halved tk_dly_tsk, TWF_BITCLR clearing every bit, no TA_INHERIT, no
+    # maxmsz check in tk_snd_mbf, a TA_MPRI mailbox queued FIFO, tk_rel_mpf
+    # not handing the block to a waiter, a cyclic handler at twice its
+    # period) must each go RED. 10 builds + 10 boots per arch; every boot runs
+    # to QEMU's 60 s limit. v1 (6 arms) took ~8 min per arch on the dev box;
+    # v2 took ~26 min per arch there with ~14 other jobs sharing 4 cores
+    # (2026-09-27). Both arches run one after the other here -> timeout 45.
     # -nic none on aarch64 (no efi-virtio.rom without ipxe-qemu), as run_smp0.sh.
-    name: "約束ごとの試験 v1 (ベアメタル x86 + AArch64, QEMU)"
+    # 2026-09-29: the AArch64 RNG0 regression (tests/aarch64/run_rng0_regression.sh,
+    # gap-ledger RNG0-AARCH64-NO-IRQ-EXIT-DISPATCH) rides here too, as three short
+    # steps (~30 s each): this is the one BLOCKING job that already has the
+    # AArch64 toolchain and QEMU. timeout 45 -> 55 for them and for 12 arms/arch.
+    name: "約束ごとの試験 v2 (ベアメタル x86 + AArch64, QEMU)"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchains + QEMU
@@ -125,9 +146,15 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             gcc-i686-linux-gnu gcc-aarch64-linux-gnu make \
             qemu-system-x86 qemu-system-arm python3
-      - name: contract suite v1 on bare x86 (plain green, 5 NCs red)
+      - name: RNG0 on bare AArch64 — positive arm, expect GREEN (IRQ-exit switch)
+        run: ARM=positive sh tests/aarch64/run_rng0_regression.sh
+      - name: RNG0 on bare AArch64 — control arm, expect GREEN (probe is sound)
+        run: ARM=control sh tests/aarch64/run_rng0_regression.sh
+      - name: RNG0 on bare AArch64 — nofix arm, expect RED (switch compiled out)
+        run: ARM=nofix sh tests/aarch64/run_rng0_regression.sh
+      - name: contract suite v2 on bare x86 (plain green, 11 NCs red)
         run: bash tests/x86/run_tk_conform.sh
-      - name: contract suite v1 on bare AArch64 (plain green, 5 NCs red)
+      - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
         run: bash tests/aarch64/run_tk_conform.sh
 
   ump-x86_64:
@@ -854,12 +881,13 @@ jobs:
           timeout 300 tests/host/run_federation_f1.sh | tee federation_f1.log
           grep -aF '[federation-f1] ALL PASS' federation_f1.log
 
-      # The contract suite v1 (inbox #5, arch/common/tk_conform.c, verb tkconf):
-      # the tk_* task / semaphore / event flag / mutex / time promises user
-      # space relies on, 62 checks incl. error codes. Five negative controls
+      # The contract suite v2 (inbox #5, arch/common/tk_conform.c, verb tkconf):
+      # the tk_* task / semaphore / event flag / mutex / message buffer /
+      # mailbox / fixed pool / cyclic handler / time / dispatch-disable promises user space
+      # relies on, 110 checks incl. error codes. Eleven negative controls
       # each patch ONE line of the vendored kernel in a scratch copy and must
       # go RED. The bare-metal twins run in the tk-conform-bare job.
-      - name: contract suite v1 (tk_* tasks / sems / flags / mutexes / time + 5 kernel-breaking NCs)
+      - name: contract suite v2 (tk_* tasks / sems / flags / mutexes / msg buffers / mailboxes / pools / cyclic / time / dispatch disable + 11 kernel-breaking NCs)
         run: |
           timeout 600 tests/host/run_tk_conform.sh | tee tk_conform.log
           grep -aF '[tk-conform] PASS' tk_conform.log
@@ -1242,6 +1270,10 @@ jobs:
           grep -aF '[ring3-mind] PASS' ring3.log
           grep -aF '[dproc-teardown] PASS' ring3.log
           grep -aF '[fpu-ctx] PASS' ring3.log
+      - name: "[ai] infer line prints clean digits (source check + three sensor frames; tests/x86/run_infer_print.sh)"
+        # 2026-09-28 fix of arch/common/pipeline.c (stack bytes leaked into the
+        # temperature). Rebuilds boot/x86 default, so it runs last in this job.
+        run: sh tests/x86/run_infer_print.sh
 
   relay-tests:
     name: "リレー往復スイート (6 シナリオ)"
@@ -1949,9 +1981,12 @@ jobs:
     # bare-metal arch backends) flips .text and FAILS this gate.
     #
     # WHY RELATIVE, NOT AN ABSOLUTE PINNED HASH: the .text bytes are
-    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 81d5b883…,
-    # x86 10a4c009… after F1 id-order fold + x86_pc idle stack 2026-09-28,
-    # audit-container gcc 13.3.0; was aarch64 dea715dd…/x86 1c8e6d16… after
+    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 0a541605…,
+    # x86 b2e9f34b… after CPU budget stage 1 + infer print + the AArch64 RNG0
+    # IRQ-exit dispatch 2026-10-01, audit-container gcc 13.3.0; was aarch64
+    # 81d5b883…/x86 f12d805d… after the RNG0 IRQ-exit dispatch 2026-09-29, x86
+    # only; was aarch64 81d5b883…/x86 10a4c009… after
+    # F1 id-order fold + x86_pc idle stack 2026-09-28; was aarch64 dea715dd…/x86 1c8e6d16… after
     # self-access R1 2026-09-24;
     # was aarch64 c4e255f1…/x86 d71839d1… after the IRQ-stub SS reload
     # 2026-09-03; was c4e255f1…/4f6f0dc5… after the KILL-CHURN restore

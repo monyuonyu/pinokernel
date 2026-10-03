@@ -1840,6 +1840,63 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — CPU budget stage 1 + infer print by value + RNG0 on bare-metal AArch64, one
+  re-bless for three merges (2026-10-01, merges `dee5d819` of `feat/cpu-budget` 3219a5df (audit-18
+  PASS), `aa8e2c2e` of `feat/infer-print` ff30ae99 (audit-19 PASS) and `99a307c9` of
+  `feat/a64-exit-dispatch` f8fc06fc (audit-19 PASS), in that order, `--no-ff` onto `8ae32aba`;
+  R-CPUBUDGET / R-INFER / R-A64 were put to mk_pino with a recommendation on 2026-09-28T22:16 –
+  2026-09-29T06:30 and, with no answer in 24 h, landed on the recommendation under the inbox #3 rule).
+  The bare-metal `.text` changes DELIBERATELY: cpu-budget on x86 (`x86_pc/cpu_cntl.c` watch, `idt.c`,
+  `dispatch.S` switch count), infer-print on both (`arch/common/pipeline.c`), a64 on aarch64
+  (`cpu_support.S` IRQ-exit switch, `aarch64_virt/cpu_cntl.c` `knl_irq_exit_need_dispatch`). Crown
+  measured at every point (fresh clone of a bundle of local master, gcc 13.3.0, `make clean` first,
+  same `objcopy -O binary -j .text` as `crown-text-identity`; script `pk-scratch/rb1001.sh`, evidence
+  `pkernel_audit_ss:/build/rb1001/summary.txt`):
+    base `8ae32aba`      aarch64 81d5b883… 358904 B   x86 f12d805d… 369447 B  (= the 2026-09-29 crown)
+    + cpu-budget        aarch64 81d5b883… 358904 B   x86 9747ad42… 369843 B  (+396, as audit-18)
+    + infer-print       aarch64 0b59622b… 358912 B   x86 b2e9f34b… 369855 B  (+8 / +12)
+    + a64-exit-dispatch
+      aarch64  0a541605b08a946b8e92e1a9ed99a3ef56ac76fd24fb0ad0fd6a30ed579e8574  359080 B  (+168)
+      x86      b2e9f34b21884f1c8935ab788e89819b8791d104cedbbabf2131e596a89d5158  369855 B
+  The final pair agrees to the last digit with audit-19's trial merge on `b183b69f`
+  (`/build/aud19-trial/summary.txt`); master moved only in docs between the two. On `99a307c9`: ci.yml
+  YAML OK, `check_script_modes.py` PASS, `check_readme_counts.py` PASS (49 jobs), vendor inventory
+  25/25 GREEN. RNG0 3 arms on `99a307c9`, x86 and AArch64 alike: positive GREEN, control GREEN, nofix
+  RED (expected), all rc=0. Not repeated here: tk_conform
+  (audit-19 ran both targets PASS on the trial merge), the CPU-budget 5 arms, infer-print 3/3 (same trial).
+  This entry was written by the run that merged; an independent re-measure is for a different run.
+- CROWN RE-BLESS — RNG0 delayed dispatch at the outermost IRQ exit, x86 only (2026-09-29, merge
+  `29a9d5d5` of `feat/rng0-exit-dispatch`, audit-17 PASS on 2026-09-28; R-RNG0 was put to mk_pino with a
+  recommendation on 2026-09-28 05:19 and, with no answer in 24 h, landed on the recommendation under the
+  inbox #3 / #18 rule). The bare-metal `.text` changes DELIBERATELY on x86 only
+  (`kernel/mtkernel3/kernel/sysdepend/x86_pc/cpu_cntl.c` `knl_irq_exit_dispatch`, called at the end of
+  `irq_handler` in `boot/x86/idt.c`). NEW dev crown `.text` sha256 (audit container gcc 13.3.0, fresh
+  clone from a git bundle, `make clean` first, same `objcopy -O binary -j .text` as `crown-text-identity`;
+  script `pk-scratch/rb-0929.sh` + `rb-0929-nm.py`, evidence `pkernel_audit_ss:/build/rb-0929/`):
+    aarch64  81d5b88302dbaf7ef384265d2784c36e064f4535c527d3566d92d48bf4531a4b  358904 B  (unchanged)
+    x86      f12d805da5a27d2b4bd18e87c6e57008b89800ad2fedd8005d7d8ee51987177f  369447 B  (was 10a4c009…, 369399)
+  Measured at the merge's first parent `d5dfa1b3` (gives exactly the 2026-09-28 crown below) and at
+  `29a9d5d5`; both hashes agree with the 8-digit values audit-17 measured on the branch.
+  WHERE THE BYTES WENT (x86 `nm -S`, `d5dfa1b3` → `29a9d5d5`): `irq_handler` 0x32→0x37 (+5) and new
+  `knl_irq_exit_dispatch` 0x2c (44); nothing else changed size. The symbols sum to +49 against a `.text`
+  delta of +48 — a 1 B alignment-padding difference, not examined further. `tk_conform` symbols in the
+  default x86 ELF: 0. Vendor-patch inventory on `29a9d5d5`: 24/24 GREEN (RNG0-X86PC is the 24th anchor).
+  REGRESSION ON `29a9d5d5` (same clone): `tests/x86/run_rng0_regression.sh` positive GREEN rc=0 32 s,
+  control GREEN rc=0 32 s, nofix RED (expected) rc=0 31 s. The heavier runs (tk_conform bare x86,
+  killchurn N=150, ring3 gates) were done by audit-17 on the branch and were not repeated here.
+  NOT COVERED: bare-metal AArch64 has the same shape (no IRQ-exit switch in the default build) — new
+  gap-ledger row `RNG0-AARCH64-NO-IRQ-EXIT-DISPATCH`. This entry was written by the run that merged;
+  an independent re-measure is for a different run.
+  INDEPENDENTLY RE-MEASURED (2026-09-29 19:30 run, audit-19; own script `pk-scratch/aud19-rb.sh`, fresh
+  clone of a new bundle, gcc 13.3.0 on both targets, evidence `pkernel_audit_ss:/build/aud19-rb/rb.txt`):
+  all four full hashes and sizes at `d5dfa1b3` / `29a9d5d5` agree to the last digit with the values
+  above (x86 10a4c009… 369399 → f12d805d… 369447; aarch64 81d5b883… 358904 at both). `nm -S` on x86:
+  only `irq_handler` 50→55 and the new `knl_irq_exit_dispatch` 44, sum +49 against `.text` +48. The
+  1 B, now examined (`pk-scratch/aud19-pad.sh`, `nm -n` spans): `off_pow` (1 B, a lone `ret`) is followed
+  by `knl_dispatch_to_schedtsk` (dispatch.S, 2-byte aligned); at `d5dfa1b3` off_pow sat at 0x1599a6 with
+  one pad byte before 0x1599a8, and after the odd +49 shift it sits at 0x1599d7 with no pad. `objdump -h`
+  `.text` 0x5a2f7 → 0x5a327 (+48). `tk_conform` symbols 0. Vendor inventory 24/24. `run_rng0_regression.sh`
+  on `29a9d5d5`: positive GREEN 44 s, control GREEN 43 s, nofix RED 43 s, all rc=0 (as expected).
 - CROWN RE-BLESS — F1 id-order fold + x86_pc idle stack, one re-bless for two merges (2026-09-28,
   merges `a73156d1` of `feat/f1-rsum-order` and `b9d73890` of `feat/x86pc-idle-stack`, both audit-12
   PASS on 2026-09-27; R-F1 / R-X86PC were put to mk_pino with a recommendation on 2026-09-27 04:40 and,

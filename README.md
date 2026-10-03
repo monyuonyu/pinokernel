@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `2a92e7d3`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `c8ecfec1`.
 
 # p-kernel
 
@@ -86,7 +86,7 @@ Anything not listed under "What runs today" is not claimed to work.
 | Process on Linux (x86_64, `boot/linux_x86_64`) | Boots to a shell |
 | Windows x86_64 (`boot/windows/x86_64`) | Builds an `.exe` (checked in CI). Not yet confirmed to start on a real machine |
 
-- **Tests for the contract between the kernel and the layers above it** (2026-09): 62 checks that the `tk_*` calls used by upper layers behave as specified (tasks, semaphores, event flags, mutexes, time — including error codes and boundary values). Expected values are checked against the μT-Kernel 3.0 specification (one item follows the reference implementation, not the specification). Five deliberately broken kernel builds are confirmed to turn the tests red, every time. Runs on Linux x86_64, bare-metal x86, and bare-metal AArch64 (`arch/common/tk_conform.c`).
+- **Tests for the contract between the kernel and the layers above it** (2026-09): 110 checks that the `tk_*` calls used by upper layers behave as specified (tasks, semaphores, event flags, mutexes, message buffers, mailboxes, fixed-size memory pools, cyclic handlers, time, dispatch disabling — including error codes and boundary values). Expected values are checked against the μT-Kernel 3.0 specification (two items follow the reference implementation, not the specification). Eleven deliberately broken kernel builds are confirmed to turn the tests red, every time. Runs on Linux x86_64, bare-metal x86, and bare-metal AArch64 (`arch/common/tk_conform.c`).
 - The first stage of multi-core support is in (CI `smp-autodetect` — a non-blocking job that failed 14 of its 15 runs up to 2026-09-09).
 
 ### Connecting
@@ -242,7 +242,7 @@ help                     ← all commands
 5. **The learning is sensitive to how arithmetic is rounded.** A difference in rounding from an optimization that fuses multiply and add once broke learning only on phones. Rounding was made identical so every environment gives the same result, but depending on that remains a weakness.
 6. **The number of commands differs by target.** Bare-metal x86 has 59, bare-metal AArch64 7, Linux x86_64 53, Linux aarch64 54 (2026-09-27). The table is in [command-matrix.md](docs/architecture/command-matrix.md), generated from the source, and CI checks that the table matches the source. Evening them out is next.
 7. **Watching after the kernel swap.** After moving to μT-Kernel 3.0, a reproducer (`tcb_churn.c`) keeps watching for bugs of the same kind as KILL-CHURN.
-8. **Bare-metal x86 has an unfixed way of freezing.** If a task keeps running without ever calling the kernel, the kernel never switches to other tasks (RNG0-BUSY-TASK-STALLS-DISPATCH). The cause is known and the fix is being decided. CI only watches it for now.
+8. **Bare-metal AArch64 still has the busy-task freeze.** If a task keeps running without ever calling the kernel, the kernel never switches to other tasks (RNG0-BUSY-TASK-STALLS-DISPATCH). On bare-metal x86 it is fixed (2026-09-29: at the exit of an interrupt, the kernel switches tasks if a switch is due). A CI regression test with three arms (the fix, a control, and the fix compiled out) blocks on it. The default bare-metal AArch64 build does not switch at the interrupt exit — confirmed in the code and by measurement — and is not fixed yet.
 
 ---
 

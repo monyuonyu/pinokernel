@@ -421,7 +421,17 @@ _vec_el1_irq:
     str w1, [x0, #0x10]         /* GICC_EOIR */
 #endif
 
-#ifdef SMP_SELFTEST
+#if defined(SMP_SELFTEST) || !defined(PK_RNG0_NO_EXIT_DISPATCH)
+    /* RNG0 on AArch64 (2026-09-29, gap-ledger RNG0-AARCH64-NO-IRQ-EXIT-
+     * DISPATCH): the single-CPU default build now takes the same IRQ-exit
+     * switch as the SMP self-test below, asking knl_irq_exit_need_dispatch
+     * (sysdepend/aarch64_virt/cpu_cntl.c: outermost, dispatch enabled, a task
+     * was interrupted, a switch is due — the x86 knl_irq_exit_dispatch
+     * condition) instead of smp_irq_need_resched. Before this, a task that
+     * never called the kernel starved every higher-priority task whose delay
+     * ended meanwhile. -DPK_RNG0_NO_EXIT_DISPATCH restores the old default
+     * vector (negative control of tests/aarch64/run_rng0_regression.sh).
+     * The switch path and .Lirq_resume_tramp are the SMP ones, unchanged. */
     /* ═══════════════════════════════════════════════════════════════════
      *  ②.2b-i — TRUE ASYNCHRONOUS register-context preempt (Option A).
      *
@@ -435,15 +445,20 @@ _vec_el1_irq:
      *  the proven knl_dispatch save/restore, instead of returning to the
      *  interrupted task.
      *
-     *  This whole block is SMP_SELFTEST-gated: with no flag the vector falls
-     *  straight through to the original `restore_caller_regs; eret` below, so
-     *  the production IRQ path is BYTE-IDENTICAL to the shipped kernel.
+     *  Until 2026-09-29 this whole block was SMP_SELFTEST-gated and the
+     *  default vector fell straight through to `restore_caller_regs; eret`
+     *  (never switching at the IRQ exit = the RNG0 starvation). Now only the
+     *  decision function differs (see the note above).
      *
      *  smp_irq_need_resched() is a C leaf (ABI-clean): it clobbers x0..x18,
      *  but those live in the 160-byte frame on this stack and are restored
      *  either by `restore_caller_regs` (no-switch) or by .Lirq_resume_tramp
      *  (switch path), so the clobber is harmless. */
+#ifdef SMP_SELFTEST
     bl   smp_irq_need_resched   /* -> 1 = switch this CPU, 0 = normal return */
+#else
+    bl   knl_irq_exit_need_dispatch /* -> 1 = switch, 0 = normal return      */
+#endif
     cbz  x0, .Lirq_return        /* no switch needed → original epilogue     */
 
     /* SWITCH PATH (A-ii two-frame nesting).  A mid-loop preempt has NO
@@ -461,12 +476,12 @@ _vec_el1_irq:
     /* knl_dispatch never returns here; it switches stacks into schedtsk. */
 
 .Lirq_return:
-#endif /* SMP_SELFTEST */
+#endif /* SMP_SELFTEST || !PK_RNG0_NO_EXIT_DISPATCH */
 
     restore_caller_regs
     eret
 
-#ifdef SMP_SELFTEST
+#if defined(SMP_SELFTEST) || !defined(PK_RNG0_NO_EXIT_DISPATCH)
 /* -----------------------------------------------------------------------
  *  .Lirq_resume_tramp — the resume path for an ASYNC-preempted task (②.2b-i).
  *
@@ -490,7 +505,7 @@ _irq_resume_tramp:
     msr  spsr_el1, x1
     restore_caller_regs         /* unwind the 160-byte caller frame           */
     eret                        /* return to the exact interrupted PC         */
-#endif /* SMP_SELFTEST */
+#endif /* SMP_SELFTEST || !PK_RNG0_NO_EXIT_DISPATCH */
 
 _vec_el1_sync:
     /* Dump ESR_EL1 + ELR_EL1 + FAR_EL1 to PL011 for diagnosis.

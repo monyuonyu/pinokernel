@@ -209,6 +209,55 @@ static void net_bringup(void)
     net_up = 1;
 }
 
+#ifdef PK_RNG0_REGR_TEST
+/* A16: the AArch64 twin of x86 T16 (gap-ledger RNG0-AARCH64-NO-IRQ-EXIT-
+ * DISPATCH; tests/aarch64/run_rng0_regression.sh; NOT in the default build).
+ * A pri-20 task spins with no kernel call; a pri-10 task sleeps 500 ms. The
+ * sleeper's timeout makes it READY inside the timer IRQ, and only a switch at
+ * the IRQ exit can run it while the spinner never calls the kernel.
+ *   positive: the sleeper prints "[A16] PASS" -> GREEN with the fix.
+ *   control (-DPK_RNG0_REGR_CONTROL): the spinner sleeps 10 ms per turn, so
+ *     the service-call exit dispatches; GREEN with or without the fix.
+ *   nofix (-DPK_RNG0_NO_EXIT_DISPATCH): positive without the IRQ-exit switch
+ *     -> the sleeper never runs -> RED. */
+static volatile UW a16_stop = 0, a16_count = 0;
+
+static void a16_spin(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    while (!a16_stop) {
+        a16_count++;
+#ifdef PK_RNG0_REGR_CONTROL
+        tk_dly_tsk(10);
+#endif
+    }
+    tk_ext_tsk();
+}
+
+static void a16_sleeper(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    tk_dly_tsk(500);
+    a16_stop = 1;
+    print("[A16] PASS: tk_dly_tsk(500) returned while a pri-20 task spun\r\n");
+    tk_ext_tsk();
+}
+
+static void a16_rng0_probe(void)
+{
+    T_CTSK cs = { .exinf = NULL, .tskatr = TA_HLNG | TA_RNG0,
+                  .task = a16_spin, .itskpri = 20, .stksz = 2048 };
+    T_CTSK cw = { .exinf = NULL, .tskatr = TA_HLNG | TA_RNG0,
+                  .task = a16_sleeper, .itskpri = 10, .stksz = 2048 };
+    ID s = tk_cre_tsk(&cs), w = tk_cre_tsk(&cw);
+    if (s < E_OK || w < E_OK) { print("[A16] FAIL: tk_cre_tsk\r\n"); return; }
+    print("[A16] start: pri-20 spinner, pri-10 sleeper (500 ms)\r\n");
+    tk_sta_tsk(w, 0);
+    tk_sta_tsk(s, 0);
+    tk_dly_tsk(1000);
+}
+#endif /* PK_RNG0_REGR_TEST */
+
 EXPORT INT usermain(void)
 {
     print("\r\n");
@@ -227,6 +276,10 @@ EXPORT INT usermain(void)
         extern INT tk_conform_run(void (*out)(const char *));
         tk_conform_run(print);
     }
+#endif
+
+#ifdef PK_RNG0_REGR_TEST
+    a16_rng0_probe();
 #endif
 
 #ifdef SMP_2TASKS_PROD
