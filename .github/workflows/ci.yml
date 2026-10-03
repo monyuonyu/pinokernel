@@ -535,6 +535,10 @@ jobs:
           # qualifier is dropped); [curio-clean] eval/hit purity: s_wonders delta
           # ==0 (RED if accrual leaks into a read path); [curio-bounded] table
           # overflow evicts min-want tie-oldest, a want=3 entry survives.
+          # [curio-guess] (ROADMAP 1-2b): a NEVER-held key at share 100 still
+          # wonders; a held-then-evicted key at share 100 does not (RED with
+          # -DR3_SHARE_ONLY_WANT, the old share-only rule).
+          grep -aF '[curio-guess] PASS' selftest.log
           grep -aF '[curio-prior] PASS' selftest.log
           grep -aF '[curio-accrue] PASS' selftest.log
           grep -aF '[curio-unwondered] PASS' selftest.log

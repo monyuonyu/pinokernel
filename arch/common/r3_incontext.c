@@ -1785,6 +1785,22 @@ _Static_assert(sizeof(R3_WANT) == 8, "R3_WANT fixed size");
 
 static R3_WANT r3_wq[R3_WQ_MAX];     /* the bounded want-table                    */
 static UW r3_wq_seq  = 0;            /* want arrival counter                      */
+#ifdef _TK_HOSTED_LIBC_
+/* ROADMAP 1-2b: bit k = this node has held a fact on key k since boot (set at
+ * the one arrival site, r3_fact_learn). r3_want_note lets a high masked share
+ * excuse a want ONLY for such a key (the LM-13 evicted case); for a never-held
+ * key the share is a guess generalised from the keys it did learn. Hosted only,
+ * like the pull it feeds (mind_net_task). RAM only: after a reboot a once-held,
+ * evicted key may be wanted again (a peer answers, nothing worse). */
+#if R_KEYV > 32
+#error "r3_held_keys is one UW: R_KEYV must be <= 32"
+#endif
+static UW r3_held_keys = 0;
+static INT r3_key_ever_held(INT k)
+{
+    return (k >= 0 && k < R_KEYV) ? (INT)((r3_held_keys >> k) & 1u) : 0;
+}
+#endif
 static UW s_wonders  = 0;            /* [curio-*]: every wonder accrual           */
 
 /* LM-14: when a fact ARRIVES (r3_fact_learn), any accrued want for one of its
@@ -2003,6 +2019,9 @@ INT r3_fact_learn(const UB *keys, const UB *vals, INT n)
             if (votes[c] > votes[best]) best = (UB)c;
         f->key[i]  = keys[i];
         f->yhat[i] = best;
+#ifdef _TK_HOSTED_LIBC_
+        if (keys[i] < R_KEYV) r3_held_keys |= 1u << keys[i];   /* 1-2b */
+#endif
     }
     r3_s_rng = r_rng; r_rng = save;
     r3_fq_n++;
@@ -2109,6 +2128,9 @@ static float s_eval_fact(UW seed, INT n, INT f)
 static void s_fq_reset(void)
 {
     r3_fq_n = 0; r3_fq_seq = 0; r3_s_rng = S_SEED_TRAIN;
+#ifdef _TK_HOSTED_LIBC_
+    r3_held_keys = 0;                     /* 1-2b: a reset queue held nothing */
+#endif
     s_steps_last_round = 0; s_evictions = 0; s_occ_max = 0;
     s_touches = 0;                        /* LM-13: fresh accrual count */
     /* LM-14: the want-table dies with the queue (VII.0 #5 amnesia bomb) —
@@ -2795,7 +2817,13 @@ INT r3_want_note(INT k, float share_modal)
 {
     INT bind, fi = m_find_key(k, &bind);
     if (fi >= 0)                     return -1;   /* bound: held, not curious */
+#if defined(_TK_HOSTED_LIBC_) && !defined(R3_SHARE_ONLY_WANT)
+    /* 1-2b: the share excuses only a key this node once held (evicted); a
+     * never-held key's high share is a confident guess (MIND-GEN-0-B E1). */
+    if (share_modal >= M_KNOWN_SHARE && r3_key_ever_held(k)) return 0;
+#else
     if (share_modal >= M_KNOWN_SHARE) return 0;   /* the weights already know it */
+#endif
 
     /* already wanted? find its slot to bump. */
     INT slot = -1;
@@ -6150,6 +6178,9 @@ void r3_curiosity_test(void)
         r_puts("[curio] FATAL: could not select 5 distinct upper keys incl. an unknown k_u — cannot run honestly\r\n");
         r_puts("[curio-prior] FAIL\r\n[curio-accrue] FAIL\r\n[curio-unwondered] FAIL\r\n");
         r_puts("[curio-wondered] FAIL\r\n[curio-weightknown] FAIL\r\n[curio-clean] FAIL\r\n[curio-bounded] FAIL\r\n");
+#ifdef _TK_HOSTED_LIBC_
+        r_puts("[curio-guess] FAIL\r\n");
+#endif
         return;
     }
 
@@ -6242,6 +6273,41 @@ void r3_curiosity_test(void)
     r_puts("% (>= bar -> weights know it)  r3_want_note="); r_putdec((UW)wk_probe);
     r_puts(" (0 = not curious)\r\n");
     r_puts(wk_ok ? "[curio-weightknown] PASS\r\n" : "[curio-weightknown] FAIL\r\n");
+
+#ifdef _TK_HOSTED_LIBC_
+    /* ---------- [curio-guess]: a confident GUESS is not knowledge ------ *
+     * ROADMAP 1-2b (MIND-GEN-0-B E1): a key this node has NEVER held can  *
+     * still get a high masked share — the substrate generalises from the  *
+     * keys it did learn (fire->warm makes snow->warm 100%). The share bar *
+     * must only excuse keys it once held (the evicted case above).        *
+     * (a) fgt_build (keys 0..7 held): the first never-held key at share   *
+     *     100 -> MUST wonder (>0).                                        *
+     * (b) the class-spread state of [curio-weightknown] (key 0 held, then *
+     *     evicted) at the same share 100 -> still 0.                      *
+     * RED on the share-only rule (-DR3_SHARE_ONLY_WANT: (a) returns 0).   */
+    INT gs_probe = 0, gs_held = 1, gs_key = -1;
+    r3_weights_set(w_base);
+    fgt_build();
+    for (INT k = 0; k < R_KEYV && gs_key < 0; k++) {
+        INT b;
+        if (m_find_key(k, &b) < 0 && !r3_key_ever_held(k)) gs_key = k;
+    }
+    if (gs_key >= 0) gs_probe = r3_want_note(gs_key, 100.0f);
+    if (spread_ok) {
+        r3_weights_set(w_base);
+        fgt_build();
+        (void)r3_fact_learn(sk5, sv5, 8);            /* class-spread f5 -> evict f1 */
+        while (r3_facts_pending()) (void)r3_consolidate_idle_round();
+        INT b;
+        if (m_find_key(0, &b) < 0 && r3_key_ever_held(0)) gs_held = r3_want_note(0, 100.0f);
+    }
+    INT gs_ok = spread_ok && (gs_key >= 0) && (gs_probe > 0) && (gs_held == 0);
+    r_puts("[curio] guess guard: never-held key "); r_putdec((UW)(gs_key < 0 ? 0 : gs_key));
+    r_puts(" at share 100 -> r3_want_note="); r_putdec((UW)(gs_probe < 0 ? 0 : gs_probe));
+    r_puts(" (>0 = curious); held+evicted key 0 at share 100 -> "); r_putdec((UW)(gs_held < 0 ? 0 : gs_held));
+    r_puts(" (0 = weights know it)\r\n");
+    r_puts(gs_ok ? "[curio-guess] PASS\r\n" : "[curio-guess] FAIL\r\n");
+#endif
 
     /* ---------- [curio-clean]: eval/hit purity ------------------------ *
      * s_eval_fact x4 + m_masked_vote x80 + 5x r3_fact_touch on a RETAINED  *
