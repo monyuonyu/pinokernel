@@ -120,6 +120,7 @@ Each design doc → its cert (CI job / self-test tag / live job). Rung status:
 | full-smp-plan.md | SMP the kernel without splitting the mind (②.0–②.2) | `smp-autodetect` (`[smp-autodetect]`, run_smp0.sh) | ✓ CLOSED (②.0–②.2; ②.3 roadmap) |
 | scaling-law.md | honest decomposition of "bigger N = smarter": breadth/resilience/throughput scale, per-thought depth does not (ensemble designed) | `[scaling-*]` | ◐ PARTIAL — ensemble mechanism designed, not fully certed |
 | web-os.md | a human-facing Web OS served from the node, chat-format galaxy | — | ○ OPEN |
+| command-parity.md | one command table across the 6 targets (inbox #4) | `command-matrix` (generated table vs the shells' sources) | ◐ PARTIAL — stage 0 (visibility) only; one ledger / filling the gaps / the add-a-command gate are design |
 
 ### L3 — 30-module/
 
@@ -161,6 +162,9 @@ Each design doc → its cert (CI job / self-test tag / live job). Rung status:
 | webd-user-space.md | move the web server out of the substrate | — (Slice A partial; no cert) | ○ OPEN |
 | living-body-inspector.md | wire star organs to REAL vitals (HONEST-GLOW) | — (via galaxy certs; no dedicated inspector cert) | ○ OPEN |
 | n1-lan-direct-plan.md | relay-less auto-mesh on same WiFi | — (design plan; LAN-direct transport uncerted) | ○ OPEN |
+| cpu-budget.md | a task that runs 2 s without a switch is logged (stage 1), ring3 over-budget handling (stage 2) | `run_cpu_budget.sh` (5 arms in `rng0-regression-monitor`) | ◐ PARTIAL — stage 1 (log only); stage 2 design |
+| mind-conflicts.md | a revised belief keeps the loser readable (1-3a); one stamp rule everywhere (1-3b); history to newcomers (1-3c) | `run_mind_conflicts.sh` (`ump-x86_64`), `[mind-conflicts]` | ◐ PARTIAL — 1-3a only on master; 1-3b in audit, 1-3c design |
+| mind-gen0-b.md | partition + heal + newcomer: no learning lost, one answer, provenance, losers kept, no resurrection (E1–E5 fixed first) | `run_mind_gen0_b.sh` (manual, not in CI) | ○ OPEN — E1 and E4 red by the pre-registered expectations |
 | conversation.md | escape the vocabulary cage (strategy branch) | — (strategy exploration) | N/A exploration |
 
 ### 40-verify/ (right arm)
@@ -207,13 +211,19 @@ above is a piece of its verification. This is the top-of-V ⇄ acceptance rung.
 > the honest state is a design doc that now exists, pointing at a cert that is still short of the
 > mechanism's full claim.
 
-Of the **65** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
+> **2026-10-04: the table is now checked by machine** (`tests/ci/check_vmodel.py`, ROADMAP 0-7,
+> first slice): every design doc needs a row, every row's doc must exist, a CLOSED/PARTIAL row must
+> cite a cert that exists in the code / tests / ci.yml, OPEN may only go down, and the counts below
+> must match the rows. Its first run found four docs written since 09-05 with no row
+> (command-parity, cpu-budget, mind-conflicts, mind-gen0-b); they were added (3 PARTIAL, 1 OPEN).
+
+Of the **69** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
 
 | rung | count | which |
 |---|---|---|
 | **✓ CLOSED** (design↔cert complete) | **39** | most of L1/L2/L3 + verify + evolution |
-| **◐ PARTIAL** (early slice certed, later slices design-only) | **12** | vendor-patch-inventory, decentralized-lookup, federation, p2p-overlay, scaling-law, special-structure-mind, interoception, device-capacity, dynamic-id, ring3-core, distributed_moe_design, windows-pe-port |
-| **○ OPEN** (design doc, no cert = broken rung) | **9** | memory-thought, web-os, self-access, self-access-design, gpu-compute, gpu-3-wiring, webd-user-space, living-body-inspector, n1-lan-direct-plan |
+| **◐ PARTIAL** (early slice certed, later slices design-only) | **15** | vendor-patch-inventory, decentralized-lookup, federation, p2p-overlay, scaling-law, command-parity, special-structure-mind, interoception, device-capacity, dynamic-id, ring3-core, distributed_moe_design, windows-pe-port, cpu-budget, mind-conflicts |
+| **○ OPEN** (design doc, no cert = broken rung) | **10** | memory-thought, web-os, self-access, self-access-design, gpu-compute, gpu-3-wiring, webd-user-space, living-body-inspector, n1-lan-direct-plan, mind-gen0-b |
 | **N/A** (survey / rationale / CONOPS) | **4** | r3-model-widening (rationale), base-model-survey, moe-distillation-survey, conversation — (survival-network counted separately as L0 CONOPS, outside this table) |
 | **DECLINED** (design kept as historical stratum, not a rung to close) | **1** | survival-recip (mk_pino chose pure altruism 2026-07-04) |
 

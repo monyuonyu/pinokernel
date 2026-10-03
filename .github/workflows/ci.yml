@@ -2794,6 +2794,15 @@ jobs:
         run: python3 tests/ci/check_readme_translations.py .
       - name: check_script_modes.py
         run: python3 tests/ci/check_script_modes.py .
+      # 2026-10-04 (ROADMAP 0-7): V-MODEL.md's design-doc <-> cert table.
+      # Red on a design doc with no row, a row for a missing doc, a CLOSED/
+      # PARTIAL row whose cert exists nowhere, more OPEN rows than before,
+      # or a tally that does not match the rows. The selftest breaks a copy
+      # six ways and needs all six red.
+      - name: check_vmodel.py selftest (each check reddens)
+        run: python3 tests/ci/check_vmodel.py --selftest
+      - name: check_vmodel.py (design docs <-> certs, V-MODEL.md)
+        run: python3 tests/ci/check_vmodel.py
       # 2026-09-27 (inbox #8): README said "22ジョブ" while this file had 45.
       # Every job count in README.ja.md / README.md / README.zh-CN.md must equal the job count here, so adding
       # a job means updating the README in the same change. A step here, not
