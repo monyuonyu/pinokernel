@@ -20,6 +20,13 @@
 - 約束ごとの試験（tk_conform）と killchurn が緑のまま（段階1は振る舞いを変えないので、ここが赤なら見張り自体の誤り）
 - crown は x86 で動く（re-bless が要る）。段階1と2は別々に
 
+## Linux 版（hosted）の割込みの出口（2026-10-04、`feat/hosted-exit-dispatch`）
+- hosted の「割込み」は SIGALRM。ハンドラの中で `knl_dispatch` に入ると、タスクの外から入ることになる（preempt.c の昔の注記）。そこで**ハンドラは中断した文脈を書き換えるだけ**: 中断した RIP を red zone（128B）の下に積み、RIP を `arch_preempt_tramp` にする。sigreturn のあと、タスク自身のスタック・ふだんのシグナルマスクで飛び先が走り、C の呼び出しで守られないレジスタ（rax〜r11・フラグ・x87/SSE を fxsave64）を退避して `knl_dispatch_entry` を呼び、戻ったら復元して中断した命令へ `ret`
+- **中断した場所が p-kernel 自身の .text のときだけ**（`__executable_start`〜`__etext`）。libc の中だと libc のロック（malloc のは再入不可）を持っている恐れがあり、次のタスクがそこで止まる。その場合は今までどおり次の END_CRITICAL_SECTION で切り替わる
+- 試験: tk_conform の K9（ディスパッチ許可で、カーネルを呼ばない約150ms の回転の間に、20ms で起きる高い優先度のタスクが走る）。陰性コントロール `-DPK_HOSTED_NO_EXIT_DISPATCH`（K9 だけ赤）
+- 限界: AVX の上半分は退避しない（hosted は -mavx なし）。aarch64（Android）は未着手で、台帳の行はそのため開いたまま
+- 他の案: ハンドラの中で切り替える（sigaltstack を全タスクで共有しているので、切り替えた先で次のシグナルが同じスタックを上書きする）、タスクごとに pthread（ディスパッチャの意味が変わる）
+
 ## 決めたこと・他の案
 - 既定の予算 2000ms: 今のベアメタルで一番長い計算は数十 ms（台帳の RNG0 行の調査）。桁で余裕を取る。他の案: 優先度ごとに予算（今は要らない）
 - 優先度を自動で下げる案は採らない: tk_chg_pri を勝手に呼ぶと約束（優先度はアプリが決める）を破る

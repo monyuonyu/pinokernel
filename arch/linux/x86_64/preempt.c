@@ -128,17 +128,22 @@ void knl_idle_wait(void)
  * knl_dispatch must still be entered from task context, never inside the
  * handler. So the handler only REWRITES the interrupted context: it pushes
  * the interrupted RIP below the 128-byte red zone and resumes the task at
- * arch_preempt_tramp. After sigreturn (task stack, normal mask) the
- * trampoline saves every register the C ABI does not (rax..r11, flags,
- * x87/SSE via fxsave64), calls arch_preempt_dispatch, restores them and
- * `ret`s to the interrupted instruction.
+ * arch_preempt_tramp. After sigreturn (normal mask) the trampoline moves to
+ * this task's SIDE STACK, saves every register the C ABI does not (rax..r11,
+ * flags, x87/SSE via fxsave64), calls arch_preempt_dispatch (whose dispatch
+ * frame also lives there while the task is switched out), restores them,
+ * returns to the task stack and `ret`s to the interrupted instruction.
+ * The side stack (one per task id, its top word = "this task is inside the
+ * trampoline") keeps the task stack's extra use to the 8-byte return
+ * address: a first version saved ~800 B on the task stack and a 4 KB task
+ * overflowed into its neighbour (SIGSEGV in `handoff stream`, 2026-10-04).
  *
- * Only when the interrupted RIP is in p-kernel's own text: if the task was
- * inside libc it may hold a libc lock (malloc's is not recursive) and the
- * next task would deadlock on it — that case keeps the old behaviour
- * (switch at the next END_CRITICAL_SECTION). Limits: AVX upper halves are
- * not saved (the hosted build does not use -mavx); x86_64 only (the
- * aarch64 / Android sibling is still the old behaviour).
+ * Only when the interrupted RIP is in p-kernel's own text and not in the
+ * trampoline: inside libc the task may hold a libc lock (malloc's is not
+ * recursive) and the next task would deadlock on it — that case keeps the
+ * old behaviour (switch at the next END_CRITICAL_SECTION). Limits: AVX upper
+ * halves are not saved (the hosted build does not use -mavx); x86_64 only
+ * (the aarch64 / Android sibling is still the old behaviour).
  * -DPK_HOSTED_NO_EXIT_DISPATCH: the old behaviour (negative control). */
 #include <ucontext.h>
 #include <stdint.h>
@@ -147,15 +152,21 @@ extern void * volatile knl_ctxtsk;
 extern volatile int knl_dispatch_disabled;
 extern volatile int knl_taskindp;            /* low 32 bits; dispatch.S uses incl */
 extern void knl_dispatch_entry(void);
+extern int tk_get_tid(void);
 extern char __executable_start[], __etext[];
 void arch_preempt_tramp(void);
-static volatile sig_atomic_t preempt_injected = 0;
+extern char arch_preempt_tramp_end[];
 
-/* called by arch_preempt_tramp, in task context */
+#define SIDE_SLOTS 129                       /* task ids 1..128 (CNF_MAX_TSKID) */
+#define SIDE_SZ    8192                      /* save area + dispatch frame + drain */
+static uint64_t side_stack[SIDE_SLOTS][SIDE_SZ / 8] __attribute__((aligned(64)));
+uint64_t arch_preempt_side_sp;               /* handler -> trampoline (one at a time) */
+uint64_t arch_preempt_tmp_sp;                /* trampoline's first 3 instructions */
+
+/* called by arch_preempt_tramp on the side stack, in task context */
 void arch_preempt_dispatch(void)
 {
     arch_irq_disabled_flag = 1;
-    preempt_injected = 0;
     if (knl_ctxtsk != 0 && knl_ctxtsk != knl_schedtsk &&
         !knl_dispatch_disabled && knl_taskindp == 0)
         knl_dispatch_entry();               /* returns here when rescheduled */
@@ -165,9 +176,13 @@ void arch_preempt_dispatch(void)
 __asm__(
     "    .text\n"
     "    .globl arch_preempt_tramp\n"
+    "    .globl arch_preempt_tramp_end\n"
     "    .type  arch_preempt_tramp, @function\n"
     "    .balign 16\n"
     "arch_preempt_tramp:\n"
+    "    movq  %rsp, arch_preempt_tmp_sp(%rip)\n"
+    "    movq  arch_preempt_side_sp(%rip), %rsp\n"     /* = &top[-1], the busy word */
+    "    pushq arch_preempt_tmp_sp(%rip)\n"            /* top[-2] = the task's rsp */
     "    pushfq\n"
     "    pushq %rax\n    pushq %rcx\n    pushq %rdx\n    pushq %rsi\n"
     "    pushq %rdi\n    pushq %r8\n     pushq %r9\n     pushq %r10\n"
@@ -185,23 +200,34 @@ __asm__(
     "    popq %r10\n    popq %r9\n      popq %r8\n      popq %rdi\n"
     "    popq %rsi\n    popq %rdx\n     popq %rcx\n     popq %rax\n"
     "    popfq\n"
+    "    movq  $0, 8(%rsp)\n"                          /* busy word = 0 (no flags) */
+    "    popq  %rsp\n"                                  /* back on the task stack */
     "    ret\n"
+    "arch_preempt_tramp_end:\n"
     "    .size arch_preempt_tramp, . - arch_preempt_tramp\n"
 );
 
 static void maybe_preempt(ucontext_t *uc)
 {
-    if (preempt_injected || arch_irq_disabled_flag || knl_taskindp != 0 ||
+    if (arch_irq_disabled_flag || knl_taskindp != 0 ||
         knl_dispatch_disabled || knl_ctxtsk == 0 || knl_ctxtsk == knl_schedtsk)
         return;
     greg_t rip = uc->uc_mcontext.gregs[REG_RIP];
     if (rip < (greg_t)(uintptr_t)__executable_start || rip >= (greg_t)(uintptr_t)__etext)
         return;                              /* in libc etc.: not here */
+    if (rip >= (greg_t)(uintptr_t)arch_preempt_tramp &&
+        rip <  (greg_t)(uintptr_t)arch_preempt_tramp_end)
+        return;                              /* moving on/off the side stack */
+    int id = tk_get_tid();
+    if (id <= 0 || id >= SIDE_SLOTS) return;
+    uint64_t *top = &side_stack[id][SIDE_SZ / 8];
+    if (top[-1]) return;                     /* this task is already inside */
+    top[-1] = 1;
+    arch_preempt_side_sp = (uint64_t)(uintptr_t)&top[-1];
     greg_t rsp = uc->uc_mcontext.gregs[REG_RSP] - 128 - 8;   /* skip the red zone */
     *(greg_t *)(uintptr_t)rsp = rip;
     uc->uc_mcontext.gregs[REG_RSP] = rsp;
     uc->uc_mcontext.gregs[REG_RIP] = (greg_t)(uintptr_t)arch_preempt_tramp;
-    preempt_injected = 1;
 }
 #endif
 

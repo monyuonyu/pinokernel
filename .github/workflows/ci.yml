@@ -884,7 +884,7 @@ jobs:
       # The contract suite v2 (inbox #5, arch/common/tk_conform.c, verb tkconf):
       # the tk_* task / semaphore / event flag / mutex / message buffer /
       # mailbox / fixed pool / cyclic handler / time / dispatch-disable promises user space
-      # relies on, 110 checks incl. error codes. Eleven negative controls
+      # relies on, 111 checks incl. error codes. Eleven negative controls
       # each patch ONE line of the vendored kernel in a scratch copy and must
       # go RED. The bare-metal twins run in the tk-conform-bare job.
       - name: contract suite v2 (tk_* tasks / sems / flags / mutexes / msg buffers / mailboxes / pools / cyclic / time / dispatch disable + 11 kernel-breaking NCs)
