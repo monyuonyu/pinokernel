@@ -1724,6 +1724,10 @@ jobs:
       # 8 kinds of operation (220 points); the remounted state must be exactly
       # the before- or the after-state, and the store must take a new write.
       # Red with -DARK_FAULT_TRUST_COMMIT_HEADER (34 points). ~10 s.
+      # samples/25_survival_fs/run.sh: versioning, dedup, rot self-verify and
+      # the original 8-point overwrite cut. Not in CI before 2026-10-04 (D5-e).
+      - name: ARK sample 25 (versioning / dedup / self-verify / overwrite cut)
+        run: timeout 120 bash samples/25_survival_fs/run.sh
       - name: ARK power cut at every write point (ROADMAP 0-8)
         run: |
           timeout 300 bash samples/25_survival_fs/allpoints.sh | tee ark_allpoints.log
