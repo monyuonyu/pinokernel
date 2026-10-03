@@ -1141,6 +1141,12 @@ jobs:
         # opt-in `raft` shell verb. Source-level assertion (the bare-metal
         # boot is a qemu-serial flow, not a self-test harness).
         run: bash samples/45_nocentral_boot/nocentral_cert.sh
+      - name: Build boot/aarch64 for Raspberry Pi 3 (kernel8.img, link only)
+        # Last in the job: `make rpi3` starts with `make clean`. The RPi3
+        # link was broken from MC-2.1 (06-20) to 2026-10-04 unnoticed
+        # (mc2_smp.c needs _stack_top_cpu1..3, linker.rpi3.ld had none).
+        # Booting on the real board is not tested here.
+        run: make -C boot/aarch64 rpi3
 
   ring3-survival:
     # ring3-core Wave B + C acceptance gates (docs/architecture/ring3-core.md
