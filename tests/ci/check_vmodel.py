@@ -9,15 +9,19 @@ RED when:
   stale-row     a row names a doc that does not exist
   no-cert       a CLOSED or PARTIAL row cites no cert at all
   unknown-cert  a CLOSED or PARTIAL row cites a cert found nowhere: a [tag]
-                (prefix before '*') must appear as "[tag" in the code / tests /
-                samples / ci.yml; a `name` must be a ci.yml job or step text,
-                or a file / directory name in the repo
+                must appear whole as "[tag]" (a [pre*] as "[pre...]"), not glued
+                to an identifier, in the code / tests / samples / ci.yml, and
+                be at least 3 characters; a `name` must be a ci.yml job id, a
+                step's name:, a whole token of ci.yml, or a file / directory
+                name in the repo
   open-ceiling  more OPEN rows than OPEN_MAX (OPEN may only go down; lower
                 OPEN_MAX in the same change that closes one)
-  tally         a count in the "Rung tally" table differs from the rows
+  tally         a count in the "Rung tally" table differs from the rows, or one
+                of its five lines is missing
 
-`--selftest` breaks a copy of the real table six ways (one per check) and
-requires each to go red, and the unbroken copy to stay green.
+`--selftest` breaks a copy of the real table nine ways (each check, plus the
+three that audit-20 found green: a bare substring of ci.yml, a one-letter tag,
+a deleted tally line) and requires each to go red, and the unbroken copy green.
 The design docs themselves carry no metadata yet (the table is the source);
 moving the source into each doc's head is the next slice of 0-7.
 Exit 0 = green, 1 = red.
@@ -31,9 +35,12 @@ ARCH = os.path.join(ROOT, "docs", "architecture")
 VMODEL = os.path.join(ARCH, "V-MODEL.md")
 LEVEL_DIRS = ["10-requirements", "20-architecture", "30-module", "40-verify", "50-evolution"]
 SKIP_SUBDIRS = {"research"}
-OPEN_MAX = 10  # 2026-10-04: memory-thought, web-os, self-access, self-access-design,
+OPEN_MAX = 11  # 2026-10-04: memory-thought, web-os, self-access, self-access-design,
                # gpu-compute, gpu-3-wiring, webd-user-space, living-body-inspector,
-               # n1-lan-direct-plan, mind-gen0-b
+               # n1-lan-direct-plan, mind-gen0-b, android-always-on.
+               # 10 -> 11 for android-always-on (d9aec0b0): a new design memo for an
+               # item not built yet (inbox #7-1) is honestly OPEN; it is not an old
+               # rung slipping back. Raising this needs a reason here, every time.
 CORPUS_DIRS = ["arch", "boot", "tests", "samples", "tools", "relay", "apps", "android", "kernel/mtkernel3/lib"]
 CORPUS_EXT = (".c", ".h", ".S", ".sh", ".py", ".yml", ".yaml", ".kt", ".java", ".rs", ".ts", ".js", ".mk")
 
@@ -105,7 +112,9 @@ def load_corpus():
     with open(os.path.join(ROOT, ".github", "workflows", "ci.yml"), encoding="utf-8") as fh:
         ci = fh.read()
     jobs = set(re.findall(r"^  ([A-Za-z0-9_\-]+):\s*$", ci, flags=re.M))
-    return "\n".join(text) + "\n" + ci, ci, names, jobs
+    steps = {x.strip().strip("'\"").strip()
+             for x in re.findall(r"^\s*-?\s*name:\s*(.+?)\s*$", ci, flags=re.M)}
+    return "\n".join(text) + "\n" + ci, ci, names, jobs | steps
 
 
 def cert_tokens(cell):
@@ -120,6 +129,34 @@ def cert_tokens(cell):
     rest = re.sub(r"`[^`]*`", " ", cell)
     tags += re.findall(r"\[([A-Za-z0-9][A-Za-z0-9_\-./*]*)\]", rest)
     return tags, names
+
+
+TAG_MIN = 3        # a tag (or the prefix before '*') shorter than this proves nothing
+ID = r"A-Za-z0-9_\-./"
+
+
+def tag_found(tag, blob):
+    """[tag] must appear whole, not glued to an identifier (`a[s]` is C, not a
+    cert); [pre*] needs [pre followed by a tag body. Too-short tags never count."""
+    pre, star, _ = tag.partition("*")
+    if len(pre.strip("-_./")) < TAG_MIN:
+        return False
+    lead = r"(?<![A-Za-z0-9_\])])\["
+    if star:
+        pat = lead + re.escape(pre) + "[" + ID + "]*\\]"
+    else:
+        pat = lead + re.escape(tag) + "\\]"
+    return re.search(pat, blob) is not None
+
+
+def name_found(n, ci, names, jobs):
+    """a `name` is a ci.yml job id, a step's name:, a file / directory name, or a
+    whole token of ci.yml (not part of a longer one: `ump` is not `ump-x86_64`)."""
+    if n in jobs or n in names or os.path.basename(n) in names:
+        return True
+    if len(n) < TAG_MIN:
+        return False
+    return re.search("(?<![" + ID + "])" + re.escape(n) + "(?![" + ID + "])", ci) is not None
 
 
 def check(vtext, docs, corpus, roots=frozenset()):
@@ -146,27 +183,28 @@ def check(vtext, docs, corpus, roots=frozenset()):
         if not tags and not nms:
             errs.append("no-cert: %s is %s but cites no cert" % (doc, rung))
         for t in tags:
-            pre = t.split("*")[0]
-            if ("[" + pre) not in blob:
-                errs.append("unknown-cert: %s cites [%s], found nowhere" % (doc, t))
+            if not tag_found(t, blob):
+                errs.append("unknown-cert: %s cites [%s], found nowhere as a whole tag" % (doc, t))
         for n in nms:
-            if n in jobs or n in names or n in ci:
-                continue
-            if os.path.basename(n) in names:
-                continue
-            errs.append("unknown-cert: %s cites `%s`, not a ci.yml job/text or a file name" % (doc, n))
+            if not name_found(n, ci, names, jobs):
+                errs.append("unknown-cert: %s cites `%s`, not a ci.yml job / step / token or a file name"
+                            % (doc, n))
     if counts.get("OPEN", 0) > OPEN_MAX:
         errs.append("open-ceiling: %d OPEN rows > OPEN_MAX %d (OPEN may only go down)"
                     % (counts.get("OPEN", 0), OPEN_MAX))
     key = {"✓ CLOSED": "CLOSED", "◐ PARTIAL": "PARTIAL", "○ OPEN": "OPEN",
            "N/A": "N/A", "DECLINED": "DECLINED"}
+    tallied = set()
     for line in vtext.splitlines():
         m = TALLY.match(line)
         if m and m.group(1).strip() in key:
             k = key[m.group(1).strip()]
+            tallied.add(k)
             if int(m.group(2)) != counts.get(k, 0):
                 errs.append("tally: Rung tally says %s %s, the table has %d"
                             % (k, m.group(2), counts.get(k, 0)))
+    for k in sorted(set(key.values()) - tallied):
+        errs.append("tally: the Rung tally has no %s line" % k)
     return errs, counts
 
 
@@ -188,6 +226,11 @@ def selftest(vtext, docs, corpus, roots):
         ("open-ceiling", vtext.replace(partial, re.sub(r"\|[^|]*\|\s*$", "| ○ OPEN |", partial)), docs),
         ("tally", re.sub(r"(\*\*✓ CLOSED\*\*.*?\|\s*\*\*)(\d+)", lambda m: m.group(1) + str(int(m.group(2)) + 1),
                          vtext, count=1), docs),
+        # audit-20's three breaks: a bare substring of ci.yml, a one-letter tag
+        # (`[s]` is everywhere in C), and a deleted tally line all used to stay green
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `ump` | ✓ CLOSED |" % cdoc), docs),
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `[s]` | ✓ CLOSED |" % cdoc), docs),
+        ("tally", "\n".join(l for l in lines if not l.startswith("| **✓ CLOSED**")) + "\n", docs),
     ]
     for name, vt, ds in breaks:
         errs, _ = check(vt, ds, corpus, roots)

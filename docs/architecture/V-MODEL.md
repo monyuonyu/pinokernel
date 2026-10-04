@@ -163,7 +163,9 @@ Each design doc → its cert (CI job / self-test tag / live job). Rung status:
 | living-body-inspector.md | wire star organs to REAL vitals (HONEST-GLOW) | — (via galaxy certs; no dedicated inspector cert) | ○ OPEN |
 | n1-lan-direct-plan.md | relay-less auto-mesh on same WiFi | — (design plan; LAN-direct transport uncerted) | ○ OPEN |
 | cpu-budget.md | a task that runs 2 s without a switch is logged (stage 1), ring3 over-budget handling (stage 2) | `run_cpu_budget.sh` (5 arms in `rng0-regression-monitor`) | ◐ PARTIAL — stage 1 (log only); stage 2 design |
-| mind-conflicts.md | a revised belief keeps the loser readable (1-3a); one stamp rule everywhere (1-3b); history to newcomers (1-3c) | `run_mind_conflicts.sh` (`ump-x86_64`), `[mind-conflicts]` | ◐ PARTIAL — 1-3a only on master; 1-3b in audit, 1-3c design |
+| mind-conflicts.md | a revised belief keeps the loser readable (1-3a); one stamp rule everywhere (1-3b); history to newcomers (1-3c) | `run_mind_conflicts.sh` (`ump-x86_64`), `[mind-conflicts]` | ◐ PARTIAL — 1-3a and 1-3b on master; 1-3c design |
+| mind-explain.md | `mind explain <key>` reads why the mind holds a belief, and changes nothing (1-4, first command) | `run_mind_explain.sh` (`ump-x86_64`), `[mind-explain]` | ✓ CLOSED — `mind history` / `mind provenance` are separate 1-4 items, not claims of this doc |
+| android-always-on.md | always-on participation on Android 15/16: specialUse FGS, charging-only default, notification fallback for resume (inbox #7-1) | — (design memo; nothing built yet) | ○ OPEN |
 | mind-gen0-b.md | partition + heal + newcomer: no learning lost, one answer, provenance, losers kept, no resurrection (E1–E5 fixed first) | `run_mind_gen0_b.sh` (manual, not in CI) | ○ OPEN — E1 and E4 red by the pre-registered expectations |
 | conversation.md | escape the vocabulary cage (strategy branch) | — (strategy exploration) | N/A exploration |
 
@@ -216,14 +218,18 @@ above is a piece of its verification. This is the top-of-V ⇄ acceptance rung.
 > cite a cert that exists in the code / tests / ci.yml, OPEN may only go down, and the counts below
 > must match the rows. Its first run found four docs written since 09-05 with no row
 > (command-parity, cpu-budget, mind-conflicts, mind-gen0-b); they were added (3 PARTIAL, 1 OPEN).
+> After audit-20 (FAIL: `ump`, `[s]` and a deleted tally line all stayed green) a name must match a
+> ci.yml job / step / whole token or a file name, a tag must appear whole and be 3+ characters, and
+> all five tally lines must exist. Two docs merged since then got rows: mind-explain (CLOSED) and
+> android-always-on (OPEN, a design memo for an unbuilt item — OPEN_MAX 10 → 11, reason in the script).
 
-Of the **69** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
+Of the **71** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
 
 | rung | count | which |
 |---|---|---|
-| **✓ CLOSED** (design↔cert complete) | **39** | most of L1/L2/L3 + verify + evolution |
+| **✓ CLOSED** (design↔cert complete) | **40** | most of L1/L2/L3 + verify + evolution (mind-explain added 2026-10-04) |
 | **◐ PARTIAL** (early slice certed, later slices design-only) | **15** | vendor-patch-inventory, decentralized-lookup, federation, p2p-overlay, scaling-law, command-parity, special-structure-mind, interoception, device-capacity, dynamic-id, ring3-core, distributed_moe_design, windows-pe-port, cpu-budget, mind-conflicts |
-| **○ OPEN** (design doc, no cert = broken rung) | **10** | memory-thought, web-os, self-access, self-access-design, gpu-compute, gpu-3-wiring, webd-user-space, living-body-inspector, n1-lan-direct-plan, mind-gen0-b |
+| **○ OPEN** (design doc, no cert = broken rung) | **11** | memory-thought, web-os, self-access, self-access-design, gpu-compute, gpu-3-wiring, webd-user-space, living-body-inspector, n1-lan-direct-plan, mind-gen0-b, android-always-on |
 | **N/A** (survey / rationale / CONOPS) | **4** | r3-model-widening (rationale), base-model-survey, moe-distillation-survey, conversation — (survival-network counted separately as L0 CONOPS, outside this table) |
 | **DECLINED** (design kept as historical stratum, not a rung to close) | **1** | survival-recip (mk_pino chose pure altruism 2026-07-04) |
 
