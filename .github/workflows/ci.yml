@@ -535,6 +535,10 @@ jobs:
           # qualifier is dropped); [curio-clean] eval/hit purity: s_wonders delta
           # ==0 (RED if accrual leaks into a read path); [curio-bounded] table
           # overflow evicts min-want tie-oldest, a want=3 entry survives.
+          # [curio-guess] (ROADMAP 1-2b): a NEVER-held key at share 100 still
+          # wonders; a held-then-evicted key at share 100 does not (RED with
+          # -DR3_SHARE_ONLY_WANT, the old share-only rule).
+          grep -aF '[curio-guess] PASS' selftest.log
           grep -aF '[curio-prior] PASS' selftest.log
           grep -aF '[curio-accrue] PASS' selftest.log
           grep -aF '[curio-unwondered] PASS' selftest.log
@@ -957,6 +961,22 @@ jobs:
           timeout 400 tests/host/run_mind_conflicts.sh | tee mind_conflicts.log
           grep -aF '[mind-conflicts] ALL PASS' mind_conflicts.log
 
+      # ROADMAP 1-2b: a node that keeps re-driving its own last teach must
+      # still deliver pull answers (mind/teach is LATEST_ONLY; the answer was
+      # overwritten in the same tick). Red with -DMQ_NO_ANSWER_SKIP. ~1 min.
+      - name: pull answer while re-driving (ROADMAP 1-2b)
+        run: |
+          timeout 300 tests/host/run_pull_while_redriving.sh | tee pull_redrive.log
+          grep -aF '[pull-redrive] ALL PASS' pull_redrive.log
+
+      # ROADMAP 1-4: `mind explain <key>` reads a belief, its teacher and its
+      # 1-3a revisions without changing the mind (explain-readonly: the ask
+      # after three explains still sees salience 2). One node, ~10 s.
+      - name: mind explain, read-only (ROADMAP 1-4)
+        run: |
+          timeout 200 tests/host/run_mind_explain.sh | tee mind_explain.log
+          grep -aF '[mind-explain] ALL PASS' mind_explain.log
+
       # LLM core host certs (tests/llm/). Each is deterministic and self-
       # contained — the SYNTHETIC core runs with NO gguf model file and NO
       # network. They build their own harness with cc (the x86_64 runner's
@@ -1141,6 +1161,12 @@ jobs:
         # opt-in `raft` shell verb. Source-level assertion (the bare-metal
         # boot is a qemu-serial flow, not a self-test harness).
         run: bash samples/45_nocentral_boot/nocentral_cert.sh
+      - name: Build boot/aarch64 for Raspberry Pi 3 (kernel8.img, link only)
+        # Last in the job: `make rpi3` starts with `make clean`. The RPi3
+        # link was broken from MC-2.1 (06-20) to 2026-10-04 unnoticed
+        # (mc2_smp.c needs _stack_top_cpu1..3, linker.rpi3.ld had none).
+        # Booting on the real board is not tested here.
+        run: make -C boot/aarch64 rpi3
 
   ring3-survival:
     # ring3-core Wave B + C acceptance gates (docs/architecture/ring3-core.md
@@ -1720,6 +1746,18 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc make python3
       - name: Run ARK crash fuzzer (0 BUG required)
         run: timeout 400 bash samples/30_ark_crash/run.sh
+      # ROADMAP 0-8: cut the power at EVERY device write (BEFORE and TORN) of
+      # 8 kinds of operation (220 points); the remounted state must be exactly
+      # the before- or the after-state, and the store must take a new write.
+      # Red with -DARK_FAULT_TRUST_COMMIT_HEADER (34 points). ~10 s.
+      # samples/25_survival_fs/run.sh: versioning, dedup, rot self-verify and
+      # the original 8-point overwrite cut. Not in CI before 2026-10-04 (D5-e).
+      - name: ARK sample 25 (versioning / dedup / self-verify / overwrite cut)
+        run: timeout 120 bash samples/25_survival_fs/run.sh
+      - name: ARK power cut at every write point (ROADMAP 0-8)
+        run: |
+          timeout 300 bash samples/25_survival_fs/allpoints.sh | tee ark_allpoints.log
+          grep -aF '[ark-allpoints] ALL PASS' ark_allpoints.log
 
   composite-loop:
     name: "複合ループ (kill ∧ 並行 ∧ メモリ, ボーナス)"

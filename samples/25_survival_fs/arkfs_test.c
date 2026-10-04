@@ -27,6 +27,15 @@
  *      blocks  <img>                # stored distinct block count (dedup proof)
  *      corrupt <img> <byteoffset>   # flip one byte (rot injection)
  *      selftest                     # in-process RAM self-test
+ *  ROADMAP 0-8 (allpoints.sh — every power-cut point of every operation):
+ *      writefill <img> <path> <nbytes> <char>   # deterministic multi-block file
+ *      unlink  <img> <path>
+ *      mkdir   <img> <path>
+ *      checkpoint <img>
+ *      compact <img>
+ *      dump    <img> <path>...      # one line per path: version, size, sha256
+ *  ARK_COUNT=1 prints "[count] writes=<N>" on stderr at exit (the number of
+ *  device writes the one operation made = the cut points 1..N).
  */
 
 #define _GNU_SOURCE
@@ -39,6 +48,7 @@
 #include <errno.h>
 
 #include "arkfs.h"
+#include "sha256.h"
 
 static void emit_stdout(const char *s) { fputs(s, stdout); fflush(stdout); }
 
@@ -118,9 +128,12 @@ static int open_img(const char *path, int create)
 
 static U4 u4len(const char *s) { U4 n = 0; while (s[n]) n++; return n; }
 
+static void print_count(void) { fprintf(stderr, "[count] writes=%ld\n", g_wcnt); }
+
 int main(int argc, char **argv)
 {
     if (argc < 2) { fprintf(stderr, "usage: %s <cmd> ...\n", argv[0]); return 2; }
+    if (getenv("ARK_COUNT")) atexit(print_count);
     const char *cmd = argv[1];
 
     if (!strcmp(cmd, "selftest")) {
@@ -209,6 +222,57 @@ int main(int argc, char **argv)
     }
     if (!strcmp(cmd, "blocks")) {
         printf("BLOCKS: %u\n", ark_block_count());
+        return 0;
+    }
+    if (!strcmp(cmd, "writefill")) {
+        if (argc < 6) return 2;
+        static char fill[ARK_BLOCK_MAX * ARK_MAX_BLK];
+        long n = atol(argv[4]);
+        if (n < 0 || n > (long)sizeof(fill)) return 2;
+        for (long i = 0; i < n; i++) fill[i] = (char)(argv[5][0] + (i % 23));
+        int r = ark_write_file(argv[3], fill, (U4)n);
+        printf("WRITE: %d ver=%d\n", r, ark_version(argv[3]));
+        return r == ARK_OK ? 0 : 1;
+    }
+    if (!strcmp(cmd, "unlink")) {
+        if (argc < 4) return 2;
+        int r = ark_unlink(argv[3]);
+        printf("UNLINK: %d\n", r);
+        return r == ARK_OK ? 0 : 1;
+    }
+    if (!strcmp(cmd, "mkdir")) {
+        if (argc < 4) return 2;
+        int r = ark_mkdir(argv[3]);
+        printf("MKDIR: %d\n", r);
+        return r == ARK_OK ? 0 : 1;
+    }
+    if (!strcmp(cmd, "checkpoint")) {
+        int r = ark_checkpoint();
+        printf("CHECKPOINT: %d\n", r);
+        return r == ARK_OK ? 0 : 1;
+    }
+    if (!strcmp(cmd, "compact")) {
+        int r = ark_compact();
+        printf("COMPACT: %d\n", r);
+        return r == ARK_OK ? 0 : 1;
+    }
+    if (!strcmp(cmd, "dump")) {
+        static char buf[ARK_BLOCK_MAX * ARK_MAX_BLK + 1];
+        for (int a = 3; a < argc; a++) {
+            U4 size = 0, ver = 0; INT is_dir = 0;
+            if (ark_stat(argv[a], &size, &is_dir, &ver) < 0) {
+                printf("%s absent\n", argv[a]);
+                continue;
+            }
+            if (is_dir) { printf("%s dir v%u\n", argv[a], ver); continue; }
+            int r = ark_read_file(argv[a], buf, sizeof(buf) - 1);
+            if (r < 0) { printf("%s v%u size=%u READ-FAIL(%d)\n", argv[a], ver, size, r); continue; }
+            unsigned char h[32];
+            sha256(buf, (size_t)r, h);
+            printf("%s v%u size=%u got=%d sha=", argv[a], ver, size, r);
+            for (int i = 0; i < 8; i++) printf("%02x", h[i]);
+            printf("\n");
+        }
         return 0;
     }
 
