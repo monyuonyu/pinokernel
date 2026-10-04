@@ -3699,6 +3699,69 @@ static void m_teach(const UB *p, const UB *end)
  * RETAINED fact. Asking IS a stimulus (dmn_trigger), like any
  * inference — the cert sequences ask AFTER wait, so this costs
  * nothing (VII.2). */
+#ifdef _TK_HOSTED_LIBC_
+/* ROADMAP 1-4: `mind explain <key>` — what this node believes about a key,
+ * from whom, and what it replaced, WITHOUT touching the mind. `mind ask`
+ * votes (RNG), accrues salience (LM-13) or a want (LM-14), triggers the DMN
+ * and emits galaxy/interoception events; explain does none of these — it
+ * only reads r3_fq, the provenance tables and the 1-3a history. So the
+ * owner can audit a memory without the audit changing what is forgotten.
+ * -DMIND_EXPLAIN_TOUCHES (negative control only) makes it touch salience. */
+static void m_explain(const UB *p, const UB *end)
+{
+    INT k;
+    INT rk = m_resolve_token(&p, end, 1, &k);
+    if (rk == 0) { r_puts("usage: mind explain <key-word|id>  (e.g. mind explain sky)\r\n"); return; }
+    if (rk < 0) return;
+    m_quiesce();                       /* read between rounds, never mid-round */
+    r_puts("[mind] explain \""); r_puts(r3_vocab_key_word(k));
+    r_puts("\" (key "); r_putdec((UW)k); r_puts(") — read-only\r\n");
+    INT bind, fi = m_find_key(k, &bind);
+    if (fi < 0) {
+        r_puts("[mind]   current: none held (never taught here, or evicted; "
+               "the weights may still answer — `mind ask` votes)\r\n");
+    } else {
+#ifdef MIND_EXPLAIN_TOUCHES
+        (void)r3_fact_touch(k);
+#endif
+        R3_FACT *f = &r3_fq[fi];
+        r_puts("[mind]   current: \""); r_puts(r3_vocab_key_word(k));
+        r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->yhat[bind])); r_puts("\"\r\n");
+        r_puts("[mind]   learned: ");
+        MT_REMOTE_PROV *rp = mt_rprov_find(f->seq);
+        const U1 *lp = mq_lprov_find(f->seq);
+        if (rp) {
+            U1 torig = 0xFF; char handle[ARK_HANDLE_MAX + 1];
+            INT named = ark_prov_resolve_remote(rp->prov_head, &torig, handle, sizeof handle);
+            r_puts("from node "); r_putdec((UW)rp->origin_node);
+            r_puts((named && handle[0]) ? " (" : " (anonymous");
+            if (named && handle[0]) r_puts(handle);
+            r_puts("), prov kept");
+        } else if (lp) {
+            r_puts("taught here");
+            if (drpc_my_node != 0xFF) { r_puts(" (node "); r_putdec((UW)drpc_my_node); r_puts(")"); }
+            r_puts(", prov kept");
+        } else {
+            r_puts("teacher unknown, no prov");
+        }
+        r_puts(", local seq "); r_putdec(f->seq); r_puts("\r\n");
+        r_puts("[mind]   consolidated: ");
+        r_puts(f->state == R3F_RETAINED ? "RETAINED " : "PENDING ");
+        r_putdec((UW)f->rounds_done); r_puts("/"); r_putdec(R3_SLEEPS_PER_FACT);
+        r_puts(" sleep rounds, salience "); r_putdec((UW)f->salience);
+        r_puts("/"); r_putdec(R3_SAL_CAP); r_puts("\r\n");
+    }
+    UW nrev = 0;
+    for (UW j = 0; j < MC_MAX; j++) {
+        MC_REC *r = &mc_hist[(mc_next + j) % MC_MAX];
+        if (r->used && r->key == (UB)k) { mc_print(r, "[mind]   revision: "); nrev++; }
+    }
+    r_puts("[mind]   revisions kept: "); r_putdec(nrev);
+    r_puts(" (ring of "); r_putdec(MC_MAX); r_puts(" across all keys, ");
+    r_putdec(mc_dropped); r_puts(" older dropped)\r\n");
+}
+#endif
+
 static void m_ask(const UB *p, const UB *end)
 {
     INT k;
@@ -3909,6 +3972,7 @@ void mind_cmd(const UB *args, UW len)
 #ifdef _TK_HOSTED_LIBC_
     else if (m_kw(&p, end, "pause")) r3_mind_pause_test();     /* survival-L2 cert */
     else if (m_kw(&p, end, "conflicts")) m_conflicts();        /* ROADMAP 1-3a */
+    else if (m_kw(&p, end, "explain")) m_explain(p, end);      /* ROADMAP 1-4  */
 #endif
     /* "pause" deliberately NOT added to this usage string: it is the ONE
      * r_puts call in mind_cmd that is NOT inside a _TK_HOSTED_LIBC_ guard
