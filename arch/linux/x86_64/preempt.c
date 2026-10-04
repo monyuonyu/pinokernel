@@ -144,20 +144,30 @@ void knl_idle_wait(void)
  * Only when the interrupted RIP is in p-kernel's own text and not in the
  * trampoline: inside libc the task may hold a libc lock (malloc's is not
  * recursive) and the next task would deadlock on it — that case keeps the
- * old behaviour (switch at the next END_CRITICAL_SECTION). Limits: AVX upper
+ * old behaviour (switch at the next END_CRITICAL_SECTION). "Own text" is
+ * pk_text_begin..pk_text_end (first / last object on the link line), not
+ * __executable_start..__etext: the build is -static, so that range holds
+ * glibc too (audit-20 measured 86-138 switches a run near malloc). The
+ * layout is checked once at boot (libc functions outside, this file inside);
+ * if it fails, the exit dispatch stays off and says so. A task's busy word
+ * is cleared when the task is (re)initialised (knl_setup_context), so a task
+ * deleted while switched out inside the trampoline does not leave its id
+ * unpreemptable for the next task with that id. Limits: AVX upper
  * halves are not saved (the hosted build does not use -mavx); x86_64 only
  * (the aarch64 / Android sibling is still the old behaviour).
  * -DPK_HOSTED_NO_EXIT_DISPATCH: the old behaviour (negative control). */
 #include <ucontext.h>
 #include <stdint.h>
+#include <pthread.h>
 
 extern void * volatile knl_ctxtsk;
 extern volatile int knl_dispatch_disabled;
 extern volatile int knl_taskindp;            /* low 32 bits; dispatch.S uses incl */
 extern void knl_dispatch_entry(void);
 extern int tk_get_tid(void);
-extern char __executable_start[], __etext[];
+extern char pk_text_begin[], pk_text_end[];  /* pk_text_begin.c / pk_text_end.c */
 void arch_preempt_tramp(void);
+void arch_preempt_dispatch(void);
 extern char arch_preempt_tramp_end[];
 
 #define SIDE_SLOTS 129                       /* task ids 1..128 (CNF_MAX_TSKID) */
@@ -165,6 +175,39 @@ extern char arch_preempt_tramp_end[];
 static uint64_t side_stack[SIDE_SLOTS][SIDE_SZ / 8] __attribute__((aligned(64)));
 uint64_t arch_preempt_side_sp;               /* handler -> trampoline (one at a time) */
 uint64_t arch_preempt_tmp_sp;                /* trampoline's first 3 instructions */
+static int pk_text_ok;                       /* set by pk_text_check() at boot */
+
+static int in_pk_text(uintptr_t a)
+{
+    return a >= (uintptr_t)pk_text_begin && a < (uintptr_t)pk_text_end;
+}
+
+/* the link-order bracket must hold libc outside and p-kernel inside */
+static void pk_text_check(void)
+{
+    const uintptr_t libc[] = {
+        (uintptr_t)&malloc, (uintptr_t)&free, (uintptr_t)&memcpy,
+        (uintptr_t)&printf, (uintptr_t)&pthread_mutex_lock,
+    };
+    int ok = (uintptr_t)pk_text_begin < (uintptr_t)pk_text_end &&
+             in_pk_text((uintptr_t)&arch_preempt_dispatch) &&
+             in_pk_text((uintptr_t)&knl_dispatch_entry);
+    for (unsigned i = 0; i < sizeof libc / sizeof libc[0]; i++)
+        if (in_pk_text(libc[i])) ok = 0;
+    pk_text_ok = ok;
+    if (!ok)
+        fprintf(stderr, "[preempt] p-kernel text bracket %p..%p holds libc or misses "
+                "the kernel: exit dispatch OFF (old behaviour)\n",
+                (void *)pk_text_begin, (void *)pk_text_end);
+}
+
+/* knl_setup_context (task created / gone dormant): a task deleted while
+ * switched out inside the trampoline must not leave its id marked busy */
+void arch_preempt_forget(int tskid)
+{
+    if (tskid > 0 && tskid < SIDE_SLOTS)
+        side_stack[tskid][SIDE_SZ / 8 - 1] = 0;
+}
 
 /* called by arch_preempt_tramp on the side stack, in task context */
 void arch_preempt_dispatch(void)
@@ -216,7 +259,7 @@ static void maybe_preempt(ucontext_t *uc)
         knl_dispatch_disabled || knl_ctxtsk == 0 || knl_ctxtsk == knl_schedtsk)
         return;
     greg_t rip = uc->uc_mcontext.gregs[REG_RIP];
-    if (rip < (greg_t)(uintptr_t)__executable_start || rip >= (greg_t)(uintptr_t)__etext)
+    if (!pk_text_ok || !in_pk_text((uintptr_t)rip))
         return;                              /* in libc etc.: not here */
     if (rip >= (greg_t)(uintptr_t)arch_preempt_tramp &&
         rip <  (greg_t)(uintptr_t)arch_preempt_tramp_end)
@@ -232,6 +275,8 @@ static void maybe_preempt(ucontext_t *uc)
     uc->uc_mcontext.gregs[REG_RSP] = rsp;
     uc->uc_mcontext.gregs[REG_RIP] = (greg_t)(uintptr_t)arch_preempt_tramp;
 }
+#else
+void arch_preempt_forget(int tskid) { (void)tskid; }
 #endif
 
 static void sigalrm_handler(int sig, siginfo_t *si, void *ucv)
@@ -266,6 +311,9 @@ void arch_signals_init(void)
         .ss_sp = signal_stack, .ss_size = SIGSTACK_SZ, .ss_flags = 0,
     };
     if (sigaltstack(&ss, NULL) < 0) { perror("sigaltstack"); exit(1); }
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+    pk_text_check();
+#endif
 
     struct sigaction sa = { 0 };
     sa.sa_sigaction = sigalrm_handler;
