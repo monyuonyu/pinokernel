@@ -138,7 +138,7 @@ int main(int argc, char **argv)
     memcpy(B.w, F.w, np * sizeof(float));
     train(&F, 0, train_w, 20, lg);                     /* generation t+1 */
 
-    ST_DIMS(&F);
+    const int D = F.d, DFF = F.dff, L = F.nlayer, E = F.nexpert;
     {
         int offs[64], lens[64], k = 0;
         offs[0] = F.o_embed; lens[0] = ST_VOCAB * D; size_line("embed", &B, &F, offs, lens, 1);
