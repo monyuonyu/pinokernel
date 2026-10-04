@@ -2360,6 +2360,73 @@ int st_quant_fake(const st_model *src, st_model *dst, int bits, int gran,
 }
 
 /* ================================================================== */
+/* one-bit delta, stage 1 (st_delta_sign — see student.h)              */
+/* ================================================================== */
+
+static uint32_t st_dq_rng = 0x9E3779B9u;          /* ST_DQ_RANDSIGN only */
+
+static void st_delta_mat(const st_model *base, const st_model *ft, st_model *dst,
+                         int off, int n, int mode)
+{
+    const float *a = base->w + off, *b = ft->w + off;
+    float *o = dst->w + off;
+    double sum = 0.0;
+    for (int i = 0; i < n; i++) { float d = b[i] - a[i]; sum += d < 0.0f ? -d : d; }
+    float alpha = mode == ST_DQ_ZERO ? 0.0f : (float)(sum / (double)n);
+    for (int i = 0; i < n; i++) {
+        int neg;
+        if (mode == ST_DQ_RANDSIGN) {
+            st_dq_rng ^= st_dq_rng << 13; st_dq_rng ^= st_dq_rng >> 17; st_dq_rng ^= st_dq_rng << 5;
+            neg = (int)(st_dq_rng & 1u);
+        } else {
+            neg = (b[i] - a[i]) < 0.0f;
+        }
+        o[i] = a[i] + (neg ? -alpha : alpha);
+    }
+}
+
+int st_delta_sign(const st_model *base, const st_model *ft, st_model *dst,
+                  int mode, size_t *bytes)
+{
+    if (!base || !ft || !dst || !base->w || !ft->w || !dst->w) return ST_E_ARG;
+    if (dst == base || dst == ft) return ST_E_ARG;
+    if (mode != ST_DQ_SIGN && mode != ST_DQ_RANDSIGN && mode != ST_DQ_ZERO) return ST_E_ARG;
+    const st_model *s3[2] = { ft, dst };
+    for (int k = 0; k < 2; k++)
+        if (s3[k]->tier != base->tier || s3[k]->d != base->d || s3[k]->dff != base->dff ||
+            s3[k]->nlayer != base->nlayer || s3[k]->nexpert != base->nexpert ||
+            s3[k]->n_params != base->n_params) return ST_E_ARG;
+    ST_DIMS(base);
+    if (dst->alive) { free(dst->alive); dst->alive = NULL; }
+    if (ft->alive) {
+        dst->alive = (int8_t *)malloc((size_t)E);
+        if (!dst->alive) return ST_E_OOM;
+        for (int e = 0; e < E; e++) dst->alive[e] = ft->alive[e];
+    }
+    int np = base->n_params;
+    for (int i = 0; i < np; i++) {                /* the fp32 remainder from ft */
+        dst->w[i] = ft->w[i]; dst->g[i] = 0.0f; dst->mu[i] = 0.0f; dst->vu[i] = 0.0f;
+    }
+    dst->adam_t = 0;
+    st_dq_rng = 0x9E3779B9u;                      /* same "random" every call */
+    size_t nm = 0, nq = 0;
+#define DQ(o, cnt) do { st_delta_mat(base, ft, dst, (o), (cnt), mode); nm++; nq += (size_t)(cnt); } while (0)
+    DQ(base->o_embed, V * D);
+    for (int l = 0; l < L; l++) {
+        DQ(base->o_wq + l*D*D, D*D); DQ(base->o_wk + l*D*D, D*D);
+        DQ(base->o_wv + l*D*D, D*D); DQ(base->o_wo + l*D*D, D*D);
+    }
+    for (int x = 0; x < L * E; x++) {
+        DQ(base->o_w1 + x*DFF*D, DFF*D); DQ(base->o_w3 + x*DFF*D, DFF*D);
+        DQ(base->o_w2 + x*D*DFF, D*DFF);
+    }
+    DQ(base->o_out, V * D);
+#undef DQ
+    if (bytes) *bytes = (nq + 7u) / 8u + nm * sizeof(float) + ((size_t)np - nq) * sizeof(float);
+    return ST_OK;
+}
+
+/* ================================================================== */
 /* smarter merge, stage 1 (st_merge_barrier / st_merge_guarded)        */
 /* ================================================================== */
 
