@@ -535,6 +535,10 @@ jobs:
           # qualifier is dropped); [curio-clean] eval/hit purity: s_wonders delta
           # ==0 (RED if accrual leaks into a read path); [curio-bounded] table
           # overflow evicts min-want tie-oldest, a want=3 entry survives.
+          # [curio-guess] (ROADMAP 1-2b): a NEVER-held key at share 100 still
+          # wonders; a held-then-evicted key at share 100 does not (RED with
+          # -DR3_SHARE_ONLY_WANT, the old share-only rule).
+          grep -aF '[curio-guess] PASS' selftest.log
           grep -aF '[curio-prior] PASS' selftest.log
           grep -aF '[curio-accrue] PASS' selftest.log
           grep -aF '[curio-unwondered] PASS' selftest.log
@@ -956,6 +960,14 @@ jobs:
         run: |
           timeout 400 tests/host/run_mind_conflicts.sh | tee mind_conflicts.log
           grep -aF '[mind-conflicts] ALL PASS' mind_conflicts.log
+
+      # ROADMAP 1-2b: a node that keeps re-driving its own last teach must
+      # still deliver pull answers (mind/teach is LATEST_ONLY; the answer was
+      # overwritten in the same tick). Red with -DMQ_NO_ANSWER_SKIP. ~1 min.
+      - name: pull answer while re-driving (ROADMAP 1-2b)
+        run: |
+          timeout 300 tests/host/run_pull_while_redriving.sh | tee pull_redrive.log
+          grep -aF '[pull-redrive] ALL PASS' pull_redrive.log
 
       # LLM core host certs (tests/llm/). Each is deterministic and self-
       # contained — the SYNTHETIC core runs with NO gguf model file and NO
