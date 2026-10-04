@@ -2370,11 +2370,17 @@ static void st_delta_mat(const st_model *base, const st_model *ft, st_model *dst
 {
     const float *a = base->w + off, *b = ft->w + off;
     float *o = dst->w + off;
-    double sum = 0.0;
-    for (int i = 0; i < n; i++) { float d = b[i] - a[i]; sum += d < 0.0f ? -d : d; }
+    double sum = 0.0; int nz = 0;
+    for (int i = 0; i < n; i++) {
+        float d = b[i] - a[i];
+        sum += d < 0.0f ? -d : d;
+        if (d != 0.0f) nz++;
+    }
     float alpha = mode == ST_DQ_ZERO ? 0.0f : (float)(sum / (double)n);
+    if (mode == ST_DQ_TERNARY) alpha = nz ? (float)(sum / (double)nz) : 0.0f;
     for (int i = 0; i < n; i++) {
         int neg;
+        if (mode == ST_DQ_TERNARY && b[i] == a[i]) { o[i] = a[i]; continue; }
         if (mode == ST_DQ_RANDSIGN) {
             st_dq_rng ^= st_dq_rng << 13; st_dq_rng ^= st_dq_rng >> 17; st_dq_rng ^= st_dq_rng << 5;
             neg = (int)(st_dq_rng & 1u);
@@ -2390,7 +2396,8 @@ int st_delta_sign(const st_model *base, const st_model *ft, st_model *dst,
 {
     if (!base || !ft || !dst || !base->w || !ft->w || !dst->w) return ST_E_ARG;
     if (dst == base || dst == ft) return ST_E_ARG;
-    if (mode != ST_DQ_SIGN && mode != ST_DQ_RANDSIGN && mode != ST_DQ_ZERO) return ST_E_ARG;
+    if (mode != ST_DQ_SIGN && mode != ST_DQ_RANDSIGN && mode != ST_DQ_ZERO &&
+        mode != ST_DQ_TERNARY) return ST_E_ARG;
     const st_model *s3[2] = { ft, dst };
     for (int k = 0; k < 2; k++)
         if (s3[k]->tier != base->tier || s3[k]->d != base->d || s3[k]->dff != base->dff ||
@@ -2422,7 +2429,8 @@ int st_delta_sign(const st_model *base, const st_model *ft, st_model *dst,
     }
     DQ(base->o_out, V * D);
 #undef DQ
-    if (bytes) *bytes = (nq + 7u) / 8u + nm * sizeof(float) + ((size_t)np - nq) * sizeof(float);
+    size_t bits = mode == ST_DQ_TERNARY ? 2u : 1u;
+    if (bytes) *bytes = (nq * bits + 7u) / 8u + nm * sizeof(float) + ((size_t)np - nq) * sizeof(float);
     return ST_OK;
 }
 

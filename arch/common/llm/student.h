@@ -394,6 +394,11 @@ int  st_quant_fake(const st_model *src, st_model *dst, int bits, int gran,
 #define ST_DQ_SIGN      0
 #define ST_DQ_RANDSIGN  1
 #define ST_DQ_ZERO      2
+/* post-hoc (added after stage 1's pre-registered gates went red): an element
+ * whose delta is exactly 0 (a byte the corpus never shows: its embed / out
+ * row gets no gradient) stays at base instead of base + alpha; alpha = mean
+ * |D| over the nonzero elements. Costs a zero mask (*bytes counts 2 bits). */
+#define ST_DQ_TERNARY   3
 int  st_delta_sign(const st_model *base, const st_model *ft, st_model *dst,
                    int mode, size_t *bytes);
 

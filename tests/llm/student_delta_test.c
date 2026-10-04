@@ -105,14 +105,15 @@ static double fabs_(double x) { return x < 0 ? -x : x; }
 static void size_line(const char *name, const st_model *b, const st_model *f,
                       const int *offs, const int *lens, int k)
 {
-    double sd = 0.0, sw = 0.0; long n = 0;
+    double sd = 0.0, sw = 0.0; long n = 0, z = 0;
     for (int j = 0; j < k; j++)
         for (int i = 0; i < lens[j]; i++) {
             sd += fabs_((double)f->w[offs[j] + i] - (double)b->w[offs[j] + i]);
             sw += fabs_((double)b->w[offs[j] + i]); n++;
+            if (f->w[offs[j] + i] == b->w[offs[j] + i]) z++;
         }
-    printf("  [dq-size] %-6s n=%7ld mean|D|=%.6f mean|w|=%.6f ratio=%.4f\n",
-           name, n, sd / n, sw / n, sd / (sw > 0 ? sw : 1));
+    printf("  [dq-size] %-6s n=%7ld mean|D|=%.6f mean|w|=%.6f ratio=%.4f exact-zero D %.1f%%\n",
+           name, n, sd / n, sw / n, sd / (sw > 0 ? sw : 1), 100.0 * (double)z / (double)n);
 }
 
 int main(int argc, char **argv)
@@ -186,6 +187,16 @@ int main(int argc, char **argv)
     }
     printf("  bytes: delta %zu vs fp32 %zu (1/%.1f)\n", bytes, np * 4,
            bytes ? (double)(np * 4) / (double)bytes : 0.0);
+    {   /* POST-HOC, not a gate (added after the pre-registered gates went red
+         * on all 3 seeds): exact-zero deltas stay at base (ST_DQ_TERNARY). */
+        size_t tb = 0;
+        if (st_delta_sign(&B, &F, &Q, ST_DQ_TERNARY, &tb) != ST_OK) rc_ok = 0;
+        float lt = heldout_loss(&Q, held_from, held_w);
+        double mt = logit_mse(&Q, &F, held_from, held_w, lg, lg2);
+        printf("  [st-delta] post-hoc ternary held %.4f (vs ft %+.4f)  logitMSE(.,ft) %.6f"
+               "  (%.0f%% of MSE(base))  bytes %zu (1/%.1f)\n", (double)lt, (double)(lt - LF),
+               mt, 100.0 * mt / (mseB > 0 ? mseB : 1), tb, tb ? (double)(np * 4) / (double)tb : 0.0);
+    }
 
     double gap = fabs_((double)LB - (double)LF);
     printf("\n[visible]\n");
