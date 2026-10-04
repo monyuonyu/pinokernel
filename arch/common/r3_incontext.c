@@ -3167,8 +3167,8 @@ static const U1 *mq_lprov_find(UW local_seq)
  *  are re-pointed at the new teacher, so before this the superseded      *
  *  value, who taught it and how firmly it was held were gone. mc_note is *
  *  called at the two revise sites (m_teach Site 1, mind_net_task Site 2) *
- *  BEFORE the overwrite and keeps them here. HISTORY ONLY: the current   *
- *  answer is still chosen as before (last arrival). Bounded ring of      *
+ *  BEFORE the overwrite and keeps them here (and, since 1-3b, an incoming *
+ *  value that LOST the stamp rule, mc_incoming_lost). Bounded ring of    *
  *  MC_MAX; the same (key, lost value, lost teacher, new value) again     *
  *  only bumps a count; older records drop out (the drop count is shown). *
  *  Hosted only for now: bare metal keeps its crown (docs/architecture/   *
@@ -3177,6 +3177,7 @@ static const U1 *mq_lprov_find(UW local_seq)
 #define MC_SRC_UNKNOWN 0          /* no prov entry for the lost engram   */
 #define MC_SRC_LOCAL   1          /* taught on this node (shell / web)   */
 #define MC_SRC_REMOTE  2          /* arrived from a region peer          */
+#define MC_NEVER_HELD  0xFE       /* lost_state: refused on arrival (1-3b) */
 typedef struct {
     UB used, key, v_lost, v_now;
     UB lost_src, now_src;         /* MC_SRC_*                            */
@@ -3185,6 +3186,7 @@ typedef struct {
     UB lost_state, lost_rounds;   /* evidence: how firmly v_lost was held */
     UB has_prov, n;               /* n = times seen (capped at 255)      */
     UW lost_seq;                  /* local seq of the superseded engram  */
+    UW lost_stamp, now_stamp;     /* 1-3b Lamport stamps of both values  */
     UW at_ms;                     /* local time of the first supersede   */
     U1 lost_prov[PFS_ID_LEN];     /* content-id of v_lost's ARK_PROV     */
 } MC_REC;
@@ -3211,33 +3213,65 @@ static void mc_print(const MC_REC *r, const char *lead)
     r_puts(" \""); r_puts(r3_vocab_key_word(r->key)); r_puts("\": \"");
     r_puts(r3_vocab_val_word(r->v_lost)); r_puts("\" (");
     mc_put_teacher(r->lost_src, r->lost_by);
-    r_puts(", seq "); r_putdec(r->lost_seq); r_puts(", ");
-    r_puts(r->lost_state == R3F_RETAINED ? "RETAINED " : "PENDING ");
-    r_putdec((UW)r->lost_rounds); r_puts("/"); r_putdec(R3_SLEEPS_PER_FACT);
+    r_puts(", stamp "); r_putdec(r->lost_stamp); r_puts(", ");
+    if (r->lost_state == MC_NEVER_HELD) r_puts("refused on arrival");
+    else {
+        r_puts("seq "); r_putdec(r->lost_seq); r_puts(", ");
+        r_puts(r->lost_state == R3F_RETAINED ? "RETAINED " : "PENDING ");
+        r_putdec((UW)r->lost_rounds); r_puts("/"); r_putdec(R3_SLEEPS_PER_FACT);
+    }
     r_puts(r->has_prov ? ", prov kept" : ", no prov");
     r_puts(") superseded by \""); r_puts(r3_vocab_val_word(r->v_now));
     r_puts("\" "); mc_put_teacher(r->now_src, r->now_by);
+    r_puts(", stamp "); r_putdec(r->now_stamp);
     r_puts(" at "); r_putdec(r->at_ms); r_puts(" ms");
     if (r->n > 1) { r_puts(", seen "); r_putdec((UW)r->n); r_puts(" times"); }
     r_puts("\r\n");
 }
 
-/* fi/bind = the engram about to be revised; call BEFORE r3_fact_revise. */
-static void mc_note(INT fi, INT bind, UB v_now, UB now_src, U1 now_by)
+/* ---- ROADMAP 1-3b: the stamp of an engram ------------------------------ *
+ *  Since 1-3b r3_fq_seq is a Lamport clock: mind_net_task moves it up to   *
+ *  every fact_seq it receives before the next ++. So a value taught AFTER  *
+ *  its teacher saw another one always carries the larger stamp. A local    *
+ *  engram's stamp is its own seq (what m_publish_teach sends); a remote    *
+ *  one's is the fact_seq its teacher published, kept here by local seq     *
+ *  (same bounded shape as mt_rprov). An entry-less remote engram (e.g. put *
+ *  by a cert) falls back to its local seq.                                 */
+typedef struct { UW seq, stamp; U1 used; } MC_RSTAMP;
+static MC_RSTAMP mc_rstamp[R3_FQ_MAX];
+
+static void mc_rstamp_put(UW local_seq, UW stamp)
 {
-    UB k = r3_fq[fi].key[bind], v_lost = r3_fq[fi].yhat[bind];
-    UW seq = r3_fq[fi].seq;
-    U1 lost_by = 0xFF; UB lost_src = MC_SRC_UNKNOWN, has_prov = 0;
-    U1 prov[PFS_ID_LEN];
-    MT_REMOTE_PROV *rp = mt_rprov_find(seq);
-    const U1 *lp = mq_lprov_find(seq);
-    if (rp) {
-        lost_src = MC_SRC_REMOTE; lost_by = rp->origin_node; has_prov = 1;
-        for (INT i = 0; i < PFS_ID_LEN; i++) prov[i] = rp->prov_head[i];
-    } else if (lp) {
-        lost_src = MC_SRC_LOCAL; lost_by = drpc_my_node; has_prov = 1;
-        for (INT i = 0; i < PFS_ID_LEN; i++) prov[i] = lp[i];
+    INT slot = -1;
+    for (INT i = 0; i < R3_FQ_MAX; i++)
+        if (!mc_rstamp[i].used) { slot = i; break; }
+    if (slot < 0) {
+        for (INT i = 0; i < R3_FQ_MAX; i++) {
+            UB present = 0;
+            for (INT j = 0; j < (INT)r3_fq_n; j++)
+                if (r3_fq[j].seq == mc_rstamp[i].seq) { present = 1; break; }
+            if (!present) { slot = i; break; }
+        }
     }
+    if (slot < 0) slot = 0;
+    mc_rstamp[slot].used = 1; mc_rstamp[slot].seq = local_seq; mc_rstamp[slot].stamp = stamp;
+}
+
+/* stamp and teaching node of the engram with this local seq */
+static UW mc_stamp_of(UW local_seq, U1 *origin_out)
+{
+    MT_REMOTE_PROV *rp = mt_rprov_find(local_seq);
+    if (!rp) { *origin_out = drpc_my_node; return local_seq; }
+    *origin_out = rp->origin_node;
+    for (INT i = 0; i < R3_FQ_MAX; i++)
+        if (mc_rstamp[i].used && mc_rstamp[i].seq == local_seq) return mc_rstamp[i].stamp;
+    return local_seq;
+}
+
+static void mc_add(UB k, UB v_lost, UB lost_src, U1 lost_by, UW lost_stamp,
+                   UB lost_state, UB lost_rounds, UW lost_seq, const U1 *prov,
+                   UB v_now, UB now_src, U1 now_by, UW now_stamp)
+{
     for (INT i = 0; i < MC_MAX; i++) {
         MC_REC *r = &mc_hist[i];
         if (r->used && r->key == k && r->v_lost == v_lost &&
@@ -3255,10 +3289,75 @@ static void mc_note(INT fi, INT bind, UB v_now, UB now_src, U1 now_by)
     r->used = 1; r->key = k; r->v_lost = v_lost; r->v_now = v_now;
     r->lost_src = lost_src; r->now_src = now_src;
     r->lost_by = lost_by; r->now_by = now_by;
-    r->lost_state = r3_fq[fi].state; r->lost_rounds = r3_fq[fi].rounds_done;
-    r->has_prov = has_prov; r->n = 1; r->lost_seq = seq; r->at_ms = (UW)t.lo;
-    for (INT i = 0; i < PFS_ID_LEN; i++) r->lost_prov[i] = has_prov ? prov[i] : 0;
+    r->lost_stamp = lost_stamp; r->now_stamp = now_stamp;
+    r->lost_state = lost_state; r->lost_rounds = lost_rounds;
+    r->has_prov = prov ? 1 : 0; r->n = 1; r->lost_seq = lost_seq; r->at_ms = (UW)t.lo;
+    for (INT i = 0; i < PFS_ID_LEN; i++) r->lost_prov[i] = prov ? prov[i] : 0;
     mc_print(r, "[mind] conflict recorded: ");
+}
+
+/* fi/bind = the engram about to be revised; call BEFORE r3_fact_revise.
+ * now_stamp = the stamp of the value that replaces it. */
+static void mc_note(INT fi, INT bind, UB v_now, UB now_src, U1 now_by, UW now_stamp)
+{
+    UW seq = r3_fq[fi].seq;
+    U1 lost_by = 0xFF; UB lost_src = MC_SRC_UNKNOWN; const U1 *prov = 0;
+    MT_REMOTE_PROV *rp = mt_rprov_find(seq);
+    const U1 *lp = mq_lprov_find(seq);
+    if (rp)      { lost_src = MC_SRC_REMOTE; lost_by = rp->origin_node; prov = rp->prov_head; }
+    else if (lp) { lost_src = MC_SRC_LOCAL;  lost_by = drpc_my_node;    prov = lp; }
+    U1 o; UW lost_stamp = mc_stamp_of(seq, &o);
+    mc_add(r3_fq[fi].key[bind], r3_fq[fi].yhat[bind], lost_src, lost_by, lost_stamp,
+           r3_fq[fi].state, r3_fq[fi].rounds_done, seq, prov,
+           v_now, now_src, now_by, now_stamp);
+}
+
+/* 1-3b, at the remote-revise site: does the incoming (stamp s_in, teacher
+ * org) beat the held engram fi? Larger stamp wins; equal stamps -> the
+ * smaller teaching node. The same comparison on every node, so the winner
+ * does not depend on which value arrived last. */
+static INT mc_incoming_wins(INT fi, UW s_in, U1 org)
+{
+    U1 o_cur; UW s_cur = mc_stamp_of(r3_fq[fi].seq, &o_cur);
+    INT win = (s_in > s_cur) || (s_in == s_cur && org < o_cur);
+    r_puts("[mind] conflict rule: incoming stamp "); r_putdec(s_in);
+    r_puts(" node "); r_putdec((UW)org);
+    r_puts(win ? " beats" : " loses to");
+    r_puts(" held stamp "); r_putdec(s_cur); r_puts(" node "); r_putdec((UW)o_cur);
+    r_puts("\r\n");
+    return win;
+}
+
+/* the incoming value lost: keep it in the history, then send the held
+ * winner back so the side that taught the loser converges too (with the
+ * winner's own teacher, prov and stamp — the pull answer's shape). */
+static MT_TEACH_PKT mc_push_pkt;
+static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
+                             const U1 prov_in[PFS_ID_LEN])
+{
+    static const U1 zero_prov[PFS_ID_LEN] = { 0 };
+    UW seq = r3_fq[fi].seq;
+    U1 o_cur; UW s_cur = mc_stamp_of(seq, &o_cur);
+    MT_REMOTE_PROV *rp = mt_rprov_find(seq);
+    const U1 *lp = mq_lprov_find(seq);
+    UB now_src = rp ? MC_SRC_REMOTE : MC_SRC_LOCAL;
+    mc_add(r3_fq[fi].key[bind], v_in, MC_SRC_REMOTE, org, s_in,
+           MC_NEVER_HELD, 0, 0, prov_in,
+           r3_fq[fi].yhat[bind], now_src, o_cur, s_cur);
+    if (drpc_my_node == 0xFF) return;
+    mc_push_pkt.magic       = MT_MAGIC;
+    mc_push_pkt.fact_seq    = s_cur;
+    mc_push_pkt.origin_node = o_cur;
+    mc_push_pkt.key         = r3_fq[fi].key[bind];
+    mc_push_pkt.val         = r3_fq[fi].yhat[bind];
+    mc_push_pkt.src         = ARK_PROV_SRC_SHELL;
+    mc_push_pkt.wire_ver    = MT_WIRE_VER_VOCAB;
+    const U1 *pv = rp ? rp->prov_head : (lp ? lp : zero_prov);
+    for (INT i = 0; i < PFS_ID_LEN; i++) mc_push_pkt.prov_head[i] = pv[i];
+    mt_vocab_fp_fill(mc_push_pkt.vocab_fp);
+    W rc = mt_wire_send(&mc_push_pkt);
+    r_puts("[mind] conflict: pushed the held winner back to the region (rc=");
+    r_putdec((UW)(rc < 0 ? 0 : rc)); r_puts(rc < 0 ? ", send failed)\r\n" : ")\r\n");
 }
 
 /* `mind conflicts` — read-only list of the history (hosted). */
@@ -3473,7 +3572,8 @@ static void m_teach(const UB *p, const UB *end)
 
         m_round_snap = dmn_r3_rounds();            /* like teach (VII.5)     */
 #ifdef _TK_HOSTED_LIBC_
-        mc_note(fi, bind, (UB)v, MC_SRC_LOCAL, drpc_my_node); /* 1-3a    */
+        /* 1-3a; the new stamp is the seq r3_fact_revise is about to take */
+        mc_note(fi, bind, (UB)v, MC_SRC_LOCAL, drpc_my_node, r3_fq_seq + 1);
 #endif
         INT rrc = r3_fact_revise((UB)k, (UB)v);    /* supersede in place     */
         if (rrc != 0) {
@@ -4045,6 +4145,12 @@ static INT mq_answer_build(U1 asker, UB k, INT *forgotten_out)
 
     mq_ans_pkt.magic       = MT_MAGIC;
     mq_ans_pkt.fact_seq    = local_seq;         /* my local seq: idempotent re-drive */
+#ifdef _TK_HOSTED_LIBC_
+    /* 1-3b: carry the fact's stamp (its teacher's), not my arrival seq, so a
+     * relayed old value cannot beat a newer one on the stamp rule. For a
+     * locally-taught fact the two are the same. Still idempotent. */
+    { U1 o; mq_ans_pkt.fact_seq = mc_stamp_of(local_seq, &o); }
+#endif
     mq_ans_pkt.origin_node = fwd_origin;
     mq_ans_pkt.key         = k;
     mq_ans_pkt.val         = v;
@@ -4358,6 +4464,11 @@ void mind_net_task(INT stacd, void *exinf)
                     m_gate_acquire();
                     m_quiesce();              /* (3) VII.4 quiesce            */
                     m_boot();                 /* the substrate, like m_teach  */
+#ifdef _TK_HOSTED_LIBC_
+                    /* 1-3b: r3_fq_seq is a Lamport clock — never behind a
+                     * stamp this node has seen, so its next teach is later. */
+                    if (mt_rx_pkt.fact_seq > r3_fq_seq) r3_fq_seq = mt_rx_pkt.fact_seq;
+#endif
 
                     INT bind, fi = m_find_key((INT)k, &bind);
                     if (fi >= 0) {
@@ -4376,13 +4487,27 @@ void mind_net_task(INT stacd, void *exinf)
                              * consolidates the new belief (same production path). */
                             UB v_old = cur;
 #ifdef _TK_HOSTED_LIBC_
-                            mc_note(fi, bind, (UB)v, MC_SRC_REMOTE, org); /* 1-3a */
+                            /* 1-3b: not last-arrival-wins any more on hosted
+                             * (the only builds that run mind_net_task): the
+                             * stamp rule decides; a loser is kept in the
+                             * history and the held winner is sent back. The
+                             * brace opened here closes after the revise block. */
+                            INT mc_take = mc_incoming_wins(fi, mt_rx_pkt.fact_seq, org);
+                            if (!mc_take)
+                                mc_incoming_lost(fi, bind, (UB)v, org, mt_rx_pkt.fact_seq,
+                                                 mt_rx_pkt.prov_head);
+                            else
+                                mc_note(fi, bind, (UB)v, MC_SRC_REMOTE, org, mt_rx_pkt.fact_seq);
+                            if (mc_take) {
 #endif
                             INT rrc = r3_fact_revise((UB)k, (UB)v);
                             if (rrc == 0) {
                                 UW local_seq = r3_fq[fi].seq;
                                 /* re-point B's provenance at the NEW teacher. */
                                 mt_rprov_put(local_seq, org, mt_rx_pkt.prov_head);
+#ifdef _TK_HOSTED_LIBC_
+                                mc_rstamp_put(local_seq, mt_rx_pkt.fact_seq);
+#endif
                                 r_puts("[mind] remote REVISE key ");
                                 r_putdec((UW)k); r_puts(" \"");
                                 r_puts(r3_vocab_key_word(k)); r_puts("\": \"");
@@ -4402,6 +4527,9 @@ void mind_net_task(INT stacd, void *exinf)
                                 r_putdec((UW)org);
                                 r_puts(" — revise refused (key vanished); dropped\r\n");
                             }
+#ifdef _TK_HOSTED_LIBC_
+                            }                         /* if (mc_take) — 1-3b */
+#endif
                         }
                     } else {
                         /* (5) arrival ONLY via the production mouth (G33). */
@@ -4413,6 +4541,9 @@ void mind_net_task(INT stacd, void *exinf)
                              * a pointer at A's consented record (do NOT
                              * re-author consent — VIII.4). */
                             mt_rprov_put(local_seq, org, mt_rx_pkt.prov_head);
+#ifdef _TK_HOSTED_LIBC_
+                            mc_rstamp_put(local_seq, mt_rx_pkt.fact_seq);   /* 1-3b */
+#endif
                             r_puts("[mind] remote teach arrived: \"");
                             r_puts(r3_vocab_key_word(k)); r_puts("\"->\"");
                             r_puts(r3_vocab_val_word(v));
