@@ -3358,8 +3358,26 @@ static INT mc_incoming_wins(INT fi, UW s_in, U1 org)
 
 /* the incoming value lost: keep it in the history, then send the held
  * winner back so the side that taught the loser converges too (with the
- * winner's own teacher, prov and stamp — the pull answer's shape). */
+ * winner's own teacher, prov and stamp — the pull answer's shape).
+ *
+ * 1-3c (ledger MIND-RULE-PUSH-ONCE): the push used to go out ONCE. The
+ * loser's re-drive is deduplicated here (same origin, same seq), so nothing
+ * triggers a second push; if the one push met an empty region view (fanout
+ * 0: this node had not yet listed the loser's teacher) or was overwritten
+ * on the LATEST_ONLY topic, the loser stayed on its value for good (audit-20:
+ * the rule arm red 1 in 8 on master). Now it is re-sent like a pull answer:
+ * MC_PUSH_SENDS sends that reached somebody (fanout > 0), within
+ * MC_PUSH_TICKS ticks, one per tick when no answer owns the tick, and only
+ * while this node still holds that winner. One slot: a newer lost conflict
+ * replaces an older push. -DMC_PUSH_ONCE: the old single push (negative
+ * control). -DMC_PUSH_FAULT_DROP_FIRST (test builds only): the first push is
+ * not sent, the loss made deterministic — with it the rule arm of
+ * run_mind_conflicts.sh is green only if the re-send works. */
+#define MC_PUSH_SENDS 20             /* = MQ_ANS_REDRIVE_MAX (~10 s at 500 ms)  */
+#define MC_PUSH_TICKS 120            /* ~60 s: give up if the region stays empty */
 static MT_TEACH_PKT mc_push_pkt;
+static UB mc_push_sends_left, mc_push_ticks_left, mc_push_sent_n;
+static UB mq_answer_sent;            /* defined with M_REDRIVE_OWN below         */
 static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
                              const U1 prov_in[PFS_ID_LEN])
 {
@@ -3383,9 +3401,56 @@ static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
     const U1 *pv = rp ? rp->prov_head : (lp ? lp : zero_prov);
     for (INT i = 0; i < PFS_ID_LEN; i++) mc_push_pkt.prov_head[i] = pv[i];
     mt_vocab_fp_fill(mc_push_pkt.vocab_fp);
+#ifndef MC_PUSH_FAULT_DROP_FIRST
     W rc = mt_wire_send(&mc_push_pkt);
+#else
+    W rc = -1;                       /* test build: the first push is lost      */
+#endif
+    UW fo = rc < 0 ? 0 : kdds_pub_fanout();
     r_puts("[mind] conflict: pushed the held winner back to the region (rc=");
-    r_putdec((UW)(rc < 0 ? 0 : rc)); r_puts(rc < 0 ? ", send failed)\r\n" : ")\r\n");
+    r_putdec((UW)(rc < 0 ? 0 : rc)); r_puts(rc < 0 ? ", send failed" : "");
+    r_puts(", fanout "); r_putdec(fo); r_puts(")\r\n");
+#ifndef MC_PUSH_ONCE
+    mc_push_sent_n      = fo > 0 ? 1 : 0;
+    mc_push_sends_left  = (UB)(MC_PUSH_SENDS - mc_push_sent_n);
+    mc_push_ticks_left  = MC_PUSH_TICKS;
+    mq_answer_sent      = 1;         /* my own re-drive must not overwrite it now */
+#endif
+}
+
+/* once per mind_net_task tick, after the pull answers and before my own
+ * re-drive: re-send the held winner (see mc_incoming_lost). */
+static void mc_push_redrive(void)
+{
+    if (mc_push_sends_left == 0) return;
+    if (mc_push_ticks_left == 0 || --mc_push_ticks_left == 0) {
+        r_puts("[mind] conflict: push-back gave up, "); r_putdec((UW)mc_push_sent_n);
+        r_puts(" send(s) reached the region\r\n");
+        mc_push_sends_left = 0;
+        return;
+    }
+    if (mq_answer_sent) return;      /* a pull answer owns this tick              */
+    m_gate_acquire();
+    INT bind, fi = m_find_key((INT)mc_push_pkt.key, &bind);
+    U1 o = 0xFF; UW s = 0;
+    if (fi >= 0) s = mc_stamp_of(r3_fq[fi].seq, &o);
+    INT still = fi >= 0 && r3_fq[fi].yhat[bind] == mc_push_pkt.val &&
+                s == mc_push_pkt.fact_seq && o == mc_push_pkt.origin_node;
+    m_gate_release();
+    if (!still) {                    /* revised or evicted since: nothing to push */
+        r_puts("[mind] conflict: push-back stopped (the winner is no longer held as pushed)\r\n");
+        mc_push_sends_left = 0;
+        return;
+    }
+    W rc = mt_wire_send(&mc_push_pkt);
+    mq_answer_sent = 1;
+    if (rc >= 0 && kdds_pub_fanout() > 0) {
+        mc_push_sent_n++;
+        if (--mc_push_sends_left == 0) {
+            r_puts("[mind] conflict: push-back done, "); r_putdec((UW)mc_push_sent_n);
+            r_puts(" send(s) reached the region\r\n");
+        }
+    }
 }
 
 /* `mind conflicts` — read-only list of the history (hosted). */
@@ -4265,11 +4330,14 @@ static INT mq_answer_build(U1 asker, UB k, INT *forgotten_out)
  * that sent an answer skips my own re-drive (at most MQ_ANS_REDRIVE_MAX
  * ticks per asker, then mine resumes). -DMQ_NO_ANSWER_SKIP: the old order. */
 static UB mq_answer_sent = 0;
+/* 1-3c: the conflict push-back re-send (mc_push_redrive) takes a tick no
+ * answer took, before my own re-drive, which then skips that tick too. */
 #ifndef MQ_NO_ANSWER_SKIP
-#define M_REDRIVE_OWN() do { if (mq_answer_sent) mq_answer_sent = 0; \
+#define M_REDRIVE_OWN() do { mc_push_redrive(); \
+                             if (mq_answer_sent) mq_answer_sent = 0; \
                              else m_republish_last(); } while (0)
 #else
-#define M_REDRIVE_OWN() do { mq_answer_sent = 0; m_republish_last(); } while (0)
+#define M_REDRIVE_OWN() do { mc_push_redrive(); mq_answer_sent = 0; m_republish_last(); } while (0)
 #endif
 #else
 #define M_REDRIVE_OWN() m_republish_last()
