@@ -660,6 +660,12 @@ INT ark_mount(ARK_BDEV *bd)
         INT n = read_record(sec, g_payld, ARK_COMMIT_MAX,
                             &type, &seq, &len, 0, &payok);
         if (n <= 0) { sec += 1u; continue; }     /* resync past a bad header */
+#ifdef ARK_FAULT_TRUST_COMMIT_HEADER
+        /* ROADMAP 0-8 NEGATIVE CONTROL ONLY (samples/25_survival_fs/
+         * allpoints.sh): believe a commit whose header is valid even when its
+         * payload is torn or missing. Uncut runs are unaffected. */
+        payok = 1;
+#endif
         if (type == ARK_REC_COMMIT && payok)
             head_after_commit = sec + (U4)n;
         sec += (U4)n;
@@ -671,6 +677,9 @@ INT ark_mount(ARK_BDEV *bd)
         INT n = read_record(sec, g_payld, ARK_COMMIT_MAX,
                             &type, &seq, &len, id, &payok);
         if (n <= 0) { sec += 1u; continue; }     /* resync past a bad header */
+#ifdef ARK_FAULT_TRUST_COMMIT_HEADER
+        payok = 1;                               /* negative control, see above */
+#endif
         if (type == ARK_REC_BLOCK) {
             idx_add(id, sec);                    /* committed; rot-tolerant   */
         } else if (type == ARK_REC_COMMIT && payok) {
