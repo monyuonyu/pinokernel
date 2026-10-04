@@ -34,6 +34,12 @@
 /* ------------------------------------------------------------------ */
 
 #define KDDS_PORT        7376
+#ifdef _TK_HOSTED_LIBC_
+/* ROADMAP 1-3c adds "mind/have" (hosted only, like mind_net_task): the named
+ * obligation below is paid here, 16 -> 20, on hosted only, so the bare-metal
+ * tables (and the crown) do not move. */
+#define KDDS_SINGLETON_TOPICS 20
+#else
 #define KDDS_SINGLETON_TOPICS 16 /* cluster-wide SINGLE topics (NOT per-node):
                                  * pfs ann/want/sync/ref + "mind/teach" (LM-7,
                                  * the shared mind) + "mind/w" (LM-10 Path W merge
@@ -47,6 +53,7 @@
                                  * eager-at-boot singletons 7 -> 8 of 16; named
                                  * worst-case co-active set 15 of 16 (one spare).
                                  * The NEXT cluster-singleton must bump 16 -> 20. */
+#endif
 /* unbounded_n_design.md §3 — the wave-48 fix, made permanent for the dkva
  * pre-open. The topic budget is sized by the REGION capacity DREGION_MAX (R),
  * an INDEPENDENT literal (drpc.h), NOT by fleet size N. The dkva coordinator

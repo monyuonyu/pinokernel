@@ -2855,6 +2855,34 @@ INT r3_want_note(INT k, float share_modal)
     return (INT)r3_wq[slot].want;
 }
 
+#ifdef _TK_HOSTED_LIBC_
+/* ROADMAP 1-3c — a peer's HAVE summary lists key k and this node has never
+ * held k: put k in the want-table at level 0, so the pull (mind/want ->
+ * a holder re-teaches) brings it before anyone asks here. NOT r3_want_note:
+ * the level stays 0 (F-LOCAL — a remote node never raises my curiosity, and
+ * the answer does not arrive precious), no EV_WONDER, no s_wonders. Takes a
+ * free slot or replaces the oldest level-0 hint; never evicts a real want.
+ * Returns 1 if added. Caller holds m_gate. */
+static INT r3_want_hint(INT k)
+{
+    INT bind;
+    if (k < 0 || k >= (INT)R_KEYV) return 0;
+    if (r3_key_ever_held(k) || m_find_key(k, &bind) >= 0) return 0;
+    INT slot = -1; UW oldest = 0xFFFFFFFFUL;
+    for (INT i = 0; i < R3_WQ_MAX; i++)
+        if (r3_wq[i].used && r3_wq[i].key == (UB)k) return 0;   /* already wanted */
+    for (INT i = 0; i < R3_WQ_MAX; i++)
+        if (!r3_wq[i].used) { slot = i; break; }
+    if (slot < 0)
+        for (INT i = 0; i < R3_WQ_MAX; i++)
+            if (r3_wq[i].want == 0 && r3_wq[i].seq < oldest) { slot = i; oldest = r3_wq[i].seq; }
+    if (slot < 0) return 0;                      /* all slots are real wants   */
+    r3_wq[slot].key = (UB)k; r3_wq[slot].want = 0;
+    r3_wq[slot].used = 1;    r3_wq[slot].seq  = ++r3_wq_seq;
+    return 1;
+}
+#endif
+
 /* ================================================================== *
  *  LM-7 (living-mind.md Part VIII) — the shared mind                    *
  *                                                                       *
@@ -2889,6 +2917,9 @@ static void mw_ann_open(void);
  * mind_net_open reserves the slot BEFORE dkva saturates the bounded table —
  * the singleton budget proves 16 still holds, living-mind-lm15-pullteach.md §3). */
 static void mq_want_open(void);
+#ifdef _TK_HOSTED_LIBC_
+static void mh_have_open(void);      /* 1-3c, defined beside mq_publish_wants */
+#endif
 
 void mind_net_open(void)
 {
@@ -2904,6 +2935,9 @@ void mind_net_open(void)
     /* LM-15: reserve the "mind/want" question topic in the SAME boot window
      * (beside mind/w), before dkva floods the table (§3 reservation discipline). */
     mq_want_open();
+#ifdef _TK_HOSTED_LIBC_
+    mh_have_open();       /* 1-3c: "mind/have", same boot window */
+#endif
 }
 
 /* one publish handle, opened lazily (region scope); -1 until first use. */
@@ -4206,6 +4240,88 @@ static void mq_publish_wants(void)
     }
 }
 
+#ifdef _TK_HOSTED_LIBC_
+/* ---- 1-3c: the HAVE summary (dtr.h MH_HAVE_PKT) -------------------------
+ * Publish: every MH_EVERY ticks while the queue holds a fact, the held keys
+ * with their stamps. Poll: one sample a tick; a key this node never held goes
+ * into the want-table at level 0 (r3_want_hint), and the existing pull does
+ * the rest. Not (yet): a held key with a newer stamp elsewhere (the want-
+ * table invariant keeps held keys out; the 1-3b push-back covers a re-driven
+ * loser), and the loser history to a newcomer (mind/hist, the next step).
+ * PKERNEL_MIND_HAVE=0 turns both sides off (the negative control, and the
+ * 1-3b bump arm, which isolates the Lamport step on purpose). */
+extern char *getenv(const char *);
+#define MH_EVERY 4                   /* ticks (~2 s at MT_POLL_MS)                */
+static W mh_sub = -1, mh_pub = -1;
+static MH_HAVE_PKT mh_tx, mh_rx;     /* file-static (no task-stack packets)      */
+static UB mh_tick_n, mh_off = 0xFF;  /* 0xFF = env not read yet                  */
+static UW mh_hints;                  /* keys wanted because of a summary         */
+
+static void mh_have_open(void)
+{
+    if (mh_sub < 0)
+        mh_sub = kdds_open_poll_scoped(MIND_HAVE_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
+}
+
+static void mh_tick(void)
+{
+    if (mh_off == 0xFF) {
+        const char *e = getenv("PKERNEL_MIND_HAVE");
+        mh_off = (e && e[0] == '0') ? 1 : 0;
+        if (mh_off) r_puts("[mind] mind/have OFF (PKERNEL_MIND_HAVE=0)\r\n");
+    }
+    if (mh_off || drpc_my_node == 0xFF) return;
+
+    /* publish */
+    if (++mh_tick_n >= MH_EVERY) {
+        mh_tick_n = 0;
+        INT n = 0;
+        m_gate_acquire();
+        for (INT i = 0; i < (INT)r3_fq_n && n < MH_MAX; i++) {
+            U1 o; UW s = mc_stamp_of(r3_fq[i].seq, &o);
+            for (INT b = 0; b < (INT)r3_fq[i].n && n < MH_MAX; b++) {
+                mh_tx.e[n].key = r3_fq[i].key[b]; mh_tx.e[n].origin = o; mh_tx.e[n].stamp = s;
+                n++;
+            }
+        }
+        m_gate_release();
+        if (n > 0) {
+            mh_tx.magic = MH_MAGIC; mh_tx.origin_node = drpc_my_node;
+            mh_tx.n = (U1)n; mh_tx.wire_ver = MT_WIRE_VER_VOCAB; mh_tx._pad = 0;
+            mt_vocab_fp_fill(mh_tx.vocab_fp);
+            if (mh_pub < 0)
+                mh_pub = kdds_open_poll_scoped(MIND_HAVE_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
+            if (mh_pub >= 0) (void)kdds_pub(mh_pub, &mh_tx, (W)sizeof mh_tx);
+        }
+    }
+
+    /* poll */
+    mh_have_open();
+    if (mh_sub < 0) return;
+    W r = kdds_sub(mh_sub, &mh_rx, (W)sizeof mh_rx, 0);
+    if (r < (W)sizeof mh_rx || mh_rx.magic != MH_MAGIC) return;
+    if (mh_rx.wire_ver != MT_WIRE_VER_VOCAB || !mt_vocab_fp_ok(mh_rx.vocab_fp)) return;
+    U1 o = mh_rx.origin_node;
+    if (o == drpc_my_node || o >= DNODE_MAX) return;
+    INT n = mh_rx.n > MH_MAX ? MH_MAX : (INT)mh_rx.n;
+    m_gate_acquire();
+    for (INT i = 0; i < n; i++) {
+        INT k = (INT)mh_rx.e[i].key;
+        if (r3_want_hint(k)) {
+            mh_hints++;
+            r_puts("[mind] mind/have from node "); r_putdec((UW)o);
+            r_puts(": key "); r_putdec((UW)k); r_puts(" (\"");
+            r_puts(r3_vocab_key_word(k));
+            r_puts("\") never held here -> want (level 0, pull)\r\n");
+        }
+    }
+    m_gate_release();
+}
+#define MH_TICK() mh_tick()
+#else
+#define MH_TICK() do { } while (0)
+#endif
+
 /* ---- answer side: ONE poll site, engram-only, forwarded provenance ---- */
 static MQ_WANT_PKT  mq_rx_want;      /* poll scratch (file-static)            */
 static MT_TEACH_PKT mq_ans_pkt;      /* answer scratch — SEPARATE from        */
@@ -4598,6 +4714,7 @@ void mind_net_task(INT stacd, void *exinf)
                 mq_poll_wants();            /* LM-15: answer region wants       */
                 M_REDRIVE_OWN();     /* 1-2b */
                 mq_publish_wants();         /* LM-15: publish my own wonders    */
+                MH_TICK();                  /* 1-3c: mind/have                  */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -4619,6 +4736,7 @@ void mind_net_task(INT stacd, void *exinf)
                 mq_poll_wants();            /* LM-15: answer region wants       */
                 M_REDRIVE_OWN();     /* 1-2b */
                 mq_publish_wants();         /* LM-15: publish my own wonders    */
+                MH_TICK();                  /* 1-3c: mind/have                  */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -4760,6 +4878,7 @@ void mind_net_task(INT stacd, void *exinf)
         mq_poll_wants();       /* LM-15: answer region wants I can serve       */
         M_REDRIVE_OWN();     /* 1-2b */
         mq_publish_wants();    /* LM-15: publish my own unanswered wonders     */
+        MH_TICK();             /* 1-3c: my HAVE summary + wants from theirs    */
         tk_dly_tsk(MT_POLL_MS);
     }
 }
