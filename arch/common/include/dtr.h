@@ -465,31 +465,6 @@ typedef struct {
                                   /* would teach mis-bound ids -> refuse loud  */
 } __attribute__((packed)) MQ_WANT_PKT;   /* 4+4+1+1+1+1+4+8 = 24 B (<= KDDS_DATA_MAX) */
 
-/* ROADMAP 1-3c (mind-conflicts.md stage 3): the HAVE summary. Each hosted node
- * publishes the keys it holds in its engram queue with their stamps (1-3b:
- * stamp + teaching node), every few ticks. A receiver wants ONLY a key it has
- * never held (r3_key_ever_held — an evicted key stays forgotten, LM-13), at
- * want level 0 (F-LOCAL: no remote node raises my curiosity); the existing
- * pull then answers it. Keys + stamps only: no values, no levels. */
-#define MIND_HAVE_TOPIC  "mind/have"
-#define MH_MAGIC         0x5648414DUL   /* "MAHV" LE -- free magic              */
-#define MH_MAX           16             /* entries (the queue holds <= 4 facts) */
-typedef struct {
-    U1 key;                       /* the held key token id                    */
-    U1 origin;                    /* the stamp's teaching node (1-3b)          */
-    UW stamp;                     /* the stamp (Lamport, 1-3b)                 */
-} __attribute__((packed)) MH_ENTRY;
-typedef struct {
-    UW magic;                     /* MH_MAGIC                                 */
-    U1 origin_node;               /* the publishing node                      */
-    U1 n;                         /* entries in e[] (<= MH_MAX)                */
-    U1 wire_ver;                  /* MT_WIRE_VER_VOCAB                         */
-    U1 _pad;
-    U1 vocab_fp[MT_VOCAB_FP_LEN]; /* key ids mean the same words only on the   */
-                                  /* same word list (wave-47)                  */
-    MH_ENTRY e[MH_MAX];
-} __attribute__((packed)) MH_HAVE_PKT;   /* 4+4+8+16*6 = 112 B (<= KDDS_DATA_MAX) */
-
 /* ================================================================== */
 /* Thread T — the lesson BRIDGE (T-fix-b / T-1, thread-t-impl-plan.md  */
 /* §2.1). A TEACHER-capable node (SWIM capability bit 1, T-fix-a) emits */

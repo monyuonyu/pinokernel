@@ -150,9 +150,6 @@ chk rule-A-recorded   "$QAL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "bl
 # and A takes it. Without it B's clock counts only what B learned (<= 2), so
 # green carries <= 3, A refuses it and pushes blue back: the correction made
 # after seeing the value loses — what the rule promises never happens.
-# Both nodes run with PKERNEL_MIND_HAVE=0: with the 1-3c summary B learns
-# fire/snow/sea before blue and the arm stops testing the step (its own
-# bump-precondition goes red), so the arm keeps the summary off on purpose.
 for p in "$QA" "$QC" "$RH"; do kill -9 "$p" 2>/dev/null; done
 QA=0; QC=0; RH=0
 PS=$((PORT + 4))
@@ -160,7 +157,7 @@ PS=$((PORT + 4))
 sleep 1
 SAL="$WORK/sa.log"; SBL="$WORK/sb.log"
 mkfifo "$WORK/sa" "$WORK/sb"; mkdir -p "$WORK/esa" "$WORK/esb"
-env PKERNEL_MIND_HAVE=0 PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/esa" PKERNEL_RELAY="127.0.0.1:$PS" \
+env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/esa" PKERNEL_RELAY="127.0.0.1:$PS" \
     "$BOOT/p-kernel" < "$WORK/sa" > "$SAL" 2>&1 &
 SA=$!; exec 3<>"$WORK/sa"
 wait_for "$SAL" 'mind_net_task up' 90 || echo "[mind-conflicts] note: bump A mind_net_task not seen"
@@ -170,7 +167,7 @@ printf 'mind teach snow white\n' >&3
 wait_for "$SAL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=2 ' 60 || echo "[mind-conflicts] note: bump A snow not published"
 printf 'mind teach sea deep\n' >&3
 wait_for "$SAL" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=3 ' 60 || echo "[mind-conflicts] note: bump A sea not published"
-env PKERNEL_MIND_HAVE=0 PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/esb" PKERNEL_RELAY="127.0.0.1:$PS" \
+env PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/esb" PKERNEL_RELAY="127.0.0.1:$PS" \
     "$BOOT/p-kernel" < "$WORK/sb" > "$SBL" 2>&1 &
 SB=$!; exec 4<>"$WORK/sb"
 wait_for "$SBL" 'mind_net_task up' 90 || echo "[mind-conflicts] note: bump B mind_net_task not seen"

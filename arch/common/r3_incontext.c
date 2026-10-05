@@ -2855,34 +2855,6 @@ INT r3_want_note(INT k, float share_modal)
     return (INT)r3_wq[slot].want;
 }
 
-#ifdef _TK_HOSTED_LIBC_
-/* ROADMAP 1-3c — a peer's HAVE summary lists key k and this node has never
- * held k: put k in the want-table at level 0, so the pull (mind/want ->
- * a holder re-teaches) brings it before anyone asks here. NOT r3_want_note:
- * the level stays 0 (F-LOCAL — a remote node never raises my curiosity, and
- * the answer does not arrive precious), no EV_WONDER, no s_wonders. Takes a
- * free slot or replaces the oldest level-0 hint; never evicts a real want.
- * Returns 1 if added. Caller holds m_gate. */
-static INT r3_want_hint(INT k)
-{
-    INT bind;
-    if (k < 0 || k >= (INT)R_KEYV) return 0;
-    if (r3_key_ever_held(k) || m_find_key(k, &bind) >= 0) return 0;
-    INT slot = -1; UW oldest = 0xFFFFFFFFUL;
-    for (INT i = 0; i < R3_WQ_MAX; i++)
-        if (r3_wq[i].used && r3_wq[i].key == (UB)k) return 0;   /* already wanted */
-    for (INT i = 0; i < R3_WQ_MAX; i++)
-        if (!r3_wq[i].used) { slot = i; break; }
-    if (slot < 0)
-        for (INT i = 0; i < R3_WQ_MAX; i++)
-            if (r3_wq[i].want == 0 && r3_wq[i].seq < oldest) { slot = i; oldest = r3_wq[i].seq; }
-    if (slot < 0) return 0;                      /* all slots are real wants   */
-    r3_wq[slot].key = (UB)k; r3_wq[slot].want = 0;
-    r3_wq[slot].used = 1;    r3_wq[slot].seq  = ++r3_wq_seq;
-    return 1;
-}
-#endif
-
 /* ================================================================== *
  *  LM-7 (living-mind.md Part VIII) — the shared mind                    *
  *                                                                       *
@@ -2917,9 +2889,6 @@ static void mw_ann_open(void);
  * mind_net_open reserves the slot BEFORE dkva saturates the bounded table —
  * the singleton budget proves 16 still holds, living-mind-lm15-pullteach.md §3). */
 static void mq_want_open(void);
-#ifdef _TK_HOSTED_LIBC_
-static void mh_have_open(void);      /* 1-3c, defined beside mq_publish_wants */
-#endif
 
 void mind_net_open(void)
 {
@@ -2935,9 +2904,6 @@ void mind_net_open(void)
     /* LM-15: reserve the "mind/want" question topic in the SAME boot window
      * (beside mind/w), before dkva floods the table (§3 reservation discipline). */
     mq_want_open();
-#ifdef _TK_HOSTED_LIBC_
-    mh_have_open();       /* 1-3c: "mind/have", same boot window */
-#endif
 }
 
 /* one publish handle, opened lazily (region scope); -1 until first use. */
@@ -3392,26 +3358,8 @@ static INT mc_incoming_wins(INT fi, UW s_in, U1 org)
 
 /* the incoming value lost: keep it in the history, then send the held
  * winner back so the side that taught the loser converges too (with the
- * winner's own teacher, prov and stamp — the pull answer's shape).
- *
- * 1-3c (ledger MIND-RULE-PUSH-ONCE): the push used to go out ONCE. The
- * loser's re-drive is deduplicated here (same origin, same seq), so nothing
- * triggers a second push; if the one push met an empty region view (fanout
- * 0: this node had not yet listed the loser's teacher) or was overwritten
- * on the LATEST_ONLY topic, the loser stayed on its value for good (audit-20:
- * the rule arm red 1 in 8 on master). Now it is re-sent like a pull answer:
- * MC_PUSH_SENDS sends that reached somebody (fanout > 0), within
- * MC_PUSH_TICKS ticks, one per tick when no answer owns the tick, and only
- * while this node still holds that winner. One slot: a newer lost conflict
- * replaces an older push. -DMC_PUSH_ONCE: the old single push (negative
- * control). -DMC_PUSH_FAULT_DROP_FIRST (test builds only): the first push is
- * not sent, the loss made deterministic — with it the rule arm of
- * run_mind_conflicts.sh is green only if the re-send works. */
-#define MC_PUSH_SENDS 20             /* = MQ_ANS_REDRIVE_MAX (~10 s at 500 ms)  */
-#define MC_PUSH_TICKS 120            /* ~60 s: give up if the region stays empty */
+ * winner's own teacher, prov and stamp — the pull answer's shape). */
 static MT_TEACH_PKT mc_push_pkt;
-static UB mc_push_sends_left, mc_push_ticks_left, mc_push_sent_n;
-static UB mq_answer_sent;            /* defined with M_REDRIVE_OWN below         */
 static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
                              const U1 prov_in[PFS_ID_LEN])
 {
@@ -3435,56 +3383,9 @@ static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
     const U1 *pv = rp ? rp->prov_head : (lp ? lp : zero_prov);
     for (INT i = 0; i < PFS_ID_LEN; i++) mc_push_pkt.prov_head[i] = pv[i];
     mt_vocab_fp_fill(mc_push_pkt.vocab_fp);
-#ifndef MC_PUSH_FAULT_DROP_FIRST
     W rc = mt_wire_send(&mc_push_pkt);
-#else
-    W rc = -1;                       /* test build: the first push is lost      */
-#endif
-    UW fo = rc < 0 ? 0 : kdds_pub_fanout();
     r_puts("[mind] conflict: pushed the held winner back to the region (rc=");
-    r_putdec((UW)(rc < 0 ? 0 : rc)); r_puts(rc < 0 ? ", send failed" : "");
-    r_puts(", fanout "); r_putdec(fo); r_puts(")\r\n");
-#ifndef MC_PUSH_ONCE
-    mc_push_sent_n      = fo > 0 ? 1 : 0;
-    mc_push_sends_left  = (UB)(MC_PUSH_SENDS - mc_push_sent_n);
-    mc_push_ticks_left  = MC_PUSH_TICKS;
-    mq_answer_sent      = 1;         /* my own re-drive must not overwrite it now */
-#endif
-}
-
-/* once per mind_net_task tick, after the pull answers and before my own
- * re-drive: re-send the held winner (see mc_incoming_lost). */
-static void mc_push_redrive(void)
-{
-    if (mc_push_sends_left == 0) return;
-    if (mc_push_ticks_left == 0 || --mc_push_ticks_left == 0) {
-        r_puts("[mind] conflict: push-back gave up, "); r_putdec((UW)mc_push_sent_n);
-        r_puts(" send(s) reached the region\r\n");
-        mc_push_sends_left = 0;
-        return;
-    }
-    if (mq_answer_sent) return;      /* a pull answer owns this tick              */
-    m_gate_acquire();
-    INT bind, fi = m_find_key((INT)mc_push_pkt.key, &bind);
-    U1 o = 0xFF; UW s = 0;
-    if (fi >= 0) s = mc_stamp_of(r3_fq[fi].seq, &o);
-    INT still = fi >= 0 && r3_fq[fi].yhat[bind] == mc_push_pkt.val &&
-                s == mc_push_pkt.fact_seq && o == mc_push_pkt.origin_node;
-    m_gate_release();
-    if (!still) {                    /* revised or evicted since: nothing to push */
-        r_puts("[mind] conflict: push-back stopped (the winner is no longer held as pushed)\r\n");
-        mc_push_sends_left = 0;
-        return;
-    }
-    W rc = mt_wire_send(&mc_push_pkt);
-    mq_answer_sent = 1;
-    if (rc >= 0 && kdds_pub_fanout() > 0) {
-        mc_push_sent_n++;
-        if (--mc_push_sends_left == 0) {
-            r_puts("[mind] conflict: push-back done, "); r_putdec((UW)mc_push_sent_n);
-            r_puts(" send(s) reached the region\r\n");
-        }
-    }
+    r_putdec((UW)(rc < 0 ? 0 : rc)); r_puts(rc < 0 ? ", send failed)\r\n" : ")\r\n");
 }
 
 /* `mind conflicts` — read-only list of the history (hosted). */
@@ -4240,88 +4141,6 @@ static void mq_publish_wants(void)
     }
 }
 
-#ifdef _TK_HOSTED_LIBC_
-/* ---- 1-3c: the HAVE summary (dtr.h MH_HAVE_PKT) -------------------------
- * Publish: every MH_EVERY ticks while the queue holds a fact, the held keys
- * with their stamps. Poll: one sample a tick; a key this node never held goes
- * into the want-table at level 0 (r3_want_hint), and the existing pull does
- * the rest. Not (yet): a held key with a newer stamp elsewhere (the want-
- * table invariant keeps held keys out; the 1-3b push-back covers a re-driven
- * loser), and the loser history to a newcomer (mind/hist, the next step).
- * PKERNEL_MIND_HAVE=0 turns both sides off (the negative control, and the
- * 1-3b bump arm, which isolates the Lamport step on purpose). */
-extern char *getenv(const char *);
-#define MH_EVERY 4                   /* ticks (~2 s at MT_POLL_MS)                */
-static W mh_sub = -1, mh_pub = -1;
-static MH_HAVE_PKT mh_tx, mh_rx;     /* file-static (no task-stack packets)      */
-static UB mh_tick_n, mh_off = 0xFF;  /* 0xFF = env not read yet                  */
-static UW mh_hints;                  /* keys wanted because of a summary         */
-
-static void mh_have_open(void)
-{
-    if (mh_sub < 0)
-        mh_sub = kdds_open_poll_scoped(MIND_HAVE_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
-}
-
-static void mh_tick(void)
-{
-    if (mh_off == 0xFF) {
-        const char *e = getenv("PKERNEL_MIND_HAVE");
-        mh_off = (e && e[0] == '0') ? 1 : 0;
-        if (mh_off) r_puts("[mind] mind/have OFF (PKERNEL_MIND_HAVE=0)\r\n");
-    }
-    if (mh_off || drpc_my_node == 0xFF) return;
-
-    /* publish */
-    if (++mh_tick_n >= MH_EVERY) {
-        mh_tick_n = 0;
-        INT n = 0;
-        m_gate_acquire();
-        for (INT i = 0; i < (INT)r3_fq_n && n < MH_MAX; i++) {
-            U1 o; UW s = mc_stamp_of(r3_fq[i].seq, &o);
-            for (INT b = 0; b < (INT)r3_fq[i].n && n < MH_MAX; b++) {
-                mh_tx.e[n].key = r3_fq[i].key[b]; mh_tx.e[n].origin = o; mh_tx.e[n].stamp = s;
-                n++;
-            }
-        }
-        m_gate_release();
-        if (n > 0) {
-            mh_tx.magic = MH_MAGIC; mh_tx.origin_node = drpc_my_node;
-            mh_tx.n = (U1)n; mh_tx.wire_ver = MT_WIRE_VER_VOCAB; mh_tx._pad = 0;
-            mt_vocab_fp_fill(mh_tx.vocab_fp);
-            if (mh_pub < 0)
-                mh_pub = kdds_open_poll_scoped(MIND_HAVE_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
-            if (mh_pub >= 0) (void)kdds_pub(mh_pub, &mh_tx, (W)sizeof mh_tx);
-        }
-    }
-
-    /* poll */
-    mh_have_open();
-    if (mh_sub < 0) return;
-    W r = kdds_sub(mh_sub, &mh_rx, (W)sizeof mh_rx, 0);
-    if (r < (W)sizeof mh_rx || mh_rx.magic != MH_MAGIC) return;
-    if (mh_rx.wire_ver != MT_WIRE_VER_VOCAB || !mt_vocab_fp_ok(mh_rx.vocab_fp)) return;
-    U1 o = mh_rx.origin_node;
-    if (o == drpc_my_node || o >= DNODE_MAX) return;
-    INT n = mh_rx.n > MH_MAX ? MH_MAX : (INT)mh_rx.n;
-    m_gate_acquire();
-    for (INT i = 0; i < n; i++) {
-        INT k = (INT)mh_rx.e[i].key;
-        if (r3_want_hint(k)) {
-            mh_hints++;
-            r_puts("[mind] mind/have from node "); r_putdec((UW)o);
-            r_puts(": key "); r_putdec((UW)k); r_puts(" (\"");
-            r_puts(r3_vocab_key_word(k));
-            r_puts("\") never held here -> want (level 0, pull)\r\n");
-        }
-    }
-    m_gate_release();
-}
-#define MH_TICK() mh_tick()
-#else
-#define MH_TICK() do { } while (0)
-#endif
-
 /* ---- answer side: ONE poll site, engram-only, forwarded provenance ---- */
 static MQ_WANT_PKT  mq_rx_want;      /* poll scratch (file-static)            */
 static MT_TEACH_PKT mq_ans_pkt;      /* answer scratch — SEPARATE from        */
@@ -4446,14 +4265,11 @@ static INT mq_answer_build(U1 asker, UB k, INT *forgotten_out)
  * that sent an answer skips my own re-drive (at most MQ_ANS_REDRIVE_MAX
  * ticks per asker, then mine resumes). -DMQ_NO_ANSWER_SKIP: the old order. */
 static UB mq_answer_sent = 0;
-/* 1-3c: the conflict push-back re-send (mc_push_redrive) takes a tick no
- * answer took, before my own re-drive, which then skips that tick too. */
 #ifndef MQ_NO_ANSWER_SKIP
-#define M_REDRIVE_OWN() do { mc_push_redrive(); \
-                             if (mq_answer_sent) mq_answer_sent = 0; \
+#define M_REDRIVE_OWN() do { if (mq_answer_sent) mq_answer_sent = 0; \
                              else m_republish_last(); } while (0)
 #else
-#define M_REDRIVE_OWN() do { mc_push_redrive(); mq_answer_sent = 0; m_republish_last(); } while (0)
+#define M_REDRIVE_OWN() do { mq_answer_sent = 0; m_republish_last(); } while (0)
 #endif
 #else
 #define M_REDRIVE_OWN() m_republish_last()
@@ -4714,7 +4530,6 @@ void mind_net_task(INT stacd, void *exinf)
                 mq_poll_wants();            /* LM-15: answer region wants       */
                 M_REDRIVE_OWN();     /* 1-2b */
                 mq_publish_wants();         /* LM-15: publish my own wonders    */
-                MH_TICK();                  /* 1-3c: mind/have                  */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -4736,7 +4551,6 @@ void mind_net_task(INT stacd, void *exinf)
                 mq_poll_wants();            /* LM-15: answer region wants       */
                 M_REDRIVE_OWN();     /* 1-2b */
                 mq_publish_wants();         /* LM-15: publish my own wonders    */
-                MH_TICK();                  /* 1-3c: mind/have                  */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -4878,7 +4692,6 @@ void mind_net_task(INT stacd, void *exinf)
         mq_poll_wants();       /* LM-15: answer region wants I can serve       */
         M_REDRIVE_OWN();     /* 1-2b */
         mq_publish_wants();    /* LM-15: publish my own unanswered wonders     */
-        MH_TICK();             /* 1-3c: my HAVE summary + wants from theirs    */
         tk_dly_tsk(MT_POLL_MS);
     }
 }
