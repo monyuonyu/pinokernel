@@ -379,6 +379,29 @@ int  st_merge_cohort(st_model *into,
 int  st_quant_fake(const st_model *src, st_model *dst, int bits, int gran,
                    size_t *bytes_q);
 
+/* ---- one-bit delta, stage 1 (research/delta-quant.md, ROADMAP 1-6) ----
+ * st_delta_sign: rebuild `ft` from `base` + a 1-bit delta (BitDelta,
+ * arXiv 2402.10193 eq. 1, alpha at its L2-optimal start, no alpha training):
+ * for each MATRIX (the st_quant_fake set), D = ft - base, dst = base +
+ * alpha * sign(D), alpha = mean |D| over that matrix. The rest (RMSNorm gains,
+ * router) is copied from ft at fp32. base, ft, dst: same tier/n_params; dst
+ * distinct from both. mode ST_DQ_SIGN is the method; ST_DQ_RANDSIGN (same
+ * alpha, sign from a fixed xorshift — is there information in the signs?) and
+ * ST_DQ_ZERO (alpha = 0, the matrices stay at base — does the delta matter?)
+ * are the cert's negative controls. *bytes (if non-NULL): what the delta
+ * would cost on the wire = 1 bit per matrix element + one fp32 alpha per
+ * matrix + the fp32 remainder. sign(0) is +1. Returns ST_OK / ST_E_ARG.    */
+#define ST_DQ_SIGN      0
+#define ST_DQ_RANDSIGN  1
+#define ST_DQ_ZERO      2
+/* post-hoc (added after stage 1's pre-registered gates went red): an element
+ * whose delta is exactly 0 (a byte the corpus never shows: its embed / out
+ * row gets no gradient) stays at base instead of base + alpha; alpha = mean
+ * |D| over the nonzero elements. Costs a zero mask (*bytes counts 2 bits). */
+#define ST_DQ_TERNARY   3
+int  st_delta_sign(const st_model *base, const st_model *ft, st_model *dst,
+                   int mode, size_t *bytes);
+
 /* ---- smarter merge, stage 1 (research/brain-merge.md §2) ----
  *
  * st_merge_barrier: evaluate the LINEAR path theta(alpha) = (1-alpha)*a +

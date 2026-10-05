@@ -5020,10 +5020,51 @@ static UW mw_refname(char *out, U1 origin)
 
 /* publish rw[] as 22 content blocks + one manifest ref. Returns 0 on success.
  * PRINTS the ~84 KB cost (XI.0 #2 — own it). Caller m_quiesce()s first. */
+#ifdef _TK_HOSTED_LIBC_
+/* research/delta-quant.md step 1 on the real target: how much did rw[] move
+ * since the LAST publish (what a peer holding that version would need)?
+ * Mean |D| / mean |w| per weight family, printed with the publish line.
+ * Measurement only — the wire is unchanged. */
+static float mw_last_pub[R_NP];
+static UB    mw_last_have;
+static void mw_delta_family(const char *name, INT from, INT to)
+{
+    double sd = 0.0, sw = 0.0; INT z = 0;
+    for (INT i = from; i < to; i++) {
+        float d = mw_self[i] - mw_last_pub[i];
+        sd += d < 0.0f ? -d : d;
+        sw += mw_last_pub[i] < 0.0f ? -mw_last_pub[i] : mw_last_pub[i];
+        if (d == 0.0f) z++;
+    }
+    UW ppm = sw > 0.0 ? (UW)(sd / sw * 1000000.0) : 0;
+    r_puts(" "); r_puts(name); r_puts("="); r_putdec(ppm);
+    r_puts("ppm/z"); r_putdec((UW)((UW)z * 100u / (UW)(to - from))); r_puts("%");
+}
+static void mw_delta_report(void)
+{
+    INT moved = 0;
+    for (INT i = 0; i < R_NP && !moved; i++) if (mw_self[i] != mw_last_pub[i]) moved = 1;
+    if (mw_last_have && moved) {                   /* silent when rw[] did not move */
+        r_puts("[onemind] delta since last publish (mean|D|/mean|w| in ppm, exact-zero %):");
+        mw_delta_family("emb", O_WKE, O_WQ);
+        mw_delta_family("attn", O_WQ, O_LN1G);
+        mw_delta_family("ffn", O_WF1, O_WCLS);
+        mw_delta_family("cls", O_WCLS, R_NP);
+        mw_delta_family("all", 0, R_NP);
+        r_puts(" epoch="); r_putdec(merge_epoch); r_puts("\r\n");
+    }
+    for (INT i = 0; i < R_NP; i++) mw_last_pub[i] = mw_self[i];
+    mw_last_have = 1;
+}
+#endif
+
 static INT mw_publish_weights(void)
 {
     if (drpc_my_node == 0xFF) return -1;           /* solo: nobody to merge */
     r3_weights_get(mw_self);
+#ifdef _TK_HOSTED_LIBC_
+    mw_delta_report();
+#endif
 
     mw_man.magic    = MW_MAGIC;
     mw_man.epoch    = merge_epoch;
