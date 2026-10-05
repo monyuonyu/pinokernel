@@ -48,6 +48,7 @@
 #endif
 #include <arpa/inet.h>
 
+#include "pk_nosw.h"
 #include "sha256.h"      /* same canonical relay/ HMAC-SHA256 as net_relay.c */
 #include "tcp_frame.h"   /* the shared [u16 len][pkt] de-framer (load-bearing) */
 
@@ -351,20 +352,28 @@ static void send_framed(const unsigned char *pkt, int pktlen)
     }
 }
 
+/* pk_nosw.h: the three senders below fill a static buf, take the shared
+ * next_nonce and write one frame to the shared stream through send_framed's
+ * static out; a switch in the middle could interleave two frames' bytes on
+ * the stream, which the relay's de-framer cannot recover from */
 static void send_register(void)
 {
+    PK_NOSW_ENTER();
     static unsigned char buf[MAX_PKT];
     int n = build_packet(buf, REL_REGISTER, (unsigned)my_node_id, 0, NULL, 0);
     send_framed(buf, n);
     last_send_ts = time(NULL);
+    PK_NOSW_LEAVE();
 }
 
 static void send_keepalive(void)
 {
+    PK_NOSW_ENTER();
     static unsigned char buf[MAX_PKT];
     int n = build_packet(buf, REL_KEEPALIVE, (unsigned)my_node_id, 0, NULL, 0);
     send_framed(buf, n);
     last_send_ts = time(NULL);
+    PK_NOSW_LEAVE();
 }
 
 /* Hold the TCP/proxy/NAT stream state open with a steady keepalive frame,
@@ -460,8 +469,10 @@ int net_relay_tcp_send(const void *frame, int len)
     if (tcp_fd < 0 || len <= 0 || len > MAX_PAYLOAD) return -1;
     tcp_tick();
     static unsigned char buf[MAX_PKT];
+    PK_NOSW_ENTER();                         /* see send_register */
     int n = build_packet(buf, REL_BROADCAST, (unsigned)my_node_id, 0, frame, len);
     send_framed(buf, n);
+    PK_NOSW_LEAVE();
     return len;
 }
 
