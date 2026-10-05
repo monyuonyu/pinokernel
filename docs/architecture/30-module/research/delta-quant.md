@@ -1,6 +1,6 @@
 # 差分を1ビットで送る（研究メモ、ROADMAP 1-6・量子化の第2段）
 
-2026-10-04。出典: Liu ほか "BitDelta: Your Fine-Tune May Only Be Worth One Bit"（arXiv 2402.10193）、Yu ほか "Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch"（DARE、arXiv 2311.03099）。どちらも arXiv の本文（HTML）で式を確かめた。
+2026-10-04。出典: Liu ほか "BitDelta: Your Fine-Tune May Only Be Worth One Bit"（arXiv 2402.10193）、Yu ほか "Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch"（DARE、arXiv 2311.03099）。式は arXiv の本文で確認。
 
 ## 何が効くのか
 - BitDelta: 元の重みとの差 Δ を、行列ごとに **Δ̂ = α・sign(Δ)**、α の初期値は **平均の絶対値 (1/nm)Σ|Δᵢⱼ|**（L2 の誤差を最小にする値）。そのあと α だけを、元のモデルの出力（logits）に合わせて学ぶ（C4 の 800 例、約 200 歩）。7B〜70B で差は 10 分の1以下に、成績の落ちは 1〜2 点
@@ -18,9 +18,9 @@
 3. **陰性コントロール**: 同じ α で符号をでたらめにした差 → held の損失が明らかに悪くなること（符号に情報があることの確認）。もう一つ、α を 0（差を捨てる）→ 前の世代のまま＝悪くなること
 4. 送る量: 塊の数とバイト数を実測（30 分の1の見込みが外れたら、そのまま書く）
 
-## 第1段の結果（2026-10-04 19:30 の回、`feat/delta-quant`、監査待ち）
+## 第1段の結果（2026-10-04、監査-21 PASS）
 - student（M の赤子）の host 試験 `tests/llm/run_st_delta.sh`。世代 t = 訓練窓の前半で 60 周、t+1 = 全部で 20 周足す。期待は走らせる前にコミット（cd30f6b6）
-- **事前登録の期待は 3 seed すべて赤。** 1ビットの組み直しは t+1 との logit の二乗誤差を t の 0.70〜0.76 倍にしか縮めない（期待は 0.5 倍以下）。seed 1 では符号でたらめ（同じ α）の方が近かった。送る量は 1/30.4
-- **差は小さくない**（|Δ|/|w|: attn 0.23〜0.50、embed 0.35〜0.76、out 0.31〜0.56、ffn 0.008〜0.018）。DARE・BitDelta の前提（同じ元からの小さな差）を満たさない＝手順1の「大きければ止める」に当たる
+- **事前登録の期待は 3 seed すべて赤。** t+1 との logit の二乗誤差は t の 0.70〜0.76 倍（期待は 0.5 倍以下）。ただしノルムとルータは t+1 の fp32 のため、行列を t のままの ZERO でも 0.64〜0.97 倍（監査-21）。seed 1 は ZERO・符号でたらめの方が近い。送る量 1/30.4
+- **差は小さくない**（|Δ|/|w|: attn 0.23〜0.50、embed 0.35〜0.76、out 0.31〜0.56、ffn 0.008〜0.018）。DARE・BitDelta の前提（同じ元からの小さな差）を満たさない（手順1の「止める」）
 - 事後（ゲート外）: embed の Δ は 92% がちょうど 0で、sign(0)=+1 がそこに α を足していた。0 を残す ternary（1/15.6）は誤差を 0.56〜0.83 倍にしたが、held の損失は t+1 から離れた
 - **Path W の世代差（42_one_mind、publish ごと、1回）**: 全体の |Δ|/|w| は 0.02〜1.3%（後の世代ほど小さい）。student の筋書きより2桁小さい＝前提に近い。次は Path W の上で1ビット＋α を測る
