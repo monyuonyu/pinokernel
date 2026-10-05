@@ -21,6 +21,7 @@
 #include "pfs_block.h"
 #include "../../common/llm/pk_parallel.h"
 #include "../../common/llm/student.h"
+#include "arkfs.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -121,7 +122,7 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N4  every p-fs block put by two tasks at once reads back whole
  *   N5  no starvation: high puts started during the runner's puts (asked
  *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
- *   N6-N8 the student (ns_student below)
+ *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -259,6 +260,9 @@ static void ns_student(void)
     }
     int np = 0;
     float l0 = st_eval_loss(&nt_m, nt_a, NT_N, &np);
+    float l1 = st_eval_loss(&nt_m, nt_a, NT_N, &np);
+    float l2 = (st_forward(&nt_m, nt_b, NT_N, nt_hl), st_eval_loss(&nt_m, nt_a, NT_N, &np));
+    float lbad = l0;
     INT during = 0, evals = 0, bad = 0, steps = 0, diff = 0;
 
     nt_hrun = nt_during = 0;
@@ -268,7 +272,7 @@ static void ns_student(void)
     while (nt_hrun < NT_HF && evals < 200000) {
         float l = st_eval_loss(&nt_m, nt_a, NT_N, &np);
         evals++;
-        if (memcmp(&l, &l0, sizeof l)) bad++;
+        if (memcmp(&l, &l0, sizeof l)) { if (!bad) lbad = l; bad++; }
     }
     nt_phase_end(t);
     during += nt_during;
@@ -290,11 +294,115 @@ static void ns_student(void)
     { char m[200];
       snprintf(m, sizeof m, "[nosw] student: %d evals, %d train steps, %d params\r\n",
                (int)evals, (int)steps, nt_m.n_params);
+      pp_out(m);
+      UW b0, b1, b2, bb;
+      memcpy(&b0, &l0, 4); memcpy(&b1, &l1, 4); memcpy(&b2, &l2, 4); memcpy(&bb, &lbad, 4);
+      snprintf(m, sizeof m, "[nosw] student: eval bits alone %08x %08x, after another forward %08x, first changed %08x\r\n",
+               (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)bb);
       pp_out(m); }
     pp_check(bad == 0, "N6", "evals of the unchanged model that changed", bad);
     pp_check(diff == 0, "N7", "weights unlike the twin trained alone", diff);
     pp_check(during > 0, "N8", "no starvation: high forwards while the runner was busy", during);
     st_free(&nt_m); st_free(&nt_ref);
+}
+
+/* N9-N11: ARK (pk_nosw.h regions in arkfs.c). On a RAM device of its own the
+ * runner puts 200 blocks, then gets and checks them over and over, while a
+ * pri-19 task wakes every 2 ms and puts 60 more. Every public ARK entry shares
+ * g_blkbuf / g_payld / g_secbuf, the log head and the index.
+ *   N9   no get returned another block's bytes or failed, no put failed
+ *   N10  afterwards every block of both tasks reads back whole
+ *   N11  no starvation: high puts landed while the runner was busy
+ * Skipped (said) when p-fs runs on ARK (PKERNEL_PFS_BACKEND=ark): the probe
+ * would unmount the live log. -DPK_NOSW_OFF must turn N9 or N10 red. */
+extern int pfs_ark_configured(void);          /* arch/linux/pfs_ark.c */
+#define NA_SEC 1024
+#define NA_LEN 256
+#define NA_RUN 200
+#define NA_HI  60
+static U1 na_ram[NA_SEC * ARK_SECTOR];
+static U1 na_idr[NA_RUN][ARK_ID_LEN], na_idh[NA_HI][ARK_ID_LEN];
+static volatile INT na_hput, na_hbad, na_during, na_busy;
+
+static INT na_read(void *ctx, U4 lba, U4 n, void *buf)
+{
+    (void)ctx;
+    if (lba + n > NA_SEC) return -1;
+    memcpy(buf, na_ram + (size_t)lba * ARK_SECTOR, (size_t)n * ARK_SECTOR);
+    return 0;
+}
+static INT na_write(void *ctx, U4 lba, U4 n, const void *buf)
+{
+    (void)ctx;
+    if (lba + n > NA_SEC) return -1;
+    memcpy(na_ram + (size_t)lba * ARK_SECTOR, buf, (size_t)n * ARK_SECTOR);
+    return 0;
+}
+static void na_fill(UB *b, UB who, INT i)
+{
+    for (INT k = 0; k < NA_LEN; k++) b[k] = (UB)(who ^ (i * 7) ^ (k * 13));
+    b[0] = who; b[1] = (UB)i; b[2] = (UB)(i >> 8);
+}
+static void t_na_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    UB b[NA_LEN];
+    for (INT n = 0; n < NA_HI; n++) {
+        tk_dly_tsk(2);
+        na_fill(b, 0xB0, n);
+        if (na_busy) na_during++;
+        if (ark_block_put(b, NA_LEN, na_idh[n]) != ARK_OK) na_hbad++;
+        na_hput++;
+    }
+    tk_ext_tsk();
+}
+static void ns_ark(void)
+{
+    if (pfs_ark_configured()) {
+        pp_out("[nosw] note: N9-N11 skipped (p-fs runs on ARK here)\r\n");
+        return;
+    }
+    static ARK_BDEV bd = { ARK_SECTOR, NA_SEC, na_read, na_write, 0, 0 };
+    if (ark_format(&bd) != ARK_OK || ark_mount(&bd) != ARK_OK) {
+        pp_out("[nosw] FAIL setup: ark format / mount\r\n"); pp_fail++; return;
+    }
+    UB b[NA_LEN], r[NA_LEN];
+    INT nr = 0, gets = 0, bad = 0, lost = 0;
+    na_hput = na_hbad = na_during = 0;
+    ID t = pp_mk(t_na_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    na_busy = 1;
+    for (INT it = 0; it < 2000000 && na_hput < NA_HI; it++) {
+        if (nr < NA_RUN) {
+            na_fill(b, 0xA0, nr);
+            if (ark_block_put(b, NA_LEN, na_idr[nr]) != ARK_OK) bad++;
+            nr++;
+        } else {
+            INT i = it % NA_RUN;
+            na_fill(b, 0xA0, i);
+            if (ark_block_get(na_idr[i], r, NA_LEN) != NA_LEN || memcmp(r, b, NA_LEN)) bad++;
+            gets++;
+        }
+    }
+    na_busy = 0;
+    for (INT n = 0; n < 200 && na_hput < NA_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    for (INT i = 0; i < nr; i++) {
+        na_fill(b, 0xA0, i);
+        if (ark_block_get(na_idr[i], r, NA_LEN) != NA_LEN || memcmp(r, b, NA_LEN)) lost++;
+    }
+    for (INT i = 0; i < na_hput; i++) {
+        na_fill(b, 0xB0, i);
+        if (ark_block_get(na_idh[i], r, NA_LEN) != NA_LEN || memcmp(r, b, NA_LEN)) lost++;
+    }
+    ark_unmount();
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] ark: %d + %d puts (%d high puts failed), %d gets\r\n",
+               (int)nr, (int)na_hput, (int)na_hbad, (int)gets);
+      pp_out(m); }
+    pp_check(bad == 0 && na_hbad == 0, "N9", "ark gets / puts that failed or crossed", bad + na_hbad);
+    pp_check(lost == 0, "N10", "ark blocks that do not read back whole", lost);
+    pp_check(na_during > 0, "N11", "no starvation: high puts while the runner was busy", na_during);
 }
 
 static void t_ns_runner(INT stacd, void *exinf)
@@ -327,6 +435,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     kdds_close(h);
     ns_pfs();
     ns_student();
+    ns_ark();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
