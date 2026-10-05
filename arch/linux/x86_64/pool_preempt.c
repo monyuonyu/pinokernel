@@ -515,7 +515,7 @@ static void ns_dlb(void)
     if (t > 0) tk_sta_tsk(t, 0);
     nl_busy = 1;
     INT loops = 0;
-    while (nl_hrun < NL_HI && loops < 20000000) {
+    while (nl_hrun < NL_HI && loops < 1000000000) {
         dlb_compound_enqueue(junk, 2, junk + 2, 2, 0);
         dlb_compound_gc();
         loops++;

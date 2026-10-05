@@ -12,6 +12,7 @@
  */
 
 #include "swim.h"
+#include "pk_nosw.h"   /* gq[] is shared by swim_task and swim_rx (net_task) */
 #include "heal.h"
 #include "replica.h"
 #include "degrade.h"
@@ -260,6 +261,7 @@ static UB cap_byte(UB node)
 
 static void gossip_add(UB node_id, UB state, UB incarnation, UB capability)
 {
+    PK_NOSW_ENTER();      /* pk_nosw.h: swim_task and swim_rx both add */
     /* Update existing entry if present */
     for (INT i = 0; i < gq_cnt; i++) {
         if (gq[i].node_id == node_id) {
@@ -267,11 +269,13 @@ static void gossip_add(UB node_id, UB state, UB incarnation, UB capability)
             gq[i].incarnation = incarnation;
             gq[i].capability  = capability;
             gq[i].remaining   = GOSSIP_TTL;
+            PK_NOSW_LEAVE();
             return;
         }
     }
     if (gq_cnt < GOSSIP_Q_MAX) {
         gq[gq_cnt++] = (GOSSIP_QUEUED){ node_id, state, incarnation, GOSSIP_TTL, capability };
+        PK_NOSW_LEAVE();
         return;
     }
     /* Queue full: evict oldest (lowest remaining) */
@@ -279,10 +283,12 @@ static void gossip_add(UB node_id, UB state, UB incarnation, UB capability)
     for (INT i = 1; i < gq_cnt; i++)
         if (gq[i].remaining < gq[min_i].remaining) min_i = i;
     gq[min_i] = (GOSSIP_QUEUED){ node_id, state, incarnation, GOSSIP_TTL, capability };
+    PK_NOSW_LEAVE();
 }
 
 static void gossip_fill(SWIM_PKT *pkt)
 {
+    PK_NOSW_ENTER();      /* reads, decrements and compacts gq[] */
     pkt->gossip_cnt = 0;
     for (INT i = 0; i < gq_cnt && pkt->gossip_cnt < SWIM_GOSSIP_MAX; i++) {
         if (gq[i].remaining == 0) continue;
@@ -298,6 +304,7 @@ static void gossip_fill(SWIM_PKT *pkt)
     for (INT i = 0; i < gq_cnt; i++)
         if (gq[i].remaining > 0) gq[w++] = gq[i];
     gq_cnt = w;
+    PK_NOSW_LEAVE();
 }
 
 /* (incarnation, state) lexicographic last-writer-wins: does the incoming

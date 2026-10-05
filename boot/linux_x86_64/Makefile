@@ -215,7 +215,10 @@ DMOE_OBJS = dmoe_bank.o
 # theater job — the SAME channel CFLAGS uses for -DCONSCIENCE_STUB.
 LLM_CFLAGS  = -Wall -Wextra -g -O1 -no-pie -fno-pie \
               -fno-stack-protector -fno-common -std=gnu11 \
-              -ffp-contract=off -MMD -MP -I$(LLM_DIR) -DCRADLE_HAS_CONSCIENCE $(EXTRA_CFLAGS)
+              -ffp-contract=off -MMD -MP -I$(LLM_DIR) -DCRADLE_HAS_CONSCIENCE \
+              -DPK_NOSW_HOSTED $(EXTRA_CFLAGS)
+# -DPK_NOSW_HOSTED: pk_nosw.h regions are real in this tier too (it has no
+# -D_LINUX_X86_64_); -DPK_NOSW_OFF in EXTRA_CFLAGS still empties them.
 
 # ---- μT-Kernel 3.0 core sources ---------------------------------------
 # コア本体（kernel/tkernel）

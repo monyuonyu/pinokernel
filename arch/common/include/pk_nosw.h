@@ -15,7 +15,12 @@
 #ifndef PK_NOSW_H
 #define PK_NOSW_H
 
-#if defined(_LINUX_X86_64_) && !defined(PK_NOSW_OFF)
+/* PK_NOSW_HOSTED: the hosted x86_64 Makefile compiles the LLM tier (student.c,
+ * dlb.c, cradle.c, ...) with LLM_CFLAGS, which has no -D_LINUX_X86_64_; without
+ * this second key their regions were silently empty (2026-10-06: tkconf nosw
+ * N6 / N14 red with the regions, while N7 was green only because the probe
+ * expands ST_TRAIN_STEP under the kernel CFLAGS). */
+#if (defined(_LINUX_X86_64_) || defined(PK_NOSW_HOSTED)) && !defined(PK_NOSW_OFF)
 #define PK_NOSW_ACTIVE 1        /* a file may wrap a whole function only then */
 void pk_nosw_enter(void);
 void pk_nosw_leave(void);

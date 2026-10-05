@@ -852,8 +852,14 @@ static void s_pretrain(void)
 {
 #ifdef _TK_HOSTED_LIBC_
     PRI s_saved_pri = 0;               /* 0 => nothing to restore (LEAVE no-ops) */
-    while (m_pretrain_busy) tk_dly_tsk(20);
-    m_pretrain_busy = 1;
+    /* pk_nosw.h: test-and-set as one region; with the hosted exit dispatch two
+     * callers switched between the last test and the store could both pass */
+    for (;;) {
+        PK_NOSW_ENTER();
+        if (!m_pretrain_busy) { m_pretrain_busy = 1; PK_NOSW_LEAVE(); break; }
+        PK_NOSW_LEAVE();
+        tk_dly_tsk(20);
+    }
     S_PRETRAIN_ENTER(s_saved_pri);     /* drop below the network tasks (default) */
 #endif
     r_init_weights(0xA5A5u);
