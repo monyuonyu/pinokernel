@@ -977,6 +977,14 @@ jobs:
           timeout 200 tests/host/run_mind_explain.sh | tee mind_explain.log
           grep -aF '[mind-explain] ALL PASS' mind_explain.log
 
+      # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
+      # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
+      # PKERNEL_MIND_HAVE=0 (HAVE_OFF=1) on have-fire/have-snow/have-hint. ~2 min.
+      - name: mind/have summary pulls never-held keys (ROADMAP 1-3c)
+        run: |
+          timeout 400 tests/host/run_mind_have.sh | tee mind_have.log
+          grep -aF '[mind-have] ALL PASS' mind_have.log
+
       # LLM core host certs (tests/llm/). Each is deterministic and self-
       # contained — the SYNTHETIC core runs with NO gguf model file and NO
       # network. They build their own harness with cc (the x86_64 runner's
@@ -2832,6 +2840,17 @@ jobs:
         run: python3 tests/ci/check_readme_translations.py .
       - name: check_script_modes.py
         run: python3 tests/ci/check_script_modes.py .
+      # 2026-10-04 (ROADMAP 0-7): V-MODEL.md's design-doc <-> cert table.
+      # Red on a design doc with no row, a row for a missing doc, a CLOSED/
+      # PARTIAL row whose cert exists nowhere, more OPEN rows than before,
+      # or a tally that does not match the rows. The selftest breaks a copy
+      # sixteen ways and needs all sixteen red. Limit (audit-22): a cert only
+      # has to EXIST - a generic file name (run.sh, Makefile), a doc name or a
+      # log prefix ([mind], [PASS]) still counts; it is not tied to the doc.
+      - name: check_vmodel.py selftest (each check reddens)
+        run: python3 tests/ci/check_vmodel.py --selftest
+      - name: check_vmodel.py (design docs <-> certs, V-MODEL.md)
+        run: python3 tests/ci/check_vmodel.py
       # 2026-09-27 (inbox #8): README said "22ジョブ" while this file had 45.
       # Every job count in README.ja.md / README.md / README.zh-CN.md must equal the job count here, so adding
       # a job means updating the README in the same change. A step here, not
