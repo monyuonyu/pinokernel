@@ -118,7 +118,8 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N2  the high task finished its 60 publishes
  *   N3  no starvation: publishes landed while the runner was reading
  *   N4  every p-fs block put by two tasks at once reads back whole
- *   N5  no starvation: high puts started during the runner's puts
+ *   N5  no starvation: high puts started during the runner's puts (asked
+ *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -198,7 +199,13 @@ static void ns_pfs(void)
                );
       pp_out(m); }
     pp_check(lost == 0, "N4", "p-fs blocks that do not read back whole (of 40)", lost);
+#ifdef PFS_FAULT_SLOW_PUT
     pp_check(np_during > 0, "N5", "no starvation: high puts during the runner's puts", np_during);
+#else
+    /* unwidened, the runner's 20 puts end before the high task first wakes
+     * (measured: 0), so N4 above proves little and N5 is not asked */
+    pp_out("[nosw] note: N5 needs -DPFS_FAULT_SLOW_PUT (not asked in this build)\r\n");
+#endif
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
 }
 
