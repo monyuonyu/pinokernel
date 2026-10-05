@@ -977,6 +977,14 @@ jobs:
           timeout 200 tests/host/run_mind_explain.sh | tee mind_explain.log
           grep -aF '[mind-explain] ALL PASS' mind_explain.log
 
+      # ROADMAP 1-4: `mind provenance` lists every held fact with its teacher,
+      # read-only (prov-readonly: the ask after three listings still sees
+      # salience 2; -DMIND_PROVENANCE_TOUCHES turns it red). One node, ~10 s.
+      - name: mind provenance, read-only (ROADMAP 1-4)
+        run: |
+          timeout 200 tests/host/run_mind_provenance.sh | tee mind_provenance.log
+          grep -aF '[mind-prov] ALL PASS' mind_provenance.log
+
       # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
       # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
       # PKERNEL_MIND_HAVE=0 (HAVE_OFF=1) on have-fire/have-snow/have-hint. ~2 min.
