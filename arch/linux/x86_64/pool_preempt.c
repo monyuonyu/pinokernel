@@ -18,8 +18,10 @@
  */
 #include "kernel.h"
 #include "kdds.h"
+#include "pfs_block.h"
 #include "../../common/llm/pk_parallel.h"
 #include <stdio.h>
+#include <string.h>
 
 #define PP_ROWS   512
 #define PP_LCALLS 150
@@ -115,7 +117,10 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N1  no torn read (a read with two values in it)
  *   N2  the high task finished its 60 publishes
  *   N3  no starvation: publishes landed while the runner was reading
- * -DPK_NOSW_OFF (empty regions) must turn N1 red. */
+ *   N4  every p-fs block put by two tasks at once reads back whole
+ *   N5  no starvation: high puts started during the runner's puts
+ * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
+ * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
 #define NS_PUBS  60
 static volatile INT ns_pubs, ns_during, ns_reading;
@@ -134,6 +139,67 @@ static void t_ns_high(INT stacd, void *exinf)
     }
     if (h >= 0) kdds_close(h);
     tk_ext_tsk();
+}
+
+/* N4/N5: p-fs puts from two tasks. The runner puts 20 blocks while a pri-19
+ * task puts 20 more, one every 2 ms; then every block must read back whole.
+ * The pick-a-free-slot -> mark-used window is short, so the test builds widen
+ * it with -DPFS_FAULT_SLOW_PUT=<spins>; without it N4 proves little (said). */
+#define NP_N 20
+static U1 np_idh[NP_N][PFS_ID_LEN];
+static volatile INT np_hput, np_during, np_putting;
+static void np_fill(UB *b, UB who, INT i)
+{
+    for (INT k = 0; k < 64; k++) b[k] = (UB)(who ^ (i * 7) ^ (k * 13));
+    b[0] = who; b[1] = (UB)i;
+}
+static void t_np_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    UB b[64];
+    for (INT n = 0; n < NP_N; n++) {
+        tk_dly_tsk(2);
+        np_fill(b, 0xB0, n);
+        if (np_putting) np_during++;
+        pfs_put(b, 64, np_idh[n]);
+        np_hput++;
+    }
+    tk_ext_tsk();
+}
+static void ns_pfs(void)
+{
+    static U1 idl[NP_N][PFS_ID_LEN];
+    UB b[64], r[64];
+    INT lost = 0, full = 0;
+    np_hput = np_during = 0;
+    ID t = pp_mk(t_np_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    np_putting = 1;
+    for (INT i = 0; i < NP_N; i++) {
+        np_fill(b, 0xA0, i);
+        if (pfs_put(b, 64, idl[i]) == PFS_E_FULL) full++;
+    }
+    np_putting = 0;
+    for (INT n = 0; n < 100 && np_hput < NP_N; n++) tk_dly_tsk(10);
+    for (INT i = 0; i < NP_N; i++) {
+        np_fill(b, 0xA0, i);
+        if (pfs_get(idl[i], r, 64) != 64 || memcmp(r, b, 64)) lost++;
+        np_fill(b, 0xB0, i);
+        if (pfs_get(np_idh[i], r, 64) != 64 || memcmp(r, b, 64)) lost++;
+    }
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] p-fs: %d + %d puts, table full %d times, window widened: %s\r\n",
+               NP_N, (int)np_hput, (int)full,
+#ifdef PFS_FAULT_SLOW_PUT
+               "yes"
+#else
+               "no"
+#endif
+               );
+      pp_out(m); }
+    pp_check(lost == 0, "N4", "p-fs blocks that do not read back whole (of 40)", lost);
+    pp_check(np_during > 0, "N5", "no starvation: high puts during the runner's puts", np_during);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
 }
 
 static void t_ns_runner(INT stacd, void *exinf)
@@ -164,6 +230,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     pp_check(ns_during > 0, "N3", "no starvation: publishes while the runner was reading", ns_during);
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     kdds_close(h);
+    ns_pfs();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);

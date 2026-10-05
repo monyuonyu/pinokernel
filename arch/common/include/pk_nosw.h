@@ -27,4 +27,19 @@ void pk_nosw_leave(void);
 #define PK_NOSW_LEAVE() ((void)0)
 #endif
 
+/* A whole function as one region, written in front of its body:
+ *   PK_NOSW_FN(INT, pfs_get, (const U1 *id, void *buf, UW n), (id, buf, n))
+ *   { ...the body, returns as before... }
+ * On hosted x86_64 the body becomes `static ret name_nosw(...)` and `name`
+ * brackets it; elsewhere it is just `ret name(...)`, the same code as before. */
+#if PK_NOSW_ACTIVE
+#define PK_NOSW_FN(ret, name, params, args)                                 \
+    static ret name##_nosw params;                                          \
+    ret name params { PK_NOSW_ENTER(); ret r_ = name##_nosw args;           \
+                      PK_NOSW_LEAVE(); return r_; }                         \
+    static ret name##_nosw params
+#else
+#define PK_NOSW_FN(ret, name, params, args) ret name params
+#endif
+
 #endif /* PK_NOSW_H */
