@@ -14,6 +14,7 @@
 
 #include "kernel.h"
 #include "tk_conform.h"
+INT pool_preempt_run(void (*out)(const char *));   /* pool_preempt.c */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -1139,8 +1140,15 @@ EXPORT INT usermain(void)
         } else if (starts_with(line, n, "tkconf") && (n == 6 || line[6] == ' ')) {
             /* the contract suite v1 (inbox #5, arch/common/tk_conform.c):
              * tk_* task / semaphore / time promises, normal paths + error
-             * codes. tests/host/run_tk_conform.sh greps "[tkc] N PASS / 0 FAIL". */
-            tk_conform_run(print);
+             * codes. tests/host/run_tk_conform.sh greps "[tkc] N PASS / 0 FAIL".
+             * `tkconf pool`: the shared matmul pool under task switches
+             * (pool_preempt.c; not a tk_* promise, so not in the count). */
+            const UB *ta = line + 6; UW tal = (UW)(n - 6);
+            while (tal && (*ta==' '||*ta=='\t')) { ta++; tal--; }
+            if (tal >= 4 && ta[0]=='p'&&ta[1]=='o'&&ta[2]=='o'&&ta[3]=='l')
+                pool_preempt_run(print);
+            else
+                tk_conform_run(print);
         } else if (starts_with(line, n, "fed") && (n == 3 || line[3] == ' ')) {
             /* federation F1 (docs/architecture/20-architecture/federation.md
              * §2.2/§4-F1, fed_id.h): `fed test` runs [fed-id-roundtrip], the

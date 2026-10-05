@@ -253,11 +253,15 @@ __asm__(
     "    .size arch_preempt_tramp, . - arch_preempt_tramp\n"
 );
 
+extern volatile int pk_parallel_busy;        /* llm/pk_parallel.c: a pool job is out */
+
 static void maybe_preempt(ucontext_t *uc)
 {
     if (arch_irq_disabled_flag || knl_taskindp != 0 ||
         knl_dispatch_disabled || knl_ctxtsk == 0 || knl_ctxtsk == knl_schedtsk)
         return;
+    if (pk_parallel_busy)
+        return;                              /* the shared pool job: next tick */
     greg_t rip = uc->uc_mcontext.gregs[REG_RIP];
     if (!pk_text_ok || !in_pk_text((uintptr_t)rip))
         return;                              /* in libc etc.: not here */

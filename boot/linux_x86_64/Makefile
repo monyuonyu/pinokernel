@@ -117,6 +117,7 @@ ARCH_C_SRCS = \
     arch_reboot.c \
     vfs_stub.c \
     preempt.c \
+    pool_preempt.c \
     fault.c \
     time.c
 
