@@ -181,13 +181,19 @@ int cradle_lesson_ingest(const uint8_t *body, int len)
      * is dropped. Distinct from the -1 "hard refuse" (empty/too-big/too-small).
      * If the frozen batch is a FIXTURE batch, ask the student to abandon it
      * (FIXTURE PRE-EMPT above) — the ring itself is still not touched here. */
+    /* pk_nosw.h (via student.h): the freeze test and the copy are one region,
+     * else the DMN could freeze the ring for a batch between them and train on
+     * a half-copied lesson. */
+    PK_NOSW_ENTER();
     if (g_lesson_frozen) {
         if (g_frozen_fixture && g_cradle_enabled) g_lesson_preempt = 1;
+        PK_NOSW_LEAVE();
         return 0;
     }
 
     memcpy(g_lesson_ring, body, (size_t)len);
     g_lesson_len = len;
+    PK_NOSW_LEAVE();
     return len;
 }
 
@@ -199,9 +205,11 @@ int cradle_lesson_ingest(const uint8_t *body, int len)
  * (default unfrozen), so the standalone cradle certs are unaffected. */
 void cradle_lesson_freeze(int on)
 {
+    PK_NOSW_ENTER();
     g_lesson_frozen  = on ? 1 : 0;
     g_frozen_fixture = on ? (cradle_window_src(0) == 0) : 0;
     g_lesson_preempt = 0;   /* a new batch / an unfreeze starts with no request */
+    PK_NOSW_LEAVE();
 }
 
 /* The student calls this at each consolidate() call boundary while a batch is
@@ -209,9 +217,11 @@ void cradle_lesson_freeze(int on)
  * FIXTURE batch held the freeze — the student then aborts that batch. */
 int cradle_lesson_preempt_take(void)
 {
-    if (!g_lesson_preempt) return 0;
+    PK_NOSW_ENTER();                 /* test-and-clear */
+    if (!g_lesson_preempt) { PK_NOSW_LEAVE(); return 0; }
     g_lesson_preempt = 0;
     g_preempt_count++;
+    PK_NOSW_LEAVE();
     return 1;
 }
 unsigned cradle_lesson_preempt_count(void) { return g_preempt_count; }

@@ -23,6 +23,7 @@
 #include "../../common/llm/student.h"
 #include "arkfs.h"
 #include "dtr.h"
+#include "../../common/llm/dlb.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -124,7 +125,7 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N5  no starvation: high puts started during the runner's puts (asked
  *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
  *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below),
- *   N12-N13 dtr (ns_dtr below)
+ *   N12-N13 dtr (ns_dtr below), N14-N15 the dlb trace ring (ns_dlb below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -230,7 +231,8 @@ static void ns_pfs(void)
 static st_model nt_m, nt_ref;
 static uint8_t nt_a[NT_N], nt_b[NT_N];
 static float nt_hl[NT_N * ST_VOCAB], nt_lg[NT_N * ST_VOCAB];
-static volatile INT nt_hrun, nt_during, nt_busy;
+static volatile INT nt_hrun, nt_during, nt_busy, nt_heval_on;
+static volatile float nt_heval;      /* N6 premise: an eval in the high task */
 
 static void t_nt_high(INT stacd, void *exinf)
 {
@@ -238,6 +240,7 @@ static void t_nt_high(INT stacd, void *exinf)
     for (INT n = 0; n < NT_HF; n++) {
         tk_dly_tsk(2);
         if (nt_busy) nt_during++;
+        if (nt_heval_on && n == 0) { int hp; nt_heval = st_eval_loss(&nt_m, nt_a, NT_N, &hp); }
         st_forward(&nt_m, nt_b, NT_N, nt_hl);
         nt_hrun++;
     }
@@ -272,7 +275,7 @@ static void ns_student(void)
     float lbad = l0;
     INT during = 0, evals = 0, bad = 0, steps = 0, diff = 0;
 
-    nt_hrun = nt_during = 0;
+    nt_hrun = nt_during = 0; nt_heval_on = 1; nt_heval = 0.0f;
     ID t = pp_mk(t_nt_high, 19);
     if (t > 0) tk_sta_tsk(t, 0);
     nt_busy = 1;
@@ -283,6 +286,9 @@ static void ns_student(void)
     }
     nt_phase_end(t);
     during += nt_during;
+    nt_heval_on = 0;
+    float l5 = st_eval_loss(&nt_m, nt_a, NT_N, &np);
+    float lh = nt_heval;
 
     nt_hrun = nt_during = 0;
     t = pp_mk(t_nt_high, 19);
@@ -302,12 +308,16 @@ static void ns_student(void)
       snprintf(m, sizeof m, "[nosw] student: %d evals, %d train steps, %d params\r\n",
                (int)evals, (int)steps, nt_m.n_params);
       pp_out(m);
-      UW b0, b1, b2, b3, b4, bb;
+      UW b0, b1, b2, b3, b4, bb, b5, bh;
+      memcpy(&b5, &l5, 4); memcpy(&bh, &lh, 4);
       memcpy(&b0, &l0, 4); memcpy(&b1, &l1, 4); memcpy(&b2, &l2, 4); memcpy(&bb, &lbad, 4);
       memcpy(&b3, &l3, 4); memcpy(&b4, &l4, 4);
       snprintf(m, sizeof m, "[nosw] student: eval bits alone %08x %08x, after another forward %08x, "
                "after a 20 ms sleep %08x, 300 ms of evals alone %08x, first changed %08x\r\n",
                (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3, (unsigned)b4, (unsigned)bb);
+      pp_out(m);
+      snprintf(m, sizeof m, "[nosw] student: eval in the high task %08x, alone after the phase %08x\r\n",
+               (unsigned)bh, (unsigned)b5);
       pp_out(m); }
     pp_check(bad == 0, "N6", "evals of the unchanged model that changed", bad);
     pp_check(diff == 0, "N7", "weights unlike the twin trained alone", diff);
@@ -470,6 +480,60 @@ static void ns_dtr(void)
     pp_check(nd_during > 0, "N13", "no starvation: swaps while the runner was busy", nd_during);
 }
 
+/* N14-N15: the dlb trace ring (pk_nosw.h regions in dlb.c). As the DMN does,
+ * the runner gc-packs the ring over and over (after enqueueing one UNverified
+ * trace each time, which gc removes); as the chat does, a pri-19 task wakes
+ * every 2 ms and enqueues one verified trace, 50 times (ring max 64). Then the
+ * ring must hold exactly 50 verified traces (contents are not compared).
+ *   N14  no verified trace lost
+ *   N15  no starvation: enqueues landed while the runner was busy
+ * The ring is reset before and after (pending live traces are dropped: this is
+ * a test command; a DMN sleep tick in the window could distill them into the
+ * live student). -DPK_NOSW_OFF must turn N14 red. */
+#define NL_HI 50
+static volatile INT nl_hrun, nl_during, nl_busy;
+static void nl_q(uint8_t *q, INT i) { q[0] = 'q'; q[1] = (uint8_t)('A' + i % 26); q[2] = (uint8_t)i; }
+static void t_nl_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    uint8_t q[3], a[8] = { 'a', 'n', 's', 'w', 'e', 'r', '!', 0 };
+    for (INT n = 0; n < NL_HI; n++) {
+        tk_dly_tsk(2);
+        if (nl_busy) nl_during++;
+        nl_q(q, n); a[7] = (uint8_t)n;
+        dlb_compound_enqueue(q, 3, a, 8, 1);
+        nl_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_dlb(void)
+{
+    const uint8_t junk[4] = { 'j', 'u', 'n', 'k' };
+    dlb_compound_reset();
+    nl_hrun = nl_during = 0;
+    ID t = pp_mk(t_nl_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nl_busy = 1;
+    INT loops = 0;
+    while (nl_hrun < NL_HI && loops < 20000000) {
+        dlb_compound_enqueue(junk, 2, junk + 2, 2, 0);
+        dlb_compound_gc();
+        loops++;
+    }
+    nl_busy = 0;
+    for (INT n = 0; n < 200 && nl_hrun < NL_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    dlb_compound_gc();
+    INT have = dlb_compound_pending(1);
+    dlb_compound_reset();
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] dlb: %d gc rounds, %d verified enqueued, %d kept\r\n",
+               (int)loops, (int)nl_hrun, (int)have);
+      pp_out(m); }
+    pp_check(have == NL_HI, "N14", "verified dlb traces lost (of 50)", NL_HI - have);
+    pp_check(nl_during > 0, "N15", "no starvation: enqueues while the runner was busy", nl_during);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -502,6 +566,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_student();
     ns_ark();
     ns_dtr();
+    ns_dlb();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
