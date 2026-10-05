@@ -22,6 +22,7 @@
 #include "../../common/llm/pk_parallel.h"
 #include "../../common/llm/student.h"
 #include "arkfs.h"
+#include "dtr.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -122,7 +123,8 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N4  every p-fs block put by two tasks at once reads back whole
  *   N5  no starvation: high puts started during the runner's puts (asked
  *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
- *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below)
+ *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below),
+ *   N12-N13 dtr (ns_dtr below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -262,6 +264,11 @@ static void ns_student(void)
     float l0 = st_eval_loss(&nt_m, nt_a, NT_N, &np);
     float l1 = st_eval_loss(&nt_m, nt_a, NT_N, &np);
     float l2 = (st_forward(&nt_m, nt_b, NT_N, nt_hl), st_eval_loss(&nt_m, nt_a, NT_N, &np));
+    float l3 = (tk_dly_tsk(20), st_eval_loss(&nt_m, nt_a, NT_N, &np));
+    float l4 = l3;
+    { SYSTIM t0, t1; tk_get_tim(&t0);
+      do { l4 = st_eval_loss(&nt_m, nt_a, NT_N, &np); tk_get_tim(&t1); }
+      while (!memcmp(&l4, &l0, sizeof l4) && (t1.lo - t0.lo) < 300); }
     float lbad = l0;
     INT during = 0, evals = 0, bad = 0, steps = 0, diff = 0;
 
@@ -295,10 +302,12 @@ static void ns_student(void)
       snprintf(m, sizeof m, "[nosw] student: %d evals, %d train steps, %d params\r\n",
                (int)evals, (int)steps, nt_m.n_params);
       pp_out(m);
-      UW b0, b1, b2, bb;
+      UW b0, b1, b2, b3, b4, bb;
       memcpy(&b0, &l0, 4); memcpy(&b1, &l1, 4); memcpy(&b2, &l2, 4); memcpy(&bb, &lbad, 4);
-      snprintf(m, sizeof m, "[nosw] student: eval bits alone %08x %08x, after another forward %08x, first changed %08x\r\n",
-               (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)bb);
+      memcpy(&b3, &l3, 4); memcpy(&b4, &l4, 4);
+      snprintf(m, sizeof m, "[nosw] student: eval bits alone %08x %08x, after another forward %08x, "
+               "after a 20 ms sleep %08x, 300 ms of evals alone %08x, first changed %08x\r\n",
+               (unsigned)b0, (unsigned)b1, (unsigned)b2, (unsigned)b3, (unsigned)b4, (unsigned)bb);
       pp_out(m); }
     pp_check(bad == 0, "N6", "evals of the unchanged model that changed", bad);
     pp_check(diff == 0, "N7", "weights unlike the twin trained alone", diff);
@@ -316,8 +325,8 @@ static void ns_student(void)
  * Skipped (said) when p-fs runs on ARK (PKERNEL_PFS_BACKEND=ark): the probe
  * would unmount the live log. -DPK_NOSW_OFF must turn N9 or N10 red. */
 extern int pfs_ark_configured(void);          /* arch/linux/pfs_ark.c */
-#define NA_SEC 1024
-#define NA_LEN 256
+#define NA_SEC 4096                   /* 2 MiB: 260 blocks of 2 KiB + log */
+#define NA_LEN 2048                   /* 256 B crossed 1 of 2 with -DPK_NOSW_OFF */
 #define NA_RUN 200
 #define NA_HI  60
 static U1 na_ram[NA_SEC * ARK_SECTOR];
@@ -346,7 +355,7 @@ static void na_fill(UB *b, UB who, INT i)
 static void t_na_high(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
-    UB b[NA_LEN];
+    static UB b[NA_LEN];
     for (INT n = 0; n < NA_HI; n++) {
         tk_dly_tsk(2);
         na_fill(b, 0xB0, n);
@@ -366,7 +375,7 @@ static void ns_ark(void)
     if (ark_format(&bd) != ARK_OK || ark_mount(&bd) != ARK_OK) {
         pp_out("[nosw] FAIL setup: ark format / mount\r\n"); pp_fail++; return;
     }
-    UB b[NA_LEN], r[NA_LEN];
+    static UB b[NA_LEN], r[NA_LEN];   /* off the 8 KB task stack */
     INT nr = 0, gets = 0, bad = 0, lost = 0;
     na_hput = na_hbad = na_during = 0;
     ID t = pp_mk(t_na_high, 19);
@@ -405,6 +414,62 @@ static void ns_ark(void)
     pp_check(na_during > 0, "N11", "no starvation: high puts while the runner was busy", na_during);
 }
 
+/* N12-N13: dtr (pk_nosw.h regions in dtr.c). The runner calls
+ * dtr_forward_probs on one input over and over while a pri-19 task wakes every
+ * 2 ms and swaps the weights between two sets A and B (dtr_weights_set, as the
+ * gossip average and spec.c do), 60 times. Every result must be exactly A's or
+ * exactly B's, never a mix. The weights are put back afterwards.
+ *   N12  no result that is neither A's nor B's
+ *   N13  no starvation: swaps landed while the runner was busy
+ * -DPK_NOSW_OFF must turn N12 red. */
+#define ND_HI 60
+static float nd_w[2][DTR_WEIGHT_FLOATS], nd_save[DTR_WEIGHT_FLOATS];
+static volatile INT nd_hrun, nd_during, nd_busy;
+static void t_nd_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < ND_HI; n++) {
+        tk_dly_tsk(2);
+        if (nd_busy) nd_during++;
+        dtr_weights_set(nd_w[(n + 1) & 1]);
+        nd_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_dtr(void)
+{
+    const B in[DTR_SEQ_LEN] = { 12, -40, 77, 5 };
+    float pa[DTR_OUT_DIM], pb[DTR_OUT_DIM], p[DTR_OUT_DIM];
+    dtr_weights_get(nd_save);
+    dtr_weights_get(nd_w[0]);
+    dtr_reinit_weights(0x5EEDu);
+    dtr_weights_get(nd_w[1]);
+    dtr_weights_set(nd_w[0]); dtr_forward_probs(in, pa);
+    dtr_weights_set(nd_w[1]); dtr_forward_probs(in, pb);
+    dtr_weights_set(nd_w[0]);
+    INT calls = 0, mixed = 0;
+    nd_hrun = nd_during = 0;
+    ID t = pp_mk(t_nd_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nd_busy = 1;
+    while (nd_hrun < ND_HI && calls < 20000000) {
+        dtr_forward_probs(in, p);
+        calls++;
+        if (memcmp(p, pa, sizeof p) && memcmp(p, pb, sizeof p)) mixed++;
+    }
+    nd_busy = 0;
+    for (INT n = 0; n < 200 && nd_hrun < ND_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    dtr_weights_set(nd_save);
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] dtr: %d forwards, %d weight swaps, A and B differ: %s\r\n",
+               (int)calls, (int)nd_hrun, memcmp(pa, pb, sizeof pa) ? "yes" : "NO");
+      pp_out(m); }
+    pp_check(mixed == 0 && memcmp(pa, pb, sizeof pa), "N12",
+             "dtr results that were neither A's nor B's", mixed);
+    pp_check(nd_during > 0, "N13", "no starvation: swaps while the runner was busy", nd_during);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -436,6 +501,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_pfs();
     ns_student();
     ns_ark();
+    ns_dtr();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
