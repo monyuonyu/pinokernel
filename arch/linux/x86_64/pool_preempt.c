@@ -17,6 +17,7 @@
  *  >= 2 CPUs (else P4 is red: the pool runs inline and proves nothing).
  */
 #include "kernel.h"
+#include "kdds.h"
 #include "../../common/llm/pk_parallel.h"
 #include <stdio.h>
 
@@ -63,6 +64,7 @@ static ID pp_mk(void (*fn)(INT, void *), PRI pri)
 }
 
 static void (*pp_out)(const char *);
+static const char *pp_tag = "[pool]";
 static INT pp_fail;
 static ID pp_caller;
 static volatile INT pp_done;
@@ -70,7 +72,7 @@ static volatile INT pp_done;
 static void pp_check(int ok, const char *id, const char *what, long got)
 {
     char b[200];
-    snprintf(b, sizeof b, "[pool] %s %s  %s (got %ld)\r\n", ok ? "PASS" : "FAIL", id, what, got);
+    snprintf(b, sizeof b, "%s %s %s  %s (got %ld)\r\n", pp_tag, ok ? "PASS" : "FAIL", id, what, got);
     pp_out(b);
     if (!ok) pp_fail++;
 }
@@ -106,9 +108,87 @@ static void t_pp_runner(INT stacd, void *exinf)
     tk_ext_tsk();
 }
 
+/* ---- `tkconf nosw`: a kdds topic slot under task switches (pk_nosw.h) ----
+ * The runner (pri 20) reads one LATEST_ONLY topic over and over and checks
+ * that all 192 bytes are one value; a higher task (pri 19) wakes every 2 ms
+ * and publishes a new value to the same topic, 60 times.
+ *   N1  no torn read (a read with two values in it)
+ *   N2  the high task finished its 60 publishes
+ *   N3  no starvation: publishes landed while the runner was reading
+ * -DPK_NOSW_OFF (empty regions) must turn N1 red. */
+#define NS_LEN   192                  /* KDDS_DATA_MAX */
+#define NS_PUBS  60
+static volatile INT ns_pubs, ns_during, ns_reading;
+
+static void t_ns_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    UB b[NS_LEN];
+    W h = kdds_open_poll_scoped("tkc/nosw", KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
+    for (INT n = 0; n < NS_PUBS && h >= 0; n++) {
+        tk_dly_tsk(2);
+        for (INT i = 0; i < NS_LEN; i++) b[i] = (UB)(2 + n % 250);
+        if (ns_reading) ns_during++;
+        kdds_pub(h, b, NS_LEN);
+        ns_pubs++;
+    }
+    if (h >= 0) kdds_close(h);
+    tk_ext_tsk();
+}
+
+static void t_ns_runner(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    UB b[NS_LEN];
+    INT torn = 0, reads = 0;
+    ns_pubs = ns_during = 0;
+    W h = kdds_open_poll_scoped("tkc/nosw", KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
+    if (h < 0) { pp_out("[nosw] FAIL setup: kdds_open\r\n"); pp_fail++; goto done; }
+    for (INT i = 0; i < NS_LEN; i++) b[i] = 1;
+    kdds_pub(h, b, NS_LEN);
+    ID t = pp_mk(t_ns_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    ns_reading = 1;
+    for (INT r = 0; r < 4000000 && ns_pubs < NS_PUBS; r++) {
+        if (kdds_sub(h, b, NS_LEN, 0) != NS_LEN) continue;
+        reads++;
+        for (INT i = 1; i < NS_LEN; i++) if (b[i] != b[0]) { torn++; break; }
+    }
+    ns_reading = 0;
+    for (INT n = 0; n < 100 && ns_pubs < NS_PUBS; n++) tk_dly_tsk(10);
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] %d reads, %d publishes\r\n", (int)reads, (int)ns_pubs);
+      pp_out(m); }
+    pp_check(torn == 0, "N1", "torn reads of the topic slot", torn);
+    pp_check(ns_pubs == NS_PUBS, "N2", "high task: publishes finished (of 60)", ns_pubs);
+    pp_check(ns_during > 0, "N3", "no starvation: publishes while the runner was reading", ns_during);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    kdds_close(h);
+done:
+    pp_done = 1;
+    tk_wup_tsk(pp_caller);
+    tk_ext_tsk();
+}
+
+INT nosw_run(void (*out)(const char *))
+{
+    pp_out = out; pp_fail = 0; pp_done = 0; pp_tag = "[nosw]";
+    out("[nosw] a kdds topic slot under task switches (runner pri 20, publisher pri 19)\r\n");
+    pp_caller = tk_get_tid();
+    ID run = pp_mk(t_ns_runner, 20);
+    if (run <= 0) { out("[nosw] FAIL setup: no runner task\r\n"); return 1; }
+    tk_can_wup(TSK_SELF);
+    tk_sta_tsk(run, 0);
+    while (!pp_done && tk_slp_tsk(120000) == E_OK) { }
+    if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
+    tk_del_tsk(run);
+    out(pp_fail ? "[nosw] RED\r\n" : "[nosw] ALL PASS\r\n");
+    return pp_fail;
+}
+
 INT pool_preempt_run(void (*out)(const char *))
 {
-    pp_out = out; pp_fail = 0; pp_done = 0;
+    pp_out = out; pp_fail = 0; pp_done = 0; pp_tag = "[pool]";
     out("[pool] the shared matmul pool under task switches (runner pri 20, high pri 19)\r\n");
     pp_caller = tk_get_tid();
     ID run = pp_mk(t_pp_runner, 20);

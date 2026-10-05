@@ -1,0 +1,30 @@
+/*
+ *  pk_nosw.h — no-switch regions for the hosted exit dispatch.
+ *
+ *  On hosted Linux x86_64 the timer may switch tasks at any instruction of
+ *  p-kernel's own code (arch/linux/x86_64/preempt.c). State shared between
+ *  tasks that was safe only because "nobody switches me out between kernel
+ *  calls" (static send buffers, kdds topic slots, ...) is bracketed with
+ *  PK_NOSW_ENTER / PK_NOSW_LEAVE. The depth is per task, so a task that
+ *  blocks in a tk_* call inside a region does not stop preemption of the
+ *  others; leaving the outermost region makes the switch the timer skipped.
+ *  Everywhere else (bare metal, aarch64, Windows, host tests) the macros are
+ *  empty, so no other build changes. -DPK_NOSW_OFF: empty on hosted x86_64
+ *  too (the negative control for `tkconf nosw`).
+ */
+#ifndef PK_NOSW_H
+#define PK_NOSW_H
+
+#if defined(_LINUX_X86_64_) && !defined(PK_NOSW_OFF)
+#define PK_NOSW_ACTIVE 1        /* a file may wrap a whole function only then */
+void pk_nosw_enter(void);
+void pk_nosw_leave(void);
+#define PK_NOSW_ENTER() pk_nosw_enter()
+#define PK_NOSW_LEAVE() pk_nosw_leave()
+#else
+#define PK_NOSW_ACTIVE 0
+#define PK_NOSW_ENTER() ((void)0)
+#define PK_NOSW_LEAVE() ((void)0)
+#endif
+
+#endif /* PK_NOSW_H */

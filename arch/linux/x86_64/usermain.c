@@ -15,6 +15,7 @@
 #include "kernel.h"
 #include "tk_conform.h"
 INT pool_preempt_run(void (*out)(const char *));   /* pool_preempt.c */
+INT nosw_run(void (*out)(const char *));           /* pool_preempt.c */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -1141,12 +1142,15 @@ EXPORT INT usermain(void)
             /* the contract suite v1 (inbox #5, arch/common/tk_conform.c):
              * tk_* task / semaphore / time promises, normal paths + error
              * codes. tests/host/run_tk_conform.sh greps "[tkc] N PASS / 0 FAIL".
-             * `tkconf pool`: the shared matmul pool under task switches
-             * (pool_preempt.c; not a tk_* promise, so not in the count). */
+             * `tkconf pool` / `tkconf nosw`: the shared matmul pool and a
+             * kdds topic slot under task switches (pool_preempt.c; not tk_*
+             * promises, so not in the count). */
             const UB *ta = line + 6; UW tal = (UW)(n - 6);
             while (tal && (*ta==' '||*ta=='\t')) { ta++; tal--; }
             if (tal >= 4 && ta[0]=='p'&&ta[1]=='o'&&ta[2]=='o'&&ta[3]=='l')
                 pool_preempt_run(print);
+            else if (tal >= 4 && ta[0]=='n'&&ta[1]=='o'&&ta[2]=='s'&&ta[3]=='w')
+                nosw_run(print);          /* pool_preempt.c, pk_nosw.h */
             else
                 tk_conform_run(print);
         } else if (starts_with(line, n, "fed") && (n == 3 || line[3] == ' ')) {

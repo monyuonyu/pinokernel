@@ -13,6 +13,7 @@
 #include "pmesh.h"
 #include "netstack.h"
 #include "kernel.h"
+#include "pk_nosw.h"
 
 /* ------------------------------------------------------------------ */
 /* シリアル出力ヘルパ                                                 */
@@ -292,7 +293,23 @@ void pmesh_rx(UW src_ip, UH src_port, const UB *data, UH len)
 
 static PMESH_DATA_PKT data_pkt;  /* static: スタック節約 */
 
+#if PK_NOSW_ACTIVE
+static W pmesh_send_nosw(UB dst_node, UH dst_port, const UB *data, UH len);
+
+/* pk_nosw.h: data_pkt is shared by every sender, so the whole send (down to
+ * the link layer's own static buffers) is one no-switch region */
 W pmesh_send(UB dst_node, UH dst_port, const UB *data, UH len)
+{
+    PK_NOSW_ENTER();
+    W rc = pmesh_send_nosw(dst_node, dst_port, data, len);
+    PK_NOSW_LEAVE();
+    return rc;
+}
+
+static W pmesh_send_nosw(UB dst_node, UH dst_port, const UB *data, UH len)
+#else
+W pmesh_send(UB dst_node, UH dst_port, const UB *data, UH len)
+#endif
 {
     if (dst_node >= DNODE_MAX) return -1;
     if (len > PMESH_DATA_MAX)  return -1;

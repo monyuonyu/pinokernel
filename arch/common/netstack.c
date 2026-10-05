@@ -16,6 +16,7 @@
 #include "rtl8139.h"
 #include "drpc.h"      /* DNODE_MAX — ARP table must cover the whole cluster */
 #include "kernel.h"
+#include "pk_nosw.h"
 
 /* ------------------------------------------------------------------ */
 /* My IP address (settable at runtime by drpc_init)                   */
@@ -739,8 +740,27 @@ static void udp_input(const IP_HDR *ip, const UB *seg, INT seg_len)
     }
 }
 
+#if PK_NOSW_ACTIVE
+static INT udp_send_nosw(UW dst_ip, UH src_port, UH dst_port,
+                         const UB *data, UH data_len);
+
+/* pk_nosw.h: udp_buf and tx_buf (ip_send) are shared by every sender, and
+ * the hosted link layer has static buffers of its own */
 INT udp_send(UW dst_ip, UH src_port, UH dst_port,
              const UB *data, UH data_len)
+{
+    PK_NOSW_ENTER();
+    INT rc = udp_send_nosw(dst_ip, src_port, dst_port, data, data_len);
+    PK_NOSW_LEAVE();
+    return rc;
+}
+
+static INT udp_send_nosw(UW dst_ip, UH src_port, UH dst_port,
+                         const UB *data, UH data_len)
+#else
+INT udp_send(UW dst_ip, UH src_port, UH dst_port,
+             const UB *data, UH data_len)
+#endif
 {
     if (data_len > 1400) return -1;
 
