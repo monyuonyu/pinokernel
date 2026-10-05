@@ -2125,6 +2125,9 @@ static float s_eval_fact(UW seed, INT n, INT f)
     return 100.0f * (float)correct / (float)n;
 }
 
+#ifdef _TK_HOSTED_LIBC_
+static void m_prov_tables_clear(void);   /* 1-3c, defined beside mq_lprov */
+#endif
 static void s_fq_reset(void)
 {
     r3_fq_n = 0; r3_fq_seq = 0; r3_s_rng = S_SEED_TRAIN;
@@ -2138,6 +2141,13 @@ static void s_fq_reset(void)
      * stale want. */
     for (INT i = 0; i < R3_WQ_MAX; i++) { r3_wq[i].used = 0; r3_wq[i].want = 0; }
     r3_wq_seq = 0; s_wonders = 0;
+#if defined(_TK_HOSTED_LIBC_) && !defined(MH_KEEP_PROV_ON_RESET)
+    /* 1-3c: the provenance side-tables die with the queue too. They are keyed
+     * by fact seq, and the reset restarts seq at 0, so a kept entry would name
+     * a cert's synthetic fact as taught (mind/have advertises only facts with
+     * provenance). -DMH_KEEP_PROV_ON_RESET: the old behaviour. */
+    m_prov_tables_clear();
+#endif
 }
 
 /* arrive cert fact f through the LIVE API; scrambled!=0 shifts every
@@ -3224,6 +3234,15 @@ static const U1 *mq_lprov_find(UW local_seq)
 }
 
 #ifdef _TK_HOSTED_LIBC_
+/* 1-3c: called from s_fq_reset (the [pull-answer-src] cert already cleared
+ * both tables by hand before its reset). */
+static void m_prov_tables_clear(void)
+{
+    for (INT i = 0; i < R3_FQ_MAX; i++) { mt_rprov[i].used = 0; mq_lprov[i].used = 0; }
+}
+#endif
+
+#ifdef _TK_HOSTED_LIBC_
 /* ---- ROADMAP 1-3a: the conflict history (global-rules.md rule 2) ----- *
  *  r3_fact_revise overwrites the engram in place, and mt_rprov/mq_lprov  *
  *  are re-pointed at the new teacher, so before this the superseded      *
@@ -4278,6 +4297,16 @@ static void mh_tick(void)
         INT n = 0;
         m_gate_acquire();
         for (INT i = 0; i < (INT)r3_fq_n && n < MH_MAX; i++) {
+#ifndef MH_ADVERTISE_ANY
+            /* only a fact someone taught: here (mq_lprov) or a named teacher
+             * (mt_rprov). A cert verb (mind onemind, nocentral, ...) leaves its
+             * synthetic facts in the live queue with neither; advertising them
+             * made a peer pull a cert fact as knowledge (samples/42_one_mind:
+             * B pulled A's cert key 4, then its own `mind teach 4 1` answered
+             * "already believes", audit-21). A pull still answers them, as
+             * before. -DMH_ADVERTISE_ANY: the old behaviour. */
+            if (!mt_rprov_find(r3_fq[i].seq) && !mq_lprov_find(r3_fq[i].seq)) continue;
+#endif
             U1 o; UW s = mc_stamp_of(r3_fq[i].seq, &o);
             for (INT b = 0; b < (INT)r3_fq[i].n && n < MH_MAX; b++) {
                 mh_tx.e[n].key = r3_fq[i].key[b]; mh_tx.e[n].origin = o; mh_tx.e[n].stamp = s;
@@ -4330,6 +4359,8 @@ static MT_TEACH_PKT mq_ans_pkt;      /* answer scratch — SEPARATE from        
                                      /* stale-re-drive clear at :2990)         */
 #define MQ_ANS_REDRIVE_MAX 20        /* ~10s @ MT_POLL_MS: re-drive cap for a  */
                                      /* dead asker's stale LATEST_ONLY want    */
+#define MQ_ANS_SLOW_EVERY 16         /* 1-3c: then one re-drive per ~8 s ...   */
+#define MQ_ANS_SLOW_MAX   40         /* ... at most 40 more (~5 min)           */
 /* per-origin "already printed a want version/vocab drop" flag (own copy, not
  * shared with the mind/teach path — a mind/want drop must not suppress a
  * mind/teach drop print, or vice versa). */
@@ -4344,6 +4375,10 @@ typedef struct {
     UB stagger;                      /* ticks to wait before the FIRST answer   */
     UB redrive_key;                  /* the key being re-driven (0xFF = none)   */
     UH redrive_ticks;                /* re-drive countdown (< MQ_ANS_REDRIVE_MAX)*/
+#ifdef _TK_HOSTED_LIBC_
+    UB redrive_rr;                   /* 1-3c: next answered[] slot to re-drive  */
+    UB redrive_slow;                 /* 1-3c: ticks since the last slow re-drive */
+#endif
 } MQ_ASK_STATE;
 static MQ_ASK_STATE mq_ask_state[DNODE_MAX];
 
@@ -4357,6 +4392,9 @@ static void mq_gen_reset(U1 o, UW want_seq)
         s->used = 1; s->want_seq = want_seq; s->n_answered = 0;
         s->stagger = (UB)(drpc_my_node & 3);   /* cross-responder thinning (§5) */
         s->redrive_key = 0xFF; s->redrive_ticks = 0;
+#ifdef _TK_HOSTED_LIBC_
+        s->redrive_rr = 0; s->redrive_slow = 0;
+#endif
     }
 }
 /* answer-once: 1 if (o, want_seq, k) has NOT been answered (and MARKS it); 0 if
@@ -4545,6 +4583,37 @@ static void mq_poll_wants(void)
         }
     }
 
+#if defined(_TK_HOSTED_LIBC_) && !defined(MQ_REDRIVE_LAST_ONLY)
+    /* 1-3c: re-drive EVERY key answered this generation, in turn, while still
+     * wanted (silent): MQ_ANS_REDRIVE_MAX ticks per key, then one every
+     * MQ_ANS_SLOW_EVERY ticks, MQ_ANS_SLOW_MAX more at most. Before, only the
+     * last answer was re-driven and only for ~10 s; mind/teach is LATEST_ONLY
+     * and the asker does not re-issue a want for the same generation, so an
+     * asker busy for longer than that (in audit-21 B was, after learning its
+     * first fact) got none of the answers, ever. The slow tail is bounded
+     * because a dead asker's want stays in the LATEST_ONLY slot.
+     * -DMQ_REDRIVE_LAST_ONLY: the old behaviour (the negative control). */
+    UH fast = (UH)(MQ_ANS_REDRIVE_MAX * s->n_answered);
+    INT go = !did_answer && s->n_answered > 0 && s->redrive_ticks < fast + MQ_ANS_SLOW_MAX;
+    if (go && s->redrive_ticks >= fast) {
+        if (++s->redrive_slow < MQ_ANS_SLOW_EVERY) go = 0; else s->redrive_slow = 0;
+    }
+    if (go) {
+        for (INT t = 0; t < (INT)s->n_answered; t++) {
+            INT j = ((INT)s->redrive_rr + t) % (INT)s->n_answered;
+            UB k = s->answered[j];
+            INT listed = 0;
+            for (INT i = 0; i < n; i++) if (mq_rx_want.keys[i] == k) { listed = 1; break; }
+            INT fg = 0;
+            if (!listed || !mq_answer_build(o, k, &fg)) continue;
+            (void)mt_wire_send(&mq_ans_pkt);
+            mq_answer_sent = 1;
+            s->redrive_ticks++;
+            s->redrive_rr = (UB)((j + 1) % (INT)s->n_answered);
+            break;
+        }
+    }
+#else
     /* re-drive the last answer (silent) while still wanted + budget remains. */
     if (!did_answer && s->redrive_key != 0xFF && s->redrive_ticks < MQ_ANS_REDRIVE_MAX) {
         INT listed = 0;
@@ -4562,6 +4631,7 @@ static void mq_poll_wants(void)
             }
         }
     }
+#endif
 
     m_gate_release();
 }
@@ -4691,6 +4761,24 @@ void mind_net_task(INT stacd, void *exinf)
          * just don't drain/learn/republish. mind_paused_for_hibernation()
          * (below) is the single point [mind-pause] tests against. */
         if (mind_paused_for_hibernation()) { tk_dly_tsk(MT_POLL_MS); continue; }
+#ifdef MQ_FAULT_DEAF_TICKS
+        /* test builds only (run_mind_have.sh DEAF=1): after this node's first
+         * want, do not read mind/teach for MQ_FAULT_DEAF_TICKS ticks, like a
+         * node busy in a long sleep; the rest of the tick still runs. */
+        {
+            static UH deaf = 0; static UB armed = 0;
+            if (!armed && mq_want_seq > 0) {
+                armed = 1; deaf = MQ_FAULT_DEAF_TICKS;
+                r_puts("[mind] FAULT: not reading mind/teach for a while (MQ_FAULT_DEAF_TICKS)\r\n");
+            }
+            if (deaf) {
+                deaf--;
+                mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK();
+                tk_dly_tsk(MT_POLL_MS);
+                continue;
+            }
+        }
+#endif
 #endif
         W r = kdds_sub(mt_sub_h, &mt_rx_pkt, (W)sizeof mt_rx_pkt, 0);
         if (r >= (W)sizeof mt_rx_pkt && mt_rx_pkt.magic == MT_MAGIC) {
