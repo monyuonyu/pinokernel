@@ -309,10 +309,7 @@ static void ct_sleep_rounds(st_model *m, const uint8_t *corpus, int n,
             } else {
                 ct_window(corpus, n, buf, w * seqlen, seqlen);
             }
-            st_zero_grad(m);
-            st_forward(m, buf, seqlen, logits);
-            st_backward(m, buf, seqlen);
-            st_adam_step(m, lr);
+            ST_TRAIN_STEP(m, buf, seqlen, logits, lr);
         }
     }
 }

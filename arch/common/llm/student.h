@@ -277,6 +277,22 @@ void st_adam_step(st_model *m, float lr);
 /* Zero the gradient accumulator. */
 void st_zero_grad(st_model *m);
 
+/* One training pass: zero_grad, forward, backward, adam on `bytes` (length n),
+ * logits = caller scratch [n * ST_VOCAB]. backward reads the cache the forward
+ * just left in m, so on the hosted x86_64 build (which may switch tasks at any
+ * instruction) the four calls are ONE no-switch region (pk_nosw.h): another
+ * task's forward on m in between would replace that cache. Elsewhere the region
+ * macros are empty and this is the same four calls as before. */
+#include "../include/pk_nosw.h"
+#define ST_TRAIN_STEP(m, bytes, n, logits, lr) do {                           \
+        PK_NOSW_ENTER();                                                      \
+        st_zero_grad(m);                                                      \
+        st_forward((m), (bytes), (n), (logits));                              \
+        st_backward((m), (bytes), (n));                                       \
+        st_adam_step((m), (lr));                                              \
+        PK_NOSW_LEAVE();                                                      \
+    } while (0)
+
 /* Grad-check: analytic gradient (one forward+backward on `bytes`) vs central
  * finite differences over a strided spread of every weight family. Returns the
  * max relative error. (`stride` picks the spread; eps the FD step.) */

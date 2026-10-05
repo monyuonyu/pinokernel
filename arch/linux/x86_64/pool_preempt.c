@@ -20,6 +20,7 @@
 #include "kdds.h"
 #include "pfs_block.h"
 #include "../../common/llm/pk_parallel.h"
+#include "../../common/llm/student.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -120,6 +121,7 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N4  every p-fs block put by two tasks at once reads back whole
  *   N5  no starvation: high puts started during the runner's puts (asked
  *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
+ *   N6-N8 the student (ns_student below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -209,6 +211,92 @@ static void ns_pfs(void)
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
 }
 
+/* N6-N8: the student (pk_nosw.h regions in student.c, ST_TRAIN_STEP at the
+ * callers). The runner evaluates, then trains, one model while a pri-19 task
+ * wakes every 2 ms and runs st_forward on the SAME model (as the chat or a
+ * canon probe on g_student does while the DMN trains it), 60 times a phase.
+ * st_forward frees and rebuilds m->cache, which the runner's eval / backward
+ * read, and shares tw_buf across models.
+ *   N6  every eval of the unchanged model returns the bits it did alone
+ *   N7  the trained weights equal a twin trained the same number of steps
+ *       alone (bit for bit)
+ *   N8  no starvation: the high forwards landed while the runner was busy
+ * -DPK_NOSW_OFF must turn N6 and N7 red. */
+#define NT_N  32
+#define NT_HF 60
+static st_model nt_m, nt_ref;
+static uint8_t nt_a[NT_N], nt_b[NT_N];
+static float nt_hl[NT_N * ST_VOCAB], nt_lg[NT_N * ST_VOCAB];
+static volatile INT nt_hrun, nt_during, nt_busy;
+
+static void t_nt_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < NT_HF; n++) {
+        tk_dly_tsk(2);
+        if (nt_busy) nt_during++;
+        st_forward(&nt_m, nt_b, NT_N, nt_hl);
+        nt_hrun++;
+    }
+    tk_ext_tsk();
+}
+
+static void nt_phase_end(ID t)
+{
+    nt_busy = 0;
+    for (INT n = 0; n < 200 && nt_hrun < NT_HF; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+}
+
+static void ns_student(void)
+{
+    for (INT i = 0; i < NT_N; i++) {
+        nt_a[i] = (uint8_t)('a' + (i * 7) % 26);
+        nt_b[i] = (uint8_t)('0' + (i * 3) % 10);
+    }
+    if (st_init(&nt_m, 7) != ST_OK || st_init(&nt_ref, 7) != ST_OK) {
+        pp_out("[nosw] FAIL setup: st_init\r\n"); pp_fail++; return;
+    }
+    int np = 0;
+    float l0 = st_eval_loss(&nt_m, nt_a, NT_N, &np);
+    INT during = 0, evals = 0, bad = 0, steps = 0, diff = 0;
+
+    nt_hrun = nt_during = 0;
+    ID t = pp_mk(t_nt_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nt_busy = 1;
+    while (nt_hrun < NT_HF && evals < 200000) {
+        float l = st_eval_loss(&nt_m, nt_a, NT_N, &np);
+        evals++;
+        if (memcmp(&l, &l0, sizeof l)) bad++;
+    }
+    nt_phase_end(t);
+    during += nt_during;
+
+    nt_hrun = nt_during = 0;
+    t = pp_mk(t_nt_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nt_busy = 1;
+    while (nt_hrun < NT_HF && steps < 100000) {
+        ST_TRAIN_STEP(&nt_m, nt_a, NT_N, nt_lg, 0.01f);
+        steps++;
+    }
+    nt_phase_end(t);
+    during += nt_during;
+    for (INT s = 0; s < steps; s++) ST_TRAIN_STEP(&nt_ref, nt_a, NT_N, nt_lg, 0.01f);
+    for (INT i = 0; i < nt_m.n_params; i++)
+        if (memcmp(&nt_m.w[i], &nt_ref.w[i], sizeof(float))) diff++;
+
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] student: %d evals, %d train steps, %d params\r\n",
+               (int)evals, (int)steps, nt_m.n_params);
+      pp_out(m); }
+    pp_check(bad == 0, "N6", "evals of the unchanged model that changed", bad);
+    pp_check(diff == 0, "N7", "weights unlike the twin trained alone", diff);
+    pp_check(during > 0, "N8", "no starvation: high forwards while the runner was busy", during);
+    st_free(&nt_m); st_free(&nt_ref);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -238,6 +326,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     kdds_close(h);
     ns_pfs();
+    ns_student();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);

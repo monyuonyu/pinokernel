@@ -421,10 +421,7 @@ static void sleep_rounds(st_model *m, int seqlen, int train_windows,
     for (int r = 0; r < rounds; r++) {
         for (int w = 0; w < train_windows; w++) {
             window(buf, w * seqlen, seqlen);
-            st_zero_grad(m);
-            st_forward(m, buf, seqlen, logits);
-            st_backward(m, buf, seqlen);
-            st_adam_step(m, lr);
+            ST_TRAIN_STEP(m, buf, seqlen, logits, lr);
         }
     }
     free(logits);
@@ -457,10 +454,7 @@ static int sleep_rounds_resume(st_model *m, int seqlen, int train_windows,
     for (int i = start; i < end; i++) {
         int w = i % train_windows;
         window(buf, w * seqlen, seqlen);
-        st_zero_grad(m);
-        st_forward(m, buf, seqlen, logits);
-        st_backward(m, buf, seqlen);
-        st_adam_step(m, lr);
+        ST_TRAIN_STEP(m, buf, seqlen, logits, lr);
     }
     free(logits);
     return end;
@@ -1191,10 +1185,7 @@ static void ss6live_warm_train(st_model *m, int steps)
     float *logits = (float *)malloc((size_t)win * 256 * sizeof(float));
     if (!logits) return;
     for (int s = 0; s < steps; s++) {
-        st_zero_grad(m);
-        st_forward(m, SS6LIVE_CORPUS, win, logits);
-        st_backward(m, SS6LIVE_CORPUS, win);
-        st_adam_step(m, 0.02f);
+        ST_TRAIN_STEP(m, SS6LIVE_CORPUS, win, logits, 0.02f);
     }
     free(logits);
 }

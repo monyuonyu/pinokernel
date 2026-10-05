@@ -278,10 +278,7 @@ int dlb_compound_distill(st_model *m, int rounds, float lr, int require_verified
             if (require_verified && !t->verified) continue;   /* the HARD GATE */
             if (t->rounds_done >= DLB_TRACE_ROUNDS_MAX) continue; /* budget spent */
             if (t->len < 2) continue;
-            st_zero_grad(m);
-            st_forward(m, t->bytes, t->len, logits);
-            st_backward(m, t->bytes, t->len);
-            st_adam_step(m, lr);
+            ST_TRAIN_STEP(m, t->bytes, t->len, logits, lr);
             t->rounds_done++;              /* consume one pass of the budget */
         }
     }
