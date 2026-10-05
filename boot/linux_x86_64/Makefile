@@ -117,6 +117,7 @@ ARCH_C_SRCS = \
     arch_reboot.c \
     vfs_stub.c \
     preempt.c \
+    pool_preempt.c \
     fault.c \
     time.c
 
@@ -214,7 +215,10 @@ DMOE_OBJS = dmoe_bank.o
 # theater job — the SAME channel CFLAGS uses for -DCONSCIENCE_STUB.
 LLM_CFLAGS  = -Wall -Wextra -g -O1 -no-pie -fno-pie \
               -fno-stack-protector -fno-common -std=gnu11 \
-              -ffp-contract=off -MMD -MP -I$(LLM_DIR) -DCRADLE_HAS_CONSCIENCE $(EXTRA_CFLAGS)
+              -ffp-contract=off -MMD -MP -I$(LLM_DIR) -DCRADLE_HAS_CONSCIENCE \
+              -DPK_NOSW_HOSTED $(EXTRA_CFLAGS)
+# -DPK_NOSW_HOSTED: pk_nosw.h regions are real in this tier too (it has no
+# -D_LINUX_X86_64_); -DPK_NOSW_OFF in EXTRA_CFLAGS still empties them.
 
 # ---- μT-Kernel 3.0 core sources ---------------------------------------
 # コア本体（kernel/tkernel）
@@ -262,7 +266,10 @@ MTK3_OBJS = $(MTK3_KNL_OBJS) $(MTK3_MISC_OBJS) $(MTK3_SYSDEP_OBJS)
 # 不要。プレースホルダヘッダ（include/lib/libc）が 2.0 の stdtype.h に
 # 依存している問題も同時に回避できる。
 
-ALL_OBJS = $(BOOT_OBJS) $(ARCH_OBJS) $(COMMON_OBJS) $(LLM_OBJS) $(DMOE_OBJS) $(MTK3_OBJS)
+# pk_text_begin.o / pk_text_end.o MUST stay first / last: they bracket
+# p-kernel's own .text for the exit dispatch (preempt.c; the build is -static,
+# so __executable_start..__etext holds glibc too). preempt.c checks it at boot.
+ALL_OBJS = pk_text_begin.o $(BOOT_OBJS) $(ARCH_OBJS) $(COMMON_OBJS) $(LLM_OBJS) $(DMOE_OBJS) $(MTK3_OBJS) pk_text_end.o
 
 TARGET = p-kernel
 
@@ -282,6 +289,9 @@ all: $(TARGET)
 $(TARGET): $(ALL_OBJS)
 	$(CC) -o $@ $(ALL_OBJS) $(LDFLAGS)
 	@echo "[OK] $(TARGET) built ($$(stat -c %s $(TARGET)) bytes)"
+
+pk_text_begin.o pk_text_end.o: %.o: $(ARCH_X86_64)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 main_mtk3.o: main_mtk3.c
 	$(CC) $(CFLAGS) -c -o $@ $<

@@ -43,6 +43,12 @@
 #include "reflex.h"   /* §8 反射層: 推論完了 → 局所即時防御アクション (配線②) */
 #include "kernel.h"
 #include <tmonitor.h>
+/* pk_nosw.h (hosted x86_64 only; empty elsewhere): the weights, tc, g_grad and
+ * the log are file-static; train / weights_set / gossip averaging rewrite them
+ * while inference reads them. No compute stretch below makes a kernel call, so
+ * none was switched out before the hosted exit dispatch: the public entries and
+ * the stretches of dtr_task / dtr_infer between kernel calls are regions. */
+#include "pk_nosw.h"
 
 /* ------------------------------------------------------------------ */
 /* 出力ヘルパー                                                        */
@@ -306,6 +312,7 @@ static void dtr_cpy(float *dst, const float *src, INT n)
 
 void dtr_weights_get(float *buf)
 {
+    PK_NOSW_ENTER();
     INT off = 0;
 #define WG(arr, n)  dtr_cpy(buf + off, (const float *)(arr), (n)); off += (n)
     WG(W_emb,  EMB_OUT * EMB_IN);   /*  32 */
@@ -326,10 +333,12 @@ void dtr_weights_get(float *buf)
     WG(b_cls,  DOUT);               /*   3 */
 #undef WG
     /* off == DTR_WEIGHT_FLOATS (635) */
+    PK_NOSW_LEAVE();
 }
 
 void dtr_weights_set(const float *buf)
 {
+    PK_NOSW_ENTER();
     INT off = 0;
 #define WS(arr, n)  dtr_cpy((float *)(arr), buf + off, (n)); off += (n)
     WS(W_emb,  EMB_OUT * EMB_IN);
@@ -349,12 +358,13 @@ void dtr_weights_set(const float *buf)
     WS(W_cls,  DOUT * DM);
     WS(b_cls,  DOUT);
 #undef WS
+    PK_NOSW_LEAVE();
 }
 
 /* 前方宣言 (run_transformer_local は後方で定義) */
 static UB run_transformer_local(const B input[SEQ], float scores_out[DOUT]);
 
-float dtr_eval_confidence(void)
+PK_NOSW_FN(float, dtr_eval_confidence, (void), ())
 {
     UW n = dtr_log_count;
     if (n == 0) return 0.0f;
@@ -510,6 +520,7 @@ static void run_mhsa_local(const float tok[SEQ][DM],
  */
 void dtr_seed_kv_cache(UB node)
 {
+    PK_NOSW_ENTER();
     for (INT s = 0; s < DTR_KV_SEED_N; s++) {
         B input[SEQ];
         for (INT t = 0; t < SEQ; t++)
@@ -519,6 +530,7 @@ void dtr_seed_kv_cache(UB node)
         float mhsa[SEQ][DM];
         run_mhsa_local(tok, mhsa);   /* dkva_cache_update を内部で呼ぶ */
     }
+    PK_NOSW_LEAVE();
 }
 
 /*
@@ -962,7 +974,7 @@ static void train_backward(UB label)
 
 /* One full-batch SGD step over (X[i], y[i]), i < n.
  * Returns the mean cross-entropy loss at the CURRENT weights. */
-float dtr_train_batch(const B (*X)[DTR_SEQ_LEN], const UB *y, UW n, float lr)
+PK_NOSW_FN(float, dtr_train_batch, (const B (*X)[DTR_SEQ_LEN], const UB *y, UW n, float lr), (X, y, n, lr))
 {
     if (n == 0) return 0.0f;
     for (INT i = 0; i < DTR_WEIGHT_FLOATS; i++) g_grad[i] = 0.0f;
@@ -988,8 +1000,8 @@ float dtr_train_batch(const B (*X)[DTR_SEQ_LEN], const UB *y, UW n, float lr)
 }
 
 /* Mean CE loss + accuracy on (X, y) without touching the weights. */
-float dtr_eval_batch(const B (*X)[DTR_SEQ_LEN], const UB *y, UW n,
-                     UW *correct_out)
+PK_NOSW_FN(float, dtr_eval_batch, (const B (*X)[DTR_SEQ_LEN], const UB *y, UW n,
+                                UW *correct_out), (X, y, n, correct_out))
 {
     if (n == 0) { if (correct_out) *correct_out = 0; return 0.0f; }
     float loss = 0.0f; UW correct = 0;
@@ -1010,10 +1022,12 @@ float dtr_eval_batch(const B (*X)[DTR_SEQ_LEN], const UB *y, UW n,
  * stats, no DKVA cache, no log, no reflex. */
 void dtr_forward_probs(const B input[DTR_SEQ_LEN], float out[DTR_OUT_DIM])
 {
+    PK_NOSW_ENTER();
     UB rprev = ret_set(0);
     (void)train_forward(input, 0);   /* label irrelevant; fills tc.probs */
     ret_set(rprev);
     for (INT c = 0; c < DOUT; c++) out[c] = tc.probs[c];
+    PK_NOSW_LEAVE();
 }
 
 /* ONE BRAIN (wave 18): the learned-model argmax for one input. The live
@@ -1060,7 +1074,7 @@ static UW fpdet_fold(UW h, UW word)
     return h;
 }
 
-UW dtr_fpdet_hash(void)
+PK_NOSW_FN(UW, dtr_fpdet_hash, (void), ())
 {
     /* save the live (possibly trained) weights so the cert is pure */
     dtr_weights_get(g_flatw);
@@ -1105,7 +1119,7 @@ UW dtr_fpdet_hash(void)
  * finite differences on a spread of parameter indices for one sample.
  * Returns the max relative error — the proof that train_backward is
  * the real derivative of train_forward, not a plausible-looking one. */
-float dtr_grad_check(const B input[DTR_SEQ_LEN], UB label)
+PK_NOSW_FN(float, dtr_grad_check, (const B input[DTR_SEQ_LEN], UB label), (input, label))
 {
     UB rprev = ret_set(0);     /* 素の重みの勾配を検証する */
     for (INT i = 0; i < DTR_WEIGHT_FLOATS; i++) g_grad[i] = 0.0f;
@@ -1149,6 +1163,7 @@ float dtr_grad_check(const B input[DTR_SEQ_LEN], UB label)
  */
 void dtr_reinit_weights(UW seed)
 {
+    PK_NOSW_ENTER();
     /* Embed */
     init_weights((float *)W_emb, EMB_OUT * EMB_IN, 0.707f, &seed);
     init_const  (b_emb, EMB_OUT, 0.0f);
@@ -1175,6 +1190,7 @@ void dtr_reinit_weights(UW seed)
     /* 分類ヘッド */
     init_weights((float *)W_cls, DOUT * DM,   0.500f, &seed);
     init_const  (b_cls, DOUT, 0.0f);
+    PK_NOSW_LEAVE();
 }
 
 void dtr_init(void)
@@ -1270,7 +1286,9 @@ void dtr_task(INT stacd, void *exinf)
                     res.req_id   = act.req_id;
                     res.src_node = my_node;
                     res._pad     = 0;
+                    PK_NOSW_ENTER();
                     res.class_id = run_stage12(act.act, scores);
+                    PK_NOSW_LEAVE();
                     for (INT si = 0; si < DOUT; si++) res.scores[si] = scores[si];
                     kdds_pub(h_res_pub, &res, (W)sizeof(res));
 
@@ -1289,11 +1307,13 @@ void dtr_task(INT stacd, void *exinf)
                     inp.req_id != last_input_req) {
                     last_input_req = inp.req_id;
                     /* Embed → head1 計算 */
+                    PK_NOSW_ENTER();
                     float tok[SEQ][DM];
                     run_embed_seq(inp.input, tok);
 
                     float head1_out[SEQ][DH];
                     run_attn_head(tok, 1, head1_out);
+                    PK_NOSW_LEAVE();
 
                     DTR_HEAD_ACT pkt;
                     pkt.magic    = DTR_HEAD_MAGIC;
@@ -1332,6 +1352,7 @@ W dtr_infer(const B input[4])
     /* ========================== SOLO ========================== */
     if (drpc_my_node == 0xFF || lvl == DEGRADE_SOLO) {
         float scores[DOUT];
+        PK_NOSW_ENTER();
         UB cls = run_transformer_local(input, scores);
         dtr_stats.local++;
 
@@ -1339,6 +1360,7 @@ W dtr_infer(const B input[4])
         float mx = scores[0];
         for (INT c = 1; c < DOUT; c++) if (scores[c] > mx) mx = scores[c];
         dtr_log_push(input, cls, (UB)(mx * 100.0f));
+        PK_NOSW_LEAVE();
 
         static const char *cn[] = {"normal", "alert", "critical"};
         dt_puts("[dtr] local(SOLO): class="); dt_putdec((UW)cls);
@@ -1353,12 +1375,14 @@ W dtr_infer(const B input[4])
     /* ======================= REDUCED: Tensor Parallel ===================== */
     if (lvl == DEGRADE_REDUCED && (drpc_my_node % 2 == 0) && h_input_pub >= 0) {
         /* Step 1: Node0 が head0 を計算 */
+        PK_NOSW_ENTER();
         float tok[SEQ][DM];
         run_embed_seq(input, tok);
         dtr_stats.layer0_runs++;
 
         float head0_out[SEQ][DH];
         run_attn_head(tok, 0, head0_out);
+        PK_NOSW_LEAVE();
 
         /* Step 2: raw input を Node1 へ送信 */
         DTR_INPUT inp_pkt;
@@ -1390,13 +1414,16 @@ W dtr_infer(const B input[4])
             dtr_stats.timeouts++;
             /* fallback: head1 を自分で計算 */
             float h1_fb[SEQ][DH];
+            PK_NOSW_ENTER();
             run_attn_head(tok, 1, h1_fb);
+            PK_NOSW_LEAVE();
             for (INT t = 0; t < SEQ; t++)
                 for (INT d = 0; d < DH; d++)
                     head1_pkt.out[t * DH + d] = h1_fb[t][d];
         }
 
         /* Step 4: head0 + head1 を concat → W_o → [SEQ][DM] */
+        PK_NOSW_ENTER();                     /* steps 4-5 read the weights */
         float mhsa[SEQ][DM];
         for (INT t = 0; t < SEQ; t++) {
             float concat[DM];
@@ -1420,6 +1447,7 @@ W dtr_infer(const B input[4])
         run_mean_pool(ffn, pool);
         float scores[DOUT];
         UB cls = run_cls_head(pool, input, scores);
+        PK_NOSW_LEAVE();
 
         if (er == E_OK) dtr_stats.tp_distributed++;
 
@@ -1448,6 +1476,7 @@ W dtr_infer(const B input[4])
         }
         if (has_peers && drpc_my_node % 2 == 0) {
             /* --- Phase 10: DKVA で Attention を計算 --- */
+            PK_NOSW_ENTER();
             float tok[SEQ][DM];
             run_embed_seq(input, tok);
             dtr_stats.layer0_runs++;
@@ -1457,11 +1486,13 @@ W dtr_infer(const B input[4])
             for (INT h = 0; h < NH; h++)
                 for (INT t = 0; t < SEQ; t++)
                     dt_linear((float *)W_q[h], NULL, tok[t], Q[t][h], DH, DM);
+            PK_NOSW_LEAVE();
 
             /* 分散 KV Attention 試行 */
             float mhsa_dkva[SEQ][DM];
             ER dkva_er = dkva_infer(Q, W_o, mhsa_dkva, ++dtr_req_counter);
 
+            PK_NOSW_ENTER();                 /* to the log push: reads weights */
             float mhsa[SEQ][DM];
             if (dkva_er == E_OK) {
                 /* DKVA 成功: 結果を使用 */
@@ -1495,6 +1526,7 @@ W dtr_infer(const B input[4])
             float mx = scores_dkva[0];
             for (INT c = 1; c < DOUT; c++) if (scores_dkva[c] > mx) mx = scores_dkva[c];
             dtr_log_push(input, cls_dkva, (UB)(mx * 100.0f));
+            PK_NOSW_LEAVE();
 
             static const char *cn_dkva[] = {"normal", "alert", "critical"};
             dt_puts("[dtr] DKVA class="); dt_putdec((UW)cls_dkva);
@@ -1517,7 +1549,9 @@ W dtr_infer(const B input[4])
         }
         if (has_peers) {
             float l0_out[DM];
+            PK_NOSW_ENTER();
             run_stage0(input, l0_out);   /* Embed + MHSA + mean-pool */
+            PK_NOSW_LEAVE();
 
             DTR_ACT act;
             act.magic    = DTR_ACT_MAGIC;
@@ -1552,7 +1586,9 @@ W dtr_infer(const B input[4])
 
     /* フォールバック: ローカル実行 */
     float scores[DOUT];
+    PK_NOSW_ENTER();
     UB cls = run_transformer_local(input, scores);
+    PK_NOSW_LEAVE();
     dtr_stats.local++;
     dt_puts("[dtr] fallback(local): class="); dt_putdec((UW)cls); dt_puts("\r\n");
     return (W)cls;

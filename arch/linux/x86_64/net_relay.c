@@ -69,6 +69,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "pk_nosw.h"
 #include "sha256.h"   /* from relay/, added to include path by Makefile.
                        * NOTE: sha256.h deliberately avoids <stdint.h> so it
                        * coexists with the T-Kernel stdint shadow that this
@@ -399,18 +400,25 @@ static void udp_send_to(int idx, const unsigned char *buf, int len)
     if (idx == cur_relay) last_send_ts = time(NULL);
 }
 
+/* pk_nosw.h: each sender below has a static buf, and build_packet takes the
+ * shared next_nonce; a switch in the middle could send another task's bytes
+ * or reuse a nonce (the peer drops it as a replay) */
 static void send_register_to(int idx)
 {
+    PK_NOSW_ENTER();
     static unsigned char buf[MAX_PKT];
     int n = build_packet(buf, REL_REGISTER, (unsigned)my_node_id, 0, NULL, 0);
     udp_send_to(idx, buf, n);
+    PK_NOSW_LEAVE();
 }
 
 static void send_keepalive_to(int idx)
 {
+    PK_NOSW_ENTER();
     static unsigned char buf[MAX_PKT];
     int n = build_packet(buf, REL_KEEPALIVE, (unsigned)my_node_id, 0, NULL, 0);
     udp_send_to(idx, buf, n);
+    PK_NOSW_LEAVE();
 }
 
 /* N-2d: a REFL1 keepalive carrying the "REF1" magic; a REFL1-aware relay
@@ -421,8 +429,10 @@ static void send_refl_probe_to(int idx)
     static unsigned char buf[MAX_PKT];
     static const unsigned char magic[4] =
         { REFL_MAGIC_0, REFL_MAGIC_1, REFL_MAGIC_2, REFL_MAGIC_3 };
+    PK_NOSW_ENTER();
     int n = build_packet(buf, REL_KEEPALIVE, (unsigned)my_node_id, 0, magic, 4);
     udp_send_to(idx, buf, n);
+    PK_NOSW_LEAVE();
 }
 
 /* Probe EVERY configured relay vantage point so CONE/SYMMETRIC has >=2 echoes
@@ -893,9 +903,11 @@ int net_relay_send(const void *frame, int len)
     if (sock_fd < 0 || len <= 0 || len > MAX_PAYLOAD) return -1;
     ha_tick();
     static unsigned char buf[MAX_PKT];
+    PK_NOSW_ENTER();                         /* see send_register_to */
     int n = build_packet(buf, REL_BROADCAST,
                          (unsigned)my_node_id, 0, frame, len);
     udp_send_to(cur_relay, buf, n);
+    PK_NOSW_LEAVE();
     return len;
 }
 

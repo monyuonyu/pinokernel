@@ -30,6 +30,7 @@
 #include "interocept.h" /* interoception: a surprising answer raises S_n (§2) */
 #include "ark_profile.h" /* ark-profile v1: the ONE provenance write site (§5) */
 #include "kdds.h"      /* LM-7: the region-scoped "mind/teach" topic (VIII.3) */
+#include "pk_nosw.h"   /* the m_gate creation is a no-switch region (hosted)  */
 #include "region.h"   /* LM-7: region_id() — observable shared-mind boundary  */
 #include "r3_vocab.h"  /* LM-8 (IX.3): the embedded, content-addressed words   */
 #include "conscience.h" /* 良心: the four-chokepoint gate (G-ASK/G-LEARN/G-WIRE) */
@@ -738,11 +739,15 @@ static ID m_gate = -1;
 
 static void m_gate_acquire(void)
 {
+    /* pk_nosw.h: two first callers switched between the test and the store
+     * would each create a gate, and the mind would have two locks */
+    PK_NOSW_ENTER();
     if (m_gate < 0) {
         T_CSEM cs = { .exinf = NULL, .sematr = TA_TFIFO,
                       .isemcnt = 1, .maxsem = 1 };
         m_gate = tk_cre_sem(&cs);
     }
+    PK_NOSW_LEAVE();
     if (m_gate >= 0) tk_wai_sem(m_gate, 1, TMO_FEVR);
 }
 
@@ -847,8 +852,14 @@ static void s_pretrain(void)
 {
 #ifdef _TK_HOSTED_LIBC_
     PRI s_saved_pri = 0;               /* 0 => nothing to restore (LEAVE no-ops) */
-    while (m_pretrain_busy) tk_dly_tsk(20);
-    m_pretrain_busy = 1;
+    /* pk_nosw.h: test-and-set as one region; with the hosted exit dispatch two
+     * callers switched between the last test and the store could both pass */
+    for (;;) {
+        PK_NOSW_ENTER();
+        if (!m_pretrain_busy) { m_pretrain_busy = 1; PK_NOSW_LEAVE(); break; }
+        PK_NOSW_LEAVE();
+        tk_dly_tsk(20);
+    }
     S_PRETRAIN_ENTER(s_saved_pri);     /* drop below the network tasks (default) */
 #endif
     r_init_weights(0xA5A5u);

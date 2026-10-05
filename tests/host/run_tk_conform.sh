@@ -32,7 +32,7 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-EXPECT=110
+EXPECT=111
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 rc_all=0

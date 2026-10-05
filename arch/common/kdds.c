@@ -22,6 +22,7 @@
 #include "pmesh.h"
 #include "region.h"
 #include "kernel.h"
+#include "pk_nosw.h"
 
 /* 直近の kdds_pub() の fanout (UDP 送信したピア数) — スコープ効果の観測用 */
 static UW kdds_last_fanout = 0;
@@ -226,10 +227,14 @@ W kdds_pub(W handle, const void *data, W len)
     W tidx = kdds_handles[handle].topic_idx;
     KDDS_TOPIC *t = &kdds_topics[tidx];
 
-    /* トピックデータを更新 (seq をインクリメントして複製判定に使う) */
+    /* トピックデータを更新 (seq をインクリメントして複製判定に使う)
+     * pk_nosw.h: the slot is shared; a task switch in the middle of the copy
+     * would let another publisher or a reader see half of each */
+    PK_NOSW_ENTER();
     kd_memcpy(t->data, data, len);
     t->data_len = (UH)len;
     t->data_seq++;
+    PK_NOSW_LEAVE();
 
     /* 同一トピックの全 subscriber セマフォを signal */
     for (W h = 0; h < KDDS_HANDLE_MAX; h++) {
@@ -310,8 +315,10 @@ W kdds_sub(W handle, void *buf, W buflen, W timeout_ms)
      * BEST_EFFORT: 次の pub まで待つ。
      */
     if (t->qos != KDDS_QOS_BEST_EFFORT && t->data_len > 0) {
+        PK_NOSW_ENTER();                       /* pk_nosw.h: see kdds_pub */
         W copy = t->data_len < buflen ? t->data_len : buflen;
         kd_memcpy(buf, t->data, copy);
+        PK_NOSW_LEAVE();
         return copy;
     }
 
@@ -321,8 +328,10 @@ W kdds_sub(W handle, void *buf, W buflen, W timeout_ms)
     if (er != E_OK) return (W)er;
 
     /* データをコピーして返す */
+    PK_NOSW_ENTER();
     W copy = t->data_len < buflen ? t->data_len : (W)buflen;
     kd_memcpy(buf, t->data, copy);
+    PK_NOSW_LEAVE();
     return copy;
 }
 
@@ -435,8 +444,10 @@ void kdds_rx(UB src_node, UH dst_port, const UB *data, UH len)
     if (tidx < 0) return;
 
     KDDS_TOPIC *t = &kdds_topics[tidx];
+    PK_NOSW_ENTER();                           /* pk_nosw.h: see kdds_pub */
     kd_memcpy(t->data, pkt->data, pkt->data_len);
     t->data_len = pkt->data_len;
+    PK_NOSW_LEAVE();
 
     /* ローカルの subscriber を起こす */
     for (W h = 0; h < KDDS_HANDLE_MAX; h++) {

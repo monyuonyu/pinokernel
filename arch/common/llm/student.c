@@ -29,6 +29,13 @@
  *  (native-student.md §A.2/§A.4/§A.5), honestly deferred — see the NS report.
  */
 #include "student.h"
+/* pk_nosw.h (hosted x86_64 only; empty elsewhere): st_forward shares tw_buf and
+ * the st_frozen / st_fw / remote counters across ALL models and frees m->cache
+ * on every call; backward and eval read that cache; adam and the blob / merge /
+ * grow functions rewrite m->w. Before the hosted exit dispatch nothing here was
+ * switched out (no kernel calls), so each public entry below is one no-switch
+ * region. A forward -> backward -> adam sequence is one more: ST_TRAIN_STEP. */
+#include "../include/pk_nosw.h"
 
 /* ================================================================== */
 /* libc-free math (same recipes as dtr.c / forward.c — one math)       */
@@ -440,7 +447,7 @@ static void st_copy_expert_family(float *dst, const float *src,
     }
 }
 
-int st_grow_experts(st_model *m, int e_new)
+PK_NOSW_FN(int, st_grow_experts, (st_model *m, int e_new), (m, e_new))
 {
     if (!m || !m->w) return ST_E_ARG;
     const int E_old = m->nexpert;
@@ -883,7 +890,8 @@ int st_router_pick_width(const float *gate, int *chosen)
     return nk;
 }
 
-int st_forward(st_model *m, const uint8_t *bytes, int n, float *logits)
+PK_NOSW_FN(int, st_forward, (st_model *m, const uint8_t *bytes, int n, float *logits),
+           (m, bytes, n, logits))
 {
     ST_DIMS(m);
     if (n < 1 || n > ST_MAXSEQ) return ST_E_ARG;
@@ -1611,14 +1619,18 @@ static int st_generate_core(st_model *m, const uint8_t *prompt, int n_prompt,
         int rc = ST_OK;
         for (int g = 0; g < max_gen; g++) {
             /* extend the cache to cover ctxbuf[0..nctx-1]; row holds the logits
-             * of the LAST extended position (== what we sample from). */
+             * of the LAST extended position (== what we sample from).
+             * pk_nosw.h: one region per byte (reads m->w, which a higher task's
+             * adam / load / merge rewrites), not per reply — emit() may print. */
+            PK_NOSW_ENTER();
             for (int p = kv->filled; p < nctx; p++) {
                 rc = kv_step(m, kv, ctxbuf[p], p, row);
                 if (rc != ST_OK) break;
             }
-            if (rc != ST_OK) break;
+            if (rc != ST_OK) { PK_NOSW_LEAVE(); break; }
             st_gen_hash_row(row);
             int b = st_sample_byte(row, temp, top_k, &rng);
+            PK_NOSW_LEAVE();
 
             out[produced++] = (uint8_t)b;
             if (emit) emit(ctx, b);
@@ -1641,11 +1653,13 @@ static int st_generate_core(st_model *m, const uint8_t *prompt, int n_prompt,
 
     int produced = 0;
     for (int g = 0; g < max_gen; g++) {
+        PK_NOSW_ENTER();                                       /* as above */
         int rc = st_forward(m, ctxbuf, nctx, logits);
-        if (rc != ST_OK) break;
+        if (rc != ST_OK) { PK_NOSW_LEAVE(); break; }
         const float *row = logits + (size_t)(nctx - 1) * V;   /* after last byte */
         st_gen_hash_row(row);
         int b = st_sample_byte(row, temp, top_k, &rng);
+        PK_NOSW_LEAVE();
 
         out[produced++] = (uint8_t)b;
         if (emit) emit(ctx, b);
@@ -1686,7 +1700,8 @@ int st_generate_stream(st_model *m, const uint8_t *prompt, int n_prompt,
 /* eval loss (pure forward)                                           */
 /* ================================================================== */
 
-float st_eval_loss(st_model *m, const uint8_t *bytes, int n, int *n_pred)
+PK_NOSW_FN(float, st_eval_loss, (st_model *m, const uint8_t *bytes, int n, int *n_pred),
+           (m, bytes, n, n_pred))
 {
     if (n < 2) { if (n_pred) *n_pred = 0; return 0.0f; }
     float *logits = (float *)malloc((size_t)n * V * sizeof(float));
@@ -1711,8 +1726,9 @@ float st_eval_loss(st_model *m, const uint8_t *bytes, int n, int *n_pred)
  * the wide window the answer logits DEPEND on a distant fact byte (hash shifts
  * when it changes); clamped to 64 they cannot (the distant byte is dropped ->
  * identical hash). Pure forward. Bytes are raw; n must be <= ST_MAXSEQ.        */
-float st_span_ce(st_model *m, const uint8_t *bytes, int n, int t0, int t1,
-                 uint64_t *row_fnv)
+PK_NOSW_FN(float, st_span_ce, (st_model *m, const uint8_t *bytes, int n, int t0, int t1,
+                                uint64_t *row_fnv),
+           (m, bytes, n, t0, t1, row_fnv))
 {
     uint64_t h = 1469598103934665603ULL;   /* FNV-1a offset basis              */
     if (t0 < 1) t0 = 1;
@@ -1745,7 +1761,7 @@ float st_span_ce(st_model *m, const uint8_t *bytes, int n, int t0, int t1,
 /* backward                                                           */
 /* ================================================================== */
 
-float st_backward(st_model *m, const uint8_t *bytes, int n)
+PK_NOSW_FN(float, st_backward, (st_model *m, const uint8_t *bytes, int n), (m, bytes, n))
 {
     ST_DIMS(m);
     st_cache *c = (st_cache *)m->cache;
@@ -2020,11 +2036,14 @@ float st_backward(st_model *m, const uint8_t *bytes, int n)
 
 void st_zero_grad(st_model *m)
 {
+    PK_NOSW_ENTER();
     for (int i = 0; i < m->n_params; i++) m->g[i] = 0.0f;
+    PK_NOSW_LEAVE();
 }
 
 void st_adam_step(st_model *m, float lr)
 {
+    PK_NOSW_ENTER();
     m->adam_t++;
     float b1 = 0.9f, b2 = 0.999f, eps = 1e-8f;
     float bc1 = 1.0f - st_expf((float)m->adam_t * st_logf(b1));
@@ -2039,6 +2058,7 @@ void st_adam_step(st_model *m, float lr)
         float vh = m->vu[i] / bc2;
         m->w[i] -= lr * mh / (st_sqrtf(vh) + eps);
     }
+    PK_NOSW_LEAVE();
 }
 
 /* ================================================================== */
@@ -2099,7 +2119,7 @@ size_t st_blob_size(const st_model *m)
 
 /* Serialize the trainable state into buf[cap]. Returns the number of bytes
  * written, or negative (ST_E_ARG) if buf is too small / model unallocated. */
-long st_save(const st_model *m, void *buf, size_t cap)
+PK_NOSW_FN(long, st_save, (const st_model *m, void *buf, size_t cap), (m, buf, cap))
 {
     if (!m || !m->w || !buf) return ST_E_ARG;
     size_t need = st_blob_size(m);
@@ -2171,7 +2191,7 @@ int st_blob_tier_ok(const st_model *m, const void *buf, size_t len)
     return 1;
 }
 
-int st_load(st_model *m, const void *buf, size_t len)
+PK_NOSW_FN(int, st_load, (st_model *m, const void *buf, size_t len), (m, buf, len))
 {
     if (!m || !m->w || !buf) return ST_E_ARG;
     /* the SAME fail-closed tier/shape guard the merge reuses (SS-3). */
@@ -2219,9 +2239,9 @@ static float st_blob_w_at(const void *buf, size_t idx)
 /* then peers ascending), plain sum then one divide — no reassociated   */
 /* sums, no new transcendental, no libc math (wave-49 one-math).        */
 /* ------------------------------------------------------------------ */
-int st_merge_cohort(st_model *into,
+PK_NOSW_FN(int, st_merge_cohort, (st_model *into,
                     const void *const *peer_blobs, const size_t *peer_lens,
-                    int count)
+                    int count), (into, peer_blobs, peer_lens, count))
 {
     if (!into || !into->w) return ST_E_ARG;
     if (count < 0) return ST_E_ARG;
@@ -2521,10 +2541,10 @@ static void st_merge_candidate(int c, const float *a, const float *b,
     }
 }
 
-int st_merge_guarded(st_model *into, const st_model *peer,
+PK_NOSW_FN(int, st_merge_guarded, (st_model *into, const st_model *peer,
                      const st_model *init, st_model *scratch,
                      const uint8_t *const *val, int n, int seqlen,
-                     float *cand_loss)
+                     float *cand_loss), (into, peer, init, scratch, val, n, seqlen, cand_loss))
 {
     if (cand_loss)
         for (int c = 0; c <= ST_MERGE_NALPHA; c++) cand_loss[c] = -1.0f;

@@ -29,6 +29,7 @@
  */
 
 #include "pfs_block.h"
+#include "pk_nosw.h"
 #include "sha256.h"          /* relay/sha256.c — zero-dep, reused kernel-side */
 
 /* Hosted durable backend (arch/linux/pfs_durable.c). Declared here as
@@ -177,8 +178,11 @@ void pfs_id_compute(const void *buf, UW len, U1 id_out[PFS_ID_LEN])
     sha256(buf, (size_t)len, id_out);
 }
 
-INT pfs_put_origin(const void *buf, UW len, U1 id_out[PFS_ID_LEN],
-                   U1 origin)
+/* pk_nosw.h: a free slot is picked here and marked used only after the data
+ * copy, so a put switched out in between can lose its slot to another put */
+PK_NOSW_FN(INT, pfs_put_origin,
+           (const void *buf, UW len, U1 id_out[PFS_ID_LEN], U1 origin),
+           (buf, len, id_out, origin))
 {
     if (buf == 0 && len != 0) return PFS_E_INVAL;
     if (len > PFS_BLOCK_MAX)   return PFS_E_TOOBIG;
@@ -256,6 +260,10 @@ INT pfs_put_origin(const void *buf, UW len, U1 id_out[PFS_ID_LEN],
         if (slot < 0) return PFS_E_FULL;
     }
 
+#ifdef PFS_FAULT_SLOW_PUT
+    /* test builds only (`tkconf nosw` N4): widen the pick -> used window */
+    { volatile UW s_; for (s_ = 0; s_ < (UW)(PFS_FAULT_SLOW_PUT); s_++) { } }
+#endif
     /* Store into the chosen slot (fresh occupancy bumps the count; an eviction
      * reuses an occupied slot so the resident count is unchanged). A fresh
      * store starts evictable; the durable-write result below may flip it. */
@@ -316,7 +324,9 @@ INT pfs_put(const void *buf, UW len, U1 id_out[PFS_ID_LEN])
     return pfs_put_origin(buf, len, id_out, PFS_ORIGIN_SELF);
 }
 
-INT pfs_get(const U1 id[PFS_ID_LEN], void *buf, UW maxlen)
+/* pk_nosw.h: the table slot and the static fbuf below are shared */
+PK_NOSW_FN(INT, pfs_get, (const U1 id[PFS_ID_LEN], void *buf, UW maxlen),
+           (id, buf, maxlen))
 {
     INT s = find_slot(id);
     if (s >= 0) {

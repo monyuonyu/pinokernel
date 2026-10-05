@@ -51,6 +51,20 @@ static int             g_inited = 0;       /* set iff pool came up cleanly  */
 static int             g_force_nw = 0;     /* cert override; <=0 = auto      */
 static int             g_last_par = 0;     /* gate decision of last gated call */
 
+/* The hosted exit dispatch (arch/linux/x86_64/preempt.c) switches tasks inside
+ * p-kernel's own code. A dispatch here is ONE shared job (g_pool, its pthread
+ * mutex, the join) and every T-Kernel task runs on the same OS thread, so the
+ * dispatching task must not be switched out between publish and join: another
+ * task's dispatch would overwrite the job and lose rows (audit-21: 15-21 of
+ * 150 calls), or block on g_pool.mtx held by the switched-out task. preempt.c
+ * does not switch while this is non-zero, and installs pk_parallel_on_leave,
+ * called when the count drops to 0, to make the switch the tick skipped (else
+ * a task calling the pool back to back starves higher ones: almost every tick
+ * lands inside a dispatch). A higher task waits for at most one dispatch.
+ * -DPK_POOL_PREEMPTIBLE: not counted (the negative control). */
+volatile int pk_parallel_busy;
+void (*pk_parallel_on_leave)(void);         /* NULL without the hosted kernel */
+
 /* ---- the deterministic partition (pure function of (out, NW)) ---------- */
 /* Slice s in [0,nw) owns rows [s*q + min(s,r), ...). A ragged remainder
  * (out % nw) is given to the LAST slice — matches the plan §1, §8 risk 5. */
@@ -183,6 +197,9 @@ void pk_parallel_rows(size_t out, pk_row_body body, void *ctx)
         return;
     }
 
+#ifndef PK_POOL_PREEMPTIBLE
+    pk_parallel_busy++;
+#endif
     pthread_mutex_lock(&g_pool.mtx);
     g_pool.body = body;
     g_pool.ctx  = ctx;
@@ -207,6 +224,10 @@ void pk_parallel_rows(size_t out, pk_row_body body, void *ctx)
     while (g_pool.done < g_pool.nhelpers)
         pthread_cond_wait(&g_pool.done_cv, &g_pool.mtx);
     pthread_mutex_unlock(&g_pool.mtx);
+#ifndef PK_POOL_PREEMPTIBLE
+    if (--pk_parallel_busy == 0 && pk_parallel_on_leave)
+        pk_parallel_on_leave();
+#endif
 }
 
 /* ---- the out*in size gate (MC-1) -------------------------------------- */

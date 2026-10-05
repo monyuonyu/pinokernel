@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `c8ecfec1`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `13bf99a6`.
 
 # p-kernel
 
@@ -86,7 +86,7 @@ Anything not listed under "What runs today" is not claimed to work.
 | Process on Linux (x86_64, `boot/linux_x86_64`) | Boots to a shell |
 | Windows x86_64 (`boot/windows/x86_64`) | Builds an `.exe` (checked in CI). Not yet confirmed to start on a real machine |
 
-- **Tests for the contract between the kernel and the layers above it** (2026-09): 110 checks that the `tk_*` calls used by upper layers behave as specified (tasks, semaphores, event flags, mutexes, message buffers, mailboxes, fixed-size memory pools, cyclic handlers, time, dispatch disabling — including error codes and boundary values). Expected values are checked against the μT-Kernel 3.0 specification (two items follow the reference implementation, not the specification). Eleven deliberately broken kernel builds are confirmed to turn the tests red, every time. Runs on Linux x86_64, bare-metal x86, and bare-metal AArch64 (`arch/common/tk_conform.c`).
+- **Tests for the contract between the kernel and the layers above it** (2026-09): 111 checks that the `tk_*` calls used by upper layers behave as specified (tasks, semaphores, event flags, mutexes, message buffers, mailboxes, fixed-size memory pools, cyclic handlers, time, dispatch disabling — including error codes and boundary values). Expected values are checked against the μT-Kernel 3.0 specification (two items follow the reference implementation, not the specification). Eleven deliberately broken kernel builds are confirmed to turn the tests red, every time. Runs on Linux x86_64, bare-metal x86, and bare-metal AArch64 (`arch/common/tk_conform.c`).
 - The first stage of multi-core support is in (CI `smp-autodetect` — a non-blocking job that failed 14 of its 15 runs up to 2026-09-09).
 
 ### Connecting

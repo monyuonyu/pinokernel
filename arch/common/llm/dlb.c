@@ -227,10 +227,12 @@ typedef struct {
 static dlb_trace g_ring[DLB_RING_MAX];
 static int       g_ring_n = 0;
 
-void dlb_compound_reset(void) { g_ring_n = 0; }
+/* pk_nosw.h (via student.h): the chat (pri 8) enqueues while the DMN (pri 13)
+ * counts, distills and gc-packs the ring; each ring entry is one region. */
+void dlb_compound_reset(void) { PK_NOSW_ENTER(); g_ring_n = 0; PK_NOSW_LEAVE(); }
 
-int dlb_compound_enqueue(const uint8_t *query, int qn,
-                         const uint8_t *ans, int an, int verified)
+PK_NOSW_FN(int, dlb_compound_enqueue, (const uint8_t *query, int qn,
+                         const uint8_t *ans, int an, int verified), (query, qn, ans, an, verified))
 {
     if (qn < 0) qn = 0;
     if (an < 0) an = 0;
@@ -246,7 +248,7 @@ int dlb_compound_enqueue(const uint8_t *query, int qn,
     return 1;
 }
 
-int dlb_compound_pending(int require_verified)
+PK_NOSW_FN(int, dlb_compound_pending, (int require_verified), (require_verified))
 {
     int c = 0;
     for (int i = 0; i < g_ring_n; i++)
@@ -278,10 +280,7 @@ int dlb_compound_distill(st_model *m, int rounds, float lr, int require_verified
             if (require_verified && !t->verified) continue;   /* the HARD GATE */
             if (t->rounds_done >= DLB_TRACE_ROUNDS_MAX) continue; /* budget spent */
             if (t->len < 2) continue;
-            st_zero_grad(m);
-            st_forward(m, t->bytes, t->len, logits);
-            st_backward(m, t->bytes, t->len);
-            st_adam_step(m, lr);
+            ST_TRAIN_STEP(m, t->bytes, t->len, logits, lr);
             t->rounds_done++;              /* consume one pass of the budget */
         }
     }
@@ -296,6 +295,7 @@ int dlb_compound_distill(st_model *m, int rounds, float lr, int require_verified
  * not-yet-distilled traces (rounds_done < MAX) survive. */
 void dlb_compound_gc(void)
 {
+    PK_NOSW_ENTER();
     int w = 0;
     for (int i = 0; i < g_ring_n; i++) {
         dlb_trace *t = &g_ring[i];
@@ -305,4 +305,5 @@ void dlb_compound_gc(void)
         w++;
     }
     g_ring_n = w;
+    PK_NOSW_LEAVE();
 }

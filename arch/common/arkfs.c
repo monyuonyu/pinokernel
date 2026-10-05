@@ -31,6 +31,12 @@
 
 #include "arkfs.h"
 #include "sha256.h"          /* relay/sha256.c — zero-dep, ABI-stable id */
+/* pk_nosw.h (hosted x86_64 only; empty elsewhere): every public entry below
+ * works on the file-static g_* state (index, log head, dir stacks, the shared
+ * sector / block / commit buffers) with no kernel call, so it was never
+ * switched out before the hosted exit dispatch; each is one no-switch region
+ * (PK_NOSW_FN; ark_unmount brackets its body). */
+#include "pk_nosw.h"
 
 /* ------------------------------------------------------------------ */
 /* on-disk structures (packed, fixed-width, LP64-stable)               */
@@ -412,6 +418,11 @@ static INT read_record(U4 sec, void *payout, U4 paymax,
     U1 *p = (U1 *)payout;
     for (U4 s = 0; s < psect; s++) {
         if (dev_read(sec + 1 + s, 1, g_secbuf) < 0) { ok = 0; break; }
+#ifdef ARK_FAULT_SLOW_GET
+        /* test builds only (`tkconf nosw` N9): widen the read -> copy window
+         * on the shared g_secbuf, which emit_record also writes */
+        for (volatile UW z_ = 0; z_ < (UW)(ARK_FAULT_SLOW_GET); z_++) { }
+#endif
         U4 off = s * ARK_SECTOR;
         U4 chunk = (h.len - off < ARK_SECTOR) ? (h.len - off) : ARK_SECTOR;
         ark_memcpy(p + off, g_secbuf, chunk);
@@ -572,7 +583,7 @@ static INT super_valid(void)
     return 1;
 }
 
-INT ark_format(ARK_BDEV *bd)
+PK_NOSW_FN(INT, ark_format, (ARK_BDEV *bd), (bd))
 {
     if (!bd || bd->sector_size != ARK_SECTOR) return ARK_E_INVAL;
     if (bd->total_sectors < 4) return ARK_E_INVAL;
@@ -605,7 +616,7 @@ INT ark_format(ARK_BDEV *bd)
     return ARK_OK;
 }
 
-INT ark_mount(ARK_BDEV *bd)
+PK_NOSW_FN(INT, ark_mount, (ARK_BDEV *bd), (bd))
 {
     if (!bd || bd->sector_size != ARK_SECTOR) return ARK_E_INVAL;
     g_bd = bd;
@@ -693,13 +704,13 @@ INT ark_mount(ARK_BDEV *bd)
     return ARK_OK;
 }
 
-void ark_unmount(void) { g_bd = 0; reset_state(); }
+void ark_unmount(void) { PK_NOSW_ENTER(); g_bd = 0; reset_state(); PK_NOSW_LEAVE(); }
 
 /* ------------------------------------------------------------------ */
 /* raw block API (p-fs-compatible)                                     */
 /* ------------------------------------------------------------------ */
 
-INT ark_block_put(const void *buf, U4 len, U1 id_out[ARK_ID_LEN])
+PK_NOSW_FN(INT, ark_block_put, (const void *buf, U4 len, U1 id_out[ARK_ID_LEN]), (buf, len, id_out))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     if (len > ARK_BLOCK_MAX) return ARK_E_TOOBIG;
@@ -720,7 +731,7 @@ INT ark_block_put(const void *buf, U4 len, U1 id_out[ARK_ID_LEN])
     return idx_add(id, start);
 }
 
-INT ark_block_get(const U1 id[ARK_ID_LEN], void *buf, U4 max)
+PK_NOSW_FN(INT, ark_block_get, (const U1 id[ARK_ID_LEN], void *buf, U4 max), (id, buf, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     INT s = idx_find(id);
@@ -737,14 +748,14 @@ INT ark_block_get(const U1 id[ARK_ID_LEN], void *buf, U4 max)
     return (INT)len;
 }
 
-INT ark_block_has(const U1 id[ARK_ID_LEN]) { return idx_find(id) >= 0 ? 1 : 0; }
-U4  ark_block_count(void) { return idx_count(); }
+PK_NOSW_FN(INT, ark_block_has, (const U1 id[ARK_ID_LEN]), (id)) { return idx_find(id) >= 0 ? 1 : 0; }
+PK_NOSW_FN(U4, ark_block_count, (void), ()) { return idx_count(); }
 
 /* Durable checkpoint: append a COMMIT (fsync'd by commit_live) that makes
  * every block appended since the last commit permanent on the next replay.
  * Used by the p-fs durable backend so a bare ark_block_put outlives a remount.
  * Atomicity is unchanged: a torn COMMIT fails crc and rolls the tail back. */
-INT ark_checkpoint(void)
+PK_NOSW_FN(INT, ark_checkpoint, (void), ())
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     return commit_live();
@@ -851,10 +862,10 @@ static INT mnode_emit(ark_ment *m, U4 n, U1 id_out[ARK_ID_LEN])
     return ark_block_put(g_mser, (U4)(p - g_mser), id_out);
 }
 
-INT ark_mtree_root(U1 out[ARK_ID_LEN])
+PK_NOSW_FN(INT, ark_mtree_root, (U1 out[ARK_ID_LEN]), (out))
 { ark_memcpy(out, g_mroot, ARK_ID_LEN); return ARK_OK; }
 
-INT ark_mtree_put(const char *path, const void *buf, U4 len)
+PK_NOSW_FN(INT, ark_mtree_put, (const char *path, const void *buf, U4 len), (path, buf, len))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     if (len > ARK_BLOCK_MAX) return ARK_E_TOOBIG;       /* single-block files here */
@@ -931,7 +942,7 @@ INT ark_mtree_put(const char *path, const void *buf, U4 len)
     return commit_live();
 }
 
-INT ark_mtree_get(const char *path, void *buf, U4 max)
+PK_NOSW_FN(INT, ark_mtree_get, (const char *path, void *buf, U4 max), (path, buf, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     static char comp[ARK_MTREE_MAXDEPTH][ARK_MENT_NAME];
@@ -959,7 +970,7 @@ INT ark_mtree_get(const char *path, void *buf, U4 max)
     return ARK_E_NOTFOUND;
 }
 
-INT ark_mtree_list(const char *path, ARK_DIRENT *out, INT max)
+PK_NOSW_FN(INT, ark_mtree_list, (const char *path, ARK_DIRENT *out, INT max), (path, out, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     static ark_ment ment[ARK_MNODE_MAXENT];
@@ -1089,7 +1100,7 @@ static INT mtree_collect(U1 seen[][ARK_ID_LEN], U4 *pn, U4 *foot)
  * Returns ARK_OK on success (state reloaded), ARK_E_FULL if the live set does
  * not fit in any free region, or a negative error (old log left intact).
  */
-INT ark_compact(void)
+PK_NOSW_FN(INT, ark_compact, (void), ())
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
 
@@ -1198,7 +1209,7 @@ INT ark_compact(void)
 /* file operations                                                     */
 /* ------------------------------------------------------------------ */
 
-INT ark_write_file(const char *path, const void *buf, U4 len)
+PK_NOSW_FN(INT, ark_write_file, (const char *path, const void *buf, U4 len), (path, buf, len))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     if (!path || ark_strlen(path) + 1 > ARK_NAME_MAX) return ARK_E_INVAL;
@@ -1255,7 +1266,7 @@ static INT read_dent_blocks(const ark_dent *d, void *buf, U4 max)
     return (INT)d->size;
 }
 
-INT ark_read_file(const char *path, void *buf, U4 max)
+PK_NOSW_FN(INT, ark_read_file, (const char *path, void *buf, U4 max), (path, buf, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     INT e = live_find(path);
@@ -1280,7 +1291,7 @@ INT ark_read_file(const char *path, void *buf, U4 max)
     return r;                                    /* nothing recoverable */
 }
 
-INT ark_stat(const char *path, U4 *size, INT *is_dir, U4 *version)
+PK_NOSW_FN(INT, ark_stat, (const char *path, U4 *size, INT *is_dir, U4 *version), (path, size, is_dir, version))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     INT e = live_find(path);
@@ -1291,7 +1302,7 @@ INT ark_stat(const char *path, U4 *size, INT *is_dir, U4 *version)
     return ARK_OK;
 }
 
-INT ark_mkdir(const char *path)
+PK_NOSW_FN(INT, ark_mkdir, (const char *path), (path))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     if (!path || ark_strlen(path) + 1 > ARK_NAME_MAX) return ARK_E_INVAL;
@@ -1305,7 +1316,7 @@ INT ark_mkdir(const char *path)
     return commit_live();
 }
 
-INT ark_unlink(const char *path)
+PK_NOSW_FN(INT, ark_unlink, (const char *path), (path))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     INT e = live_find(path);
@@ -1318,7 +1329,7 @@ INT ark_unlink(const char *path)
 
 /* readdir: entries whose name is an immediate child of `path` ("/" lists
  * top level). Prototype namespace is flat path-strings (survival-fs.md §6). */
-INT ark_readdir(const char *path, ARK_DIRENT *out, INT max)
+PK_NOSW_FN(INT, ark_readdir, (const char *path, ARK_DIRENT *out, INT max), (path, out, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     U4 plen = ark_strlen(path);
@@ -1352,7 +1363,7 @@ INT ark_readdir(const char *path, ARK_DIRENT *out, INT max)
 /* versioning — walk the commit log                                    */
 /* ------------------------------------------------------------------ */
 
-INT ark_version(const char *path)
+PK_NOSW_FN(INT, ark_version, (const char *path), (path))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     INT e = live_find(path);
@@ -1364,7 +1375,7 @@ INT ark_version(const char *path)
  * Scan every commit oldest->newest. For each commit holding `path`, record a
  * row whenever that file's version number changes (a new version was minted).
  */
-INT ark_history(const char *path, ARK_HIST *out, INT max)
+PK_NOSW_FN(INT, ark_history, (const char *path, ARK_HIST *out, INT max), (path, out, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     static ark_dent tbl[ARK_MAX_FILES];
@@ -1396,7 +1407,7 @@ INT ark_history(const char *path, ARK_HIST *out, INT max)
 
 /* Read the bytes of a specific historical version (blocks are immutable and
  * still in the log). Returns length or negative. */
-INT ark_read_version(const char *path, U4 version, void *buf, U4 max)
+PK_NOSW_FN(INT, ark_read_version, (const char *path, U4 version, void *buf, U4 max), (path, version, buf, max))
 {
     if (!g_bd) return ARK_E_NOTMOUNTED;
     static ark_dent tbl[ARK_MAX_FILES];
