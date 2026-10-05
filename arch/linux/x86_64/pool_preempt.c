@@ -333,7 +333,9 @@ static void ns_student(void)
  *   N10  afterwards every block of both tasks reads back whole
  *   N11  no starvation: high puts landed while the runner was busy
  * Skipped (said) when p-fs runs on ARK (PKERNEL_PFS_BACKEND=ark): the probe
- * would unmount the live log. -DPK_NOSW_OFF must turn N9 or N10 red. */
+ * would unmount the live log. -DPK_NOSW_OFF must turn N9 or N10 red; unwidened
+ * that was 1 of 2 runs (/build/r1006k), so test builds widen the get with
+ * -DARK_FAULT_SLOW_GET=<spins> (arkfs.c read_record), as N4 does for p-fs. */
 extern int pfs_ark_configured(void);          /* arch/linux/pfs_ark.c */
 #define NA_SEC 4096                   /* 2 MiB: 260 blocks of 2 KiB + log */
 #define NA_LEN 2048                   /* 256 B crossed 1 of 2 with -DPK_NOSW_OFF */
@@ -416,8 +418,14 @@ static void ns_ark(void)
     }
     ark_unmount();
     { char m[200];
-      snprintf(m, sizeof m, "[nosw] ark: %d + %d puts (%d high puts failed), %d gets\r\n",
-               (int)nr, (int)na_hput, (int)na_hbad, (int)gets);
+      snprintf(m, sizeof m, "[nosw] ark: %d + %d puts (%d high puts failed), %d gets, get widened: %s\r\n",
+               (int)nr, (int)na_hput, (int)na_hbad, (int)gets,
+#ifdef ARK_FAULT_SLOW_GET
+               "yes"
+#else
+               "no"
+#endif
+               );
       pp_out(m); }
     pp_check(bad == 0 && na_hbad == 0, "N9", "ark gets / puts that failed or crossed", bad + na_hbad);
     pp_check(lost == 0, "N10", "ark blocks that do not read back whole", lost);

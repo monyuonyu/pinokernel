@@ -418,6 +418,11 @@ static INT read_record(U4 sec, void *payout, U4 paymax,
     U1 *p = (U1 *)payout;
     for (U4 s = 0; s < psect; s++) {
         if (dev_read(sec + 1 + s, 1, g_secbuf) < 0) { ok = 0; break; }
+#ifdef ARK_FAULT_SLOW_GET
+        /* test builds only (`tkconf nosw` N9): widen the read -> copy window
+         * on the shared g_secbuf, which emit_record also writes */
+        for (volatile UW z_ = 0; z_ < (UW)(ARK_FAULT_SLOW_GET); z_++) { }
+#endif
         U4 off = s * ARK_SECTOR;
         U4 chunk = (h.len - off < ARK_SECTOR) ? (h.len - off) : ARK_SECTOR;
         ark_memcpy(p + off, g_secbuf, chunk);
