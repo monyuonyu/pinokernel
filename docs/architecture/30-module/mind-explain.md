@@ -13,6 +13,11 @@
 - **hosted だけ**（1-3a と同じ。`mind` はベアメタルのシェルに無く、crown は動かない）
 - レビューの例の「current generation」は今は出さない。世代の定義（ROADMAP 1-5 の「今の版」）がまだ無いため
 
+## `mind provenance`（2026-10-06）
+- 持っている事実を全部、鍵ごとに1行: 今の値、教えた者（explain の learned: と同じ文。共通の `m_teacher_puts`）、ローカルの seq、PENDING／RETAINED。最後に教えた者の種類ごとの数
+- 読むだけ（explain と同じ決まり）。`mind history`（学び・引き寄せ・改訂・忘却の時系列）は、出来事の記録そのものがまだ無いので作っていない（改訂だけなら `mind conflicts`）
+- 試験 `tests/host/run_mind_provenance.sh`（5項目）。陰性コントロール `-DMIND_PROVENANCE_TOUCHES` で prov-readonly が赤。「別のノードから」の行は1台では出ない（試していない）
+
 ## どう測るか
 - `tests/host/run_mind_explain.sh`（1台、網なし、CI の UMP x86_64）。8項目。読むだけの確かめは「explain を3回したあとの ask が salience=2」
 - 陰性コントロール: `-DMIND_EXPLAIN_TOUCHES`（explain が salience を加算する）で explain-readonly が赤

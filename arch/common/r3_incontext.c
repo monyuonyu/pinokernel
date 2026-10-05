@@ -3829,6 +3829,65 @@ static void m_teach(const UB *p, const UB *end)
  * inference — the cert sequences ask AFTER wait, so this costs
  * nothing (VII.2). */
 #ifdef _TK_HOSTED_LIBC_
+/* ROADMAP 1-4: who taught the fact with this local seq, from the provenance
+ * tables only (mt_rprov = pulled / pushed from another node, mq_lprov = taught
+ * here). Prints the teacher text; returns 1 other node, 0 here, 2 unknown.
+ * Shared by `mind explain` and `mind provenance`. */
+static INT m_teacher_puts(UW seq)
+{
+    MT_REMOTE_PROV *rp = mt_rprov_find(seq);
+    const U1 *lp = mq_lprov_find(seq);
+    if (rp) {
+        U1 torig = 0xFF; char handle[ARK_HANDLE_MAX + 1];
+        INT named = ark_prov_resolve_remote(rp->prov_head, &torig, handle, sizeof handle);
+        r_puts("from node "); r_putdec((UW)rp->origin_node);
+        r_puts((named && handle[0]) ? " (" : " (anonymous");
+        if (named && handle[0]) r_puts(handle);
+        r_puts("), prov kept");
+        return 1;
+    }
+    if (lp) {
+        r_puts("taught here");
+        if (drpc_my_node != 0xFF) { r_puts(" (node "); r_putdec((UW)drpc_my_node); r_puts(")"); }
+        r_puts(", prov kept");
+        return 0;
+    }
+    r_puts("teacher unknown, no prov");
+    return 2;
+}
+
+/* ROADMAP 1-4: `mind provenance` — every fact this node holds, one line per
+ * bound key, with its teacher (the explain "learned:" text), local seq and
+ * consolidation state, then a count by teacher kind. Read-only like explain:
+ * no vote, no salience, no want, no DMN, no events (the owner audits the whole
+ * memory at once without changing what is forgotten).
+ * -DMIND_PROVENANCE_TOUCHES (negative control only) makes it touch salience. */
+static void m_provenance(void)
+{
+    m_quiesce();                       /* read between rounds, never mid-round */
+    r_puts("[mind] provenance — read-only, queue order\r\n");
+    UW nkeys = 0, kind[3] = { 0, 0, 0 };
+    for (INT i = 0; i < (INT)r3_fq_n; i++) {
+        R3_FACT *f = &r3_fq[i];
+        for (INT b = 0; b < (INT)f->n; b++) {
+#ifdef MIND_PROVENANCE_TOUCHES
+            (void)r3_fact_touch((INT)f->key[b]);
+#endif
+            r_puts("[mind]   \""); r_puts(r3_vocab_key_word(f->key[b]));
+            r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->yhat[b])); r_puts("\": ");
+            INT w = m_teacher_puts(f->seq);
+            r_puts(", local seq "); r_putdec(f->seq);
+            r_puts(f->state == R3F_RETAINED ? ", RETAINED\r\n" : ", PENDING\r\n");
+            kind[w]++;
+            nkeys++;
+        }
+    }
+    r_puts("[mind] provenance: "); r_putdec(r3_fq_n); r_puts(" fact(s), ");
+    r_putdec(nkeys); r_puts(" key(s): "); r_putdec(kind[0]); r_puts(" taught here, ");
+    r_putdec(kind[1]); r_puts(" from other nodes, "); r_putdec(kind[2]);
+    r_puts(" teacher unknown\r\n");
+}
+
 /* ROADMAP 1-4: `mind explain <key>` — what this node believes about a key,
  * from whom, and what it replaced, WITHOUT touching the mind. `mind ask`
  * votes (RNG), accrues salience (LM-13) or a want (LM-14), triggers the DMN
@@ -3857,22 +3916,7 @@ static void m_explain(const UB *p, const UB *end)
         r_puts("[mind]   current: \""); r_puts(r3_vocab_key_word(k));
         r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->yhat[bind])); r_puts("\"\r\n");
         r_puts("[mind]   learned: ");
-        MT_REMOTE_PROV *rp = mt_rprov_find(f->seq);
-        const U1 *lp = mq_lprov_find(f->seq);
-        if (rp) {
-            U1 torig = 0xFF; char handle[ARK_HANDLE_MAX + 1];
-            INT named = ark_prov_resolve_remote(rp->prov_head, &torig, handle, sizeof handle);
-            r_puts("from node "); r_putdec((UW)rp->origin_node);
-            r_puts((named && handle[0]) ? " (" : " (anonymous");
-            if (named && handle[0]) r_puts(handle);
-            r_puts("), prov kept");
-        } else if (lp) {
-            r_puts("taught here");
-            if (drpc_my_node != 0xFF) { r_puts(" (node "); r_putdec((UW)drpc_my_node); r_puts(")"); }
-            r_puts(", prov kept");
-        } else {
-            r_puts("teacher unknown, no prov");
-        }
+        (void)m_teacher_puts(f->seq);
         r_puts(", local seq "); r_putdec(f->seq); r_puts("\r\n");
         r_puts("[mind]   consolidated: ");
         r_puts(f->state == R3F_RETAINED ? "RETAINED " : "PENDING ");
@@ -4102,6 +4146,7 @@ void mind_cmd(const UB *args, UW len)
     else if (m_kw(&p, end, "pause")) r3_mind_pause_test();     /* survival-L2 cert */
     else if (m_kw(&p, end, "conflicts")) m_conflicts();        /* ROADMAP 1-3a */
     else if (m_kw(&p, end, "explain")) m_explain(p, end);      /* ROADMAP 1-4  */
+    else if (m_kw(&p, end, "provenance")) m_provenance();      /* ROADMAP 1-4  */
 #endif
     /* "pause" deliberately NOT added to this usage string: it is the ONE
      * r_puts call in mind_cmd that is NOT inside a _TK_HOSTED_LIBC_ guard
