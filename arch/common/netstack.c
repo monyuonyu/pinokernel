@@ -230,6 +230,7 @@ static void make_mcast_mac(UW mcast_ip, UB mac[6])
 
 void arp_request(UW target_ip)
 {
+    PK_NOSW_ENTER();                 /* pk_nosw.h: tx_buf */
     ETH_HDR *eth = (ETH_HDR *)tx_buf;
     ARP_PKT *arp = (ARP_PKT *)(tx_buf + sizeof(ETH_HDR));
 
@@ -249,10 +250,12 @@ void arp_request(UW target_ip)
 
     rtl8139_send(tx_buf, (UH)(sizeof(ETH_HDR) + sizeof(ARP_PKT)));
     net_tx_arp++;
+    PK_NOSW_LEAVE();
 }
 
 static void arp_reply(const ARP_PKT *req, const UB *req_src_mac)
 {
+    PK_NOSW_ENTER();                 /* pk_nosw.h: tx_buf */
     ETH_HDR *eth = (ETH_HDR *)tx_buf;
     ARP_PKT *arp = (ARP_PKT *)(tx_buf + sizeof(ETH_HDR));
 
@@ -270,6 +273,7 @@ static void arp_reply(const ARP_PKT *req, const UB *req_src_mac)
 
     rtl8139_send(tx_buf, (UH)(sizeof(ETH_HDR) + sizeof(ARP_PKT)));
     net_tx_arp++;
+    PK_NOSW_LEAVE();
 }
 
 static void arp_input(const UB *frame, INT len)
@@ -355,6 +359,7 @@ static INT ip_send(UW dst_ip, UB proto, const UB *payload, UH plen)
         }
     }
 
+    PK_NOSW_ENTER();                 /* pk_nosw.h: tx_buf is shared by every sender */
     ETH_HDR *eth = (ETH_HDR *)tx_buf;
     IP_HDR  *ip  = (IP_HDR  *)(tx_buf + sizeof(ETH_HDR));
 
@@ -377,6 +382,7 @@ static INT ip_send(UW dst_ip, UB proto, const UB *payload, UH plen)
     for (UH i = 0; i < plen; i++) data[i] = payload[i];
 
     rtl8139_send(tx_buf, (UH)(sizeof(ETH_HDR) + 20 + plen));
+    PK_NOSW_LEAVE();
     return 0;
 }
 
@@ -951,6 +957,7 @@ static void icmp_send_reply(const IP_HDR *req_ip, const ICMP_HDR *req_icmp,
                             const UB *req_data, UH data_len,
                             const UB *eth_src_mac)
 {
+    PK_NOSW_ENTER();                 /* pk_nosw.h: icmp_buf and tx_buf */
     static UB icmp_buf[sizeof(ICMP_HDR) + 128];
     ICMP_HDR *rep = (ICMP_HDR *)icmp_buf;
 
@@ -991,6 +998,7 @@ static void icmp_send_reply(const IP_HDR *req_ip, const ICMP_HDR *req_icmp,
     for (UH i = 0; i < icmp_len; i++) payload[i] = icmp_buf[i];
 
     rtl8139_send(tx_buf, (UH)(sizeof(ETH_HDR) + 20 + icmp_len));
+    PK_NOSW_LEAVE();
 }
 
 static void icmp_input(const UB *frame, const IP_HDR *ip,
