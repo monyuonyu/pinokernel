@@ -10,11 +10,11 @@
  *    [pool] PASS P2  no wrong rows in the high task's calls
  *    [pool] PASS P3  the high task finished its 40 calls
  *    [pool] PASS P4  precondition: the pool really ran in parallel (helper wakes)
- *    [pool] PASS P5  precondition: some high calls started inside the low loop
- *  -DPK_POOL_PREEMPTIBLE (pk_parallel.c does not count busy) must turn P1 or
- *  P2 red; -DPK_HOSTED_NO_EXIT_DISPATCH (no switch inside p-kernel code) is
- *  green, as before the exit dispatch. Needs >= 2 CPUs (else P4 is red: the
- *  pool runs inline and the test proves nothing).
+ *    [pool] PASS P5  no starvation: high calls started inside the low loop
+ *  Negative controls: -DPK_POOL_PREEMPTIBLE (busy not counted) turns P1 and
+ *  P2 red; -DPK_POOL_NO_LEAVE_DISPATCH (no switch when the pool is left) and
+ *  -DPK_HOSTED_NO_EXIT_DISPATCH (the old behaviour, RNG0) turn P5 red. Needs
+ *  >= 2 CPUs (else P4 is red: the pool runs inline and proves nothing).
  */
 #include "kernel.h"
 #include "../../common/llm/pk_parallel.h"
@@ -99,7 +99,7 @@ static void t_pp_runner(INT stacd, void *exinf)
     pp_check(pp_h_bad == 0, "P2", "high task: calls with a wrong row", pp_h_bad);
     pp_check(pp_h_runs == PP_HCALLS, "P3", "high task: calls finished (of 40)", pp_h_runs);
     pp_check(wakes > 0, "P4", "precondition: pool helper wakes", (long)wakes);
-    pp_check(pp_h_during > 0, "P5", "precondition: high calls started inside the low loop", pp_h_during);
+    pp_check(pp_h_during > 0, "P5", "no starvation: high calls started inside the low loop", pp_h_during);
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     pp_done = 1;
     tk_wup_tsk(pp_caller);

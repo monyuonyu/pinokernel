@@ -254,6 +254,20 @@ __asm__(
 );
 
 extern volatile int pk_parallel_busy;        /* llm/pk_parallel.c: a pool job is out */
+extern void (*pk_parallel_on_leave)(void);
+
+/* pk_parallel.c calls this when its last dispatch is joined (task context, at
+ * a call boundary): the switch maybe_preempt skipped while the pool was busy
+ * happens here. Without it a task calling the pool back to back starved higher
+ * tasks (`tkconf pool` P5 = 0, measured 2/2). -DPK_POOL_NO_LEAVE_DISPATCH:
+ * skip it (the negative control for P5). */
+static void pk_pool_left(void)
+{
+#ifndef PK_POOL_NO_LEAVE_DISPATCH
+    if (pk_text_ok && !arch_irq_disabled_flag)
+        arch_preempt_dispatch();
+#endif
+}
 
 static void maybe_preempt(ucontext_t *uc)
 {
@@ -317,6 +331,7 @@ void arch_signals_init(void)
     if (sigaltstack(&ss, NULL) < 0) { perror("sigaltstack"); exit(1); }
 #ifndef PK_HOSTED_NO_EXIT_DISPATCH
     pk_text_check();
+    if (pk_text_ok) pk_parallel_on_leave = pk_pool_left;
 #endif
 
     struct sigaction sa = { 0 };

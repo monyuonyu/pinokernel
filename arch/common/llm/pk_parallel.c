@@ -57,10 +57,13 @@ static int             g_last_par = 0;     /* gate decision of last gated call *
  * dispatching task must not be switched out between publish and join: another
  * task's dispatch would overwrite the job and lose rows (audit-21: 15-21 of
  * 150 calls), or block on g_pool.mtx held by the switched-out task. preempt.c
- * does not switch while this is non-zero; the next tick tries again. The cost
- * is that a higher task waits for one dispatch, as it did before the exit
- * dispatch. -DPK_POOL_PREEMPTIBLE: not counted (the negative control). */
+ * does not switch while this is non-zero, and installs pk_parallel_on_leave,
+ * called when the count drops to 0, to make the switch the tick skipped (else
+ * a task calling the pool back to back starves higher ones: almost every tick
+ * lands inside a dispatch). A higher task waits for at most one dispatch.
+ * -DPK_POOL_PREEMPTIBLE: not counted (the negative control). */
 volatile int pk_parallel_busy;
+void (*pk_parallel_on_leave)(void);         /* NULL without the hosted kernel */
 
 /* ---- the deterministic partition (pure function of (out, NW)) ---------- */
 /* Slice s in [0,nw) owns rows [s*q + min(s,r), ...). A ragged remainder
@@ -222,7 +225,8 @@ void pk_parallel_rows(size_t out, pk_row_body body, void *ctx)
         pthread_cond_wait(&g_pool.done_cv, &g_pool.mtx);
     pthread_mutex_unlock(&g_pool.mtx);
 #ifndef PK_POOL_PREEMPTIBLE
-    pk_parallel_busy--;
+    if (--pk_parallel_busy == 0 && pk_parallel_on_leave)
+        pk_parallel_on_leave();
 #endif
 }
 
