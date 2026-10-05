@@ -7,21 +7,28 @@ RED when:
                 30-module/ 40-verify/ 50-evolution/ has no row in the table
                 (30-module/research/ memos are notes for an item, not rungs)
   stale-row     a row names a doc that does not exist
+  dup-row       a doc has more than one row
   no-cert       a CLOSED or PARTIAL row cites no cert at all
   unknown-cert  a CLOSED or PARTIAL row cites a cert found nowhere: a [tag]
                 must appear whole as "[tag]" (a [pre*] as "[pre...]"), not glued
                 to an identifier, in the code / tests / samples / ci.yml, and
                 be at least 3 characters; a `name` must be a ci.yml job id, a
-                step's name:, a whole token of ci.yml, or a file / directory
-                name in the repo
+                step's name:, a path from the repo root that exists (if it has
+                a '/'), a file name in the repo or a samples/ directory with a
+                script in it (not any other directory name), or a whole
+                phrase of ci.yml with a space, '-' or '_' in it. The row's own
+                design doc and V-MODEL.md are never a cert
   open-ceiling  more OPEN rows than OPEN_MAX (OPEN may only go down; lower
                 OPEN_MAX in the same change that closes one)
   tally         a count in the "Rung tally" table differs from the rows, or one
                 of its five lines is missing
 
-`--selftest` breaks a copy of the real table nine ways (each check, plus the
+`--selftest` breaks a copy of the real table sixteen ways (each check, the
 three that audit-20 found green: a bare substring of ci.yml, a one-letter tag,
-a deleted tally line) and requires each to go red, and the unbroken copy green.
+a deleted tally line, and the six audit-21 found green: a missing path with a
+real basename, the row's own doc, V-MODEL.md, a directory name, a plain ci.yml
+word, a step name's first word) and requires each to go red, and the unbroken
+copy green.
 The design docs themselves carry no metadata yet (the table is the source);
 moving the source into each doc's head is the next slice of 0-7.
 Exit 0 = green, 1 = red.
@@ -94,8 +101,11 @@ def load_corpus():
     for d in CORPUS_DIRS:
         base = os.path.join(ROOT, d)
         for dp, dns, fns in os.walk(base):
-            for n in dns:
-                names.add(n)
+            # files, and a samples/ directory with a script in it (`14_genome`);
+            # other directory names (`host`, `common`) prove nothing
+            if (os.path.dirname(dp) == os.path.join(ROOT, "samples")
+                    and any(f.endswith(".sh") for f in fns)):
+                names.add(os.path.basename(dp))
             for f in fns:
                 names.add(f)
                 if f.endswith(CORPUS_EXT):
@@ -149,12 +159,24 @@ def tag_found(tag, blob):
     return re.search(pat, blob) is not None
 
 
-def name_found(n, ci, names, jobs):
-    """a `name` is a ci.yml job id, a step's name:, a file / directory name, or a
-    whole token of ci.yml (not part of a longer one: `ump` is not `ump-x86_64`)."""
-    if n in jobs or n in names or os.path.basename(n) in names:
+NOT_CERTS = {"V-MODEL.md"}   # the table cannot prove itself
+
+
+def name_found(n, ci, names, jobs, doc=None):
+    """a `name` is a ci.yml job id, a step's name:, a path from the repo root
+    that exists (when it has a '/'), a file name (not a directory), or a whole
+    phrase of ci.yml that has a space, '-' or '_' in it (not part of a longer
+    one: `ump` is not `ump-x86_64`; a plain word like `make` proves nothing).
+    The row's own design doc and V-MODEL.md never count."""
+    if os.path.basename(n) in NOT_CERTS or (doc and os.path.basename(n) == doc):
+        return False
+    if n in jobs:
         return True
-    if len(n) < TAG_MIN:
+    if "/" in n:
+        return os.path.isfile(os.path.join(ROOT, n))
+    if n in names:
+        return True
+    if len(n) < TAG_MIN or not re.search(r"[ \-_]", n):
         return False
     return re.search("(?<![" + ID + "])" + re.escape(n) + "(?![" + ID + "])", ci) is not None
 
@@ -168,6 +190,8 @@ def check(vtext, docs, corpus, roots=frozenset()):
         if m:
             rows.append((m.group(1), m.group(3), rung_of(m.group(4))))
     seen = {r[0] for r in rows}
+    for d in sorted({r[0] for r in rows if [x[0] for x in rows].count(r[0]) > 1}):
+        errs.append("dup-row: %s has more than one row" % d)
     for d in sorted(docs - seen):
         errs.append("missing-row: %s has no row in V-MODEL.md" % d)
     for d in sorted(seen - docs - set(roots)):
@@ -186,7 +210,7 @@ def check(vtext, docs, corpus, roots=frozenset()):
             if not tag_found(t, blob):
                 errs.append("unknown-cert: %s cites [%s], found nowhere as a whole tag" % (doc, t))
         for n in nms:
-            if not name_found(n, ci, names, jobs):
+            if not name_found(n, ci, names, jobs, doc):
                 errs.append("unknown-cert: %s cites `%s`, not a ci.yml job / step / token or a file name"
                             % (doc, n))
     if counts.get("OPEN", 0) > OPEN_MAX:
@@ -231,6 +255,16 @@ def selftest(vtext, docs, corpus, roots):
         ("unknown-cert", vtext.replace(closed, "| %s | x | `ump` | ✓ CLOSED |" % cdoc), docs),
         ("unknown-cert", vtext.replace(closed, "| %s | x | `[s]` | ✓ CLOSED |" % cdoc), docs),
         ("tally", "\n".join(l for l in lines if not l.startswith("| **✓ CLOSED**")) + "\n", docs),
+        # audit-21's six: a path that does not exist (its basename does), the
+        # row's own doc, V-MODEL.md, a directory name, a plain ci.yml word, the
+        # first word of a step name; and a doc with two rows
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `tests/no/such/dir/run.sh` | ✓ CLOSED |" % cdoc), docs),
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `%s` | ✓ CLOSED |" % (cdoc, cdoc)), docs),
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `V-MODEL.md` | ✓ CLOSED |" % cdoc), docs),
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `host` | ✓ CLOSED |" % cdoc), docs),
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `echo` | ✓ CLOSED |" % cdoc), docs),
+        ("unknown-cert", vtext.replace(closed, "| %s | x | `ARK` | ✓ CLOSED |" % cdoc), docs),
+        ("dup-row", vtext.replace(closed, closed + "\n" + closed), docs),
     ]
     for name, vt, ds in breaks:
         errs, _ = check(vt, ds, corpus, roots)
