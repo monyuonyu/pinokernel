@@ -38,6 +38,10 @@
  */
 #define DORMANT_STACK_SIZE	112
 
+/* arch/linux/aarch64/preempt.c: clear the task id's "inside the preemption
+ * trampoline" word (a task deleted while switched out there kept it set) */
+IMPORT void arch_preempt_forget( int tskid );
+
 /*
  * 休止状態タスクのコンテキスト初期化
  *	タスク生成時・終了時に呼ばれ、次回起動時にトランポリンへ
@@ -62,6 +66,7 @@ Inline void knl_setup_context( TCB *tcb )
 	((void **)ssp)[11] = (void *)knl_task_entry_trampoline;
 
 	tcb->tskctxb.ssp = ssp;
+	arch_preempt_forget(tcb->tskid);
 }
 
 /*

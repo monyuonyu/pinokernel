@@ -502,10 +502,15 @@ set_source_files_properties(${LLM_TEACHER_SRC} PROPERTIES
     COMPILE_OPTIONS "-ffp-contract=off"
     INCLUDE_DIRECTORIES "${ARCH_CO}/llm")
 
+# pk_text_begin.c / pk_text_end.c stay FIRST / LAST: they bracket p-kernel's
+# own .text for the exit dispatch (arch/linux/aarch64/preempt.c checks the
+# bracket at boot and keeps the old behaviour if it does not hold).
 add_library(pkernel SHARED
+    ${ARCH_LX}/aarch64/pk_text_begin.c
     ${BOOT} ${ARCH_SRC} ${ARCH_SHARED_SRC} ${RELAY_SRC} ${COMMON_SRC}
     ${MTK3_KNL_SRC} ${GPU_SRC} ${JNI_SRC}
-    ${LLM_STUDENT_SRC} ${LLM_TEACHER_SRC} ${LLM_STUB_SRC})
+    ${LLM_STUDENT_SRC} ${LLM_TEACHER_SRC} ${LLM_STUB_SRC}
+    ${ARCH_LX}/aarch64/pk_text_end.c)
 
 # galaxy_page.h / manifesto_page.h live in the generated dir; galaxy.c and
 # ark_profile.c #include them by bare name. gpu_gen holds the SPIR-V header.
