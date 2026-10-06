@@ -17,6 +17,9 @@
 #   slow     -DARK_FAULT_SLOW_GET=200000 (ARK get widened): ALL PASS
 #   slowoff  the same with -DPK_NOSW_OFF: must be RED on N9 (unwidened, N9
 #            catches the ARK race only 1 time in 2, so CI asks it widened)
+#   netlive  plain build with the LAN up (PKERNEL_LAN=1 + key): the net_lan
+#            probe must refuse (N23 PASS, N20-N22 SKIPPED, no ALL PASS)
+#   netliveng  -DPK_NETLAN_PROBE_NO_GUARD, LAN up: must be RED on N23
 # A negative-control arm that stays green fails this script.
 #
 #   tests/host/run_nosw.sh            (x86_64 host)
@@ -81,6 +84,30 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
 expect_red off "-DPK_NOSW_OFF" "N1 N20"
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
+
+# The net_lan probe uses an all-zero key; with the LAN up that key is the live
+# one (net_task receives with it). Live, the probe must refuse: N23 PASS,
+# N20-N22 SKIPPED and the summary must not say ALL PASS.
+LIVE="PKERNEL_LAN=1 PKERNEL_LAN_PORT=17351 PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+live() {  # $1 = arm, $2 = tree root, $3 = pass|red
+    printf 'tkconf nosw\nexit\n' | env $LIVE PKERNEL_GALAXY=0 timeout 300 "$2/boot/linux_x86_64/p-kernel" 2>&1 \
+        | tr -d '\r' | grep -a '^\[\(nosw\|net_lan\)\]' > "$WORK/$1.log"
+    grep -a '^\[nosw\] \(FAIL\|PASS N23\|SKIP\|net_lan\|ALL PASS\|PASS,\|RED\)\|^\[net_lan\] node' "$WORK/$1.log"
+    if [ "$3" = pass ]; then
+        if grep -aq '^\[nosw\] PASS N23 ' "$WORK/$1.log" && grep -aq '^\[nosw\] SKIP N20 N21 N22 ' "$WORK/$1.log" \
+           && ! grep -aq '^\[nosw\] ALL PASS' "$WORK/$1.log"; then echo "[result] $1 N23 PASS, N20-N22 SKIPPED (expected)"
+        else echo "[result] $1 UNEXPECTED (want PASS N23, SKIP N20-N22, no ALL PASS)"; rc_all=1; fi
+    else
+        if grep -aq '^\[nosw\] FAIL N23 ' "$WORK/$1.log"; then echo "[result] $1 RED on N23 (expected)"
+        else echo "[result] $1 not red on N23 (UNEXPECTED: the probe swapped the live key unseen)"; rc_all=1; fi
+    fi
+    echo ""
+}
+echo "[run] netlive (plain build, LAN up)"
+live netlive "$ROOT" pass
+echo "[build] netliveng (-DPK_NETLAN_PROBE_NO_GUARD)"
+d=$(arm netliveng "-DPK_NETLAN_PROBE_NO_GUARD")
+if [ -n "$d" ]; then live netliveng "$d" red; else echo "[result] netliveng build FAILED"; rc_all=1; fi
 
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-cert] PASS"; else echo "[nosw-cert] FAIL"; fi
 exit "$rc_all"

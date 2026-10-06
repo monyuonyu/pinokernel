@@ -416,23 +416,42 @@ int net_lan_send(const void *frame, int len)
     return len;
 }
 
-/* `tkconf nosw` probe (pool_preempt.c N20-N21), no socket needed.
- * net_lan_probe(1) switches to the v2 wire with an all-zero key and returns
- * next_nonce; net_lan_probe(0) puts the wire and key back. */
+/* `tkconf nosw` probe (pool_preempt.c N20-N23), no socket needed.
+ * net_lan_probe(1, &n) switches to the v2 wire with an all-zero key;
+ * net_lan_probe(0, &n) puts the wire and key back. Both store next_nonce in
+ * *n. While the LAN is up (sock_fd >= 0) net_lan_probe(1) refuses and changes
+ * nothing (-1): net_task's net_lan_recv and the heartbeat use the same key,
+ * so a zero key would accept forged v2 packets and send unverifiable ones
+ * (audit-26). -DPK_NETLAN_PROBE_NO_GUARD: no refusal (the negative control). */
+static int probe_on;
 static int probe_saved_ver;
 static u8  probe_saved_key[KEY_LEN];
-unsigned long long net_lan_probe(int on)
+int net_lan_probe(int on, unsigned long long *nonce)
 {
     if (on) {
+#ifndef PK_NETLAN_PROBE_NO_GUARD
+        if (sock_fd >= 0) return -1;
+#endif
         probe_saved_ver = wire_version;
         memcpy(probe_saved_key, key, KEY_LEN);
         memset(key, 0, KEY_LEN);
         wire_version = RELAY_VER_V2;
-    } else {
+        probe_on = 1;
+    } else if (probe_on) {
         wire_version = probe_saved_ver;
         memcpy(key, probe_saved_key, KEY_LEN);
+        probe_on = 0;
     }
-    return next_nonce;
+    *nonce = next_nonce;
+    return 0;
+}
+int net_lan_live(void) { return sock_fd >= 0; }
+/* A sum of the key's bytes (N23: the key while the probe is on). */
+unsigned net_lan_key_sum(void)
+{
+    unsigned s = 0;
+    for (int i = 0; i < KEY_LEN; i++) s += key[i];
+    return s;
 }
 /* One send into out (>= MAX_PKT bytes). 1 = the packet is this call's own:
  * its payload is `frame` and its MAC verifies; 0 = it is not. */

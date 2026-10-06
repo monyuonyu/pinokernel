@@ -74,6 +74,7 @@ static ID pp_mk(void (*fn)(INT, void *), PRI pri)
 static void (*pp_out)(const char *);
 static const char *pp_tag = "[pool]";
 static INT pp_fail;
+static INT pp_skip;
 static ID pp_caller;
 static volatile INT pp_done;
 
@@ -666,11 +667,17 @@ static void ns_poolregion(void)
  *   N20  packets that are not the sender's own (payload or MAC)
  *   N21  nonces lost: next_nonce advanced less than the number of sends
  *   N22  no starvation: sends landed while the runner was busy
- * -DPK_NOSW_OFF must turn N20 red. */
+ * -DPK_NOSW_OFF must turn N20 red.
+ * The zero key is the live key: while the LAN is up (PKERNEL_LAN=1) the probe
+ * refuses, N20-N22 are SKIPPED (the summary says so, not ALL PASS) and
+ *   N23  live LAN: the probe was refused and the key stayed as it was
+ * -DPK_NETLAN_PROBE_NO_GUARD must turn N23 red (run_nosw.sh netlive arms). */
 #define NW_HI  60
 #define NW_LEN 1000
-IMPORT unsigned long long net_lan_probe(int on);
+IMPORT int net_lan_probe(int on, unsigned long long *nonce);
 IMPORT int net_lan_probe_send(const void *frame, int len, unsigned char *out);
+IMPORT int net_lan_live(void);
+IMPORT unsigned net_lan_key_sum(void);
 static volatile INT nw_hrun, nw_hbad, nw_during, nw_busy;
 static void t_nw_high(INT stacd, void *exinf)
 {
@@ -689,8 +696,23 @@ static void ns_netlan(void)
 {
     static UB f[NW_LEN], o[NW_LEN + 64];
     INT sends = 0, bad = 0;
+    unsigned long long n0, n1;
+    if (net_lan_live()) {
+        unsigned k0 = net_lan_key_sum();
+        int r = net_lan_probe(1, &n0);
+        unsigned k1 = net_lan_key_sum();
+        if (r == 0) net_lan_probe(0, &n1);
+        { char m[160];
+          snprintf(m, sizeof m, "[nosw] net_lan is live: probe %s, key sum %u -> %u\r\n",
+                   r < 0 ? "refused" : "ran", k0, k1);
+          pp_out(m); }
+        pp_check(r < 0 && k1 == k0, "N23", "live LAN: the probe left the key alone (key sum during it)", (long)k1);
+        pp_out("[nosw] SKIP N20 N21 N22  net_lan is live (the probe needs its own zero key)\r\n");
+        pp_skip += 3;
+        return;
+    }
     memset(f, 0xAA, sizeof f);
-    unsigned long long n0 = net_lan_probe(1);
+    net_lan_probe(1, &n0);
     nw_hrun = nw_hbad = nw_during = 0;
     ID t = pp_mk(t_nw_high, 19);
     if (t > 0) tk_sta_tsk(t, 0);
@@ -702,7 +724,7 @@ static void ns_netlan(void)
     nw_busy = 0;
     for (INT n = 0; n < 200 && nw_hrun < NW_HI; n++) tk_dly_tsk(10);
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
-    unsigned long long n1 = net_lan_probe(0);
+    net_lan_probe(0, &n1);
     long long lost = (long long)(sends + nw_hrun) - (long long)(n1 - n0);
     { char m[200];
       snprintf(m, sizeof m, "[nosw] net_lan: %d runner sends, %d high sends, nonces %llu\r\n",
@@ -757,7 +779,7 @@ done:
 
 INT nosw_run(void (*out)(const char *))
 {
-    pp_out = out; pp_fail = 0; pp_done = 0; pp_tag = "[nosw]";
+    pp_out = out; pp_fail = 0; pp_skip = 0; pp_done = 0; pp_tag = "[nosw]";
     out("[nosw] a kdds topic slot under task switches (runner pri 20, publisher pri 19)\r\n");
     pp_caller = tk_get_tid();
     ID run = pp_mk(t_ns_runner, 20);
@@ -767,7 +789,9 @@ INT nosw_run(void (*out)(const char *))
     while (!pp_done && tk_slp_tsk(120000) == E_OK) { }
     if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
-    out(pp_fail ? "[nosw] RED\r\n" : "[nosw] ALL PASS\r\n");
+    out(pp_fail ? "[nosw] RED\r\n" :
+        pp_skip ? "[nosw] PASS, BUT N20-N22 SKIPPED (net_lan is live)\r\n" :
+                  "[nosw] ALL PASS\r\n");
     return pp_fail;
 }
 
