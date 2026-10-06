@@ -16,6 +16,8 @@
 #   slow     -DARK_FAULT_SLOW_GET=200000 (ARK get widened): ALL PASS
 #   slowoff  the same with -DPK_NOSW_OFF: must be RED on N9 (unwidened, N9
 #            catches the ARK race only 1 time in 2, so CI asks it widened)
+#   slowclaim  -DDRPC_FAULT_SLOW_CLAIM=200000 (drpc_claim's gap widened): ALL PASS
+#   slowclaimoff  the same with -DPK_NOSW_OFF: must be RED on N26
 # A negative-control arm that stays green fails this script.
 #
 #   tests/host/run_nosw.sh            (x86_64 host)
@@ -78,6 +80,8 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
 expect_red off "-DPK_NOSW_OFF" N1
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
+expect_green slowclaim "-DDRPC_FAULT_SLOW_CLAIM=200000"
+expect_red slowclaimoff "-DDRPC_FAULT_SLOW_CLAIM=200000 -DPK_NOSW_OFF" N26
 
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-cert] PASS"; else echo "[nosw-cert] FAIL"; fi
 exit "$rc_all"

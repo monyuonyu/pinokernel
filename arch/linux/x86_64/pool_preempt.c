@@ -657,6 +657,61 @@ static void ns_poolregion(void)
     pp_check(nq_hrun == NQ_HI, "N19", "no starvation: high wakes finished (of 30)", nq_hrun);
 }
 
+/* N26-N27: drpc's pending table (drpc_claim: search, seq, fill, in_use). The
+ * runner claims and releases a slot over and over; a pri-19 task wakes every
+ * 2 ms, claims a slot, holds it over a 1 ms sleep and checks it still holds
+ * its own claim, 60 times. The runner checks its claim too.
+ *   N26  claims found overwritten by another claim (the same slot twice)
+ *   N27  no starvation: high claims while the runner was claiming
+ * With -DDRPC_FAULT_SLOW_CLAIM=<spins> (the gap widened), -DPK_NOSW_OFF must
+ * turn N26 red (run_nosw.sh slowclaim / slowclaimoff). */
+#define DC_HI 60
+IMPORT INT  drpc_probe_claim(UH *seq);
+IMPORT BOOL drpc_probe_mine(INT slot, UH seq);
+IMPORT void drpc_probe_release(INT slot);
+static volatile INT dc_hrun, dc_bad, dc_during, dc_busy, dc_full;
+static void t_dc_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < DC_HI; n++) {
+        UH q = 0;
+        tk_dly_tsk(2);
+        if (dc_busy) dc_during++;
+        INT sl = drpc_probe_claim(&q);
+        if (sl < 0) { dc_full++; dc_hrun++; continue; }
+        tk_dly_tsk(1);
+        if (!drpc_probe_mine(sl, q)) dc_bad++;
+        drpc_probe_release(sl);
+        dc_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_drpc(void)
+{
+    INT claims = 0, bad = 0;
+    dc_hrun = dc_bad = dc_during = dc_full = 0;
+    ID t = pp_mk(t_dc_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    dc_busy = 1;
+    while (dc_hrun < DC_HI && claims < 50000000) {
+        UH q = 0;
+        INT sl = drpc_probe_claim(&q);
+        if (sl < 0) { dc_full++; continue; }
+        if (!drpc_probe_mine(sl, q)) bad++;
+        drpc_probe_release(sl);
+        claims++;
+    }
+    dc_busy = 0;
+    for (INT n = 0; n < 200 && dc_hrun < DC_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    { char m[160];
+      snprintf(m, sizeof m, "[nosw] drpc: %d runner claims, %d high claims, table full %d times\r\n",
+               (int)claims, (int)dc_hrun, (int)dc_full);
+      pp_out(m); }
+    pp_check(bad + dc_bad == 0, "N26", "drpc claims overwritten by another claim", bad + dc_bad);
+    pp_check(dc_during > 0, "N27", "no starvation: high claims while the runner was claiming", dc_during);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -692,6 +747,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_dlb();
     ns_dkva();
     ns_poolregion();
+    ns_drpc();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
