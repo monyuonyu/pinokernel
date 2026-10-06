@@ -716,8 +716,14 @@ INT nosw_run(void (*out)(const char *))
     if (run <= 0) { out("[nosw] FAIL setup: no runner task\r\n"); return 1; }
     tk_can_wup(TSK_SELF);
     tk_sta_tsk(run, 0);
-    while (!pp_done && tk_slp_tsk(120000) == E_OK) { }
-    if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
+    /* 900 s, not 120: with the regions on, the high task of the student part
+     * runs once per ST_TRAIN_STEP (the step is one region), and under
+     * qemu-aarch64-static a step of the M baby takes ~15 s. At 120 s the
+     * runner was in that phase, depth 0, ready, 6-7 steps done (2/2); with
+     * 1500 s the whole run was ALL PASS in 370 s (2026-10-07, /build/a64d-e).
+     * Native x86_64 finishes far inside either limit. */
+    while (!pp_done && tk_slp_tsk(900000) == E_OK) { }
+    if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 900 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
     out(pp_fail ? "[nosw] RED\r\n" : "[nosw] ALL PASS\r\n");
     return pp_fail;
