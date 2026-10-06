@@ -87,13 +87,16 @@ expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
 
 # The net_lan probe uses an all-zero key; with the LAN up that key is the live
 # one (net_task receives with it). Live, the probe must refuse: N23 PASS,
-# N20-N22 SKIPPED and the summary must not say ALL PASS.
+# N20-N22 SKIPPED and the summary must not say ALL PASS. The LAN starts on the
+# shell verb `net`; the [net_lan] node line shows it came up.
 LIVE="PKERNEL_LAN=1 PKERNEL_LAN_PORT=17351 PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 live() {  # $1 = arm, $2 = tree root, $3 = pass|red
-    printf 'tkconf nosw\nexit\n' | env $LIVE PKERNEL_GALAXY=0 timeout 300 "$2/boot/linux_x86_64/p-kernel" 2>&1 \
+    printf 'net\ntkconf nosw\nexit\n' | env $LIVE PKERNEL_GALAXY=0 timeout 300 "$2/boot/linux_x86_64/p-kernel" 2>&1 \
         | tr -d '\r' | grep -a '^\[\(nosw\|net_lan\)\]' > "$WORK/$1.log"
     grep -a '^\[nosw\] \(FAIL\|PASS N23\|SKIP\|net_lan\|ALL PASS\|PASS,\|RED\)\|^\[net_lan\] node' "$WORK/$1.log"
-    if [ "$3" = pass ]; then
+    if ! grep -aq '^\[net_lan\] node ' "$WORK/$1.log"; then
+        echo "[result] $1 the LAN did not come up (UNEXPECTED)"; rc_all=1
+    elif [ "$3" = pass ]; then
         if grep -aq '^\[nosw\] PASS N23 ' "$WORK/$1.log" && grep -aq '^\[nosw\] SKIP N20 N21 N22 ' "$WORK/$1.log" \
            && ! grep -aq '^\[nosw\] ALL PASS' "$WORK/$1.log"; then echo "[result] $1 N23 PASS, N20-N22 SKIPPED (expected)"
         else echo "[result] $1 UNEXPECTED (want PASS N23, SKIP N20-N22, no ALL PASS)"; rc_all=1; fi
