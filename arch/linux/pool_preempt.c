@@ -72,6 +72,9 @@ static ID pp_mk(void (*fn)(INT, void *), PRI pri)
 }
 
 static void (*pp_out)(const char *);
+/* arch/linux/aarch64/preempt.c: SIGALRM ticks that arrived on a thread other
+ * than the T-Kernel one (not switched). Weak: absent on x86_64. */
+extern volatile unsigned long arch_preempt_foreign_ticks __attribute__((weak));
 static const char *pp_tag = "[pool]";
 static INT pp_fail;
 static ID pp_caller;
@@ -110,6 +113,12 @@ static void t_pp_runner(INT stacd, void *exinf)
     pp_check(pp_h_runs == PP_HCALLS, "P3", "high task: calls finished (of 40)", pp_h_runs);
     pp_check(wakes > 0, "P4", "precondition: pool helper wakes", (long)wakes);
     pp_check(pp_h_during > 0, "P5", "no starvation: high calls started inside the low loop", pp_h_during);
+    if (&arch_preempt_foreign_ticks) {          /* hosted aarch64 only (weak) */
+        char m[96];
+        snprintf(m, sizeof m, "[pool] note: ticks taken on another OS thread %lu\r\n",
+                 (unsigned long)arch_preempt_foreign_ticks);
+        pp_out(m);
+    }
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     pp_done = 1;
     tk_wup_tsk(pp_caller);

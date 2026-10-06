@@ -316,8 +316,20 @@ static int frame_self_contained(const ucontext_t *uc)
     return 0;
 }
 
+/* the thread arch_timer_start ran on (the T-Kernel thread). A tick taken on
+ * any other thread (the pool's helpers are p-kernel code too) must never
+ * enter the trampoline: it would dispatch on the wrong OS thread. Counted so
+ * `tkconf pool` can show whether it happens (SIGEV_THREAD_ID should prevent
+ * it; under qemu-user it was not known). */
+static long arch_kernel_tid;
+volatile unsigned long arch_preempt_foreign_ticks;
+
 static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
 {
+    if (arch_kernel_tid && syscall(SYS_gettid) != arch_kernel_tid) {
+        arch_preempt_foreign_ticks++;
+        return;
+    }
     if (arch_irq_disabled_flag || knl_taskindp != 0 ||
         knl_dispatch_disabled || knl_ctxtsk == 0 || knl_ctxtsk == knl_schedtsk)
         return;
@@ -345,6 +357,7 @@ static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
     uc->uc_mcontext.pc = (unsigned long long)(uintptr_t)arch_preempt_tramp;
 }
 #else
+volatile unsigned long arch_preempt_foreign_ticks;
 void arch_preempt_forget(int tskid) { (void)tskid; }
 void pk_nosw_enter(void) { }
 void pk_nosw_leave(void) { }
@@ -430,6 +443,9 @@ void arch_timer_start(unsigned long period_us)
             perror("timer_create"); exit(1);
         }
         arch_alarm_tid_created = 1;
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+        arch_kernel_tid = (long)syscall(SYS_gettid);
+#endif
     }
     struct itimerspec its = {
         .it_interval = { .tv_sec = period_us / 1000000,
