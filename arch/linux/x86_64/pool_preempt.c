@@ -667,50 +667,50 @@ static void ns_poolregion(void)
  *   N21  nonces lost: next_nonce advanced less than the number of sends
  *   N22  no starvation: sends landed while the runner was busy
  * -DPK_NOSW_OFF must turn N20 red. */
-#define NL_HI  60
-#define NL_LEN 1000
+#define NW_HI  60
+#define NW_LEN 1000
 IMPORT unsigned long long net_lan_probe(int on);
 IMPORT int net_lan_probe_send(const void *frame, int len, unsigned char *out);
-static volatile INT nl_hrun, nl_hbad, nl_during, nl_busy;
-static void t_nl_high(INT stacd, void *exinf)
+static volatile INT nw_hrun, nw_hbad, nw_during, nw_busy;
+static void t_nw_high(INT stacd, void *exinf)
 {
-    static UB f[NL_LEN], o[NL_LEN + 64];
+    static UB f[NW_LEN], o[NW_LEN + 64];
     (void)stacd; (void)exinf;
     memset(f, 0xBB, sizeof f);
-    for (INT n = 0; n < NL_HI; n++) {
+    for (INT n = 0; n < NW_HI; n++) {
         tk_dly_tsk(2);
-        if (nl_busy) nl_during++;
-        if (!net_lan_probe_send(f, NL_LEN, o)) nl_hbad++;
-        nl_hrun++;
+        if (nw_busy) nw_during++;
+        if (!net_lan_probe_send(f, NW_LEN, o)) nw_hbad++;
+        nw_hrun++;
     }
     tk_ext_tsk();
 }
 static void ns_netlan(void)
 {
-    static UB f[NL_LEN], o[NL_LEN + 64];
+    static UB f[NW_LEN], o[NW_LEN + 64];
     INT sends = 0, bad = 0;
     memset(f, 0xAA, sizeof f);
     unsigned long long n0 = net_lan_probe(1);
-    nl_hrun = nl_hbad = nl_during = 0;
-    ID t = pp_mk(t_nl_high, 19);
+    nw_hrun = nw_hbad = nw_during = 0;
+    ID t = pp_mk(t_nw_high, 19);
     if (t > 0) tk_sta_tsk(t, 0);
-    nl_busy = 1;
-    while (nl_hrun < NL_HI && sends < 20000000) {
-        if (!net_lan_probe_send(f, NL_LEN, o)) bad++;
+    nw_busy = 1;
+    while (nw_hrun < NW_HI && sends < 20000000) {
+        if (!net_lan_probe_send(f, NW_LEN, o)) bad++;
         sends++;
     }
-    nl_busy = 0;
-    for (INT n = 0; n < 200 && nl_hrun < NL_HI; n++) tk_dly_tsk(10);
+    nw_busy = 0;
+    for (INT n = 0; n < 200 && nw_hrun < NW_HI; n++) tk_dly_tsk(10);
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     unsigned long long n1 = net_lan_probe(0);
-    long long lost = (long long)(sends + nl_hrun) - (long long)(n1 - n0);
+    long long lost = (long long)(sends + nw_hrun) - (long long)(n1 - n0);
     { char m[200];
       snprintf(m, sizeof m, "[nosw] net_lan: %d runner sends, %d high sends, nonces %llu\r\n",
-               (int)sends, (int)nl_hrun, n1 - n0);
+               (int)sends, (int)nw_hrun, n1 - n0);
       pp_out(m); }
-    pp_check(bad + nl_hbad == 0, "N20", "net_lan packets that were not the sender's own", bad + nl_hbad);
+    pp_check(bad + nw_hbad == 0, "N20", "net_lan packets that were not the sender's own", bad + nw_hbad);
     pp_check(lost == 0, "N21", "net_lan nonces lost (sends - nonces minted)", (INT)lost);
-    pp_check(nl_during > 0, "N22", "no starvation: net_lan sends while the runner was busy", nl_during);
+    pp_check(nw_during > 0, "N22", "no starvation: net_lan sends while the runner was busy", nw_during);
 }
 
 static void t_ns_runner(INT stacd, void *exinf)
