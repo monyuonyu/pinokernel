@@ -175,6 +175,18 @@ int pfs_dur_read(const char *fname, void *buf, unsigned maxlen)
     return (int)off;
 }
 
+/* Remove <dir>/<fname> (pfs_drop: a superseded block must not come back at
+ * the next restore). Returns 0 on success, -1 otherwise. */
+int pfs_dur_remove(const char *fname)
+{
+    const char *dir = pfs_dur_dir();
+    if (!dir) return -1;
+    char path[PFS_DUR_PATH_MAX];
+    if (snprintf(path, sizeof path, "%s/%s", dir, fname) >= (int)sizeof path)
+        return -1;
+    return unlink(path) == 0 ? 0 : -1;
+}
+
 /* True if `s` is exactly PFS_DUR_HEX_LEN lowercase-hex chars — i.e. looks
  * like a block-id filename (skips ".", "..", "refs.tab", "*.tmp"). */
 static int is_block_name(const char *s)
