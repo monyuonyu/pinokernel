@@ -25,6 +25,7 @@
 #include "dtr.h"
 #include "../../common/llm/dlb.h"
 #include "dkva.h"
+#include "pk_nosw.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -127,7 +128,8 @@ static void t_pp_runner(INT stacd, void *exinf)
  *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
  *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below),
  *   N12-N13 dtr (ns_dtr below), N14-N15 the dlb trace ring (ns_dlb below),
- *   N16-N17 the dkva KV cache (ns_dkva below)
+ *   N16-N17 the dkva KV cache (ns_dkva below), N18-N19 the pool inside a
+ *   region (ns_poolregion below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -615,6 +617,46 @@ static void ns_dkva(void)
     pp_check(nk_during > 0, "N17", "no starvation: rewrites while the runner was busy", nk_during);
 }
 
+/* N18-N19: the pool inside a no-switch region. The runner enters a region,
+ * runs a pool job (~ms) and checks no other task ran before it leaves; a
+ * pri-19 task wakes every 2 ms, 30 times. pk_pool_left (preempt.c) used to
+ * dispatch at the pool's end regardless of the region.
+ *   N18  no switch inside the region at the pool's end
+ *   N19  no starvation: the high task ran between the runner's regions
+ * -DPK_POOL_LEAVE_IGNORES_NOSW (the old pk_pool_left) must turn N18 red. */
+#define NQ_HI 30
+static volatile INT nq_hrun;
+static void t_nq_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < NQ_HI; n++) { tk_dly_tsk(2); nq_hrun++; }
+    tk_ext_tsk();
+}
+static void ns_poolregion(void)
+{
+    INT rounds = 0, inside = 0;
+    nq_hrun = 0;
+    ID t = pp_mk(t_nq_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    while (nq_hrun < NQ_HI && rounds < 100000) {
+        struct pp_ctx c = { pp_L, 3000 + (UW)rounds, 2000 };
+        PK_NOSW_ENTER();
+        INT h0 = nq_hrun;
+        pk_parallel_rows(PP_ROWS, pp_body, &c);
+        if (nq_hrun != h0) inside++;
+        PK_NOSW_LEAVE();
+        rounds++;
+    }
+    for (INT n = 0; n < 200 && nq_hrun < NQ_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] pool in a region: %d rounds, %d high wakes\r\n",
+               (int)rounds, (int)nq_hrun);
+      pp_out(m); }
+    pp_check(inside == 0, "N18", "rounds where another task ran inside the region", inside);
+    pp_check(nq_hrun == NQ_HI, "N19", "no starvation: high wakes finished (of 30)", nq_hrun);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -649,6 +691,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_dtr();
     ns_dlb();
     ns_dkva();
+    ns_poolregion();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
