@@ -43,6 +43,10 @@
  *	タスク生成時・終了時に呼ばれ、次回起動時にトランポリンへ
  *	着地するスタックフレームを構築します。
  */
+#if !defined(PK_NOSW_OFF) && !defined(SMP_SELFTEST)
+IMPORT void knl_nosw_forget( ID tskid );	/* cpu_cntl.c */
+#endif
+
 Inline void knl_setup_context( TCB *tcb )
 {
 	/* AArch64 は sp 経由のすべてのロード/ストアで 16 バイト整列を
@@ -62,6 +66,9 @@ Inline void knl_setup_context( TCB *tcb )
 	((void **)ssp)[11] = (void *)knl_task_entry_trampoline;
 
 	tcb->tskctxb.ssp = ssp;
+#if !defined(PK_NOSW_OFF) && !defined(SMP_SELFTEST)
+	knl_nosw_forget(tcb->tskid);	/* pk_nosw.h: a new life starts outside any region */
+#endif
 }
 
 /*

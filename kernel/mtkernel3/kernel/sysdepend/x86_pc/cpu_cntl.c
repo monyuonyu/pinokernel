@@ -87,11 +87,61 @@ EXPORT void knl_dispatch_poison_check( TCB *tcb )
  *	戻るので、iretq までの残りを割込み禁止に戻す。
  *	-DPK_RNG0_NO_EXIT_DISPATCH は修正前の振る舞い（試験の陰性コントロール用）。
  */
+#ifndef PK_NOSW_OFF
+/*
+ * 切り替えない区間（arch/common/include/pk_nosw.h。R-NOSW-BARE、2026-10-07）
+ *	タスクの間で共有する状態（kdds の話題の枠など）を、カーネルを呼ばずに
+ *	読み書きしている間は、割込みの出口で切り替えない。深さはタスクごと
+ *	（区間の中で tk_* で待てば、ほかのタスクは普通に走る）。いちばん外側の
+ *	区間を出るとき、飛ばした切り替えをする（END_CRITICAL_SECTION の判定）。
+ *	タスク独立部（割込みハンドラ）の中の区間は数えない（そこでは切り替わら
+ *	ない）。深さは knl_setup_context（休止状態にするたび）で 0 に戻す。
+ *	-DPK_NOSW_OFF: 区間なし（陰性コントロール）。
+ */
+LOCAL UH knl_nosw_depth[CFN_MAX_TSKID];
+
+EXPORT void pk_nosw_enter( void )
+{
+	BEGIN_DISABLE_INTERRUPT;
+	if ( knl_taskindp == 0 && knl_ctxtsk != NULL ) {
+		knl_nosw_depth[INDEX_TSK(knl_ctxtsk->tskid)]++;
+	}
+	END_DISABLE_INTERRUPT;
+}
+
+EXPORT void pk_nosw_leave( void )
+{
+	BOOL out = FALSE;
+
+	BEGIN_DISABLE_INTERRUPT;
+	if ( knl_taskindp == 0 && knl_ctxtsk != NULL ) {
+		UH *d = &knl_nosw_depth[INDEX_TSK(knl_ctxtsk->tskid)];
+		if ( *d != 0 && --*d == 0 ) {
+			out = TRUE;
+		}
+	}
+	END_DISABLE_INTERRUPT;
+	if ( out ) {
+		BEGIN_CRITICAL_SECTION;		/* 飛ばした切り替えがあればここで */
+		END_CRITICAL_SECTION;
+	}
+}
+
+EXPORT void knl_nosw_forget( ID tskid )
+{
+	knl_nosw_depth[INDEX_TSK(tskid)] = 0;
+}
+#define NOSW_HELD()	( knl_nosw_depth[INDEX_TSK(knl_ctxtsk->tskid)] != 0 )
+#else
+#define NOSW_HELD()	0
+#endif
+
 EXPORT void knl_irq_exit_dispatch( void )
 {
 #ifndef PK_RNG0_NO_EXIT_DISPATCH
 	if ( knl_taskindp == 0 && !knl_dispatch_disabled
-	  && knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk ) {
+	  && knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk
+	  && !NOSW_HELD() ) {
 		knl_dispatch();
 		__asm__ volatile ("cli" ::: "memory");
 	}
