@@ -117,7 +117,6 @@ ARCH_C_SRCS = \
     arch_reboot.c \
     vfs_stub.c \
     preempt.c \
-    pool_preempt.c \
     fault.c \
     time.c
 
@@ -125,7 +124,7 @@ RELAY_DIR    = $(ROOT)/relay
 RELAY_C_SRCS = sha256.c
 RELAY_OBJS   = $(RELAY_C_SRCS:.c=.o)
 
-ARCH_SHARED_C_SRCS = selfc.c selfc_proc.c pfs_durable.c pfs_ark.c sign_entropy.c console_ring.c node_id.c
+ARCH_SHARED_C_SRCS = selfc.c selfc_proc.c pfs_durable.c pfs_ark.c sign_entropy.c console_ring.c node_id.c pool_preempt.c
 ARCH_SHARED_OBJS   = $(ARCH_SHARED_C_SRCS:.c=.o)
 
 ARCH_OBJS = $(ARCH_C_SRCS:.c=.o) $(RELAY_OBJS) $(ARCH_SHARED_OBJS)

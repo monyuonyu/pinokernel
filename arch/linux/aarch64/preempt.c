@@ -175,6 +175,8 @@ void knl_idle_wait(void)
  * at the copy: the kernel restores the whole interrupted context exactly as
  * an ordinary signal return would. A frame with an extra_context record (its
  * data lives outside the copied bytes) is not preempted (old behaviour).
+ * pk_nosw.h regions work as on x86_64 (per-task depth; leaving the outermost
+ * one makes the skipped switch).
  * -DPK_HOSTED_NO_EXIT_DISPATCH: the old behaviour (negative control). */
 #include <ucontext.h>
 #include <stdint.h>
@@ -222,12 +224,18 @@ static void pk_text_check(void)
                 (void *)pk_text_begin, (void *)pk_text_end);
 }
 
+/* pk_nosw.h: per-task no-switch depth (index = task id) */
+static unsigned short nosw_depth[SIDE_SLOTS];
+
 /* knl_setup_context (task created / gone dormant): a task deleted while
- * switched out inside the trampoline must not leave its id marked busy */
+ * switched out inside the trampoline must not leave its id marked busy,
+ * nor a task deleted inside a no-switch region its id unpreemptable */
 void arch_preempt_forget(int tskid)
 {
-    if (tskid > 0 && tskid < SIDE_SLOTS)
+    if (tskid > 0 && tskid < SIDE_SLOTS) {
         side_stack[tskid][SIDE_SZ / 8 - 1] = 0;
+        nosw_depth[tskid] = 0;
+    }
 }
 
 /* called by arch_preempt_tramp on the side stack, in task context */
@@ -268,9 +276,29 @@ extern void (*pk_parallel_on_leave)(void);
 static void pk_pool_left(void)
 {
 #ifndef PK_POOL_NO_LEAVE_DISPATCH
+    /* the pool used inside a pk_nosw.h region: the outermost pk_nosw_leave
+     * dispatches instead. -DPK_POOL_LEAVE_IGNORES_NOSW: the old way (N18) */
+#ifndef PK_POOL_LEAVE_IGNORES_NOSW
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS && nosw_depth[id]) return;
+#endif
     if (pk_text_ok && !arch_irq_disabled_flag)
         arch_preempt_dispatch();
 #endif
+}
+
+/* pk_nosw.h. Outside a task (id 0, or before the kernel runs) both are no-ops. */
+void pk_nosw_enter(void)
+{
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS) nosw_depth[id]++;
+}
+
+void pk_nosw_leave(void)
+{
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS && nosw_depth[id] && --nosw_depth[id] == 0)
+        pk_pool_left();
 }
 
 /* the frame's records must all sit inside the copied bytes */
@@ -302,6 +330,7 @@ static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
         return;                              /* on its way back */
     int id = tk_get_tid();
     if (id <= 0 || id >= SIDE_SLOTS) return;
+    if (nosw_depth[id]) return;              /* pk_nosw.h region: on leaving */
     uint64_t *top = &side_stack[id][SIDE_SZ / 8];
     if (top[-1]) return;                     /* this task is already inside */
     /* the kernel's rt_sigframe is { siginfo; ucontext } back to back */
@@ -317,6 +346,8 @@ static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
 }
 #else
 void arch_preempt_forget(int tskid) { (void)tskid; }
+void pk_nosw_enter(void) { }
+void pk_nosw_leave(void) { }
 #endif
 
 static void sigalrm_handler(int sig, siginfo_t *si, void *ucv)

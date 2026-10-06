@@ -153,8 +153,8 @@ void knl_idle_wait(void)
  * is cleared when the task is (re)initialised (knl_setup_context), so a task
  * deleted while switched out inside the trampoline does not leave its id
  * unpreemptable for the next task with that id. Limits: AVX upper
- * halves are not saved (the hosted build does not use -mavx); x86_64 only
- * (the aarch64 / Android sibling is still the old behaviour).
+ * halves are not saved (the hosted build does not use -mavx). The aarch64 /
+ * Android sibling returns through rt_sigreturn instead (see its preempt.c).
  * -DPK_HOSTED_NO_EXIT_DISPATCH: the old behaviour (negative control). */
 #include <ucontext.h>
 #include <stdint.h>

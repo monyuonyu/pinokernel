@@ -124,7 +124,7 @@ RELAY_DIR    = $(ROOT)/relay
 RELAY_C_SRCS = sha256.c
 RELAY_OBJS   = $(RELAY_C_SRCS:.c=.o)
 
-ARCH_SHARED_C_SRCS = selfc.c selfc_proc.c pfs_durable.c pfs_ark.c sign_entropy.c console_ring.c node_id.c
+ARCH_SHARED_C_SRCS = selfc.c selfc_proc.c pfs_durable.c pfs_ark.c sign_entropy.c console_ring.c node_id.c pool_preempt.c
 ARCH_SHARED_OBJS   = $(ARCH_SHARED_C_SRCS:.c=.o)
 
 ARCH_OBJS = $(ARCH_C_SRCS:.c=.o) $(RELAY_OBJS) $(ARCH_SHARED_OBJS)
@@ -216,7 +216,10 @@ DMOE_OBJS = dmoe_bank.o
 # theater job — the SAME channel CFLAGS uses for -DCONSCIENCE_STUB.
 LLM_CFLAGS  = -Wall -Wextra -g -O1 -no-pie -fno-pie \
               -fno-stack-protector -fno-common -std=gnu11 \
-              -ffp-contract=off -MMD -MP -I$(LLM_DIR) -DCRADLE_HAS_CONSCIENCE $(EXTRA_CFLAGS)
+              -ffp-contract=off -MMD -MP -I$(LLM_DIR) -DCRADLE_HAS_CONSCIENCE \
+              -DPK_NOSW_HOSTED $(EXTRA_CFLAGS)
+# -DPK_NOSW_HOSTED: pk_nosw.h regions are real in this tier too (it has no
+# -D_LINUX_AARCH64_); -DPK_NOSW_OFF in EXTRA_CFLAGS still empties them.
 
 # ---- μT-Kernel 3.0 core sources ---------------------------------------
 # コア本体（kernel/tkernel）
