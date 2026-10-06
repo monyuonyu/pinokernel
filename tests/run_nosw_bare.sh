@@ -5,12 +5,19 @@
 #
 # Bare x86 and AArch64 switch at the outermost interrupt exit (RNG0), so a
 # task reading a kdds topic slot could be switched out half-way through the
-# copy. tk_conform.c's [nosw-bare] (built with -DPK_TKCONF -DPK_TKCONF_NOSW)
-# reads a LATEST_ONLY topic while a higher task publishes 60 values, and
-# counts torn reads. Per arch, two arms:
-#   new  regions on                  -> "[nosw-bare] PASS" (0 torn)
-#   off  -DPK_NOSW_OFF (regions gone) -> "[nosw-bare] FAIL" (the NC; 25-35
-#        torn reads in 2026-10-07's boots)
+# copy. tk_conform.c (built with -DPK_TKCONF -DPK_TKCONF_NOSW) prints:
+#   [nosw-bare]   torn reads of a LATEST_ONLY topic a higher task publishes to
+#   [nosw-leave]  a task woken inside a region runs at PK_NOSW_LEAVE, not before
+#   [nosw-ext]    a task that tk_ext_tsk's inside a region is preemptible in
+#                 its next life
+#   [nosw-ter]    the same after tk_ter_tsk inside a region
+# Per arch, four arms; each line is judged PASS / FAIL / - (not judged):
+#   new       regions on                    bare PASS leave PASS ext PASS ter PASS
+#   off       -DPK_NOSW_OFF (regions gone)  bare FAIL leave FAIL (25-35 torn
+#             reads in 2026-10-07's boots)
+#   noleave   cpu_cntl.c: leaving the region does not switch     leave FAIL
+#   noforget  cpu_task.h: a new life keeps the old region depth  ext FAIL ter FAIL
+# (noleave / noforget: audit-25 showed [nosw-bare] stays green under both.)
 #
 #   ./tests/run_nosw_bare.sh            (both arches)
 #   ARCHES=x86 ./tests/run_nosw_bare.sh
@@ -19,17 +26,38 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 ARCHES="${ARCHES:-x86 aarch64}"
+ARMS="${NOSW_ARMS:-new off noleave noforget}"
 BOOT_TIMEOUT="${NOSW_BOOT_TIMEOUT:-90}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 rc_all=0
-arm() {  # $1 = arch, $2 = new|off
-    local d="$WORK/$1-$2" log="$WORK/$1-$2.serial" cf line v want
+break_kernel() {  # $1 = tree, $2 = sysdepend dir, $3 = file, $4 = old, $5 = new
+    python3 - "$1/kernel/mtkernel3/kernel/sysdepend/$2/$3" "$4" "$5" <<'EOF'
+import sys
+p, old, new = sys.argv[1:4]
+s = open(p).read()
+assert s.count(old) == 1, ('anchor not found once', p, old)
+open(p, 'w').write(s.replace(old, new))
+EOF
+}
+arm() {  # $1 = arch, $2 = arm
+    local d="$WORK/$1-$2" log="$WORK/$1-$2.serial" cf sd want tag w line v
     cf="-DPK_TKCONF -DPK_TKCONF_NOSW"
-    [ "$2" = off ] && cf="$cf -DPK_NOSW_OFF"
+    sd=x86_pc; [ "$1" = aarch64 ] && sd=aarch64_virt
     mkdir -p "$d"
     tar -C "$ROOT" --exclude=./.git -cf - . | tar -C "$d" -xf -
+    case "$2" in
+        new)      want="bare=PASS leave=PASS ext=PASS ter=PASS" ;;
+        off)      want="bare=FAIL leave=FAIL ext=- ter=-"; cf="$cf -DPK_NOSW_OFF" ;;
+        noleave)  want="bare=- leave=FAIL ext=- ter=-"
+                  break_kernel "$d" "$sd" cpu_cntl.c $'\tif ( out ) {' $'\tif ( 0 && out ) {' \
+                      || { echo "[result] $1 $2 anchor missing (FAIL)"; rc_all=1; return; } ;;
+        noforget) want="bare=- leave=- ext=FAIL ter=FAIL"
+                  break_kernel "$d" "$sd" cpu_task.h $'\tknl_nosw_forget(tcb->tskid);' $'\t(void)0;' \
+                      || { echo "[result] $1 $2 anchor missing (FAIL)"; rc_all=1; return; } ;;
+        *) echo "[result] unknown arm $2"; rc_all=1; return ;;
+    esac
     : > "$log"
     if [ "$1" = x86 ]; then
         if ! ( cd "$d/boot/x86" && make clean && make EXTRA_CFLAGS="$cf" bootloader.bin ) > "$WORK/$1-$2.build" 2>&1; then
@@ -46,21 +74,23 @@ arm() {  # $1 = arch, $2 = new|off
             -M virt,gic-version=2 -cpu cortex-a53 -m 256M -serial stdio -display none \
             -no-reboot -nic none -kernel kernel.elf ) > "$log" 2>&1 < /dev/null
     fi
-    line=$(tr -d '\r' < "$log" | grep -a -m1 '^\[nosw-bare\]')
-    echo "  $1 $2: ${line:-(no [nosw-bare] line)}"
-    case "$line" in
-        "[nosw-bare] PASS"*) v=PASS ;;
-        "[nosw-bare] FAIL"*) v=FAIL ;;
-        *) v=NONE ;;
-    esac
-    want=PASS; [ "$2" = off ] && want=FAIL
-    if [ "$v" = "$want" ]; then echo "[result] $1 $2 $v (expected)"
-    else echo "[result] $1 $2 $v (UNEXPECTED, want $want)"; rc_all=1; fi
+    for w in $want; do
+        tag="${w%%=*}"
+        line=$(tr -d '\r' < "$log" | grep -a -m1 "^\[nosw-$tag\]")
+        echo "  $1 $2: ${line:-(no [nosw-$tag] line)}"
+        case "$line" in
+            "[nosw-$tag] PASS"*) v=PASS ;;
+            "[nosw-$tag] FAIL"*) v=FAIL ;;
+            *) v=NONE ;;
+        esac
+        [ "${w#*=}" = - ] && continue
+        if [ "$v" = "${w#*=}" ]; then echo "[result] $1 $2 $tag $v (expected)"
+        else echo "[result] $1 $2 $tag $v (UNEXPECTED, want ${w#*=})"; rc_all=1; fi
+    done
 }
 
 for a in $ARCHES; do
-    arm "$a" new
-    arm "$a" off
+    for m in $ARMS; do arm "$a" "$m"; done
 done
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-bare] PASS"; else echo "[nosw-bare] FAIL"; fi
 exit "$rc_all"

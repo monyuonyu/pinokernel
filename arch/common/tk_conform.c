@@ -738,6 +738,7 @@ static void suite_dds(PRI me)
  * Build: EXTRA_CFLAGS="-DPK_TKCONF -DPK_TKCONF_NOSW"; with -DPK_NOSW_OFF the
  * regions are gone and this goes red (measured on master 10-05: 24-32 torn). */
 #include "kdds.h"
+#include "pk_nosw.h"
 #define NB_LEN 192
 static volatile INT nb_pubs;
 static void t_nb_high(INT stacd, void *exinf)
@@ -778,6 +779,91 @@ static void suite_nosw_kdds(PRI me)
     tk_dly_tsk(20);
     tk_del_tsk(t);
 }
+
+/* The region's edges (audit-25 probes, 2026-10-07). [nosw-bare] alone stays
+ * green when PK_NOSW_LEAVE does not switch, or when a task that ended inside
+ * a region keeps its depth into its next life:
+ *   [nosw-leave]  a higher task woken by the timer while we are in a region
+ *                 does not run inside it (before=0) and runs inside
+ *                 PK_NOSW_LEAVE (after=1)
+ *   [nosw-ext]    a task that tk_ext_tsk's inside a region, restarted, is
+ *                 preemptible at the interrupt exit (we wake within 10 ms)
+ *   [nosw-ter]    the same after tk_ter_tsk while it sleeps inside a region
+ * Time is a 1-tick cyclic handler's counter: no tk_* call inside a region
+ * (any tk_* call ends with END_CRITICAL_SECTION, which dispatches). */
+static volatile UW nr_tick;
+static volatile INT nr_hran, nr_stop;
+static void nr_cyc(void *exinf) { (void)exinf; nr_tick++; }
+static void t_nr_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    tk_dly_tsk(3);
+    nr_hran = 1;
+    tk_ext_tsk();
+}
+static void t_nr_low(INT stacd, void *exinf)
+{
+    UW t0;
+    (void)exinf;
+    if (stacd == 0) { PK_NOSW_ENTER(); tk_ext_tsk(); }
+    if (stacd == 2) { PK_NOSW_ENTER(); tk_slp_tsk(TMO_FEVR); }
+    t0 = nr_tick;
+    while (!nr_stop && nr_tick - t0 < 1000) ;
+    tk_ext_tsk();
+}
+static void nr_line(const char *tag, BOOL ok, const char *k1, W v1, const char *k2, W v2)
+{
+    char m[200]; INT k = 0; const char *q;
+    for (q = tag; *q; ) m[k++] = *q++;
+    for (q = ok ? " PASS " : " FAIL "; *q; ) m[k++] = *q++;
+    for (q = k1; *q; ) m[k++] = *q++; put_dec(m, &k, v1);
+    m[k++] = ' ';
+    for (q = k2; *q; ) m[k++] = *q++; put_dec(m, &k, v2);
+    m[k++] = '\r'; m[k++] = '\n'; m[k] = 0;
+    g_out(m);
+}
+static void suite_nosw_edges(PRI me)
+{
+    T_CCYC cc = { .exinf = NULL, .cycatr = TA_HLNG | TA_STA, .cychdr = (FP)nr_cyc,
+                  .cyctim = 1, .cycphs = 0 };
+    ID c, h, t; UW t0; INT before, after; W el;
+
+    c = tk_cre_cyc(&cc);
+    nr_hran = 0;
+    h = mk_task(t_nr_high, me - 1);
+    tk_sta_tsk(h, 0);                 /* runs now, sleeps 3 ms */
+    PK_NOSW_ENTER();
+    t0 = nr_tick;
+    while (nr_tick - t0 < 30) ;       /* well past the 3 ms wake-up */
+    before = nr_hran;
+    PK_NOSW_LEAVE();
+    after = nr_hran;
+    nr_line("[nosw-leave]", before == 0 && after == 1, "before=", before, "after=", after);
+    tk_dly_tsk(10);
+    tk_del_tsk(h);
+
+    t = mk_task(t_nr_low, me + 1);
+    tk_sta_tsk(t, 0);
+    tk_dly_tsk(5);                    /* t: enter, tk_ext_tsk inside the region */
+    nr_stop = 0; t0 = nr_tick;
+    tk_sta_tsk(t, 1);
+    tk_dly_tsk(10);                   /* t spins below us; we must still wake */
+    el = (W)(nr_tick - t0); nr_stop = 1;
+    nr_line("[nosw-ext]", el < 500, "ticks=", el, "id=", t);
+    tk_dly_tsk(5);
+
+    tk_sta_tsk(t, 2);
+    tk_dly_tsk(5);                    /* t: enter, sleep inside the region */
+    tk_ter_tsk(t);
+    nr_stop = 0; t0 = nr_tick;
+    tk_sta_tsk(t, 1);
+    tk_dly_tsk(10);
+    el = (W)(nr_tick - t0); nr_stop = 1;
+    nr_line("[nosw-ter]", el < 500, "ticks=", el, "id=", t);
+    tk_dly_tsk(5);
+    tk_del_tsk(t);
+    tk_del_cyc(c);
+}
 #endif /* PK_TKCONF_NOSW */
 
 /* The suite runs in its own task at TKC_PRI, so helpers can sit one above
@@ -806,6 +892,7 @@ static void t_runner(INT stacd, void *exinf)
     suite_dds(r.tskpri);
 #ifdef PK_TKCONF_NOSW
     suite_nosw_kdds(r.tskpri);
+    suite_nosw_edges(r.tskpri);
 #endif
     g_done = 1;
     tk_wup_tsk(g_caller);
