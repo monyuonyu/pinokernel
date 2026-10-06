@@ -731,7 +731,9 @@ INT pfs_self_test(void (*emit)(const char *))
 /* `pfs droptest` (PFS-FULL-SILENT-DROP). Fills the LIVE table with distinct
  * test blocks until a put is refused, checks the refusal is counted, then
  * drops every test block and checks the slots really come back. Must not be
- * run while the node replicates real blocks into the table (it fills it). */
+ * run while the node replicates real blocks into the table (it fills it).
+ * Hosted only (the hosted shells are the only callers). */
+#ifdef _TK_HOSTED_LIBC_
 static U1 drop_ids[PFS_MAX_BLOCKS][PFS_ID_LEN];
 
 INT pfs_drop_self_test(void (*emit)(const char *))
@@ -740,19 +742,18 @@ INT pfs_drop_self_test(void (*emit)(const char *))
     UW  start = pfs_count(), full0 = pfs_full_count();
     UW  n = 0;
     INT rc = PFS_OK;
-#ifdef _TK_HOSTED_LIBC_
     if (pfs_ark_active()) {
         emit("[pfs-drop] SKIP: ARK evicts instead of refusing (not this path)\r\n");
         return 1;
     }
-#endif
     /* 1. fill: each block is "pfs-droptest" + a 4-byte counter (distinct ids) */
     static U1 b[16];
+    U1 over[PFS_ID_LEN];                     /* id of the refused put */
     for (UW k = 0; k < PFS_MAX_BLOCKS + 1; k++) {
         static const char tag[] = "pfs-droptest";
         for (INT i = 0; i < 12; i++) b[i] = (U1)tag[i];
         b[12] = (U1)k; b[13] = (U1)(k >> 8); b[14] = 0x5A; b[15] = 0xA5;
-        rc = pfs_put(b, 16, drop_ids[n < PFS_MAX_BLOCKS ? n : 0]);
+        rc = pfs_put(b, 16, n < PFS_MAX_BLOCKS ? drop_ids[n] : over);
         if (rc != PFS_OK) break;
         n++;
     }
@@ -763,13 +764,18 @@ INT pfs_drop_self_test(void (*emit)(const char *))
     } else {
         emit("[pfs-drop] ok  full table refuses and counts the refusal\r\n");
     }
-    /* 2. drop every test block: each must vanish and free its slot */
-    UW gone = 0;
+    /* 2. drop every test block: each must vanish and free its slot (compared
+     * with the count at full, not at start: a boot task may store a block of
+     * its own while we fill) */
+    UW gone = 0, at_full = pfs_count();
     for (UW k = 0; k < n; k++) {
         if (pfs_drop(drop_ids[k]) == PFS_OK && !pfs_has(drop_ids[k])) gone++;
     }
-    if (gone != n || pfs_count() != start) {
-        emit("[pfs-drop] FAIL drop did not free the slots\r\n"); fails++;
+    if (gone != n || pfs_count() != at_full - n) {
+        emit("[pfs-drop] FAIL drop did not free the slots (start ");
+        emit_dec(emit, start); emit(" filled "); emit_dec(emit, n);
+        emit(" gone "); emit_dec(emit, gone); emit(" now ");
+        emit_dec(emit, pfs_count()); emit(")\r\n"); fails++;
     } else {
         emit("[pfs-drop] ok  every dropped block is gone and the count is back\r\n");
     }
@@ -783,7 +789,6 @@ INT pfs_drop_self_test(void (*emit)(const char *))
     } else {
         (void)pfs_drop(id2);
     }
-#ifdef _TK_HOSTED_LIBC_
     /* 4. flat-file: the dropped block's file is gone (a reboot won't reload) */
     if (pfs_dur_active() && n) {
         char hex[2 * PFS_ID_LEN + 1];
@@ -795,8 +800,8 @@ INT pfs_drop_self_test(void (*emit)(const char *))
             emit("[pfs-drop] ok  dropped block's durable file removed\r\n");
         }
     }
-#endif
     if (fails == 0) emit("[pfs-drop] PASS\r\n");
     else            emit("[pfs-drop] FAIL\r\n");
     return fails;
 }
+#endif /* _TK_HOSTED_LIBC_ */
