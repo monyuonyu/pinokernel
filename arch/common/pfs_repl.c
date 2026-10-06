@@ -460,7 +460,9 @@ void pfs_repl_rx(UB src_node, UH dst_port, const UB *data, UH len)
          * vanish here without a word (the sender kept re-sending, we kept
          * re-WANTing). Count it and say so — first time, then every 32nd. */
         if ((stat_store_fail++ & 31u) == 0) {
-            pr_puts("[pfs] DROP block (store refused rc=");
+            /* PFS_E_DURABLE: kept in RAM only (pinned), not dropped */
+            pr_puts(prc == PFS_E_DURABLE ? "[pfs] block kept in RAM only (store rc="
+                                         : "[pfs] DROP block (store refused rc=");
             pr_putdec((UW)(-prc));
             pr_puts(prc == PFS_E_FULL ? " table full " : " ");
             pr_putdec(pfs_count()); pr_puts("/"); pr_putdec(PFS_MAX_BLOCKS);
