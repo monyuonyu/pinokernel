@@ -18,6 +18,7 @@
 #            catches the ARK race only 1 time in 2, so CI asks it widened)
 #   oncewide -DPK_POOL_INIT_SPIN (pk_pool_init widened): `tkconf pool` ALL PASS
 #            with no hang (POOL-ONCE)
+#   oncewideoff  the same with -DPK_POOL_ONCE_PREEMPTIBLE: must hang (rc 124)
 # A negative-control arm that stays green fails this script.
 #
 #   tests/host/run_nosw.sh            (x86_64 host)
@@ -103,6 +104,7 @@ once() {  # $1 = arm, $2 = EXTRA_CFLAGS, $3 = green|hang
     echo ""
 }
 once oncewide "-DPK_POOL_INIT_SPIN=200000000" green
+once oncewideoff "-DPK_POOL_INIT_SPIN=200000000 -DPK_POOL_ONCE_PREEMPTIBLE" hang
 
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-cert] PASS"; else echo "[nosw-cert] FAIL"; fi
 exit "$rc_all"
