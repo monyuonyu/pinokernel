@@ -2571,6 +2571,25 @@ PK_NOSW_FN(int, st_merge_guarded, (st_model *into, const st_model *peer,
     return best;
 }
 
+/* ---- smarter merge, stage 3 (research/brain-merge-distill.md) ---- */
+
+float st_backward_soft(st_model *m, const uint8_t *bytes, int n, const float *q)
+{
+    (void)m; (void)bytes; (void)n; (void)q;
+    return 0.0f;                                 /* not implemented yet */
+}
+
+int st_merge_distill(st_model *into, st_model *peer, const st_model *init,
+                     st_model *scratch, const uint8_t *const *xfer, int nx,
+                     const uint8_t *const *val, int nv, int seqlen,
+                     int steps, float lr, st_distill_stats *stats)
+{
+    (void)into; (void)peer; (void)init; (void)scratch; (void)xfer; (void)nx;
+    (void)val; (void)nv; (void)seqlen; (void)steps; (void)lr;
+    if (stats) { st_distill_stats z = { -1, 0, 0.0f, 0.0f }; *stats = z; }
+    return ST_E_ARG;                             /* not implemented yet */
+}
+
 /* ================================================================== */
 /* grad check                                                         */
 /* ================================================================== */
