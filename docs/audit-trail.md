@@ -1867,6 +1867,11 @@ N-4 cross-host deferred to the ThinkPad).
   red (leave after=0; ext/ter 1000 ticks). Regions on bare metal are short (kdds copies, dtr with
   SEQ 4 / DM 8, dkva); the LLM tier is not in the bare-metal builds. This entry was written by the run
   that merged; an independent re-measure is for a different run.
+  INDEPENDENT RE-MEASURE (2026-10-07 02:35 run, not the merging run; fresh clones of master 20f2b17e,
+  `pk-scratch/nsp-run.sh` + `rb-check.sh`, `/build/nsp`, `/build/rb1007`): crown sha256 aarch64
+  6f82264d…a12b 361532 B and x86 3826e048…189d 372079 B, every digit as above; vendor inventory 25/25
+  GREEN; RNG0 x86 and AArch64 positive GREEN, control GREEN, nofix RED; `run_tk_conform.sh` x86 and
+  AArch64 PASS (plain 111/0, all 11 NCs RED). Same model as the merging run (limit).
 - CROWN RE-BLESS — CPU budget stage 1 + infer print by value + RNG0 on bare-metal AArch64, one
   re-bless for three merges (2026-10-01, merges `dee5d819` of `feat/cpu-budget` 3219a5df (audit-18
   PASS), `aa8e2c2e` of `feat/infer-print` ff30ae99 (audit-19 PASS) and `99a307c9` of
