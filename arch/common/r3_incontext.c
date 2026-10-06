@@ -5135,32 +5135,34 @@ static W mw_ann_sub_h(void)
 /* reserve the topic slot at boot (called from mind_net_open). */
 static void mw_ann_open(void) { (void)mw_ann_sub_h(); }
 
+static void mw_gc(void);   /* below: frees superseded weight blocks */
+
 /* drain the mind/w topic: record each peer's latest {epoch, manifest-id} and
  * issue a WANT for the manifest block so P1 pulls it. Called each fold + each
  * merge-pulse poll. */
 static void mw_ann_poll(void)
 {
     if (mw_ann_sub_h() < 0) return;
+    INT superseded = 0;
     for (INT guard = 0; guard < 8; guard++) {
         W r = kdds_sub(mw_ann_sub, &mw_ann, (W)sizeof mw_ann, 0);
         if (r < (W)sizeof mw_ann || mw_ann.magic != MW_MAGIC) break;
         U1 o = mw_ann.origin;
         if (o >= DNODE_MAX || o == drpc_my_node) continue;
+        if (mw_ann_have[o]) {
+            INT same = 1;
+            for (INT i = 0; i < PFS_ID_LEN; i++)
+                if (mw_ann_man[o][i] != mw_ann.man_id[i]) same = 0;
+            if (!same) superseded = 1;    /* o's older blocks are now dead */
+        }
         mw_ann_epoch[o] = mw_ann.epoch;
         for (INT i=0;i<PFS_ID_LEN;i++) mw_ann_man[o][i] = mw_ann.man_id[i];
         mw_ann_have[o] = 1;
         if (!pfs_has(mw_ann.man_id)) pfs_repl_want(mw_ann.man_id);  /* pull it */
     }
+    if (superseded) mw_gc();
 }
 
-/* build the per-origin ref name "mw" + 2 decimal digits of origin. */
-static UW mw_refname(char *out, U1 origin)
-{
-    out[0]='m'; out[1]='w';
-    out[2]=(char)('0' + (origin/10)%10);
-    out[3]=(char)('0' + origin%10);
-    return 4;
-}
 
 /* publish rw[] as 22 content blocks + one manifest ref. Returns 0 on success.
  * PRINTS the ~84 KB cost (XI.0 #2 — own it). Caller m_quiesce()s first. */
@@ -5202,6 +5204,79 @@ static void mw_delta_report(void)
 }
 #endif
 
+/* PFS-FULL-SILENT-DROP (a): every publish whose rw[] moved puts ~23 NEW blocks
+ * (chunks + manifest) and nothing ever freed the old ones, so after a few
+ * epochs the 64-slot table was full and every later chunk was refused — the
+ * merge stalled for good. A weight blob is belief STATE, not history: once an
+ * origin has a newer manifest its older chunks are dead. mw_gc() frees every
+ * MW block (chunk or manifest) that no CURRENT manifest names. "Current" =
+ * my own last publish + each peer's last announced manifest (when local).
+ * A peer whose current manifest is not local yet keeps nothing beyond what
+ * the other current manifests name — its chunks are re-fetched on demand
+ * (bandwidth, not correctness). Blocks of an origin we never heard announce
+ * are left alone. -DMW_GC_OFF disables it (negative control). */
+static U1          mw_own_man[PFS_ID_LEN];      /* my last published manifest */
+static MW_MANIFEST mw_own_live;                 /* ... and its chunk ids      */
+static UB          mw_own_have;
+static MW_MANIFEST mw_gc_man;                   /* scratch: a peer manifest   */
+static U1          mw_gc_buf[PFS_BLOCK_MAX];    /* scratch: one table block   */
+static UW          mw_gc_dropped;
+
+static INT mw_in_man(const MW_MANIFEST *m, const U1 id[PFS_ID_LEN])
+{
+    for (INT c = 0; c < N_WCHUNK; c++) {
+        INT k = 0;
+        while (k < PFS_ID_LEN && m->chunk[c][k] == id[k]) k++;
+        if (k == PFS_ID_LEN) return 1;
+    }
+    return 0;
+}
+static INT mw_id_eq(const U1 a[PFS_ID_LEN], const U1 b[PFS_ID_LEN])
+{
+    for (INT k = 0; k < PFS_ID_LEN; k++) if (a[k] != b[k]) return 0;
+    return 1;
+}
+static INT mw_is_live(const U1 id[PFS_ID_LEN])
+{
+    if (mw_own_have && (mw_id_eq(id, mw_own_man) || mw_in_man(&mw_own_live, id)))
+        return 1;
+    for (U1 o = 0; o < DNODE_MAX; o++) {
+        if (!mw_ann_have[o] || o == drpc_my_node) continue;
+        if (mw_id_eq(id, mw_ann_man[o])) return 1;
+        if (pfs_get(mw_ann_man[o], &mw_gc_man, sizeof mw_gc_man) == (INT)sizeof mw_gc_man &&
+            mw_gc_man.magic == MW_MAGIC && mw_in_man(&mw_gc_man, id))
+            return 1;
+    }
+    return 0;
+}
+static void mw_gc(void)
+{
+#ifndef MW_GC_OFF
+    UW dropped = 0;
+    for (UW i = 0; i < PFS_MAX_BLOCKS; i++) {
+        U1 id[PFS_ID_LEN]; UW len; U1 org;
+        if (!pfs_slot_info(i, id, &len, &org)) continue;
+        if (len != sizeof(MW_CHUNK) && len != sizeof(MW_MANIFEST)) continue;
+        U1 owner = (org == PFS_ORIGIN_SELF) ? drpc_my_node : org;
+        if (owner >= DNODE_MAX) continue;
+        if (owner == drpc_my_node ? !mw_own_have : !mw_ann_have[owner]) continue;
+        if (pfs_get(id, mw_gc_buf, sizeof mw_gc_buf) != (INT)len) continue;
+        UW mg = (UW)mw_gc_buf[0] | ((UW)mw_gc_buf[1] << 8) |
+                ((UW)mw_gc_buf[2] << 16) | ((UW)mw_gc_buf[3] << 24);
+        if (mg != MW_MAGIC) continue;
+        if (mw_is_live(id)) continue;
+        if (pfs_drop(id) == PFS_OK) dropped++;
+    }
+    if (dropped) {
+        mw_gc_dropped += dropped;
+        r_puts("[onemind] freed "); r_putdec(dropped);
+        r_puts(" superseded weight block(s) (total "); r_putdec(mw_gc_dropped);
+        r_puts(", table "); r_putdec(pfs_count()); r_puts("/");
+        r_putdec(PFS_MAX_BLOCKS); r_puts(")\r\n");
+    }
+#endif
+}
+
 static INT mw_publish_weights(void)
 {
     if (drpc_my_node == 0xFF) return -1;           /* solo: nobody to merge */
@@ -5217,28 +5292,42 @@ static INT mw_publish_weights(void)
     mw_man.n_chunks = N_WCHUNK;
     mw_man._pad     = 0;
 
-    UW off = 0;
-    for (INT c = 0; c < N_WCHUNK; c++) {
-        UW n = R_NP - off; if (n > W_FLOATS_PER_CHUNK) n = W_FLOATS_PER_CHUNK;
-        mw_chunk.magic = MW_MAGIC;
-        mw_chunk.idx = (UH)c; mw_chunk.n = (UH)n;
-        for (UW i = 0; i < n; i++) mw_chunk.w[i] = mw_self[off + i];
-        for (UW i = n; i < W_FLOATS_PER_CHUNK; i++) mw_chunk.w[i] = 0.0f;
-        /* content-addressed put: the put-hook announces it to the region
-         * (P1) on the FIRST store, so peers can WANT it; identical bytes dedup.
-         * The chunk id is STABLE (no epoch in the chunk header), so a peer's
-         * paced WANTs (mw_fetch_peer) are satisfied across rounds — no flood. */
-        if (pfs_put(&mw_chunk, sizeof mw_chunk, mw_man.chunk[c]) != PFS_OK)
-            return -1;
-        off += n;
+    /* PFS-FULL-SILENT-DROP: name the NEW set first (ids only), make it my
+     * current publish, and free what it supersedes BEFORE the puts — so the
+     * puts find room, and chunks that did not change are kept, not re-put. */
+    for (INT pass = 0; pass < 2; pass++) {
+        UW off = 0;
+        for (INT c = 0; c < N_WCHUNK; c++) {
+            UW n = R_NP - off; if (n > W_FLOATS_PER_CHUNK) n = W_FLOATS_PER_CHUNK;
+            mw_chunk.magic = MW_MAGIC;
+            mw_chunk.idx = (UH)c; mw_chunk.n = (UH)n;
+            for (UW i = 0; i < n; i++) mw_chunk.w[i] = mw_self[off + i];
+            for (UW i = n; i < W_FLOATS_PER_CHUNK; i++) mw_chunk.w[i] = 0.0f;
+            if (pass == 0) {
+                pfs_id_compute(&mw_chunk, sizeof mw_chunk, mw_man.chunk[c]);
+            /* content-addressed put: the put-hook announces it to the region
+             * (P1) on the FIRST store, so peers can WANT it; identical bytes
+             * dedup. The chunk id is STABLE (no epoch in the chunk header), so
+             * a peer's paced WANTs (mw_fetch_peer) are satisfied across rounds. */
+            } else if (pfs_put(&mw_chunk, sizeof mw_chunk, mw_man.chunk[c]) != PFS_OK) {
+                return -1;
+            }
+            off += n;
+        }
+        if (pass == 0) {
+            pfs_id_compute(&mw_man, sizeof mw_man, mw_own_man);
+            mw_own_live = mw_man;
+            mw_own_have = 1;
+            mw_gc();
+        }
     }
     /* store the manifest as a CONTENT block (id = its hash) — the announce
      * carries this id so peers read the manifest by content-id (no ref-gossip
-     * dependency). Also keep the pfs_dag ref for durability/`pfs log`. */
+     * dependency). No pfs_dag ref any more (PFS-FULL-SILENT-DROP): nothing
+     * read "mw<NN>", each save left one more never-freed dag manifest in the
+     * 64-slot table, and its history would point at chunks mw_gc() frees. */
     U1 man_id[PFS_ID_LEN];
     if (pfs_put(&mw_man, sizeof mw_man, man_id) != PFS_OK) return -1;
-    char ref[8]; UW rl = mw_refname(ref, drpc_my_node);
-    (void)pfs_dag_save((const UB *)ref, rl, &mw_man, sizeof mw_man);
 
     /* PUSH the small MANIFEST + a ROTATING window of MW_PUSH_BURST chunks to
      * each region peer. The full 22 are NOT pushed at once (the P1 receive
@@ -5269,8 +5358,7 @@ static INT mw_publish_weights(void)
     r_puts("[onemind] published rw[] epoch="); r_putdec(merge_epoch);
     r_puts(" as "); r_putdec((UW)N_WCHUNK);
     r_puts(" chunks ("); r_putdec(W_BYTES);
-    r_puts(" B = ~84KB, ref mw"); r_putdec((UW)drpc_my_node);
-    r_puts(") -> region "); r_putdec((UW)region_id());
+    r_puts(" B = ~84KB) -> region "); r_putdec((UW)region_id());
     r_puts(" + pushed to peers + announced on mind/w");
     r_puts("  [Path W wire cost: ~1900x Path E's 45 B engram]\r\n");
     return 0;

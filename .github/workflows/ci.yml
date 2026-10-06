@@ -942,6 +942,16 @@ jobs:
           grep -aF '[pfs-durswallow] PASS' dur_honest_cert.log
           grep -aF '[pfs-dagrefs] PASS'    dur_honest_cert.log
 
+      # PFS-FULL-SILENT-DROP: a full p-fs table refuses AND counts it, and
+      # pfs_drop frees the slot and the flat file. `pfs droptest` fills the
+      # live table of a single node, then drops its test blocks. ~10 s.
+      - name: p-fs full-table refusal is counted, pfs_drop frees (PFS-FULL-SILENT-DROP)
+        run: |
+          make -C boot/linux_x86_64 -j4 > /dev/null
+          D=$(mktemp -d)
+          printf 'pfs droptest\nexit\n' | PKERNEL_GALAXY=0 PKERNEL_PFS_DIR="$D" timeout 120 boot/linux_x86_64/p-kernel | tee pfs_drop.log
+          grep -aF '[pfs-drop] PASS' pfs_drop.log
+
       # persistence SLICE 1 + 2 (docs/architecture/persistence.md): the ark
       # REMEMBERS across an actual kill+restart on the same PKERNEL_PFS_DIR.
       # [persist-identity]: a shell-taught self/prov ref comes back byte-

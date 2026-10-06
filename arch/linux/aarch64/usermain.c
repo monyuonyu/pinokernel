@@ -721,6 +721,10 @@ static void cmd_pfs(const UB *line, INT n)
         /* DUR-REFTAB cert: a torn-but-same-length refs.tab must be REJECTED at
          * load (CRC), a clean refs.tab must round-trip. */
         pfs_dag_self_test(print);
+    } else if (p < end && starts_with(p, (INT)(end - p), "droptest")) {
+        /* PFS-FULL-SILENT-DROP cert: a full table refuses AND counts it;
+         * pfs_drop frees the slot (and the flat file). Single node only. */
+        pfs_drop_self_test(print);
     } else if (p < end && starts_with(p, (INT)(end - p), "ls")) {
         pfs_repl_ls();
     } else {

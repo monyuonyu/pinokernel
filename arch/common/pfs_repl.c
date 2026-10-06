@@ -160,6 +160,7 @@ static U1           tx_block[PFS_BLOCK_MAX];
 /* stats (printed by events; counters kept for future `pfs stat`) */
 static UW stat_ann_tx, stat_ann_rx, stat_want_tx, stat_want_rx;
 static UW stat_blocks_tx, stat_blocks_rx, stat_hash_fail;
+static UW stat_store_fail;   /* verified blocks the local store refused */
 
 /* G28: protected-object layer hooks (protect.c). announce_hook fires for
  * every heard ANNOUNCE; announce_suppress mutes the ambient put-hook push so
@@ -453,8 +454,24 @@ void pfs_repl_rx(UB src_node, UH dst_port, const UB *data, UH len)
     }
 
     /* store (dedup-safe); the put-hook re-announces it to the region */
-    if (pfs_put_origin(rx_state.buf, rx_state.total, 0,
-                       rx_state.origin) == PFS_OK) {
+    INT prc = pfs_put_origin(rx_state.buf, rx_state.total, 0, rx_state.origin);
+    if (prc != PFS_OK) {
+        /* PFS-FULL-SILENT-DROP: a verified block we could not keep used to
+         * vanish here without a word (the sender kept re-sending, we kept
+         * re-WANTing). Count it and say so — first time, then every 32nd. */
+        if ((stat_store_fail++ & 31u) == 0) {
+            /* PFS_E_DURABLE: kept in RAM only (pinned), not dropped */
+            pr_puts(prc == PFS_E_DURABLE ? "[pfs] block kept in RAM only (store rc="
+                                         : "[pfs] DROP block (store refused rc=");
+            pr_putdec((UW)(-prc));
+            pr_puts(prc == PFS_E_FULL ? " table full " : " ");
+            pr_putdec(pfs_count()); pr_puts("/"); pr_putdec(PFS_MAX_BLOCKS);
+            pr_puts(", refused so far "); pr_putdec(stat_store_fail);
+            pr_puts(") id="); pr_put_id(rx_state.id); pr_puts("\r\n");
+        }
+        return;
+    }
+    {
         stat_blocks_rx++;
         pr_puts("[pfs] replicated block id="); pr_put_id(rx_state.id);
         pr_puts("  len="); pr_putdec(rx_state.total);
@@ -609,6 +626,11 @@ void pfs_repl_ls(void)
         shown++;
     }
     if (!shown) pr_puts("  (none)\r\n");
+    pr_puts("  table "); pr_putdec(pfs_count()); pr_puts("/");
+    pr_putdec(PFS_MAX_BLOCKS);
+    pr_puts("  puts refused (full) "); pr_putdec(pfs_full_count());
+    pr_puts("  replicas refused "); pr_putdec(stat_store_fail);
+    pr_puts("\r\n");
 }
 
 /* ------------------------------------------------------------------ */
