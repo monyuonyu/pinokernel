@@ -896,6 +896,17 @@ jobs:
           timeout 600 tests/host/run_tk_conform.sh | tee tk_conform.log
           grep -aF '[tk-conform] PASS' tk_conform.log
 
+      # The hosted exit dispatch (RNG0-HOSTED) switches tasks at any
+      # instruction; shared state lives in per-task no-switch regions
+      # (pk_nosw.h). `tkconf nosw` races a pri-19 task against the runner on
+      # each guarded state, `tkconf pool` on the matmul pool. Negative
+      # controls: -DPK_NOSW_OFF must turn N1 red, and with the ARK get
+      # widened (-DARK_FAULT_SLOW_GET) N9. Four builds, ~6 min.
+      - name: no-switch regions + compute pool under the hosted exit dispatch (tkconf nosw / pool + 2 NCs)
+        run: |
+          timeout 1200 tests/host/run_nosw.sh | tee nosw_cert.log
+          grep -aF '[nosw-cert] PASS' nosw_cert.log
+
       # SWIM SELF-SUSPICION de-storm (arch/common/swim.c gossip_apply; replica.c:387).
       # Under self-hosted CI CPU load a node falls behind on SWIM PING/ACK, is FALSELY
       # rumored SUSPECT, and reacts to EVERY such rumor with a FULL UNPACED memory
