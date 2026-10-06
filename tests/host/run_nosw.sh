@@ -13,6 +13,7 @@
 # Arms (each a separate build of the same tree):
 #   plain    `tkconf nosw` and `tkconf pool` ALL PASS
 #   off      -DPK_NOSW_OFF (regions empty): `tkconf nosw` must be RED on N1
+#            (kdds slot) and N20 (net_lan send buffer; 27 foreign packets in each of 2 runs)
 #   slow     -DARK_FAULT_SLOW_GET=200000 (ARK get widened): ALL PASS
 #   slowoff  the same with -DPK_NOSW_OFF: must be RED on N9 (unwidened, N9
 #            catches the ARK race only 1 time in 2, so CI asks it widened)
@@ -55,14 +56,16 @@ for v in "tkconf nosw" "tkconf pool"; do
     echo ""
 done
 
-expect_red() {  # $1 = arm, $2 = EXTRA_CFLAGS, $3 = check id that must FAIL
+expect_red() {  # $1 = arm, $2 = EXTRA_CFLAGS, $3 = check ids that must each FAIL
     echo "[build] $1 ($2)"
-    local d; d=$(arm "$1" "$2")
+    local d c; d=$(arm "$1" "$2")
     [ -n "$d" ] || { echo "[result] $1 build FAILED"; rc_all=1; return; }
     drive "$d" "tkconf nosw" > "$WORK/$1.log"
     grep '^\[nosw\] FAIL\|ALL PASS\|RED' "$WORK/$1.log"
-    if grep -q "^\[nosw\] FAIL $3 " "$WORK/$1.log"; then echo "[result] $1 RED on $3 (expected)"
-    else echo "[result] $1 not red on $3 (UNEXPECTED: the probe missed the empty regions)"; rc_all=1; fi
+    for c in $3; do
+        if grep -q "^\[nosw\] FAIL $c " "$WORK/$1.log"; then echo "[result] $1 RED on $c (expected)"
+        else echo "[result] $1 not red on $c (UNEXPECTED: the probe missed the empty regions)"; rc_all=1; fi
+    done
     echo ""
 }
 expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
@@ -75,7 +78,7 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
     else echo "[result] $1 RED (UNEXPECTED)"; rc_all=1; fi
     echo ""
 }
-expect_red off "-DPK_NOSW_OFF" N1
+expect_red off "-DPK_NOSW_OFF" "N1 N20"
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
 
