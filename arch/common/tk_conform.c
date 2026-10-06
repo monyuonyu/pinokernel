@@ -799,8 +799,8 @@ static volatile INT nr_hran, nr_stop;
 static void nr_cyc(void *exinf) { (void)exinf; nr_tick++; }
 static void t_nr_high(INT stacd, void *exinf)
 {
-    (void)stacd; (void)exinf;
-    tk_dly_tsk(3);
+    (void)exinf;
+    tk_dly_tsk(stacd ? stacd : 3);
     nr_hran = 1;
     tk_ext_tsk();
 }
@@ -865,11 +865,13 @@ static void suite_nosw_edges(PRI me)
     nr_line("[nosw-ter]", el < 500, "ticks=", el, "id=", t);
     tk_dly_tsk(5);
 
-    tk_sta_tsk(t, 2);
-    tk_dly_tsk(5);                    /* t: enter, sleep inside the region (stays) */
+    /* h is started first: starting a task clears its region depth, and a
+     * kernel that keeps one depth for all tasks would be cleared by that */
     nr_hran = 0;
     h = mk_task(t_nr_high, me - 1);
-    tk_sta_tsk(h, 0);                 /* runs now, sleeps 3 ms */
+    tk_sta_tsk(h, 8);                 /* runs now, sleeps 8 ms */
+    tk_sta_tsk(t, 2);
+    tk_dly_tsk(2);                    /* t: enter, sleep inside the region (stays) */
     t0 = nr_tick;
     while (nr_tick - t0 < 30 && !nr_hran) ;   /* no tk_* call: only the exit switches */
     el = (W)(nr_tick - t0);
