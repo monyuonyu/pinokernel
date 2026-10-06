@@ -119,6 +119,11 @@ static void *pk_worker_main(void *arg)
 
 static void pk_pool_init(void)
 {
+#ifdef PK_POOL_INIT_SPIN
+    /* fault injection (tests/host/run_nosw.sh): widen the window a task
+     * switch must hit inside pthread_once (POOL-ONCE) */
+    for (volatile unsigned long z_ = 0; z_ < (unsigned long)(PK_POOL_INIT_SPIN); z_++) { }
+#endif
     memset(&g_pool, 0, sizeof(g_pool));
 
 #ifdef _WIN32
@@ -181,7 +186,19 @@ static int pk_effective_nw(void)
 
 void pk_parallel_rows(size_t out, pk_row_body body, void *ctx)
 {
+    /* pthread_once holds its once-lock while pk_pool_init (p-kernel's text)
+     * runs. A switch in there and the next task's pthread_once waits, on the
+     * same OS thread, for an init that can never finish (POOL-ONCE, audit-26).
+     * So the init is a pool region too. -DPK_POOL_ONCE_PREEMPTIBLE: not
+     * counted (the negative control, run_nosw.sh oncewideoff). */
+#ifndef PK_POOL_ONCE_PREEMPTIBLE
+    pk_parallel_busy++;
+#endif
     pthread_once(&g_once, pk_pool_init);
+#ifndef PK_POOL_ONCE_PREEMPTIBLE
+    if (--pk_parallel_busy == 0 && pk_parallel_on_leave)
+        pk_parallel_on_leave();
+#endif
 
     /* Fallback: serial INLINE body (byte-identical, zero overhead) when the
      * pool failed to come up, the row count is below the gate, or only one
