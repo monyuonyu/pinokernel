@@ -26,7 +26,9 @@
 
 #define PFS_ID_LEN     32          /* sha256 digest width — block-id size */
 #define PFS_BLOCK_MAX  4096        /* max bytes per block (P0) */
+#ifndef PFS_MAX_BLOCKS             /* -D only for the 40-slot diagnostic build */
 #define PFS_MAX_BLOCKS 64          /* in-memory block table capacity (P0) */
+#endif
 
 /* origin tag for blocks created locally outside distributed mode (also
  * the value pfs_put() uses). A real node id (0..DNODE_MAX-1) marks the
@@ -85,6 +87,22 @@ INT  pfs_has(const U1 id[PFS_ID_LEN]);
 
 /* Number of distinct blocks currently stored (dedup'd count). */
 UW   pfs_count(void);
+
+/* PFS-FULL-SILENT-DROP: forget a block the caller knows is superseded (the
+ * only delete in P0; content-addressed blocks are otherwise immutable). Frees
+ * the table slot and, with the flat-file backend, removes its file so a reboot
+ * does not reload it (ARK is an append-only log: the slot is freed, the log
+ * keeps it). Refuses a pinned sole copy (DUR-SWALLOW) with PFS_E_DURABLE.
+ * Returns PFS_OK, PFS_E_NOTFOUND or PFS_E_DURABLE. */
+INT  pfs_drop(const U1 id[PFS_ID_LEN]);
+
+/* How many pfs_put calls were refused with PFS_E_FULL since boot. */
+UW   pfs_full_count(void);
+
+/* `pfs droptest`: drop + the full-table refusal count, on the live table
+ * (fills it to PFS_E_FULL with test blocks, then drops them all again).
+ * Prints [pfs-drop] PASS/FAIL. Returns 0 on PASS. */
+INT  pfs_drop_self_test(void (*emit)(const char *));
 
 /* Run the P0 self-test (dedup + round-trip + miss). Prints PASS/FAIL via
  * the supplied puts-style callback. Returns 0 on PASS, non-zero on FAIL. */

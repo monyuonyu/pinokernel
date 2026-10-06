@@ -41,6 +41,8 @@
 #ifdef _TK_HOSTED_LIBC_
 extern int  pfs_dur_active(void);
 extern int  pfs_dur_write(const char *fname, const void *data, unsigned len);
+extern int  pfs_dur_remove(const char *fname);
+extern int  pfs_dur_read(const char *fname, void *buf, unsigned maxlen);
 extern int  pfs_dur_foreach(void (*cb)(const char *name, const void *data,
                                        unsigned len, void *ctx),
                             void *ctx);
@@ -120,6 +122,7 @@ typedef struct {
 
 static PFS_SLOT pfs_table[PFS_MAX_BLOCKS];
 static UW       pfs_n;             /* number of distinct blocks stored */
+static UW       pfs_full_n;        /* puts refused with PFS_E_FULL since boot */
 
 /* P1 hook: fired once per NEW block (never on a dedup hit). Registered
  * by pfs_repl.c so a local store becomes a region announce. */
@@ -257,7 +260,7 @@ PK_NOSW_FN(INT, pfs_put_origin,
 #endif
         /* No free slot AND no safe eviction victim (table full, or every
          * resident block is an un-evictable sole copy): refuse honestly. */
-        if (slot < 0) return PFS_E_FULL;
+        if (slot < 0) { pfs_full_n++; return PFS_E_FULL; }
     }
 
 #ifdef PFS_FAULT_SLOW_PUT
@@ -370,6 +373,32 @@ INT pfs_has(const U1 id[PFS_ID_LEN])
 UW pfs_count(void)
 {
     return pfs_n;
+}
+
+UW pfs_full_count(void)
+{
+    return pfs_full_n;
+}
+
+/* pk_nosw.h: same table as pfs_put_origin / pfs_get */
+PK_NOSW_FN(INT, pfs_drop, (const U1 id[PFS_ID_LEN]), (id))
+{
+    INT s = find_slot(id);
+    if (s < 0) return PFS_E_NOTFOUND;
+    if (pfs_table[s].unevict) return PFS_E_DURABLE;   /* the only copy */
+#ifdef _TK_HOSTED_LIBC_
+    /* flat-file: remove the file too, or the next boot's restore reloads it
+     * and the table fills again. ARK keeps it (append-only; get falls back). */
+    if (!pfs_ark_active() && pfs_dur_active()) {
+        char hex[2 * PFS_ID_LEN + 1];
+        id_to_hex(pfs_table[s].id, hex);
+        (void)pfs_dur_remove(hex);
+    }
+#endif
+    pfs_table[s].used = 0;
+    pfs_table[s].len  = 0;
+    pfs_n--;
+    return PFS_OK;
 }
 
 INT pfs_slot_info(UW idx, U1 id_out[PFS_ID_LEN], UW *len_out,
@@ -698,3 +727,81 @@ INT pfs_self_test(void (*emit)(const char *))
     else            emit("[pfs] FAIL\r\n");
     return fails;
 }
+
+/* `pfs droptest` (PFS-FULL-SILENT-DROP). Fills the LIVE table with distinct
+ * test blocks until a put is refused, checks the refusal is counted, then
+ * drops every test block and checks the slots really come back. Must not be
+ * run while the node replicates real blocks into the table (it fills it).
+ * Hosted only (the hosted shells are the only callers). */
+#ifdef _TK_HOSTED_LIBC_
+static U1 drop_ids[PFS_MAX_BLOCKS][PFS_ID_LEN];
+
+INT pfs_drop_self_test(void (*emit)(const char *))
+{
+    INT fails = 0;
+    UW  start = pfs_count(), full0 = pfs_full_count();
+    UW  n = 0;
+    INT rc = PFS_OK;
+    if (pfs_ark_active()) {
+        emit("[pfs-drop] SKIP: ARK evicts instead of refusing (not this path)\r\n");
+        return 1;
+    }
+    /* 1. fill: each block is "pfs-droptest" + a 4-byte counter (distinct ids) */
+    static U1 b[16];
+    U1 over[PFS_ID_LEN];                     /* id of the refused put */
+    for (UW k = 0; k < PFS_MAX_BLOCKS + 1; k++) {
+        static const char tag[] = "pfs-droptest";
+        for (INT i = 0; i < 12; i++) b[i] = (U1)tag[i];
+        b[12] = (U1)k; b[13] = (U1)(k >> 8); b[14] = 0x5A; b[15] = 0xA5;
+        rc = pfs_put(b, 16, n < PFS_MAX_BLOCKS ? drop_ids[n] : over);
+        if (rc != PFS_OK) break;
+        n++;
+    }
+    if (rc != PFS_E_FULL || pfs_count() != PFS_MAX_BLOCKS) {
+        emit("[pfs-drop] FAIL table did not fill to PFS_E_FULL\r\n"); fails++;
+    } else if (pfs_full_count() != full0 + 1) {
+        emit("[pfs-drop] FAIL the PFS_E_FULL refusal was not counted\r\n"); fails++;
+    } else {
+        emit("[pfs-drop] ok  full table refuses and counts the refusal\r\n");
+    }
+    /* 2. drop every test block: each must vanish and free its slot (compared
+     * with the count at full, not at start: a boot task may store a block of
+     * its own while we fill) */
+    UW gone = 0, at_full = pfs_count();
+    for (UW k = 0; k < n; k++) {
+        if (pfs_drop(drop_ids[k]) == PFS_OK && !pfs_has(drop_ids[k])) gone++;
+    }
+    if (gone != n || pfs_count() != at_full - n) {
+        emit("[pfs-drop] FAIL drop did not free the slots (start ");
+        emit_dec(emit, start); emit(" filled "); emit_dec(emit, n);
+        emit(" gone "); emit_dec(emit, gone); emit(" now ");
+        emit_dec(emit, pfs_count()); emit(")\r\n"); fails++;
+    } else {
+        emit("[pfs-drop] ok  every dropped block is gone and the count is back\r\n");
+    }
+    /* 3. a dropped id is not found again, and a freed table accepts a put */
+    if (n && pfs_drop(drop_ids[0]) != PFS_E_NOTFOUND) {
+        emit("[pfs-drop] FAIL second drop of the same id did not miss\r\n"); fails++;
+    }
+    U1 id2[PFS_ID_LEN];
+    if (pfs_put(b, 16, id2) != PFS_OK) {
+        emit("[pfs-drop] FAIL a put after the drops was refused\r\n"); fails++;
+    } else {
+        (void)pfs_drop(id2);
+    }
+    /* 4. flat-file: the dropped block's file is gone (a reboot won't reload) */
+    if (pfs_dur_active() && n) {
+        char hex[2 * PFS_ID_LEN + 1];
+        static U1 rb[16];
+        id_to_hex(drop_ids[0], hex);
+        if (pfs_dur_read(hex, rb, 16) >= 0) {
+            emit("[pfs-drop] FAIL dropped block's durable file still exists\r\n"); fails++;
+        } else {
+            emit("[pfs-drop] ok  dropped block's durable file removed\r\n");
+        }
+    }
+    if (fails == 0) emit("[pfs-drop] PASS\r\n");
+    else            emit("[pfs-drop] FAIL\r\n");
+    return fails;
+}
+#endif /* _TK_HOSTED_LIBC_ */

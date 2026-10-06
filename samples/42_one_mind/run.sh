@@ -5,7 +5,7 @@
 # The weight-states themselves converge. Where Path E (sample 41) spreads the
 # tiny ENGRAM (each node trains its OWN rw[]), Path W merges the WEIGHTS: after
 # consolidation each node publishes its rw[] (84 KB, chunked over 22 content-
-# addressed p-fs blocks under ONE per-origin manifest ref "mw<node>") and
+# addressed p-fs blocks under ONE per-origin manifest, announced on mind/w) and
 # gl_merge()s the region's set into ONE shared weight-state. mk_pino's 心をひとつに,
 # made literal at the substrate level — and gated on a MEASURED question, not an
 # assertion: does averaging two minds that learned DIFFERENT facts answer BOTH,
