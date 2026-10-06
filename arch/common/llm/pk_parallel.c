@@ -119,6 +119,11 @@ static void *pk_worker_main(void *arg)
 
 static void pk_pool_init(void)
 {
+#ifdef PK_POOL_INIT_SPIN
+    /* fault injection (tests/host/run_nosw.sh): widen the window a task
+     * switch must hit inside pthread_once (POOL-ONCE) */
+    for (volatile unsigned long z_ = 0; z_ < (unsigned long)(PK_POOL_INIT_SPIN); z_++) { }
+#endif
     memset(&g_pool, 0, sizeof(g_pool));
 
 #ifdef _WIN32

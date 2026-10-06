@@ -16,6 +16,8 @@
 #   slow     -DARK_FAULT_SLOW_GET=200000 (ARK get widened): ALL PASS
 #   slowoff  the same with -DPK_NOSW_OFF: must be RED on N9 (unwidened, N9
 #            catches the ARK race only 1 time in 2, so CI asks it widened)
+#   oncewide -DPK_POOL_INIT_SPIN (pk_pool_init widened): `tkconf pool` ALL PASS
+#            with no hang (POOL-ONCE)
 # A negative-control arm that stays green fails this script.
 #
 #   tests/host/run_nosw.sh            (x86_64 host)
@@ -78,6 +80,29 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
 expect_red off "-DPK_NOSW_OFF" N1
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
+
+# POOL-ONCE: a switch inside pthread_once(pk_pool_init) left the next task's
+# pthread_once waiting, on the same OS thread, for an init that never ends.
+# The window is a few microseconds; -DPK_POOL_INIT_SPIN widens it so a tick
+# always lands inside. `tkconf pool` must then still finish (a hang = rc 124).
+once() {  # $1 = arm, $2 = EXTRA_CFLAGS, $3 = green|hang
+    echo "[build] $1 ($2)"
+    local d; d=$(arm "$1" "$2")
+    [ -n "$d" ] || { echo "[result] $1 build FAILED"; rc_all=1; return; }
+    printf 'tkconf pool\nexit\n' | PKERNEL_GALAXY=0 timeout 120 "$d/boot/linux_x86_64/p-kernel" > "$WORK/$1.raw" 2>&1
+    local rc=$?
+    tr -d '\r' < "$WORK/$1.raw" | grep -a '^\[pool\] \(FAIL\|ALL PASS\|RED\)'
+    echo "[once] $1 rc=$rc"
+    if [ "$3" = green ]; then
+        if [ "$rc" -eq 0 ] && grep -aq '^\[pool\] ALL PASS' "$WORK/$1.raw"; then echo "[result] $1 GREEN (expected)"
+        else echo "[result] $1 RED rc=$rc (UNEXPECTED)"; rc_all=1; fi
+    else
+        if [ "$rc" -eq 124 ]; then echo "[result] $1 HUNG (expected)"
+        else echo "[result] $1 did not hang rc=$rc (UNEXPECTED: the widened window missed)"; rc_all=1; fi
+    fi
+    echo ""
+}
+once oncewide "-DPK_POOL_INIT_SPIN=200000000" green
 
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-cert] PASS"; else echo "[nosw-cert] FAIL"; fi
 exit "$rc_all"
