@@ -17,6 +17,8 @@
 #   slow     -DARK_FAULT_SLOW_GET=200000 (ARK get widened): ALL PASS
 #   slowoff  the same with -DPK_NOSW_OFF: must be RED on N9 (unwidened, N9
 #            catches the ARK race only 1 time in 2, so CI asks it widened)
+#   slowpeer -DNETLAN_FAULT_SLOW_LEARN=200000 (learn_peer's gap widened): ALL PASS
+#   slowpeeroff  the same with -DPK_NOSW_OFF: must be RED on N24
 #   netlive  plain build with the LAN up (PKERNEL_LAN=1 + key): the net_lan
 #            probe must refuse (N23 PASS, N20-N22 SKIPPED, no ALL PASS)
 #   netliveng  -DPK_NETLAN_PROBE_NO_GUARD, LAN up: must be RED on N23
@@ -84,6 +86,8 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
 expect_red off "-DPK_NOSW_OFF" "N1 N20"
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
+expect_green slowpeer "-DNETLAN_FAULT_SLOW_LEARN=200000"
+expect_red slowpeeroff "-DNETLAN_FAULT_SLOW_LEARN=200000 -DPK_NOSW_OFF" N24
 
 # The net_lan probe uses an all-zero key; with the LAN up that key is the live
 # one (net_task receives with it). Live, the probe must refuse: N23 PASS,

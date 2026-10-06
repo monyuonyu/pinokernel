@@ -692,6 +692,53 @@ static void t_nw_high(INT stacd, void *exinf)
     }
     tk_ext_tsk();
 }
+/* N24-N25: net_lan's peer table (learn_peer publishes the count, then copies
+ * the address; lan_send walks the table from any task). The runner fills the
+ * emptied table with 64 peers over and over; a pri-19 task wakes every 2 ms
+ * and walks it as lan_send does, 60 times.
+ *   N24  slots walked while still empty (counted but not yet copied)
+ *   N25  no starvation: walks while the runner was filling
+ * With -DNETLAN_FAULT_SLOW_LEARN=<spins> (the gap widened), -DPK_NOSW_OFF must
+ * turn N24 red (run_nosw.sh slowpeer / slowpeeroff). */
+#define NP_HI 60
+IMPORT int  net_lan_probe_peers_reset(void);
+IMPORT void net_lan_probe_learn(unsigned i);
+IMPORT int  net_lan_probe_peers_bad(void);
+static volatile INT np_hrun, np_bad, np_during, np_busy;
+static void t_np_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < NP_HI; n++) {
+        tk_dly_tsk(2);
+        if (np_busy) np_during++;
+        np_bad += net_lan_probe_peers_bad();
+        np_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_netpeer(void)
+{
+    INT rounds = 0;
+    if (net_lan_probe_peers_reset() < 0) { pp_out("[nosw] FAIL setup: peer table probe refused\r\n"); pp_fail++; return; }
+    np_hrun = np_bad = np_during = 0;
+    ID t = pp_mk(t_np_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    np_busy = 1;
+    while (np_hrun < NP_HI && rounds < 1000000) {
+        for (unsigned i = 0; i < 64; i++) net_lan_probe_learn(i);
+        net_lan_probe_peers_reset();
+        rounds++;
+    }
+    np_busy = 0;
+    for (INT n = 0; n < 200 && np_hrun < NP_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    net_lan_probe_peers_reset();
+    { char m[160];
+      snprintf(m, sizeof m, "[nosw] net_lan peers: %d fills of 64, %d walks\r\n", (int)rounds, (int)np_hrun);
+      pp_out(m); }
+    pp_check(np_bad == 0, "N24", "net_lan peer slots walked while still empty", np_bad);
+    pp_check(np_during > 0, "N25", "no starvation: peer walks while the runner was filling", np_during);
+}
 static void ns_netlan(void)
 {
     static UB f[NW_LEN], o[NW_LEN + 64];
@@ -708,7 +755,8 @@ static void ns_netlan(void)
           pp_out(m); }
         pp_check(r < 0 && k1 == k0, "N23", "live LAN: the probe left the key alone (key sum during it)", (long)k1);
         pp_out("[nosw] SKIP N20 N21 N22  net_lan is live (the probe needs its own zero key)\r\n");
-        pp_skip += 3;
+        pp_out("[nosw] SKIP N24 N25  net_lan is live (the probe empties the peer table)\r\n");
+        pp_skip += 5;
         return;
     }
     memset(f, 0xAA, sizeof f);
@@ -733,6 +781,7 @@ static void ns_netlan(void)
     pp_check(bad + nw_hbad == 0, "N20", "net_lan packets that were not the sender's own", bad + nw_hbad);
     pp_check(lost == 0, "N21", "net_lan nonces lost (sends - nonces minted)", (INT)lost);
     pp_check(nw_during > 0, "N22", "no starvation: net_lan sends while the runner was busy", nw_during);
+    ns_netpeer();
 }
 
 static void t_ns_runner(INT stacd, void *exinf)
@@ -790,7 +839,7 @@ INT nosw_run(void (*out)(const char *))
     if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
     out(pp_fail ? "[nosw] RED\r\n" :
-        pp_skip ? "[nosw] PASS, BUT N20-N22 SKIPPED (net_lan is live)\r\n" :
+        pp_skip ? "[nosw] PASS, BUT N20-N22 N24 N25 SKIPPED (net_lan is live)\r\n" :
                   "[nosw] ALL PASS\r\n");
     return pp_fail;
 }
