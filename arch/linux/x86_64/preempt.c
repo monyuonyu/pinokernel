@@ -270,6 +270,14 @@ extern void (*pk_parallel_on_leave)(void);
 static void pk_pool_left(void)
 {
 #ifndef PK_POOL_NO_LEAVE_DISPATCH
+    /* the pool used inside a pk_nosw.h region: switching here would switch
+     * inside the region; the outermost pk_nosw_leave dispatches instead
+     * (no caller does this today — audit-23 grep — so nothing changes now).
+     * -DPK_POOL_LEAVE_IGNORES_NOSW: the old way (negative control, N18) */
+#ifndef PK_POOL_LEAVE_IGNORES_NOSW
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS && nosw_depth[id]) return;
+#endif
     if (pk_text_ok && !arch_irq_disabled_flag)
         arch_preempt_dispatch();
 #endif

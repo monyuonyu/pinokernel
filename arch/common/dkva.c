@@ -27,6 +27,7 @@
 #include "world.h"
 #include "degrade.h"
 #include "kernel.h"
+#include "pk_nosw.h"
 
 IMPORT void sio_send_frame(const UB *buf, INT size);
 IMPORT void dtr_seed_kv_cache(UB node);   /* dtr.c: KV キャッシュ warmup */
@@ -152,6 +153,9 @@ static void node_topic_name(char *out, const char *pfx, UB node)
 void dkva_cache_update(const float K[DKVA_NH][DKVA_SEQ][DKVA_DH],
                        const float V[DKVA_NH][DKVA_SEQ][DKVA_DH])
 {
+    /* pk_nosw.h: dtr writes (pri 6) while dkva_task (pri 7) / dkva_infer read
+     * the same entries in compute_partial — both sides are regions */
+    PK_NOSW_ENTER();
     INT idx = kv_head;
     for (INT h = 0; h < DKVA_NH; h++)
         for (INT t = 0; t < DKVA_SEQ; t++)
@@ -162,6 +166,7 @@ void dkva_cache_update(const float K[DKVA_NH][DKVA_SEQ][DKVA_DH],
     kv_cache[idx].valid = 1;
     kv_head = (kv_head + 1) % DKVA_CACHE_SIZE;
     if (kv_count < DKVA_CACHE_SIZE) kv_count++;
+    PK_NOSW_LEAVE();
 }
 
 /* ------------------------------------------------------------------ */
@@ -171,6 +176,7 @@ void dkva_cache_update(const float K[DKVA_NH][DKVA_SEQ][DKVA_DH],
 static void compute_partial(const DKVA_Q_PKT *qpkt, DKVA_RESP_PKT *resp)
 {
     float scale = 1.0f / dk_sqrt((float)DKVA_DH);
+    PK_NOSW_ENTER();   /* kv_cache: see dkva_cache_update (small: 8 entries) */
 
     /* partial_out / attn_sum を 0 初期化 */
     for (INT t = 0; t < DKVA_SEQ; t++)
@@ -207,7 +213,26 @@ static void compute_partial(const DKVA_Q_PKT *qpkt, DKVA_RESP_PKT *resp)
     }
 
     resp->n_entries = (UB)n_used;
+    PK_NOSW_LEAVE();
 }
+
+#ifdef _LINUX_X86_64_
+/* `tkconf nosw` N16 (arch/linux/x86_64/pool_preempt.c): the reader as
+ * dkva_task calls it, and a save/restore of the cache around the probe. */
+void dkva_probe_partial(const DKVA_Q_PKT *q, DKVA_RESP_PKT *r) { compute_partial(q, r); }
+static KV_ENTRY kv_probe_save[DKVA_CACHE_SIZE];
+static INT      kv_probe_head, kv_probe_count;
+void dkva_probe_kv(INT restore)
+{
+    if (!restore) {
+        for (INT i = 0; i < DKVA_CACHE_SIZE; i++) kv_probe_save[i] = kv_cache[i];
+        kv_probe_head = kv_head; kv_probe_count = kv_count;
+    } else {
+        for (INT i = 0; i < DKVA_CACHE_SIZE; i++) kv_cache[i] = kv_probe_save[i];
+        kv_head = kv_probe_head; kv_count = kv_probe_count;
+    }
+}
+#endif
 
 /* DKVA_RESP_PKT (= {分子 partial_out, 分母 attn_sum}) を accumulator に加算。
  * partial も region 要約も同じ型なので共用できる。 */
