@@ -15,6 +15,7 @@
  *  P2 red; -DPK_POOL_NO_LEAVE_DISPATCH (no switch when the pool is left) and
  *  -DPK_HOSTED_NO_EXIT_DISPATCH (the old behaviour, RNG0) turn P5 red. Needs
  *  >= 2 CPUs (else P4 is red: the pool runs inline and proves nothing).
+ *  `tkconf nosw` (N1-) and `tkconf fp` (F1-F2) live here too: see each probe.
  */
 #include "kernel.h"
 #include "kdds.h"
@@ -711,6 +712,91 @@ INT nosw_run(void (*out)(const char *))
     if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
     out(pp_fail ? "[nosw] RED\r\n" : "[nosw] ALL PASS\r\n");
+    return pp_fail;
+}
+
+/* `tkconf fp` (FP-PRESERVE, audit-26): the exit dispatch must give a task back
+ * its FP/SIMD registers. The runner (pri 20) steps 8 doubles held in registers
+ * through chunks of a bounded linear map while a pri-19 task wakes every 2 ms
+ * and does FP work of its own, 60 times. Then the same number of chunks again
+ * with dispatch disabled. The two results must be equal bit for bit.
+ *   F1  doubles unlike the run without switches (of 8)
+ *   F2  precondition: high FP rounds that landed inside the runner's chunks
+ * -DPK_PREEMPT_DROP_FP (preempt.c: the trampoline zeroes xmm0-15 instead of
+ * restoring them) must turn F1 red. */
+#define FP_HI    60
+#define FP_ITERS 20000
+static volatile INT fp_hrun, fp_during, fp_busy;
+static volatile double fp_sink;
+static void fp_chunk(double s[8])
+{
+    double a = s[0], b = s[1], c = s[2], d = s[3], e = s[4], f = s[5], g = s[6], h = s[7];
+    for (INT i = 0; i < FP_ITERS; i++) {
+        double t = a;
+        a = a * 0.9999999 + b * 1e-7;  b = b * 0.9999999 + c * 1e-7;
+        c = c * 0.9999999 + d * 1e-7;  d = d * 0.9999999 + e * 1e-7;
+        e = e * 0.9999999 + f * 1e-7;  f = f * 0.9999999 + g * 1e-7;
+        g = g * 0.9999999 + h * 1e-7;  h = h * 0.9999999 + t * 1e-7;
+    }
+    s[0] = a; s[1] = b; s[2] = c; s[3] = d; s[4] = e; s[5] = f; s[6] = g; s[7] = h;
+}
+static void t_fp_high(INT stacd, void *exinf)
+{
+    double x[8] = { -3.5, 2.25, 9.0, -0.125, 7.75, -6.0, 0.5, 4.0 };
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < FP_HI; n++) {
+        tk_dly_tsk(2);
+        if (fp_busy) fp_during++;
+        fp_chunk(x);
+        fp_hrun++;
+    }
+    fp_sink = x[0];
+    tk_ext_tsk();
+}
+static void t_fp_runner(INT stacd, void *exinf)
+{
+    static const double s0[8] = { 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 };
+    double s[8], r[8];
+    INT chunks = 0, diff = 0;
+    (void)stacd; (void)exinf;
+    memcpy(s, s0, sizeof s);
+    fp_hrun = fp_during = 0;
+    ID t = pp_mk(t_fp_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    fp_busy = 1;
+    while (fp_hrun < FP_HI && chunks < 1000000) { fp_chunk(s); chunks++; }
+    fp_busy = 0;
+    for (INT n = 0; n < 200 && fp_hrun < FP_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    memcpy(r, s0, sizeof r);
+    tk_dis_dsp();
+    for (INT k = 0; k < chunks; k++) fp_chunk(r);
+    tk_ena_dsp();
+    for (INT i = 0; i < 8; i++) if (memcmp(&s[i], &r[i], sizeof s[i])) diff++;
+    { char m[200];
+      snprintf(m, sizeof m, "[fp] %d chunks of %d steps, high rounds %d, s[0] %.17g / %.17g\r\n",
+               (int)chunks, FP_ITERS, (int)fp_hrun, s[0], r[0]);
+      pp_out(m); }
+    pp_check(diff == 0, "F1", "doubles unlike the run without switches (of 8)", diff);
+    pp_check(fp_during > 0, "F2", "precondition: high FP rounds inside the runner's chunks", fp_during);
+    pp_done = 1;
+    tk_wup_tsk(pp_caller);
+    tk_ext_tsk();
+}
+
+INT fp_preserve_run(void (*out)(const char *))
+{
+    pp_out = out; pp_fail = 0; pp_done = 0; pp_tag = "[fp]";
+    out("[fp] FP/SIMD registers across task switches (runner pri 20, high pri 19)\r\n");
+    pp_caller = tk_get_tid();
+    ID run = pp_mk(t_fp_runner, 20);
+    if (run <= 0) { out("[fp] FAIL setup: no runner task\r\n"); return 1; }
+    tk_can_wup(TSK_SELF);
+    tk_sta_tsk(run, 0);
+    while (!pp_done && tk_slp_tsk(120000) == E_OK) { }
+    if (!pp_done) { out("[fp] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
+    tk_del_tsk(run);
+    out(pp_fail ? "[fp] RED\r\n" : "[fp] ALL PASS\r\n");
     return pp_fail;
 }
 

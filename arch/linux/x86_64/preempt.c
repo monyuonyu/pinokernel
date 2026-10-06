@@ -245,7 +245,28 @@ __asm__(
     "    andq  $-64, %rsp\n"
     "    fxsave64 (%rsp)\n"
     "    call  arch_preempt_dispatch\n"
+    /* -DPK_PREEMPT_DROP_FP: zero xmm0-15 instead of restoring them (the
+     * negative control for `tkconf fp` F1, FP-PRESERVE) */
+#ifdef PK_PREEMPT_DROP_FP
+    "    pxor  %xmm0, %xmm0\n"
+    "    pxor  %xmm1, %xmm1\n"
+    "    pxor  %xmm2, %xmm2\n"
+    "    pxor  %xmm3, %xmm3\n"
+    "    pxor  %xmm4, %xmm4\n"
+    "    pxor  %xmm5, %xmm5\n"
+    "    pxor  %xmm6, %xmm6\n"
+    "    pxor  %xmm7, %xmm7\n"
+    "    pxor  %xmm8, %xmm8\n"
+    "    pxor  %xmm9, %xmm9\n"
+    "    pxor  %xmm10, %xmm10\n"
+    "    pxor  %xmm11, %xmm11\n"
+    "    pxor  %xmm12, %xmm12\n"
+    "    pxor  %xmm13, %xmm13\n"
+    "    pxor  %xmm14, %xmm14\n"
+    "    pxor  %xmm15, %xmm15\n"
+#else
     "    fxrstor64 (%rsp)\n"
+#endif
     "    movq  %rbp, %rsp\n"
     "    popq  %rbp\n"
     "    popq %r11\n"
