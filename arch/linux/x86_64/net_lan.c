@@ -50,6 +50,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "pk_nosw.h"
 #include "sha256.h"   /* from relay/ (same include path net_relay uses);
                        * deliberately avoids <stdint.h> to coexist with the
                        * T-Kernel stdint shadow this TU is built under. */
@@ -378,25 +379,72 @@ int net_lan_init(void)
     return my_node_id;
 }
 
+/* Build one packet in the static buffer and hand it out: to the socket, or
+ * (sink != NULL, the `tkconf nosw` probe) into sink. The buffer and
+ * next_nonce are shared by every sending task; with the exit dispatch a task
+ * could be switched out between the build and the sendto and another
+ * sender's packet would go out under its nonce, so the whole send is one
+ * no-switch region (pk_nosw.h; gap-ledger EXIT-DISPATCH-SHARED-STATE). */
+static int lan_send(const void *frame, int len, unsigned char *sink)
+{
+    static unsigned char buf[MAX_PKT];
+    int n;
+    PK_NOSW_ENTER();
+    n = build_packet(buf, REL_BROADCAST, (unsigned)my_node_id, 0, frame, len);
+    if (sink) {
+        memcpy(sink, buf, (size_t)n);
+    } else {
+        /* 1) Rendezvous broadcast — first contact for peers we haven't learned. */
+        (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
+                     (struct sockaddr *)&bcast_addr, sizeof(bcast_addr));
+
+        /* 2) Direct unicast to every learned peer (works even where broadcast
+         *    is filtered once contact is established). */
+        for (int i = 0; i < lan_peer_count; i++) {
+            (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
+                         (struct sockaddr *)&lan_peers[i], sizeof(lan_peers[i]));
+        }
+    }
+    PK_NOSW_LEAVE();
+    return n;
+}
+
 int net_lan_send(const void *frame, int len)
 {
     if (sock_fd < 0 || len <= 0 || len > MAX_PAYLOAD) return -1;
-
-    static unsigned char buf[MAX_PKT];
-    int n = build_packet(buf, REL_BROADCAST,
-                         (unsigned)my_node_id, 0, frame, len);
-
-    /* 1) Rendezvous broadcast — first contact for peers we haven't learned. */
-    (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
-                 (struct sockaddr *)&bcast_addr, sizeof(bcast_addr));
-
-    /* 2) Direct unicast to every learned peer (works even where broadcast is
-     *    filtered once contact is established). */
-    for (int i = 0; i < lan_peer_count; i++) {
-        (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
-                     (struct sockaddr *)&lan_peers[i], sizeof(lan_peers[i]));
-    }
+    (void)lan_send(frame, len, NULL);
     return len;
+}
+
+/* `tkconf nosw` probe (pool_preempt.c N20-N21), no socket needed.
+ * net_lan_probe(1) switches to the v2 wire with an all-zero key and returns
+ * next_nonce; net_lan_probe(0) puts the wire and key back. */
+static int probe_saved_ver;
+static u8  probe_saved_key[KEY_LEN];
+unsigned long long net_lan_probe(int on)
+{
+    if (on) {
+        probe_saved_ver = wire_version;
+        memcpy(probe_saved_key, key, KEY_LEN);
+        memset(key, 0, KEY_LEN);
+        wire_version = RELAY_VER_V2;
+    } else {
+        wire_version = probe_saved_ver;
+        memcpy(key, probe_saved_key, KEY_LEN);
+    }
+    return next_nonce;
+}
+/* One send into out (>= MAX_PKT bytes). 1 = the packet is this call's own:
+ * its payload is `frame` and its MAC verifies; 0 = it is not. */
+int net_lan_probe_send(const void *frame, int len, unsigned char *out)
+{
+    u8 want[HMAC_TRUNC_LEN];
+    int n = lan_send(frame, len, out);
+    if (n != HEAD_LEN + AUTH_LEN + len) return 0;
+    compute_mac(RELAY_VER_V2, out[5], out[6], out[7], load_u64_le(out + HEAD_LEN),
+                out + HEAD_LEN + AUTH_LEN, len, want);
+    return ct_eq(want, out + HEAD_LEN + 8, HMAC_TRUNC_LEN) &&
+           memcmp(out + HEAD_LEN + AUTH_LEN, frame, (size_t)len) == 0;
 }
 
 int net_lan_recv(void *out, int maxlen)

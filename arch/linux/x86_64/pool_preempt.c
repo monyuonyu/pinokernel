@@ -129,7 +129,8 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below),
  *   N12-N13 dtr (ns_dtr below), N14-N15 the dlb trace ring (ns_dlb below),
  *   N16-N17 the dkva KV cache (ns_dkva below), N18-N19 the pool inside a
- *   region (ns_poolregion below)
+ *   region (ns_poolregion below), N20-N22 net_lan's send buffer and nonce
+ *   (ns_netlan below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -657,6 +658,61 @@ static void ns_poolregion(void)
     pp_check(nq_hrun == NQ_HI, "N19", "no starvation: high wakes finished (of 30)", nq_hrun);
 }
 
+/* N20-N22: net_lan_send's static packet buffer and nonce counter (the
+ * region in net_lan.c lan_send). The runner sends 1000-byte frames of 0xAA
+ * over and over; a pri-19 task wakes every 2 ms and sends a frame of 0xBB,
+ * 60 times. The packets go into private buffers instead of the socket
+ * (net_lan_probe_send), on the v2 wire with a zero key.
+ *   N20  packets that are not the sender's own (payload or MAC)
+ *   N21  nonces lost: next_nonce advanced less than the number of sends
+ *   N22  no starvation: sends landed while the runner was busy
+ * -DPK_NOSW_OFF must turn N20 red. */
+#define NL_HI  60
+#define NL_LEN 1000
+IMPORT unsigned long long net_lan_probe(int on);
+IMPORT int net_lan_probe_send(const void *frame, int len, unsigned char *out);
+static volatile INT nl_hrun, nl_hbad, nl_during, nl_busy;
+static void t_nl_high(INT stacd, void *exinf)
+{
+    static UB f[NL_LEN], o[NL_LEN + 64];
+    (void)stacd; (void)exinf;
+    memset(f, 0xBB, sizeof f);
+    for (INT n = 0; n < NL_HI; n++) {
+        tk_dly_tsk(2);
+        if (nl_busy) nl_during++;
+        if (!net_lan_probe_send(f, NL_LEN, o)) nl_hbad++;
+        nl_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_netlan(void)
+{
+    static UB f[NL_LEN], o[NL_LEN + 64];
+    INT sends = 0, bad = 0;
+    memset(f, 0xAA, sizeof f);
+    unsigned long long n0 = net_lan_probe(1);
+    nl_hrun = nl_hbad = nl_during = 0;
+    ID t = pp_mk(t_nl_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nl_busy = 1;
+    while (nl_hrun < NL_HI && sends < 20000000) {
+        if (!net_lan_probe_send(f, NL_LEN, o)) bad++;
+        sends++;
+    }
+    nl_busy = 0;
+    for (INT n = 0; n < 200 && nl_hrun < NL_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    unsigned long long n1 = net_lan_probe(0);
+    long long lost = (long long)(sends + nl_hrun) - (long long)(n1 - n0);
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] net_lan: %d runner sends, %d high sends, nonces %llu\r\n",
+               (int)sends, (int)nl_hrun, n1 - n0);
+      pp_out(m); }
+    pp_check(bad + nl_hbad == 0, "N20", "net_lan packets that were not the sender's own", bad + nl_hbad);
+    pp_check(lost == 0, "N21", "net_lan nonces lost (sends - nonces minted)", (INT)lost);
+    pp_check(nl_during > 0, "N22", "no starvation: net_lan sends while the runner was busy", nl_during);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -692,6 +748,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_dlb();
     ns_dkva();
     ns_poolregion();
+    ns_netlan();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
