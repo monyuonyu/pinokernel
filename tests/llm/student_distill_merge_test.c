@@ -16,17 +16,27 @@
  *    T-gen   text the two parents generate themselves (no raw data; the
  *            intended use)
  *
- *  Gates, per arm (each prints PASS/FAIL; rc is over ALL of them, T-gen
- *  included — a red T-gen is reported red, not re-labelled):
+ *  Two starts for the child (each gate line ends in start=pick|init):
+ *    pick  stage 3: the guarded pick, D_STEPS at D_LR
+ *    init  stage 3b (brain-merge-distill.md §4, fixed before results): the
+ *          common ancestor I, one parent's budget (ROUNDS x TW steps) at the
+ *          parents' LR
+ *
+ *  Gates, per arm and start (each prints PASS/FAIL; rc is over ALL of
+ *  them, T-gen included — a red T-gen is reported red, not re-labelled):
  *    [d5c-s1-gain]  S1 TEST: child <= better parent - GAIN
  *    [d5c-s2-both]  S2 both halves: child <= better parent - GAIN, and on
  *                   each half child <= midpoint of the two parents
  *    [d5c-floor]    child <= worse parent (S1 TEST, S2 both halves)
  *    [d5c-determ]   the merge twice -> byte-identical
+ *    [d5c-b-plain]  start=init, T-real only: child <= plain hard-label
+ *                   training from I with the same steps and LR (S1 TEST,
+ *                   S2 both halves); printed, not gated, on T-gen
  *
- *  Negative controls (run_st_distill.sh requires each to go RED):
- *    -DST_DISTILL_ONE_TEACHER  the teacher is `into` alone (s2-both red)
- *    -DST_DISTILL_RAND_XFER    xfer is pseudo-random bytes (gain red)
+ *  Negative controls (run_st_distill.sh judges the target line
+ *  "[d5c-s2-both] ... start=init", not the exit code):
+ *    -DST_DISTILL_ONE_TEACHER  the teacher is `into` alone
+ *    -DST_DISTILL_RAND_XFER    xfer is pseudo-random bytes
  *
  *  Build (wave-49): -O1 -ffp-contract=off.
  */
@@ -50,6 +60,7 @@ static int g_pass = 0, g_fail = 0;
 #define GAIN    0.03f     /* nats, brain-merge-distill.md §3 */
 #define D_STEPS 400       /* distillation steps (fixed, d5c3-plan.md) */
 #define D_LR    1e-3f     /* Adam, FedDF §4.1 */
+#define B_LR    LR        /* stage 3b: the parents' LR; steps ROUNDS * TW */
 #define NGEN_MAX 128
 
 static const uint8_t CORPUS[] =
@@ -127,12 +138,15 @@ static void make_rand(int count)
 
 /* merge peer into a copy of `a`; the child goes to *child */
 static int merge(st_model *child, st_model *a, st_model *b, const st_model *I,
-                 st_model *S, const uint8_t *const *x, int nx,
+                 st_model *S, const uint8_t *const *x, int nx, int start,
                  st_distill_stats *st)
 {
     clone(child, a);
+    if (start == ST_DISTILL_START_INIT)
+        return st_merge_distill(child, b, I, S, x, nx, VALW, VW, SEQLEN,
+                                ROUNDS * TW, B_LR, start, st);
     return st_merge_distill(child, b, I, S, x, nx, VALW, VW, SEQLEN, D_STEPS,
-                            D_LR, st);
+                            D_LR, start, st);
 }
 
 static void report(const char *arm, const char *sc, int rc,
@@ -143,15 +157,26 @@ static void report(const char *arm, const char *sc, int rc,
            (double)st->val_before, (double)st->val_after);
 }
 
-static void run_arm(const char *arm, int gen)
+static char g_msg[256];
+static const char *G(const char *gate, const char *sn)
 {
-    printf("=== arm %s ===\n", arm);
-    st_model I, A, B, S, C, C2;
+    snprintf(g_msg, sizeof g_msg, "%s start=%s", gate, sn);
+    return g_msg;
+}
+
+static void run_arm(const char *arm, int gen, int start)
+{
+    const char *sn = start == ST_DISTILL_START_INIT ? "init" : "pick";
+    printf("=== arm %s start=%s ===\n", arm, sn);
+    st_model I, A, B, S, C, C2, P;
     st_distill_stats st, st2;
     const uint8_t *const *x; int nx;
 
     st_init_tier(&I, 0xC0FFEE, ST_TIER_S);
     st_init_tier(&S, 1, ST_TIER_S);
+    /* plain reference (stage 3b): hard labels from I, same steps and LR */
+    clone(&P, &I);
+    train_list(&P, ALLW, TW, 1, ROUNDS);
 
     /* ---- S1 ---- */
     clone(&A, &I); clone(&B, &I);
@@ -162,21 +187,24 @@ static void run_arm(const char *arm, int gen)
 #ifdef ST_DISTILL_RAND_XFER
     nx = 2 * TW; make_rand(nx); x = GENW;
 #endif
-    int rc  = merge(&C,  &A, &B, &I, &S, x, nx, &st);
-    int rc2 = merge(&C2, &A, &B, &I, &S, x, nx, &st2);
+    int rc  = merge(&C,  &A, &B, &I, &S, x, nx, start, &st);
+    int rc2 = merge(&C2, &A, &B, &I, &S, x, nx, start, &st2);
     report(arm, "S1", rc, &st);
     float lA = loss_on(&A, TESTW, SW), lB = loss_on(&B, TESTW, SW);
-    float lC = loss_on(&C, TESTW, SW);
+    float lC = loss_on(&C, TESTW, SW), lP = loss_on(&P, TESTW, SW);
     float better = lA < lB ? lA : lB, worse = lA > lB ? lA : lB;
-    printf("  [%s S1] TEST A=%.4f B=%.4f child=%.4f (gain vs better %.4f)\n",
-           arm, (double)lA, (double)lB, (double)lC, (double)(better - lC));
-    CHECK(rc >= 0, "st_merge_distill returned ok (S1)");
-    CHECK(rc >= 0 && lC <= better - GAIN, "[d5c-s1-gain] S1 TEST: child <= better parent - 0.03");
-    CHECK(rc >= 0 && lC <= worse + 1e-4f, "[d5c-floor] S1 TEST: child <= worse parent");
+    printf("  [%s S1 %s] TEST A=%.4f B=%.4f child=%.4f plain=%.4f (gain vs better %.4f)\n",
+           arm, sn, (double)lA, (double)lB, (double)lC, (double)lP,
+           (double)(better - lC));
+    CHECK(rc >= 0, G("st_merge_distill returned ok (S1)", sn));
+    CHECK(rc >= 0 && lC <= better - GAIN, G("[d5c-s1-gain] S1 TEST: child <= better parent - 0.03", sn));
+    CHECK(rc >= 0 && lC <= worse + 1e-4f, G("[d5c-floor] S1 TEST: child <= worse parent", sn));
     CHECK(rc >= 0 && rc == rc2 && st.best_step == st2.best_step &&
           memcmp(C.w, C2.w, (size_t)C.n_params * sizeof(float)) == 0,
-          "[d5c-determ] merge twice -> byte-identical");
-    CHECK(rc >= 0 && C.adam_t == 0, "Adam state reset after merge");
+          G("[d5c-determ] merge twice -> byte-identical", sn));
+    CHECK(rc >= 0 && C.adam_t == 0, G("Adam state reset after merge", sn));
+    if (start == ST_DISTILL_START_INIT && !gen)
+        CHECK(rc >= 0 && lC <= lP, G("[d5c-b-plain] S1 TEST: child <= plain training from I", sn));
     st_free(&A); st_free(&B); st_free(&C); st_free(&C2);
 
     /* ---- S2 ---- */
@@ -188,14 +216,16 @@ static void run_arm(const char *arm, int gen)
 #ifdef ST_DISTILL_RAND_XFER
     nx = 2 * TW; make_rand(nx); x = GENW;
 #endif
-    rc = merge(&C, &A, &B, &I, &S, x, nx, &st);
+    rc = merge(&C, &A, &B, &I, &S, x, nx, start, &st);
     report(arm, "S2", rc, &st);
     float aA = loss_on(&A, ALLW, TW), aB = loss_on(&B, ALLW, TW), aC = loss_on(&C, ALLW, TW);
+    float aP = loss_on(&P, ALLW, TW);
     float hA[2], hB[2], hC[2];
     hA[0] = loss_on(&A, TRA, NA); hB[0] = loss_on(&B, TRA, NA); hC[0] = loss_on(&C, TRA, NA);
     hA[1] = loss_on(&A, TRB, NB); hB[1] = loss_on(&B, TRB, NB); hC[1] = loss_on(&C, TRB, NB);
     float tA = loss_on(&A, TESTW, SW), tB = loss_on(&B, TESTW, SW), tC = loss_on(&C, TESTW, SW);
-    printf("  [%s S2] both  A=%.4f B=%.4f child=%.4f\n", arm, (double)aA, (double)aB, (double)aC);
+    printf("  [%s S2 %s] both  A=%.4f B=%.4f child=%.4f plain=%.4f\n", arm, sn,
+           (double)aA, (double)aB, (double)aC, (double)aP);
     printf("  [%s S2] A-half A=%.4f B=%.4f child=%.4f mid=%.4f\n", arm,
            (double)hA[0], (double)hB[0], (double)hC[0], (double)(0.5f * (hA[0] + hB[0])));
     printf("  [%s S2] B-half A=%.4f B=%.4f child=%.4f mid=%.4f\n", arm,
@@ -204,12 +234,14 @@ static void run_arm(const char *arm, int gen)
            (double)tA, (double)tB, (double)tC);
     float b2 = aA < aB ? aA : aB, w2 = aA > aB ? aA : aB;
     int halves = hC[0] <= 0.5f * (hA[0] + hB[0]) && hC[1] <= 0.5f * (hA[1] + hB[1]);
-    CHECK(rc >= 0, "st_merge_distill returned ok (S2)");
+    CHECK(rc >= 0, G("st_merge_distill returned ok (S2)", sn));
     CHECK(rc >= 0 && aC <= b2 - GAIN && halves,
-          "[d5c-s2-both] S2: both halves child <= better - 0.03, each half <= midpoint");
-    CHECK(rc >= 0 && aC <= w2 + 1e-4f, "[d5c-floor] S2 both halves: child <= worse parent");
+          G("[d5c-s2-both] S2: both halves child <= better - 0.03, each half <= midpoint", sn));
+    CHECK(rc >= 0 && aC <= w2 + 1e-4f, G("[d5c-floor] S2 both halves: child <= worse parent", sn));
+    if (start == ST_DISTILL_START_INIT && !gen)
+        CHECK(rc >= 0 && aC <= aP, G("[d5c-b-plain] S2 both halves: child <= plain training from I", sn));
     st_free(&A); st_free(&B); st_free(&C);
-    st_free(&I); st_free(&S);
+    st_free(&I); st_free(&S); st_free(&P);
 }
 
 /* soft-target backward: (a) a one-hot q gives st_backward's loss and
@@ -304,10 +336,10 @@ int main(void)
 {
     printf("=== [d5c] merge by distillation (stage 3) cert ===\n");
 #ifdef ST_DISTILL_ONE_TEACHER
-    printf("(NEGATIVE CONTROL build: -DST_DISTILL_ONE_TEACHER — expect RED on s2-both)\n");
+    printf("(NEGATIVE CONTROL build: -DST_DISTILL_ONE_TEACHER — expect RED on s2-both start=init)\n");
 #endif
 #ifdef ST_DISTILL_RAND_XFER
-    printf("(NEGATIVE CONTROL build: -DST_DISTILL_RAND_XFER — expect RED on gain)\n");
+    printf("(NEGATIVE CONTROL build: -DST_DISTILL_RAND_XFER — expect RED on s2-both start=init)\n");
 #endif
     NW = ((int)sizeof(CORPUS) - 1) / SEQLEN;
     SW = NW / 6; VW = NW / 6; TW = NW - SW - VW;
@@ -321,8 +353,10 @@ int main(void)
     g_logits = (float *)malloc((size_t)SEQLEN * ST_VOCAB * sizeof(float));
 
     soft_grad();
-    run_arm("T-real", 0);
-    run_arm("T-gen", 1);
+    run_arm("T-real", 0, ST_DISTILL_START_PICK);
+    run_arm("T-gen", 1, ST_DISTILL_START_PICK);
+    run_arm("T-real", 0, ST_DISTILL_START_INIT);
+    run_arm("T-gen", 1, ST_DISTILL_START_INIT);
 
     printf("\n[d5c] %d PASS / %d FAIL\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

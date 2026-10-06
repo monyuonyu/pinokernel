@@ -2624,14 +2624,17 @@ PK_NOSW_FN(int, st_merge_distill, (st_model *into, st_model *peer,
                      const st_model *init, st_model *scratch,
                      const uint8_t *const *xfer, int nx,
                      const uint8_t *const *val, int nv, int seqlen,
-                     int steps, float lr, st_distill_stats *stats),
-           (into, peer, init, scratch, xfer, nx, val, nv, seqlen, steps, lr, stats))
+                     int steps, float lr, int start, st_distill_stats *stats),
+           (into, peer, init, scratch, xfer, nx, val, nv, seqlen, steps, lr,
+            start, stats))
 {
     st_distill_stats z = { -1, 0, 0.0f, 0.0f };
     if (stats) *stats = z;
     if (!st_same_shape(into, peer) || !st_same_shape(into, init) ||
         !st_same_shape(into, scratch) || !xfer || nx < 1 || !val || nv < 1 ||
-        seqlen < 2 || seqlen > ST_MAXSEQ || steps < 0) return ST_E_ARG;
+        seqlen < 2 || seqlen > ST_MAXSEQ || steps < 0 ||
+        (start != ST_DISTILL_START_PICK && start != ST_DISTILL_START_INIT))
+        return ST_E_ARG;
     int np = into->n_params;
 
     /* the teacher's first parent is `into` as it is now: keep a copy */
