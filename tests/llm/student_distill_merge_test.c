@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "../../arch/common/llm/student.h"
 
@@ -211,6 +212,94 @@ static void run_arm(const char *arm, int gen)
     st_free(&I); st_free(&S);
 }
 
+/* soft-target backward: (a) a one-hot q gives st_backward's loss and
+ * gradient; (b) with a spread q (another baby's softmax) the output-head
+ * gradient matches central finite differences of -sum q log p (the head is
+ * after the router, so a step there cannot change which experts fire). */
+static double soft_loss(st_model *m, const uint8_t *x, const float *q)
+{
+    st_forward(m, x, SEQLEN, g_logits);
+    double tot = 0.0;
+    for (int t = 0; t < SEQLEN - 1; t++) {
+        const float *z = g_logits + (size_t)t * ST_VOCAB;
+        double mx = z[0], s = 0.0;
+        for (int o = 1; o < ST_VOCAB; o++) if (z[o] > mx) mx = z[o];
+        for (int o = 0; o < ST_VOCAB; o++) s += exp(z[o] - mx);
+        double lse = mx + log(s);
+        for (int o = 0; o < ST_VOCAB; o++)
+            tot -= (double)q[(size_t)t * ST_VOCAB + o] * ((double)z[o] - lse);
+    }
+    return tot / (SEQLEN - 1);
+}
+
+static void soft_grad(void)
+{
+    printf("=== soft-target backward ===\n");
+    st_model M, T;
+    st_init_tier(&M, 0xABCD, ST_TIER_S);
+    st_init_tier(&T, 0x1234, ST_TIER_S);
+    const uint8_t *x = ALLW[0];
+    size_t row = (size_t)SEQLEN * ST_VOCAB;
+    float *q  = (float *)calloc(row, sizeof(float));
+    float *g1 = (float *)malloc((size_t)M.n_params * sizeof(float));
+
+    for (int t = 0; t < SEQLEN - 1; t++) q[(size_t)t * ST_VOCAB + x[t + 1]] = 1.0f;
+    st_zero_grad(&M); st_forward(&M, x, SEQLEN, g_logits);
+    float lh = st_backward(&M, x, SEQLEN);
+    memcpy(g1, M.g, (size_t)M.n_params * sizeof(float));
+    st_zero_grad(&M); st_forward(&M, x, SEQLEN, g_logits);
+    float ls = st_backward_soft(&M, x, SEQLEN, q);
+    float gmax = 0.0f, dmax = 0.0f;
+    for (int i = 0; i < M.n_params; i++) {
+        float a = g1[i] < 0 ? -g1[i] : g1[i];
+        float d = g1[i] - M.g[i]; if (d < 0) d = -d;
+        if (a > gmax) gmax = a;
+        if (d > dmax) dmax = d;
+    }
+    printf("  one-hot q: loss hard=%.6f soft=%.6f  max|dg|/max|g|=%.3g\n",
+           (double)lh, (double)ls, (double)(gmax > 0 ? dmax / gmax : 1.0f));
+    CHECK(gmax > 0.0f && dmax <= 1e-5f * gmax && (lh - ls) < 1e-5f && (ls - lh) < 1e-5f,
+          "[d5c-soft-onehot] one-hot q == st_backward (loss, every gradient)");
+
+    /* spread q: T's next-byte distribution */
+    st_forward(&T, x, SEQLEN, g_logits);
+    for (int t = 0; t < SEQLEN - 1; t++) {
+        const float *z = g_logits + (size_t)t * ST_VOCAB;
+        double mx = z[0], s = 0.0;
+        for (int o = 1; o < ST_VOCAB; o++) if (z[o] > mx) mx = z[o];
+        for (int o = 0; o < ST_VOCAB; o++) s += exp(z[o] - mx);
+        for (int o = 0; o < ST_VOCAB; o++)
+            q[(size_t)t * ST_VOCAB + o] = (float)(exp(z[o] - mx) / s);
+    }
+    st_zero_grad(&M); st_forward(&M, x, SEQLEN, g_logits);
+    float la = st_backward_soft(&M, x, SEQLEN, q);
+    double lr = soft_loss(&M, x, q);
+    float worst = 0.0f;
+    int nhead = ST_VOCAB * M.d;
+    for (int k = 0; k < 8; k++) {         /* the 8 largest |g| in the head */
+        int bi = -1; float bg = -1.0f;
+        for (int i = 0; i < nhead; i++) {
+            float a = M.g[M.o_out + i]; if (a < 0) a = -a;
+            if (a > bg) { bg = a; bi = i; }
+        }
+        float ga = M.g[M.o_out + bi];
+        float w0 = M.w[M.o_out + bi], eps = 1e-2f;
+        M.w[M.o_out + bi] = w0 + eps; double lp = soft_loss(&M, x, q);
+        M.w[M.o_out + bi] = w0 - eps; double lm = soft_loss(&M, x, q);
+        M.w[M.o_out + bi] = w0;
+        float fd = (float)((lp - lm) / (2.0 * eps));
+        float den = (fd < 0 ? -fd : fd) > (ga < 0 ? -ga : ga) ? (fd < 0 ? -fd : fd) : (ga < 0 ? -ga : ga);
+        float re = den > 0 ? (fd - ga) / den : 0.0f; if (re < 0) re = -re;
+        if (re > worst) worst = re;
+        M.g[M.o_out + bi] = 0.0f;         /* next largest */
+    }
+    printf("  spread q: loss backward=%.6f recomputed=%.6f  FD max rel err (8 head weights)=%.3g\n",
+           (double)la, lr, (double)worst);
+    CHECK(worst < 1e-2f && (la - lr) < 1e-4 && (lr - la) < 1e-4,
+          "[d5c-soft-fd] spread q: loss and head gradient match finite differences");
+    free(q); free(g1); st_free(&M); st_free(&T);
+}
+
 int main(void)
 {
     printf("=== [d5c] merge by distillation (stage 3) cert ===\n");
@@ -231,6 +320,7 @@ int main(void)
     printf("  windows: train=%d (A %d / B %d) val=%d test=%d\n", TW, NA, NB, VW, SW);
     g_logits = (float *)malloc((size_t)SEQLEN * ST_VOCAB * sizeof(float));
 
+    soft_grad();
     run_arm("T-real", 0);
     run_arm("T-gen", 1);
 

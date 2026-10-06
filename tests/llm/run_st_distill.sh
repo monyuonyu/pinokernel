@@ -28,7 +28,7 @@ for v in plain ONE_TEACHER RAND_XFER; do
     def=""
     [ "$v" != plain ] && def="-DST_DISTILL_$v"
     echo "[build] $v $def"
-    if ! $CC $CFLAGS $def "$SRC_TEST" "$SRC_STU" -o "$WORK/d_$v"; then
+    if ! $CC $CFLAGS $def "$SRC_TEST" "$SRC_STU" -lm -o "$WORK/d_$v"; then
         echo "[build] $v FAILED"; rc_all=1; continue
     fi
     "$WORK/d_$v"
