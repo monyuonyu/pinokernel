@@ -44,6 +44,10 @@ IMPORT void tk_ext_tsk( void );
 /*
  * 休止状態タスクのコンテキスト初期化
  */
+#ifndef PK_NOSW_OFF
+IMPORT void knl_nosw_forget( ID tskid );	/* cpu_cntl.c */
+#endif
+
 Inline void knl_setup_context( TCB *tcb )
 {
 	/* 4 バイト境界へ切り下げ（knl_Imalloc は 8 バイト整列を保証） */
@@ -62,6 +66,9 @@ Inline void knl_setup_context( TCB *tcb )
 	ssp[6] = (UW)(unsigned long)tk_ext_tsk;
 
 	tcb->tskctxb.ssp = ssp;
+#ifndef PK_NOSW_OFF
+	knl_nosw_forget(tcb->tskid);	/* pk_nosw.h: a new life starts outside any region */
+#endif
 }
 
 /*

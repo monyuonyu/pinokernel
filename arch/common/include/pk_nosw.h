@@ -8,9 +8,9 @@
  *  PK_NOSW_ENTER / PK_NOSW_LEAVE. The depth is per task, so a task that
  *  blocks in a tk_* call inside a region does not stop preemption of the
  *  others; leaving the outermost region makes the switch the timer skipped.
- *  Everywhere else (bare metal, aarch64, Windows, host tests) the macros are
- *  empty, so no other build changes. -DPK_NOSW_OFF: empty on hosted x86_64
- *  too (the negative control for `tkconf nosw`).
+ *  The same on bare metal x86 / AArch64 (below). Everywhere else (hosted
+ *  aarch64, Windows, host tests) the macros are empty. -DPK_NOSW_OFF: empty
+ *  everywhere (the negative control for `tkconf nosw` and PK_TKCONF_NOSW).
  */
 #ifndef PK_NOSW_H
 #define PK_NOSW_H
@@ -20,7 +20,14 @@
  * this second key their regions were silently empty (2026-10-06: tkconf nosw
  * N6 / N14 red with the regions, while N7 was green only because the probe
  * expands ST_TRAIN_STEP under the kernel CFLAGS). */
-#if (defined(_LINUX_X86_64_) || defined(PK_NOSW_HOSTED)) && !defined(PK_NOSW_OFF)
+/* Bare metal x86 (_X86_PC_) and AArch64 (_AARCH64_VIRT_) switch at the
+ * outermost interrupt exit too (RNG0), so the regions are live there as well
+ * (R-NOSW-BARE, 2026-10-07; the depth and the exit check are in the two
+ * kernel/.../sysdepend/<target>/cpu_cntl.c). Not in the AArch64 SMP self-test
+ * build, which keeps its own exit path (cpu_cntl.c's SMP_SELFTEST). */
+#if ((defined(_LINUX_X86_64_) || defined(PK_NOSW_HOSTED)) ||                \
+     ((defined(_X86_PC_) || defined(_AARCH64_VIRT_)) && !defined(SMP_SELFTEST))) \
+    && !defined(PK_NOSW_OFF)
 #define PK_NOSW_ACTIVE 1        /* a file may wrap a whole function only then */
 void pk_nosw_enter(void);
 void pk_nosw_leave(void);

@@ -41,10 +41,56 @@ EXPORT W knl_taskindp = 0;
  *	（そのビルドの .text を1バイトも変えないため）。
  */
 #ifndef SMP_SELFTEST
+#ifndef PK_NOSW_OFF
+/*
+ * 切り替えない区間（pk_nosw.h。R-NOSW-BARE、2026-10-07）。x86_pc/cpu_cntl.c
+ * と同じ: 深さはタスクごと、いちばん外側を出るとき飛ばした切り替えをする、
+ * タスク独立部では数えない、knl_setup_context で 0 に戻す。
+ * -DPK_NOSW_OFF: 区間なし（陰性コントロール）。
+ */
+LOCAL UH knl_nosw_depth[CFN_MAX_TSKID];
+
+EXPORT void pk_nosw_enter( void )
+{
+	BEGIN_DISABLE_INTERRUPT;
+	if ( knl_taskindp == 0 && knl_ctxtsk != NULL ) {
+		knl_nosw_depth[INDEX_TSK(knl_ctxtsk->tskid)]++;
+	}
+	END_DISABLE_INTERRUPT;
+}
+
+EXPORT void pk_nosw_leave( void )
+{
+	BOOL out = FALSE;
+
+	BEGIN_DISABLE_INTERRUPT;
+	if ( knl_taskindp == 0 && knl_ctxtsk != NULL ) {
+		UH *d = &knl_nosw_depth[INDEX_TSK(knl_ctxtsk->tskid)];
+		if ( *d != 0 && --*d == 0 ) {
+			out = TRUE;
+		}
+	}
+	END_DISABLE_INTERRUPT;
+	if ( out ) {
+		BEGIN_CRITICAL_SECTION;		/* 飛ばした切り替えがあればここで */
+		END_CRITICAL_SECTION;
+	}
+}
+
+EXPORT void knl_nosw_forget( ID tskid )
+{
+	knl_nosw_depth[INDEX_TSK(tskid)] = 0;
+}
+#define NOSW_HELD()	( knl_nosw_depth[INDEX_TSK(knl_ctxtsk->tskid)] != 0 )
+#else
+#define NOSW_HELD()	0
+#endif
+
 EXPORT INT knl_irq_exit_need_dispatch( void )
 {
 	return ( knl_taskindp == 0 && !knl_dispatch_disabled
-	      && knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk ) ? 1 : 0;
+	      && knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk
+	      && !NOSW_HELD() ) ? 1 : 0;
 }
 #endif
 

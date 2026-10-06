@@ -727,6 +727,59 @@ static void suite_dds(PRI me)
     tk_del_tsk(t);
 }
 
+
+#ifdef PK_TKCONF_NOSW
+/* R-NOSW-BARE (2026-10-07): bare metal switches at the interrupt exit (RNG0),
+ * so a reader of a kdds topic slot can be switched out half-way through the
+ * copy. pk_nosw.h regions around the slot make that impossible. A task one
+ * priority above publishes 60 values (192 bytes, all the same byte) every
+ * 2 ms to a LATEST_ONLY topic while this task reads it in a loop; a read
+ * holding two values is torn. PASS = 0 torn reads (and enough reads).
+ * Build: EXTRA_CFLAGS="-DPK_TKCONF -DPK_TKCONF_NOSW"; with -DPK_NOSW_OFF the
+ * regions are gone and this goes red (measured on master 10-05: 24-32 torn). */
+#include "kdds.h"
+#define NB_LEN 192
+static volatile INT nb_pubs;
+static void t_nb_high(INT stacd, void *exinf)
+{
+    UB b[NB_LEN]; INT n, i; W h; (void)stacd; (void)exinf;
+    h = kdds_open_poll_scoped("tkc/nosw", KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
+    for (n = 0; n < 60 && h >= 0; n++) {
+        tk_dly_tsk(2);
+        for (i = 0; i < NB_LEN; i++) b[i] = (UB)(2 + n % 250);
+        kdds_pub(h, b, NB_LEN);
+        nb_pubs++;
+    }
+    tk_ext_tsk();
+}
+static void suite_nosw_kdds(PRI me)
+{
+    UB b[NB_LEN]; INT i, r, torn = 0, reads = 0; char m[200]; INT k = 0; ID t; W h;
+    const char *q;
+    h = kdds_open_poll_scoped("tkc/nosw", KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
+    if (h < 0) { g_out("[nosw-bare] FAIL kdds open failed\r\n"); return; }
+    for (i = 0; i < NB_LEN; i++) b[i] = 1;
+    kdds_pub(h, b, NB_LEN);
+    nb_pubs = 0;
+    t = mk_task(t_nb_high, me - 1);
+    tk_sta_tsk(t, 0);
+    for (r = 0; r < 50000000 && nb_pubs < 60; r++) {
+        if (kdds_sub(h, b, NB_LEN, 0) != NB_LEN) continue;
+        reads++;
+        for (i = 1; i < NB_LEN; i++) if (b[i] != b[0]) { torn++; break; }
+    }
+    for (q = (torn == 0 && reads >= 1000 && nb_pubs == 60) ? "[nosw-bare] PASS" : "[nosw-bare] FAIL";
+         *q; ) m[k++] = *q++;
+    for (q = " kdds torn reads "; *q; ) m[k++] = *q++; put_dec(m, &k, torn);
+    for (q = " of "; *q; ) m[k++] = *q++; put_dec(m, &k, reads);
+    for (q = " reads, publishes "; *q; ) m[k++] = *q++; put_dec(m, &k, nb_pubs);
+    m[k++] = '\r'; m[k++] = '\n'; m[k] = 0;
+    g_out(m);
+    tk_dly_tsk(20);
+    tk_del_tsk(t);
+}
+#endif /* PK_TKCONF_NOSW */
+
 /* The suite runs in its own task at TKC_PRI, so helpers can sit one above
  * and one below it whatever the caller's priority is (the hosted shell runs
  * at 1). The caller sleeps until the runner wakes it — tk_slp_tsk/tk_wup_tsk,
@@ -751,6 +804,9 @@ static void t_runner(INT stacd, void *exinf)
     suite_cyc();
     suite_time();
     suite_dds(r.tskpri);
+#ifdef PK_TKCONF_NOSW
+    suite_nosw_kdds(r.tskpri);
+#endif
     g_done = 1;
     tk_wup_tsk(g_caller);
     tk_ext_tsk();
