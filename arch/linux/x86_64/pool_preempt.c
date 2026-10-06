@@ -700,19 +700,19 @@ static void t_nw_high(INT stacd, void *exinf)
  *   N25  no starvation: walks while the runner was filling
  * With -DNETLAN_FAULT_SLOW_LEARN=<spins> (the gap widened), -DPK_NOSW_OFF must
  * turn N24 red (run_nosw.sh slowpeer / slowpeeroff). */
-#define NP_HI 60
+#define LP_HI 60
 IMPORT int  net_lan_probe_peers_reset(void);
 IMPORT void net_lan_probe_learn(unsigned i);
 IMPORT int  net_lan_probe_peers_bad(void);
-static volatile INT np_hrun, np_bad, np_during, np_busy;
-static void t_np_high(INT stacd, void *exinf)
+static volatile INT lp_hrun, lp_bad, lp_during, lp_busy;
+static void t_lp_high(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
-    for (INT n = 0; n < NP_HI; n++) {
+    for (INT n = 0; n < LP_HI; n++) {
         tk_dly_tsk(2);
-        if (np_busy) np_during++;
-        np_bad += net_lan_probe_peers_bad();
-        np_hrun++;
+        if (lp_busy) lp_during++;
+        lp_bad += net_lan_probe_peers_bad();
+        lp_hrun++;
     }
     tk_ext_tsk();
 }
@@ -720,24 +720,24 @@ static void ns_netpeer(void)
 {
     INT rounds = 0;
     if (net_lan_probe_peers_reset() < 0) { pp_out("[nosw] FAIL setup: peer table probe refused\r\n"); pp_fail++; return; }
-    np_hrun = np_bad = np_during = 0;
-    ID t = pp_mk(t_np_high, 19);
+    lp_hrun = lp_bad = lp_during = 0;
+    ID t = pp_mk(t_lp_high, 19);
     if (t > 0) tk_sta_tsk(t, 0);
-    np_busy = 1;
-    while (np_hrun < NP_HI && rounds < 1000000) {
+    lp_busy = 1;
+    while (lp_hrun < LP_HI && rounds < 1000000) {
         for (unsigned i = 0; i < 64; i++) net_lan_probe_learn(i);
         net_lan_probe_peers_reset();
         rounds++;
     }
-    np_busy = 0;
-    for (INT n = 0; n < 200 && np_hrun < NP_HI; n++) tk_dly_tsk(10);
+    lp_busy = 0;
+    for (INT n = 0; n < 200 && lp_hrun < LP_HI; n++) tk_dly_tsk(10);
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     net_lan_probe_peers_reset();
     { char m[160];
-      snprintf(m, sizeof m, "[nosw] net_lan peers: %d fills of 64, %d walks\r\n", (int)rounds, (int)np_hrun);
+      snprintf(m, sizeof m, "[nosw] net_lan peers: %d fills of 64, %d walks\r\n", (int)rounds, (int)lp_hrun);
       pp_out(m); }
-    pp_check(np_bad == 0, "N24", "net_lan peer slots walked while still empty", np_bad);
-    pp_check(np_during > 0, "N25", "no starvation: peer walks while the runner was filling", np_during);
+    pp_check(lp_bad == 0, "N24", "net_lan peer slots walked while still empty", lp_bad);
+    pp_check(lp_during > 0, "N25", "no starvation: peer walks while the runner was filling", lp_during);
 }
 static void ns_netlan(void)
 {
