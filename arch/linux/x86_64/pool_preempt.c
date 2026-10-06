@@ -24,6 +24,7 @@
 #include "arkfs.h"
 #include "dtr.h"
 #include "../../common/llm/dlb.h"
+#include "dkva.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -125,7 +126,8 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N5  no starvation: high puts started during the runner's puts (asked
  *       only with -DPFS_FAULT_SLOW_PUT: unwidened, the puts end too soon)
  *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below),
- *   N12-N13 dtr (ns_dtr below), N14-N15 the dlb trace ring (ns_dlb below)
+ *   N12-N13 dtr (ns_dtr below), N14-N15 the dlb trace ring (ns_dlb below),
+ *   N16-N17 the dkva KV cache (ns_dkva below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -542,6 +544,77 @@ static void ns_dlb(void)
     pp_check(nl_during > 0, "N15", "no starvation: enqueues while the runner was busy", nl_during);
 }
 
+/* N16-N17: the dkva KV cache (pk_nosw.h regions in dkva.c). As dkva_task
+ * answers a peer's query, the runner computes the partial attention over the
+ * cache over and over; as dtr does after each forward, a pri-19 task wakes
+ * every 2 ms and rewrites all 8 entries with set A or set B, 60 times (one
+ * wake = all 8, so between wakes the cache is all A or all B). Every partial
+ * must be exactly A's or exactly B's. The cache is saved and put back.
+ *   N16  no partial that is neither A's nor B's (mixed K/V)
+ *   N17  no starvation: rewrites landed while the runner was busy
+ * -DPK_NOSW_OFF must turn N16 red. */
+#define NK_HI 60
+IMPORT void dkva_probe_partial(const DKVA_Q_PKT *q, DKVA_RESP_PKT *r);
+IMPORT void dkva_probe_kv(INT restore);
+static float nk_k[2][DKVA_NH][DKVA_SEQ][DKVA_DH], nk_v[2][DKVA_NH][DKVA_SEQ][DKVA_DH];
+static DKVA_Q_PKT nk_q;
+static DKVA_RESP_PKT nk_ra, nk_rb, nk_r;
+static volatile INT nk_hrun, nk_during, nk_busy;
+static void nk_fill(INT s)
+{
+    for (INT e = 0; e < DKVA_CACHE_SIZE; e++) dkva_cache_update(nk_k[s], nk_v[s]);
+}
+static void t_nk_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < NK_HI; n++) {
+        tk_dly_tsk(2);
+        if (nk_busy) nk_during++;
+        nk_fill((n + 1) & 1);
+        nk_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_dkva(void)
+{
+    for (INT h = 0; h < DKVA_NH; h++)
+        for (INT t = 0; t < DKVA_SEQ; t++)
+            for (INT d = 0; d < DKVA_DH; d++) {
+                nk_k[0][h][t][d] = 0.25f + 0.01f * (float)d;
+                nk_v[0][h][t][d] = 1.0f + (float)t;
+                nk_k[1][h][t][d] = -0.5f + 0.02f * (float)h;
+                nk_v[1][h][t][d] = -2.0f - (float)d;
+            }
+    memset(&nk_q, 0, sizeof nk_q);
+    for (INT t = 0; t < DKVA_SEQ; t++)
+        for (INT h = 0; h < DKVA_NH; h++)
+            for (INT d = 0; d < DKVA_DH; d++) nk_q.Q[t][h][d] = 0.3f + 0.1f * (float)t;
+    dkva_probe_kv(0);
+    nk_fill(1); dkva_probe_partial(&nk_q, &nk_rb);
+    nk_fill(0); dkva_probe_partial(&nk_q, &nk_ra);
+    INT calls = 0, mixed = 0;
+    nk_hrun = nk_during = 0;
+    ID t = pp_mk(t_nk_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nk_busy = 1;
+    while (nk_hrun < NK_HI && calls < 20000000) {
+        dkva_probe_partial(&nk_q, &nk_r);
+        calls++;
+        if (memcmp(&nk_r, &nk_ra, sizeof nk_r) && memcmp(&nk_r, &nk_rb, sizeof nk_r)) mixed++;
+    }
+    nk_busy = 0;
+    for (INT n = 0; n < 200 && nk_hrun < NK_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    dkva_probe_kv(1);
+    INT differ = memcmp(&nk_ra, &nk_rb, sizeof nk_ra) != 0;
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] dkva: %d partials, %d cache rewrites, A and B differ: %s\r\n",
+               (int)calls, (int)nk_hrun, differ ? "yes" : "NO");
+      pp_out(m); }
+    pp_check(mixed == 0 && differ, "N16", "dkva partials that were neither A's nor B's", mixed);
+    pp_check(nk_during > 0, "N17", "no starvation: rewrites while the runner was busy", nk_during);
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -575,6 +648,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_ark();
     ns_dtr();
     ns_dlb();
+    ns_dkva();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
