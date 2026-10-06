@@ -2650,7 +2650,9 @@ PK_NOSW_FN(int, st_merge_distill, (st_model *into, st_model *peer,
         free(la); free(lb); free(lc); free(q); st_free(&ta); return ST_E_OOM;
     }
 
-    /* (1) start from the guarded pick (scratch is free again afterwards) */
+    /* (1) the guarded pick (scratch is free again afterwards) is the best
+     * so far; the child starts there or, for stage 3b, from the common
+     * ancestor (st_merge_guarded already reset the Adam state) */
     int pick = st_merge_guarded(into, peer, init, scratch, val, nv, seqlen, NULL);
     if (pick < 0) {
         free(la); free(lb); free(lc); free(q); st_free(&ta); return pick;
@@ -2658,6 +2660,8 @@ PK_NOSW_FN(int, st_merge_distill, (st_model *into, st_model *peer,
     float best = st_windows_loss(into, val, nv, seqlen);
     z.init_pick = pick; z.val_before = best;
     for (int i = 0; i < np; i++) scratch->w[i] = into->w[i];   /* best so far */
+    if (start == ST_DISTILL_START_INIT)
+        for (int i = 0; i < np; i++) into->w[i] = init->w[i];
 
     /* (2)(3) KL(teacher || child) on the xfer windows, in order */
     for (int s = 1; s <= steps; s++) {
