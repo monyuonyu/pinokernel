@@ -869,13 +869,14 @@ static void suite_nosw_edges(PRI me)
      * kernel that keeps one depth for all tasks would be cleared by that */
     nr_hran = 0;
     h = mk_task(t_nr_high, me - 1);
-    tk_sta_tsk(h, 8);                 /* runs now, sleeps 8 ms */
+    tk_sta_tsk(h, 30);                /* runs now, sleeps 30 ms (3-4 ticks of 10 ms) */
     tk_sta_tsk(t, 2);
-    tk_dly_tsk(2);                    /* t: enter, sleep inside the region (stays) */
+    tk_dly_tsk(1);                    /* t: enter, sleep inside the region (stays) */
+    before = nr_hran;                 /* 0: h is still asleep when we start */
     t0 = nr_tick;
-    while (nr_tick - t0 < 30 && !nr_hran) ;   /* no tk_* call: only the exit switches */
+    while (nr_tick - t0 < 60 && !nr_hran) ;   /* no tk_* call: only the exit switches */
     el = (W)(nr_tick - t0);
-    nr_line("[nosw-sleep]", nr_hran == 1, "hran=", nr_hran, "ticks=", el);
+    nr_line("[nosw-sleep]", before == 0 && nr_hran == 1, "before=", before, "ticks=", el); /* 60 = never */
     tk_dly_tsk(10);
     tk_del_tsk(h);
     tk_ter_tsk(t);
