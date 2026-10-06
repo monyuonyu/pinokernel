@@ -135,9 +135,11 @@ jobs:
     # gap-ledger RNG0-AARCH64-NO-IRQ-EXIT-DISPATCH) rides here too, as three short
     # steps (~30 s each): this is the one BLOCKING job that already has the
     # AArch64 toolchain and QEMU. timeout 45 -> 55 for them and for 12 arms/arch.
+    # 2026-10-07: tests/run_nosw_bare.sh (R-NOSW-BARE: 2 arms x 2 arches, each
+    # boot up to 90 s) rides here for the same reason. 55 -> 70.
     name: "約束ごとの試験 v2 (ベアメタル x86 + AArch64, QEMU)"
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchains + QEMU
@@ -156,6 +158,8 @@ jobs:
         run: bash tests/x86/run_tk_conform.sh
       - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
         run: bash tests/aarch64/run_tk_conform.sh
+      - name: no-switch regions on bare x86 + AArch64 (0 torn kdds reads; PK_NOSW_OFF torn)
+        run: bash tests/run_nosw_bare.sh
 
   ump-x86_64:
     name: "UMP x86_64 (ビルド + 自己テスト)"
