@@ -1105,7 +1105,8 @@ jobs:
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 15 -> 20 (2026-10-07): + tkconf / pool and a second build for the K9 NC
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchain + qemu-user
@@ -1180,6 +1181,31 @@ jobs:
           timeout 60 sh -c "printf 'dtr fpdet\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee fpdet.log
           grep -aF '[fpdet] PASS' fpdet.log
+      # RNG0 on hosted aarch64 (Android's core; gap-ledger RNG0-HOSTED): the
+      # SIGALRM exit dispatch in arch/linux/aarch64/preempt.c. `tkconf` is the
+      # contract suite with K9 (a task woken during a no-call spin runs during
+      # it); ~2 s under qemu-user. `tkconf nosw` (~10 min here) is not run.
+      - name: contract suite on hosted aarch64 incl. K9 (BLOCKING, RNG0 exit dispatch)
+        run: |
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee tkconf_a64.log
+          grep -aF '[tkc] 111 PASS / 0 FAIL' tkconf_a64.log
+      - name: compute pool under the exit dispatch on hosted aarch64 (non-blocking; 1 hang in 15 local runs)
+        continue-on-error: true
+        run: |
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf pool\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee pool_a64.log
+          grep -aF '[pool] ALL PASS' pool_a64.log
+      - name: K9 goes red without the exit dispatch (negative control, -DPK_HOSTED_NO_EXIT_DISPATCH)
+        run: |
+          make -C boot/linux clean >/dev/null
+          make -C boot/linux EXTRA_CFLAGS=-DPK_HOSTED_NO_EXIT_DISPATCH >/dev/null
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee tkconf_a64_nc.log
+          grep -aF '[tkc] FAIL K9' tkconf_a64_nc.log
 
   bare-metal:
     name: "ベアメタル (i686 + aarch64, ビルドのみ)"
