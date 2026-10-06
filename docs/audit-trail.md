@@ -1840,6 +1840,33 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — bare-metal no-switch regions + p-fs full table, one re-bless for two merges
+  (2026-10-07, merges of `feat/nosw-bare` f22e70eb (audit-25 PASS, this run) and `feat/pfs-full-drop`
+  4925c818 (audit-24 PASS), in that order, `--no-ff` onto `4fd52746`; R-PFSDROP (2026-10-06T20:33) and
+  R-NOSW-BARE (2026-10-06T00:03) were put to mk_pino with a recommendation and, with no answer in 24 h,
+  landed on it). The bare-metal `.text` changes DELIBERATELY: nosw on both (`x86_pc` / `aarch64_virt`
+  `cpu_cntl.c` depth + exit check, `cpu_task.h` reset in `knl_setup_context`), pfs on both
+  (`pfs_block.c` / `pfs_repl.c` / `r3_incontext.c`). Crown on fresh clones of a bundle (gcc 13.3.0,
+  `objcopy -O binary -j .text`; script `pk-scratch/a25b.sh`, evidence
+  `pkernel_audit_ss:/build/a25b/summary.txt`):
+    base `4fd52746`        aarch64 0a541605… 359080 B   x86 b2e9f34b… 369855 B  (= the 2026-10-01 crown)
+    nosw-bare alone        aarch64 c31ba688… 360148 B   x86 857673e2… 370891 B  (+1068 / +1036, as the implementer)
+    pfs-full-drop alone    aarch64 c16c6d02… 360436 B   x86 3d7fcd6f… 371019 B  (as audit-24)
+    both (trial merge, tree bd3c385d = the real merge's tree)
+      aarch64  6f82264d74521fe67739b9a8b86273d5e118c2a08be8622b586db5216614a12b  361532 B
+      x86      3826e048eec33a0d58373ede83bd5c0b863672919b06e3ea15028aa9ac88189d  372079 B
+  (+28 B / +24 B over the sum of the two deltas: alignment.) On that tree: YAML OK, script modes PASS,
+  README counts PASS, vendor inventory 25/25 GREEN, RNG0 3 arms x86 and AArch64 as expected (positive
+  GREEN, control GREEN, nofix RED), `tests/x86/run_tk_conform.sh` and `tests/aarch64/run_tk_conform.sh`
+  PASS. Audit-25 of nosw-bare (`/build/a25a`, auditor probes `pk-scratch/a25-probe.c` spliced into the
+  PK_TKCONF_NOSW build, x86 and AArch64 alike): regions on -> 0 torn kdds reads, a timer-woken higher
+  task does not run inside a region and does run inside `pk_nosw_leave`, a task that dies in a region
+  (tk_ext_tsk, tk_ter_tsk) is preemptible in its next life, tkc 111/0; `-DPK_NOSW_OFF` -> 20/25 torn,
+  the higher task runs inside the region. Two breakages the committed `[nosw-bare]` does NOT see (green):
+  `pk_nosw_leave` never switching, and `knl_setup_context` not resetting the depth — only the probes go
+  red (leave after=0; ext/ter 1000 ticks). Regions on bare metal are short (kdds copies, dtr with
+  SEQ 4 / DM 8, dkva); the LLM tier is not in the bare-metal builds. This entry was written by the run
+  that merged; an independent re-measure is for a different run.
 - CROWN RE-BLESS — CPU budget stage 1 + infer print by value + RNG0 on bare-metal AArch64, one
   re-bless for three merges (2026-10-01, merges `dee5d819` of `feat/cpu-budget` 3219a5df (audit-18
   PASS), `aa8e2c2e` of `feat/infer-print` ff30ae99 (audit-19 PASS) and `99a307c9` of
