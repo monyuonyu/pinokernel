@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # run_nosw.sh — the hosted exit dispatch's no-switch regions and compute pool
 #   (gap-ledger EXIT-DISPATCH-SHARED-STATE / RNG0-HOSTED; arch/common/include/
-#   pk_nosw.h, arch/linux/x86_64/pool_preempt.c, shell verbs `tkconf nosw` and
+#   pk_nosw.h, arch/linux/pool_preempt.c, shell verbs `tkconf nosw` and
 #   `tkconf pool`).
 #
 # On hosted Linux x86_64 the timer may switch tasks at any instruction, so
