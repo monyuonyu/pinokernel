@@ -216,8 +216,8 @@ static void compute_partial(const DKVA_Q_PKT *qpkt, DKVA_RESP_PKT *resp)
     PK_NOSW_LEAVE();
 }
 
-#ifdef _LINUX_X86_64_
-/* `tkconf nosw` N16 (arch/linux/x86_64/pool_preempt.c): the reader as
+#if defined(_LINUX_X86_64_) || defined(_LINUX_AARCH64_)
+/* `tkconf nosw` N16 (arch/linux/pool_preempt.c): the reader as
  * dkva_task calls it, and a save/restore of the cache around the probe. */
 void dkva_probe_partial(const DKVA_Q_PKT *q, DKVA_RESP_PKT *r) { compute_partial(q, r); }
 static KV_ENTRY kv_probe_save[DKVA_CACHE_SIZE];
