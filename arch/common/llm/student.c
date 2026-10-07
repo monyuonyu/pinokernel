@@ -1761,7 +1761,27 @@ PK_NOSW_FN(float, st_span_ce, (st_model *m, const uint8_t *bytes, int n, int t0,
 /* backward                                                           */
 /* ================================================================== */
 
+static float st_backward_q(st_model *m, const uint8_t *bytes, int n,
+                           const float *q);
+
 PK_NOSW_FN(float, st_backward, (st_model *m, const uint8_t *bytes, int n), (m, bytes, n))
+{
+    return st_backward_q(m, bytes, n, NULL);
+}
+
+/* D5-c stage 3: the same backward with a soft target q[(n-1)*V] */
+PK_NOSW_FN(float, st_backward_soft, (st_model *m, const uint8_t *bytes, int n,
+                                     const float *q), (m, bytes, n, q))
+{
+    if (!q) return 0.0f;
+    return st_backward_q(m, bytes, n, q);
+}
+
+/* The body of both. q == NULL: the one-hot next byte (st_backward, the same
+ * operations in the same order as before the split). Otherwise q is the
+ * target distribution per position and the loss is -sum q log p. */
+static float st_backward_q(st_model *m, const uint8_t *bytes, int n,
+                           const float *q)
 {
     ST_DIMS(m);
     st_cache *c = (st_cache *)m->cache;
@@ -1799,10 +1819,19 @@ PK_NOSW_FN(float, st_backward, (st_model *m, const uint8_t *bytes, int n), (m, b
     for (int t = 0; t < n - 1; t++) {
         int tgt = bytes[t + 1];
         const float *pr = c->probs + (size_t)t * V;
-        loss += -(double)st_logf(pr[tgt]);
-        /* dL/dlogit = (p - onehot) * invN */
-        for (int o = 0; o < V; o++) g_logit[o] = pr[o] * invN;
-        g_logit[tgt] -= invN;
+        if (!q) {
+            loss += -(double)st_logf(pr[tgt]);
+            /* dL/dlogit = (p - onehot) * invN */
+            for (int o = 0; o < V; o++) g_logit[o] = pr[o] * invN;
+            g_logit[tgt] -= invN;
+        } else {
+            /* dL/dlogit = (p - q) * invN */
+            const float *qt = q + (size_t)t * V;
+            for (int o = 0; o < V; o++) {
+                if (qt[o] > 0.0f) loss += -(double)qt[o] * (double)st_logf(pr[o]);
+                g_logit[o] = pr[o] * invN - qt[o] * invN;
+            }
+        }
         /* logits = Out . o_in : grads */
         const float *oin = c->o_in + (size_t)t * D;
         for (int i = 0; i < D; i++) g_oin[i] = 0.0f;
@@ -2569,6 +2598,99 @@ PK_NOSW_FN(int, st_merge_guarded, (st_model *into, const st_model *peer,
     for (int i = 0; i < np; i++) { into->mu[i] = 0.0f; into->vu[i] = 0.0f; }
     into->adam_t = 0;
     return best;
+}
+
+/* ---- smarter merge, stage 3 (research/brain-merge-distill.md) ---- */
+
+/* teacher row: softmax of the mean of two logit rows (temperature 1) */
+static void st_teacher_row(const float *la, const float *lb, float *q)
+{
+    float mx = 0.0f;
+    for (int o = 0; o < V; o++) {
+#if defined(ST_DISTILL_ONE_TEACHER)
+        q[o] = la[o]; (void)lb;                    /* negative control */
+#else
+        q[o] = 0.5f * (la[o] + lb[o]);
+#endif
+        if (o == 0 || q[o] > mx) mx = q[o];
+    }
+    float s = 0.0f;
+    for (int o = 0; o < V; o++) { q[o] = st_expf(q[o] - mx); s += q[o]; }
+    float inv = 1.0f / s;
+    for (int o = 0; o < V; o++) q[o] *= inv;
+}
+
+PK_NOSW_FN(int, st_merge_distill, (st_model *into, st_model *peer,
+                     const st_model *init, st_model *scratch,
+                     const uint8_t *const *xfer, int nx,
+                     const uint8_t *const *val, int nv, int seqlen,
+                     int steps, float lr, int start, st_distill_stats *stats),
+           (into, peer, init, scratch, xfer, nx, val, nv, seqlen, steps, lr,
+            start, stats))
+{
+    st_distill_stats z = { -1, 0, 0.0f, 0.0f };
+    if (stats) *stats = z;
+    if (!st_same_shape(into, peer) || !st_same_shape(into, init) ||
+        !st_same_shape(into, scratch) || !xfer || nx < 1 || !val || nv < 1 ||
+        seqlen < 2 || seqlen > ST_MAXSEQ || steps < 0 ||
+        (start != ST_DISTILL_START_PICK && start != ST_DISTILL_START_INIT))
+        return ST_E_ARG;
+    int np = into->n_params;
+
+    /* the teacher's first parent is `into` as it is now: keep a copy */
+    st_model ta;
+    if (st_init_tier(&ta, 1, into->tier) != ST_OK) return ST_E_OOM;
+    for (int i = 0; i < np; i++) ta.w[i] = into->w[i];
+    size_t row = (size_t)seqlen * V;
+    float *la = (float *)malloc(row * sizeof(float));
+    float *lb = (float *)malloc(row * sizeof(float));
+    float *lc = (float *)malloc(row * sizeof(float));
+    float *q  = (float *)malloc(row * sizeof(float));
+    if (!la || !lb || !lc || !q) {
+        free(la); free(lb); free(lc); free(q); st_free(&ta); return ST_E_OOM;
+    }
+
+    /* (1) the guarded pick (scratch is free again afterwards) is the best
+     * so far; the child starts there or, for stage 3b, from the common
+     * ancestor (st_merge_guarded already reset the Adam state) */
+    int pick = st_merge_guarded(into, peer, init, scratch, val, nv, seqlen, NULL);
+    if (pick < 0) {
+        free(la); free(lb); free(lc); free(q); st_free(&ta); return pick;
+    }
+    float best = st_windows_loss(into, val, nv, seqlen);
+    z.init_pick = pick; z.val_before = best;
+    for (int i = 0; i < np; i++) scratch->w[i] = into->w[i];   /* best so far */
+    if (start == ST_DISTILL_START_INIT)
+        for (int i = 0; i < np; i++) into->w[i] = init->w[i];
+
+    /* (2)(3) KL(teacher || child) on the xfer windows, in order */
+    for (int s = 1; s <= steps; s++) {
+        const uint8_t *x = xfer[(s - 1) % nx];
+        st_forward(&ta, x, seqlen, la);
+        st_forward(peer, x, seqlen, lb);
+        for (int t = 0; t < seqlen - 1; t++)
+            st_teacher_row(la + (size_t)t * V, lb + (size_t)t * V, q + (size_t)t * V);
+        st_zero_grad(into);
+        st_forward(into, x, seqlen, lc);
+        st_backward_q(into, x, seqlen, q);
+        st_adam_step(into, lr);
+        /* (4) keep the best on val (ties keep the earlier) */
+        if (s % ST_DISTILL_EVAL == 0) {
+            float l = st_windows_loss(into, val, nv, seqlen);
+            if (l < best) {
+                best = l; z.best_step = s;
+                for (int i = 0; i < np; i++) scratch->w[i] = into->w[i];
+            }
+        }
+    }
+    for (int i = 0; i < np; i++) {
+        into->w[i] = scratch->w[i]; into->mu[i] = 0.0f; into->vu[i] = 0.0f;
+    }
+    into->adam_t = 0;
+    z.val_after = best;
+    if (stats) *stats = z;
+    free(la); free(lb); free(lc); free(q); st_free(&ta);
+    return pick;
 }
 
 /* ================================================================== */

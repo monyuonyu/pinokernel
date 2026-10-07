@@ -15,6 +15,7 @@
  *  P2 red; -DPK_POOL_NO_LEAVE_DISPATCH (no switch when the pool is left) and
  *  -DPK_HOSTED_NO_EXIT_DISPATCH (the old behaviour, RNG0) turn P5 red. Needs
  *  >= 2 CPUs (else P4 is red: the pool runs inline and proves nothing).
+ *  `tkconf nosw` (N1-) and `tkconf fp` (F1-F2) live here too: see each probe.
  */
 #include "kernel.h"
 #include "kdds.h"
@@ -77,6 +78,7 @@ static void (*pp_out)(const char *);
 extern volatile unsigned long arch_preempt_foreign_ticks __attribute__((weak));
 static const char *pp_tag = "[pool]";
 static INT pp_fail;
+static INT pp_skip;
 static ID pp_caller;
 static volatile INT pp_done;
 
@@ -138,7 +140,8 @@ static void t_pp_runner(INT stacd, void *exinf)
  *   N6-N8 the student (ns_student below), N9-N11 ARK (ns_ark below),
  *   N12-N13 dtr (ns_dtr below), N14-N15 the dlb trace ring (ns_dlb below),
  *   N16-N17 the dkva KV cache (ns_dkva below), N18-N19 the pool inside a
- *   region (ns_poolregion below)
+ *   region (ns_poolregion below), N20-N22 net_lan's send buffer and nonce
+ *   (ns_netlan below)
  * -DPK_NOSW_OFF (empty regions) must turn N1 red, and N4 red when built with
  * -DPFS_FAULT_SLOW_PUT=2000000 too (green with only the latter). */
 #define NS_LEN   192                  /* KDDS_DATA_MAX */
@@ -666,6 +669,131 @@ static void ns_poolregion(void)
     pp_check(nq_hrun == NQ_HI, "N19", "no starvation: high wakes finished (of 30)", nq_hrun);
 }
 
+/* N20-N22: net_lan_send's static packet buffer and nonce counter (the
+ * region in net_lan.c lan_send). The runner sends 1000-byte frames of 0xAA
+ * over and over; a pri-19 task wakes every 2 ms and sends a frame of 0xBB,
+ * 60 times. The packets go into private buffers instead of the socket
+ * (net_lan_probe_send), on the v2 wire with a zero key.
+ *   N20  packets that are not the sender's own (payload or MAC)
+ *   N21  nonces lost: next_nonce advanced less than the number of sends
+ *   N22  no starvation: sends landed while the runner was busy
+ * -DPK_NOSW_OFF must turn N20 red.
+ * The zero key is the live key: while the LAN is up (PKERNEL_LAN=1) the probe
+ * refuses, N20-N22 are SKIPPED (the summary says so, not ALL PASS) and
+ *   N23  live LAN: the probe was refused and the key stayed as it was
+ * -DPK_NETLAN_PROBE_NO_GUARD must turn N23 red (run_nosw.sh netlive arms). */
+#define NW_HI  60
+#define NW_LEN 1000
+IMPORT int net_lan_probe(int on, unsigned long long *nonce);
+IMPORT int net_lan_probe_send(const void *frame, int len, unsigned char *out);
+IMPORT int net_lan_live(void);
+IMPORT unsigned net_lan_key_sum(void);
+static volatile INT nw_hrun, nw_hbad, nw_during, nw_busy;
+static void t_nw_high(INT stacd, void *exinf)
+{
+    static UB f[NW_LEN], o[NW_LEN + 64];
+    (void)stacd; (void)exinf;
+    memset(f, 0xBB, sizeof f);
+    for (INT n = 0; n < NW_HI; n++) {
+        tk_dly_tsk(2);
+        if (nw_busy) nw_during++;
+        if (!net_lan_probe_send(f, NW_LEN, o)) nw_hbad++;
+        nw_hrun++;
+    }
+    tk_ext_tsk();
+}
+/* N24-N25: net_lan's peer table (learn_peer publishes the count, then copies
+ * the address; lan_send walks the table from any task). The runner fills the
+ * emptied table with 64 peers over and over; a pri-19 task wakes every 2 ms
+ * and walks it as lan_send does, 60 times.
+ *   N24  slots walked while still empty (counted but not yet copied)
+ *   N25  no starvation: walks while the runner was filling
+ * With -DNETLAN_FAULT_SLOW_LEARN=<spins> (the gap widened), -DPK_NOSW_OFF must
+ * turn N24 red (run_nosw.sh slowpeer / slowpeeroff). */
+#define LP_HI 60
+IMPORT int  net_lan_probe_peers_reset(void);
+IMPORT void net_lan_probe_learn(unsigned i);
+IMPORT int  net_lan_probe_peers_bad(void);
+static volatile INT lp_hrun, lp_bad, lp_during, lp_busy;
+static void t_lp_high(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < LP_HI; n++) {
+        tk_dly_tsk(2);
+        if (lp_busy) lp_during++;
+        lp_bad += net_lan_probe_peers_bad();
+        lp_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_netpeer(void)
+{
+    INT rounds = 0;
+    if (net_lan_probe_peers_reset() < 0) { pp_out("[nosw] FAIL setup: peer table probe refused\r\n"); pp_fail++; return; }
+    lp_hrun = lp_bad = lp_during = 0;
+    ID t = pp_mk(t_lp_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    lp_busy = 1;
+    while (lp_hrun < LP_HI && rounds < 1000000) {
+        for (unsigned i = 0; i < 64; i++) net_lan_probe_learn(i);
+        net_lan_probe_peers_reset();
+        rounds++;
+    }
+    lp_busy = 0;
+    for (INT n = 0; n < 200 && lp_hrun < LP_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    net_lan_probe_peers_reset();
+    { char m[160];
+      snprintf(m, sizeof m, "[nosw] net_lan peers: %d fills of 64, %d walks\r\n", (int)rounds, (int)lp_hrun);
+      pp_out(m); }
+    pp_check(lp_bad == 0, "N24", "net_lan peer slots walked while still empty", lp_bad);
+    pp_check(lp_during > 0, "N25", "no starvation: peer walks while the runner was filling", lp_during);
+}
+static void ns_netlan(void)
+{
+    static UB f[NW_LEN], o[NW_LEN + 64];
+    INT sends = 0, bad = 0;
+    unsigned long long n0, n1;
+    if (net_lan_live()) {
+        unsigned k0 = net_lan_key_sum();
+        int r = net_lan_probe(1, &n0);
+        unsigned k1 = net_lan_key_sum();
+        if (r == 0) net_lan_probe(0, &n1);
+        { char m[160];
+          snprintf(m, sizeof m, "[nosw] net_lan is live: probe %s, key sum %u -> %u\r\n",
+                   r < 0 ? "refused" : "ran", k0, k1);
+          pp_out(m); }
+        pp_check(r < 0 && k1 == k0, "N23", "live LAN: the probe left the key alone (key sum during it)", (long)k1);
+        pp_out("[nosw] SKIP N20 N21 N22  net_lan is live (the probe needs its own zero key)\r\n");
+        pp_out("[nosw] SKIP N24 N25  net_lan is live (the probe empties the peer table)\r\n");
+        pp_skip += 5;
+        return;
+    }
+    memset(f, 0xAA, sizeof f);
+    net_lan_probe(1, &n0);
+    nw_hrun = nw_hbad = nw_during = 0;
+    ID t = pp_mk(t_nw_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nw_busy = 1;
+    while (nw_hrun < NW_HI && sends < 20000000) {
+        if (!net_lan_probe_send(f, NW_LEN, o)) bad++;
+        sends++;
+    }
+    nw_busy = 0;
+    for (INT n = 0; n < 200 && nw_hrun < NW_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    net_lan_probe(0, &n1);
+    long long lost = (long long)(sends + nw_hrun) - (long long)(n1 - n0);
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] net_lan: %d runner sends, %d high sends, nonces %llu\r\n",
+               (int)sends, (int)nw_hrun, n1 - n0);
+      pp_out(m); }
+    pp_check(bad + nw_hbad == 0, "N20", "net_lan packets that were not the sender's own", bad + nw_hbad);
+    pp_check(lost == 0, "N21", "net_lan nonces lost (sends - nonces minted)", (INT)lost);
+    pp_check(nw_during > 0, "N22", "no starvation: net_lan sends while the runner was busy", nw_during);
+    ns_netpeer();
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -701,6 +829,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_dlb();
     ns_dkva();
     ns_poolregion();
+    ns_netlan();
 done:
     pp_done = 1;
     tk_wup_tsk(pp_caller);
@@ -709,7 +838,7 @@ done:
 
 INT nosw_run(void (*out)(const char *))
 {
-    pp_out = out; pp_fail = 0; pp_done = 0; pp_tag = "[nosw]";
+    pp_out = out; pp_fail = 0; pp_skip = 0; pp_done = 0; pp_tag = "[nosw]";
     out("[nosw] a kdds topic slot under task switches (runner pri 20, publisher pri 19)\r\n");
     pp_caller = tk_get_tid();
     ID run = pp_mk(t_ns_runner, 20);
@@ -725,7 +854,94 @@ INT nosw_run(void (*out)(const char *))
     while (!pp_done && tk_slp_tsk(900000) == E_OK) { }
     if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 900 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
-    out(pp_fail ? "[nosw] RED\r\n" : "[nosw] ALL PASS\r\n");
+    out(pp_fail ? "[nosw] RED\r\n" :
+        pp_skip ? "[nosw] PASS, BUT N20-N22 N24 N25 SKIPPED (net_lan is live)\r\n" :
+                  "[nosw] ALL PASS\r\n");
+    return pp_fail;
+}
+
+/* `tkconf fp` (FP-PRESERVE, audit-26): the exit dispatch must give a task back
+ * its FP/SIMD registers. The runner (pri 20) steps 8 doubles held in registers
+ * through chunks of a bounded linear map while a pri-19 task wakes every 2 ms
+ * and does FP work of its own, 60 times. Then the same number of chunks again
+ * with dispatch disabled. The two results must be equal bit for bit.
+ *   F1  doubles unlike the run without switches (of 8)
+ *   F2  precondition: high FP rounds that landed inside the runner's chunks
+ * -DPK_PREEMPT_DROP_FP (preempt.c: the trampoline zeroes xmm0-15 instead of
+ * restoring them) must turn F1 red. */
+#define FP_HI    60
+#define FP_ITERS 20000
+static volatile INT fp_hrun, fp_during, fp_busy;
+static volatile double fp_sink;
+static void fp_chunk(double s[8])
+{
+    double a = s[0], b = s[1], c = s[2], d = s[3], e = s[4], f = s[5], g = s[6], h = s[7];
+    for (INT i = 0; i < FP_ITERS; i++) {
+        double t = a;
+        a = a * 0.9999999 + b * 1e-7;  b = b * 0.9999999 + c * 1e-7;
+        c = c * 0.9999999 + d * 1e-7;  d = d * 0.9999999 + e * 1e-7;
+        e = e * 0.9999999 + f * 1e-7;  f = f * 0.9999999 + g * 1e-7;
+        g = g * 0.9999999 + h * 1e-7;  h = h * 0.9999999 + t * 1e-7;
+    }
+    s[0] = a; s[1] = b; s[2] = c; s[3] = d; s[4] = e; s[5] = f; s[6] = g; s[7] = h;
+}
+static void t_fp_high(INT stacd, void *exinf)
+{
+    double x[8] = { -3.5, 2.25, 9.0, -0.125, 7.75, -6.0, 0.5, 4.0 };
+    (void)stacd; (void)exinf;
+    for (INT n = 0; n < FP_HI; n++) {
+        tk_dly_tsk(2);
+        if (fp_busy) fp_during++;
+        fp_chunk(x);
+        fp_hrun++;
+    }
+    fp_sink = x[0];
+    tk_ext_tsk();
+}
+static void t_fp_runner(INT stacd, void *exinf)
+{
+    static const double s0[8] = { 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 };
+    double s[8], r[8];
+    INT chunks = 0, diff = 0;
+    (void)stacd; (void)exinf;
+    memcpy(s, s0, sizeof s);
+    fp_hrun = fp_during = 0;
+    ID t = pp_mk(t_fp_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    fp_busy = 1;
+    while (fp_hrun < FP_HI && chunks < 1000000) { fp_chunk(s); chunks++; }
+    fp_busy = 0;
+    for (INT n = 0; n < 200 && fp_hrun < FP_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    memcpy(r, s0, sizeof r);
+    tk_dis_dsp();
+    for (INT k = 0; k < chunks; k++) fp_chunk(r);
+    tk_ena_dsp();
+    for (INT i = 0; i < 8; i++) if (memcmp(&s[i], &r[i], sizeof s[i])) diff++;
+    { char m[200];
+      snprintf(m, sizeof m, "[fp] %d chunks of %d steps, high rounds %d, s[0] %.17g / %.17g\r\n",
+               (int)chunks, FP_ITERS, (int)fp_hrun, s[0], r[0]);
+      pp_out(m); }
+    pp_check(diff == 0, "F1", "doubles unlike the run without switches (of 8)", diff);
+    pp_check(fp_during > 0, "F2", "precondition: high FP rounds inside the runner's chunks", fp_during);
+    pp_done = 1;
+    tk_wup_tsk(pp_caller);
+    tk_ext_tsk();
+}
+
+INT fp_preserve_run(void (*out)(const char *))
+{
+    pp_out = out; pp_fail = 0; pp_done = 0; pp_tag = "[fp]";
+    out("[fp] FP/SIMD registers across task switches (runner pri 20, high pri 19)\r\n");
+    pp_caller = tk_get_tid();
+    ID run = pp_mk(t_fp_runner, 20);
+    if (run <= 0) { out("[fp] FAIL setup: no runner task\r\n"); return 1; }
+    tk_can_wup(TSK_SELF);
+    tk_sta_tsk(run, 0);
+    while (!pp_done && tk_slp_tsk(120000) == E_OK) { }
+    if (!pp_done) { out("[fp] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
+    tk_del_tsk(run);
+    out(pp_fail ? "[fp] RED\r\n" : "[fp] ALL PASS\r\n");
     return pp_fail;
 }
 

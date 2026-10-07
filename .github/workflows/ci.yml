@@ -137,9 +137,14 @@ jobs:
     # AArch64 toolchain and QEMU. timeout 45 -> 55 for them and for 12 arms/arch.
     # 2026-10-07: tests/run_nosw_bare.sh (R-NOSW-BARE: 2 arms x 2 arches, each
     # boot up to 90 s) rides here for the same reason. 55 -> 70.
+    # 2026-10-07 (audit-25): + the region's edges ([nosw-leave/ext/ter]) and two
+    # kernel-breaking arms (leave does not switch, a new life keeps the depth):
+    # 4 arms x 2 arches. 70 -> 80.
+    # 2026-10-07 (NOSW-SLEEP): + [nosw-sleep] and the arm glob (one depth for
+    # all tasks): 5 arms x 2 arches. 80 -> 90.
     name: "約束ごとの試験 v2 (ベアメタル x86 + AArch64, QEMU)"
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchains + QEMU
@@ -158,7 +163,7 @@ jobs:
         run: bash tests/x86/run_tk_conform.sh
       - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
         run: bash tests/aarch64/run_tk_conform.sh
-      - name: no-switch regions on bare x86 + AArch64 (0 torn kdds reads; PK_NOSW_OFF torn)
+      - name: no-switch regions on bare x86 + AArch64 (0 torn kdds reads, region edges, a sleeper in a region; PK_NOSW_OFF and 3 broken kernels red)
         run: bash tests/run_nosw_bare.sh
 
   ump-x86_64:

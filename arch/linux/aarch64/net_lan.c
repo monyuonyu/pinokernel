@@ -50,6 +50,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "pk_nosw.h"
 #include "sha256.h"   /* from relay/ (same include path net_relay uses);
                        * deliberately avoids <stdint.h> to coexist with the
                        * T-Kernel stdint shadow this TU is built under. */
@@ -262,7 +263,18 @@ static void learn_peer(const struct sockaddr_in *from)
             return;   /* already known */
     }
     if (lan_peer_count >= LAN_PEER_MAX) return;   /* table full — broadcast still reaches it */
-    lan_peers[lan_peer_count++] = *from;
+    /* The count is published before the copy (the compiled order too), and
+     * lan_send walks the table from any task: one no-switch region, or a
+     * sender switched in between unicasts to an empty slot. The receiver is
+     * the only writer, so the check above stays outside. -DNETLAN_FAULT_SLOW_LEARN
+     * widens the gap for `tkconf nosw` N24. */
+    PK_NOSW_ENTER();
+    int i = lan_peer_count++;
+#ifdef NETLAN_FAULT_SLOW_LEARN
+    for (volatile unsigned z_ = 0; z_ < (unsigned)(NETLAN_FAULT_SLOW_LEARN); z_++) { }
+#endif
+    lan_peers[i] = *from;
+    PK_NOSW_LEAVE();
 }
 
 /* Low-stack one-shot logger (same discipline as net_relay's loggers). */
@@ -378,25 +390,122 @@ int net_lan_init(void)
     return my_node_id;
 }
 
+/* Build one packet in the static buffer and hand it out: to the socket, or
+ * (sink != NULL, the `tkconf nosw` probe) into sink. The buffer and
+ * next_nonce are shared by every sending task; with the exit dispatch a task
+ * could be switched out between the build and the sendto and another
+ * sender's packet would go out under its nonce, so the whole send is one
+ * no-switch region (pk_nosw.h; gap-ledger EXIT-DISPATCH-SHARED-STATE). */
+static int lan_send(const void *frame, int len, unsigned char *sink)
+{
+    static unsigned char buf[MAX_PKT];
+    int n;
+    PK_NOSW_ENTER();
+    n = build_packet(buf, REL_BROADCAST, (unsigned)my_node_id, 0, frame, len);
+    if (sink) {
+        memcpy(sink, buf, (size_t)n);
+    } else {
+        /* 1) Rendezvous broadcast — first contact for peers we haven't learned. */
+        (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
+                     (struct sockaddr *)&bcast_addr, sizeof(bcast_addr));
+
+        /* 2) Direct unicast to every learned peer (works even where broadcast
+         *    is filtered once contact is established). */
+        for (int i = 0; i < lan_peer_count; i++) {
+            (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
+                         (struct sockaddr *)&lan_peers[i], sizeof(lan_peers[i]));
+        }
+    }
+    PK_NOSW_LEAVE();
+    return n;
+}
+
 int net_lan_send(const void *frame, int len)
 {
     if (sock_fd < 0 || len <= 0 || len > MAX_PAYLOAD) return -1;
-
-    static unsigned char buf[MAX_PKT];
-    int n = build_packet(buf, REL_BROADCAST,
-                         (unsigned)my_node_id, 0, frame, len);
-
-    /* 1) Rendezvous broadcast — first contact for peers we haven't learned. */
-    (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
-                 (struct sockaddr *)&bcast_addr, sizeof(bcast_addr));
-
-    /* 2) Direct unicast to every learned peer (works even where broadcast is
-     *    filtered once contact is established). */
-    for (int i = 0; i < lan_peer_count; i++) {
-        (void)sendto(sock_fd, buf, (size_t)n, MSG_DONTWAIT | MSG_NOSIGNAL,
-                     (struct sockaddr *)&lan_peers[i], sizeof(lan_peers[i]));
-    }
+    (void)lan_send(frame, len, NULL);
     return len;
+}
+
+/* `tkconf nosw` probe (pool_preempt.c N20-N23), no socket needed.
+ * net_lan_probe(1, &n) switches to the v2 wire with an all-zero key;
+ * net_lan_probe(0, &n) puts the wire and key back. Both store next_nonce in
+ * *n. While the LAN is up (sock_fd >= 0) net_lan_probe(1) refuses and changes
+ * nothing (-1): net_task's net_lan_recv and the heartbeat use the same key,
+ * so a zero key would accept forged v2 packets and send unverifiable ones
+ * (audit-26). -DPK_NETLAN_PROBE_NO_GUARD: no refusal (the negative control). */
+static int probe_on;
+static int probe_saved_ver;
+static u8  probe_saved_key[KEY_LEN];
+int net_lan_probe(int on, unsigned long long *nonce)
+{
+    if (on) {
+#ifndef PK_NETLAN_PROBE_NO_GUARD
+        if (sock_fd >= 0) return -1;
+#endif
+        probe_saved_ver = wire_version;
+        memcpy(probe_saved_key, key, KEY_LEN);
+        memset(key, 0, KEY_LEN);
+        wire_version = RELAY_VER_V2;
+        probe_on = 1;
+    } else if (probe_on) {
+        wire_version = probe_saved_ver;
+        memcpy(key, probe_saved_key, KEY_LEN);
+        probe_on = 0;
+    }
+    *nonce = next_nonce;
+    return 0;
+}
+int net_lan_live(void) { return sock_fd >= 0; }
+/* N24-N25: the peer table without a socket (refused while the LAN is live).
+ * reset empties it, learn(i) learns 10.24.(i>>8).(i&255):7351, and bad()
+ * walks it as lan_send does and counts slots that are still empty. */
+int net_lan_probe_peers_reset(void)
+{
+    if (sock_fd >= 0) return -1;
+    PK_NOSW_ENTER();
+    memset(lan_peers, 0, sizeof(lan_peers));
+    lan_peer_count = 0;
+    PK_NOSW_LEAVE();
+    return 0;
+}
+void net_lan_probe_learn(unsigned i)
+{
+    struct sockaddr_in a;
+    if (sock_fd >= 0) return;
+    memset(&a, 0, sizeof(a));
+    a.sin_family = AF_INET;
+    a.sin_port = htons(7351);
+    a.sin_addr.s_addr = htonl(0x0a180000u | (i & 0xffffu));
+    learn_peer(&a);
+}
+int net_lan_probe_peers_bad(void)
+{
+    int bad = 0;
+    PK_NOSW_ENTER();
+    for (int i = 0; i < lan_peer_count; i++)
+        if (lan_peers[i].sin_family != AF_INET) bad++;
+    PK_NOSW_LEAVE();
+    return bad;
+}
+/* A sum of the key's bytes (N23: the key while the probe is on). */
+unsigned net_lan_key_sum(void)
+{
+    unsigned s = 0;
+    for (int i = 0; i < KEY_LEN; i++) s += key[i];
+    return s;
+}
+/* One send into out (>= MAX_PKT bytes). 1 = the packet is this call's own:
+ * its payload is `frame` and its MAC verifies; 0 = it is not. */
+int net_lan_probe_send(const void *frame, int len, unsigned char *out)
+{
+    u8 want[HMAC_TRUNC_LEN];
+    int n = lan_send(frame, len, out);
+    if (n != HEAD_LEN + AUTH_LEN + len) return 0;
+    compute_mac(RELAY_VER_V2, out[5], out[6], out[7], load_u64_le(out + HEAD_LEN),
+                out + HEAD_LEN + AUTH_LEN, len, want);
+    return ct_eq(want, out + HEAD_LEN + 8, HMAC_TRUNC_LEN) &&
+           memcmp(out + HEAD_LEN + AUTH_LEN, frame, (size_t)len) == 0;
 }
 
 int net_lan_recv(void *out, int maxlen)

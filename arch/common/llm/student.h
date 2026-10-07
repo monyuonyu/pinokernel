@@ -453,6 +453,43 @@ int   st_merge_guarded(st_model *into, const st_model *peer,
                        const uint8_t *const *val, int n, int seqlen,
                        float *cand_loss);
 
+/* ---- smarter merge, stage 3: by distillation (research/brain-merge-distill.md)
+ *
+ * st_backward_soft: st_backward with a soft target. q[(n-1)*ST_VOCAB] holds,
+ * for each position t < n-1, the distribution the next byte should have; the
+ * gradient at the logits is (p - q)/(n-1) instead of (p - onehot)/(n-1).
+ * Returns the mean -sum q log p. Must follow an st_forward on the same bytes.
+ *
+ * st_merge_distill: merge `peer` into `into` (FedDF, arXiv:2006.07242 §3):
+ * (1) st_merge_guarded picks a candidate on `val`; the child starts from
+ * that pick (start = ST_DISTILL_START_PICK, stage 3) or from `init`, the
+ * common ancestor (ST_DISTILL_START_INIT, stage 3b); (2) the teacher is the
+ * mean of the two parents' logits, temperature 1; (3) `steps` Adam steps
+ * (lr) of KL(teacher || child) on the xfer windows, in order, wrapping;
+ * (4) the child's `val` loss is checked every ST_DISTILL_EVAL steps and the
+ * best weights seen are kept, the guarded pick included, so the child is
+ * never worse on `val` than the guarded pick. `peer`'s weights are not
+ * changed (its activation cache is used). `init` and `scratch` as in
+ * st_merge_guarded. Adam state of `into` is reset. Deterministic. Returns the
+ * guarded pick (>= 0) or negative ST_E_*. stats (optional) as below.
+ * Cert-only negative control: -DST_DISTILL_ONE_TEACHER (teacher = into).
+ * Hosted-only.                                                             */
+#define ST_DISTILL_EVAL 10
+#define ST_DISTILL_START_PICK 0
+#define ST_DISTILL_START_INIT 1
+typedef struct {
+    int   init_pick;    /* st_merge_guarded's candidate index              */
+    int   best_step;    /* 0 = the guarded pick was kept                   */
+    float val_before;   /* val loss of the guarded pick                    */
+    float val_after;    /* val loss of the returned child                  */
+} st_distill_stats;
+float st_backward_soft(st_model *m, const uint8_t *bytes, int n, const float *q);
+int   st_merge_distill(st_model *into, st_model *peer, const st_model *init,
+                       st_model *scratch, const uint8_t *const *xfer, int nx,
+                       const uint8_t *const *val, int nv, int seqlen,
+                       int steps, float lr, int start,
+                       st_distill_stats *stats);
+
 /* ---- firing-width observability (SS-1) ----
  * Read-only: the number of experts the LAST st_forward fired on its FINAL
  * (most recent) token, final layer — the "answer token" firing width. This is
