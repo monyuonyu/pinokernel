@@ -444,18 +444,33 @@ static int rv_free_pos(int vlen, int *pos)
     return k;
 }
 
+/* mean next-byte CE at positions ts[0..k) (predict w[t] from row t-1), ONE
+ * forward (st_span_ce costs a forward per call: 10 min per point at 64 probes,
+ * 2026-10-08). log-softmax with the student's own st_expf / st_logf. */
+static float *rv_logits;
+static double rv_ce_at(st_model *m, const uint8_t *w, int wn, const int *ts, int k)
+{
+    if (!rv_logits) rv_logits = (float *)malloc((size_t)ST_MAXSEQ * ST_VOCAB * sizeof(float));
+    if (!rv_logits || k < 1 || st_forward(m, w, wn, rv_logits) != ST_OK) return 0.0;
+    double s = 0.0;
+    for (int j = 0; j < k; j++) {
+        const float *row = rv_logits + (size_t)(ts[j] - 1) * ST_VOCAB;
+        float mx = row[0];
+        for (int c = 1; c < ST_VOCAB; c++) if (row[c] > mx) mx = row[c];
+        double z = 0.0;
+        for (int c = 0; c < ST_VOCAB; c++) z += (double)st_expf(row[c] - mx);
+        s += (double)st_logf((float)z) - (double)(row[w[ts[j]]] - mx);
+    }
+    return s / k;
+}
+
 /* mean CE over the free bytes of the answer at [as, as+vlen) (the tail). */
 static double rv_free_ce(st_model *m, const uint8_t *seq, int n, int as, int vlen, int ctx)
 {
     int pos[16], k = rv_free_pos(vlen, pos);
     int start = (ctx > 0 && as - ctx > 0) ? as - ctx : 0;
-    const uint8_t *w = seq + start; int wn = n - start;
-    double s = 0.0;
-    for (int j = 0; j < k; j++) {
-        int t = as - start + pos[j];
-        s += (double)st_span_ce(m, w, wn, t, t + 1, 0);
-    }
-    return k ? s / k : 0.0;
+    for (int j = 0; j < k; j++) pos[j] += as - start;
+    return rv_ce_at(m, seq + start, n - start, pos, k);
 }
 
 typedef struct { double mean, se; } rv_stat;
@@ -519,9 +534,12 @@ static rv_stat measure_R(st_model *m, int d, int nprobe, uint32_t seed, int ctx)
         int n = rv_build_repeat(seq, d, &rng);
         if (n > ST_MAXSEQ) continue;
         int t0 = n - RV_LEN + 1;                  /* second copy, bytes 2..24 */
-        double ce1 = (double)st_span_ce(m, seq, RV_LEN, 1, RV_LEN, 0);
+        int ts[RV_LEN];
+        for (int j = 0; j < RV_LEN - 1; j++) ts[j] = 1 + j;
+        double ce1 = rv_ce_at(m, seq, RV_LEN, ts, RV_LEN - 1);
         int start = (ctx > 0 && t0 - ctx > 0) ? t0 - ctx : 0;
-        double ce2 = (double)st_span_ce(m, seq + start, n - start, t0 - start, n - start, 0);
+        for (int j = 0; j < RV_LEN - 1; j++) ts[j] = t0 - start + j;
+        double ce2 = rv_ce_at(m, seq + start, n - start, ts, RV_LEN - 1);
         double x = ce1 - ce2;
         s += x; s2 += x * x; c++;
     }
@@ -578,10 +596,15 @@ static int falsify_main(void)
 {
     const int dd[6] = { 16, 32, 48, 96, 128, 192 };
     const int tdists[6] = { 8, 24, 48, 96, 128, 176 };
-    const int NP = 64, CTX = 16;
+    /* ROTE_QUICK=1: 8 probes, 2 training rounds - only to see the code run
+     * end to end and time it; NOT the stage-A measurement (that is 64 / 24). */
+    const int quick = getenv("ROTE_QUICK") != 0;
+    const int NP = quick ? 8 : 64, CTX = 16, ROUNDS = quick ? 2 : 24;
+    if (quick) printf("[rote] QUICK budget (8 probes, 2 rounds): timing only, not a result\n");
     double thrS[6], thrR[6];
     printf("[rote] ==== research/rote-vs-copy.md stage A: floor, NC, PC (C1 FULL budget) ====\n");
     fflush(stdout);
+    double tall = now_ms();
     /* floor: three untrained students. thr(d) = max over seeds of mean + 3 SE */
     for (int i = 0; i < 6; i++) { thrS[i] = -1e30; thrR[i] = -1e30; }
     for (int s = 0; s < 3; s++) {
@@ -607,7 +630,7 @@ static int falsify_main(void)
     if (st_init(&m, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
     st_rope_set_enabled(1);
     double t0 = now_ms();
-    train_ctx(&m, 24, 128, 0x7A1E77u, tdists, 6);
+    train_ctx(&m, ROUNDS, 128, 0x7A1E77u, tdists, 6);
     printf("[rote] trained C1 FULL in %.1f s\n", (now_ms() - t0) / 1000.0);
     int sover = 0, rover = 0, ncbad = 0;
     for (int i = 0; i < 6; i++) {
@@ -636,7 +659,9 @@ static int falsify_main(void)
     st_model pc;
     if (st_init(&pc, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
     st_rope_set_enabled(1);
-    train_repeat(&pc, 24, 128, 0x9C9C9Cu, tdists, 6);
+    double t1 = now_ms();
+    train_repeat(&pc, ROUNDS, 128, 0x9C9C9Cu, tdists, 6);
+    printf("[rote] trained PC in %.1f s\n", (now_ms() - t1) / 1000.0);
     int pcover = 0;
     for (int i = 0; i < 6; i++) {
         rv_stat R = measure_R(&pc, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
@@ -656,6 +681,7 @@ static int falsify_main(void)
                       (rover >= 4) ? "induction on random repeats, but no fact copy (not in the memo's table)" :
                       "no copy shown (habit if A != 0, else nothing)";
     printf("[rote] verdict (C1 FULL student): %s\n", cls);
+    printf("[rote] total %.1f s\n", (now_ms() - tall) / 1000.0);
     return 0;
 }
 
