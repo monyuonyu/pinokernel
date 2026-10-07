@@ -25,6 +25,8 @@
 #   netlive  plain build with the LAN up (PKERNEL_LAN=1 + key): the net_lan
 #            probe must refuse (N23 PASS, N20-N22 SKIPPED, no ALL PASS)
 #   netliveng  -DPK_NETLAN_PROBE_NO_GUARD, LAN up: must be RED on N23
+#   dropfp   -DPK_PREEMPT_DROP_FP (xmm0-15 zeroed, not restored): `tkconf fp`
+#            must be RED on F1 (plain also runs `tkconf fp`: ALL PASS)
 # A negative-control arm that stays green fails this script.
 #
 #   tests/host/run_nosw.sh            (x86_64 host)
@@ -38,7 +40,7 @@ rc_all=0
 
 drive() {  # $1 = tree root, $2 = verb -> its output on stdout
     printf '%s\nexit\n' "$2" | PKERNEL_GALAXY=0 timeout 300 "$1/boot/linux_x86_64/p-kernel" 2>&1 \
-        | tr -d '\r' | grep -a '^\[\(nosw\|pool\)\]'
+        | tr -d '\r' | grep -a '^\[\(nosw\|pool\|fp\)\]'
 }
 
 arm() {  # $1 = name, $2 = EXTRA_CFLAGS -> tree root on stdout ("" on failure)
@@ -56,10 +58,10 @@ echo "[build] plain"
 if ! make -C "$ROOT/boot/linux_x86_64" -j4 > "$WORK/build-plain.log" 2>&1; then
     tail -20 "$WORK/build-plain.log"; echo "[nosw-cert] FAIL (build)"; exit 1
 fi
-for v in "tkconf nosw" "tkconf pool"; do
+for v in "tkconf nosw" "tkconf pool" "tkconf fp"; do
     drive "$ROOT" "$v" > "$WORK/plain.log"
     cat "$WORK/plain.log"
-    if grep -q '^\[\(nosw\|pool\)\] ALL PASS' "$WORK/plain.log"; then echo "[result] plain $v GREEN (expected)"
+    if grep -q '^\[\(nosw\|pool\|fp\)\] ALL PASS' "$WORK/plain.log"; then echo "[result] plain $v GREEN (expected)"
     else echo "[result] plain $v RED (UNEXPECTED)"; rc_all=1; fi
     echo ""
 done
@@ -142,6 +144,18 @@ live netlive "$ROOT" pass
 echo "[build] netliveng (-DPK_NETLAN_PROBE_NO_GUARD)"
 d=$(arm netliveng "-DPK_NETLAN_PROBE_NO_GUARD")
 if [ -n "$d" ]; then live netliveng "$d" red; else echo "[result] netliveng build FAILED"; rc_all=1; fi
+
+# FP-PRESERVE: the trampoline must give the task back its FP/SIMD registers.
+echo "[build] dropfp (-DPK_PREEMPT_DROP_FP)"
+d=$(arm dropfp "-DPK_PREEMPT_DROP_FP")
+if [ -z "$d" ]; then echo "[result] dropfp build FAILED"; rc_all=1
+else
+    drive "$d" "tkconf fp" > "$WORK/dropfp.log"
+    grep '^\[fp\] \(FAIL\|PASS\|ALL PASS\|RED\)' "$WORK/dropfp.log"
+    if grep -q '^\[fp\] FAIL F1 ' "$WORK/dropfp.log"; then echo "[result] dropfp RED on F1 (expected)"
+    else echo "[result] dropfp not red on F1 (UNEXPECTED: lost FP registers went unseen)"; rc_all=1; fi
+    echo ""
+fi
 
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-cert] PASS"; else echo "[nosw-cert] FAIL"; fi
 exit "$rc_all"
