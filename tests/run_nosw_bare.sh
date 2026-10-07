@@ -18,6 +18,10 @@
 #   off       -DPK_NOSW_OFF (regions gone)  bare FAIL leave FAIL (25-35 torn
 #             reads in 2026-10-07's boots)
 #   noleave   cpu_cntl.c: leaving the region does not switch     leave FAIL
+#             (built with -DPK_TKCONF_NOSW_NOKDDS: the kdds part is skipped.
+#             Without a switch at leave its publisher only runs on ticks that
+#             land outside a region, and on bare x86 the read loop ran to its
+#             50M cap past the 90 s boot timeout — CI-NOLEAVE, audit-28)
 #   noforget  cpu_task.h: a new life keeps the old region depth  ext FAIL ter FAIL
 #   glob      cpu_cntl.c: one depth for all tasks                 sleep FAIL
 # (noleave / noforget: audit-25 showed [nosw-bare] stays green under both;
@@ -54,7 +58,7 @@ arm() {  # $1 = arch, $2 = arm
     case "$2" in
         new)      want="bare=PASS leave=PASS ext=PASS ter=PASS sleep=PASS" ;;
         off)      want="bare=FAIL leave=FAIL ext=- ter=- sleep=-"; cf="$cf -DPK_NOSW_OFF" ;;
-        noleave)  want="bare=- leave=FAIL ext=- ter=- sleep=-"
+        noleave)  want="bare=- leave=FAIL ext=- ter=- sleep=-"; cf="$cf -DPK_TKCONF_NOSW_NOKDDS"
                   break_kernel "$d" "$sd" cpu_cntl.c $'\tif ( out ) {' $'\tif ( 0 && out ) {' \
                       || { echo "[result] $1 $2 anchor missing (FAIL)"; rc_all=1; return; } ;;
         noforget) want="bare=- leave=- ext=FAIL ter=FAIL sleep=-"

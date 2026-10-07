@@ -757,6 +757,17 @@ static void suite_nosw_kdds(PRI me)
 {
     UB b[NB_LEN]; INT i, r, torn = 0, reads = 0; char m[200]; INT k = 0; ID t; W h;
     const char *q;
+#ifdef PK_TKCONF_NOSW_NOKDDS
+    /* CI-NOLEAVE (2026-10-07): in a kernel whose PK_NOSW_LEAVE does not switch
+     * the publisher only runs on a tick that happens to land outside a region,
+     * so this loop runs to its 50M-read cap (90 s+ on bare x86) and the arm
+     * timed out before [nosw-leave]. That arm judges only leave, so it skips
+     * this part (not judged). */
+    (void)b; (void)i; (void)r; (void)torn; (void)reads; (void)m; (void)k;
+    (void)t; (void)h; (void)q; (void)me;
+    g_out("[nosw-bare] SKIP not built (PK_TKCONF_NOSW_NOKDDS)\r\n");
+    return;
+#endif
     h = kdds_open_poll_scoped("tkc/nosw", KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
     if (h < 0) { g_out("[nosw-bare] FAIL kdds open failed\r\n"); return; }
     for (i = 0; i < NB_LEN; i++) b[i] = 1;
