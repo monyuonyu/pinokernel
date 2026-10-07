@@ -34,6 +34,15 @@
 Noinit(EXPORT MPLCB knl_mplcb_table[NUM_MPLID]);	/* 可変長メモリプール管理ブロックテーブル */
 Noinit(EXPORT QUEUE knl_free_mplcb);	/* 未使用管理ブロックのキュー（FreeQue） */
 
+/* p-kernel 変更（2026-10-07）: (IMACB*)&mplcb->mplsz のキャストが成り立つ
+ * 並びかをコンパイル時に検査する（LP64 で崩れていた。mempool.h 参照）。
+ * 崩れるとここで配列の大きさが負になりビルドが落ちる。 */
+typedef char knl_mplcb_imacb_layout[
+	( __builtin_offsetof(MPLCB, areaque) - __builtin_offsetof(MPLCB, mplsz)
+	  == __builtin_offsetof(IMACB, areaque)
+	  && __builtin_offsetof(MPLCB, freeque) - __builtin_offsetof(MPLCB, mplsz)
+	  == __builtin_offsetof(IMACB, freeque) ) ? 1 : -1 ];
+
 
 /**
  * @brief 可変長メモリプール管理ブロックの初期化
