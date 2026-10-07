@@ -488,12 +488,14 @@ int net_lan_probe_peers_bad(void)
     PK_NOSW_LEAVE();
     return bad;
 }
-/* A sum of the key's bytes (N23: the key while the probe is on). */
-unsigned net_lan_key_sum(void)
+/* A copy of the key (N23: compared byte for byte with the copy taken before
+ * the probe; a sum missed a refusal that swapped two bytes, audit-28).
+ * Returns the key's length, or -1 if out is too small. */
+int net_lan_key_copy(unsigned char *out, int cap)
 {
-    unsigned s = 0;
-    for (int i = 0; i < KEY_LEN; i++) s += key[i];
-    return s;
+    if (cap < KEY_LEN) return -1;
+    memcpy(out, key, KEY_LEN);
+    return KEY_LEN;
 }
 /* One send into out (>= MAX_PKT bytes). 1 = the packet is this call's own:
  * its payload is `frame` and its MAC verifies; 0 = it is not. */
