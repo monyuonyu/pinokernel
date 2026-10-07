@@ -263,7 +263,18 @@ static void learn_peer(const struct sockaddr_in *from)
             return;   /* already known */
     }
     if (lan_peer_count >= LAN_PEER_MAX) return;   /* table full — broadcast still reaches it */
-    lan_peers[lan_peer_count++] = *from;
+    /* The count is published before the copy (the compiled order too), and
+     * lan_send walks the table from any task: one no-switch region, or a
+     * sender switched in between unicasts to an empty slot. The receiver is
+     * the only writer, so the check above stays outside. -DNETLAN_FAULT_SLOW_LEARN
+     * widens the gap for `tkconf nosw` N24. */
+    PK_NOSW_ENTER();
+    int i = lan_peer_count++;
+#ifdef NETLAN_FAULT_SLOW_LEARN
+    for (volatile unsigned z_ = 0; z_ < (unsigned)(NETLAN_FAULT_SLOW_LEARN); z_++) { }
+#endif
+    lan_peers[i] = *from;
+    PK_NOSW_LEAVE();
 }
 
 /* Low-stack one-shot logger (same discipline as net_relay's loggers). */
@@ -446,6 +457,37 @@ int net_lan_probe(int on, unsigned long long *nonce)
     return 0;
 }
 int net_lan_live(void) { return sock_fd >= 0; }
+/* N24-N25: the peer table without a socket (refused while the LAN is live).
+ * reset empties it, learn(i) learns 10.24.(i>>8).(i&255):7351, and bad()
+ * walks it as lan_send does and counts slots that are still empty. */
+int net_lan_probe_peers_reset(void)
+{
+    if (sock_fd >= 0) return -1;
+    PK_NOSW_ENTER();
+    memset(lan_peers, 0, sizeof(lan_peers));
+    lan_peer_count = 0;
+    PK_NOSW_LEAVE();
+    return 0;
+}
+void net_lan_probe_learn(unsigned i)
+{
+    struct sockaddr_in a;
+    if (sock_fd >= 0) return;
+    memset(&a, 0, sizeof(a));
+    a.sin_family = AF_INET;
+    a.sin_port = htons(7351);
+    a.sin_addr.s_addr = htonl(0x0a180000u | (i & 0xffffu));
+    learn_peer(&a);
+}
+int net_lan_probe_peers_bad(void)
+{
+    int bad = 0;
+    PK_NOSW_ENTER();
+    for (int i = 0; i < lan_peer_count; i++)
+        if (lan_peers[i].sin_family != AF_INET) bad++;
+    PK_NOSW_LEAVE();
+    return bad;
+}
 /* A sum of the key's bytes (N23: the key while the probe is on). */
 unsigned net_lan_key_sum(void)
 {

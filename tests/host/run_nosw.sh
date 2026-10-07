@@ -20,6 +20,8 @@
 #   oncewide -DPK_POOL_INIT_SPIN (pk_pool_init widened): `tkconf pool` ALL PASS
 #            with no hang (POOL-ONCE)
 #   oncewideoff  the same with -DPK_POOL_ONCE_PREEMPTIBLE: must hang (rc 124)
+#   slowpeer -DNETLAN_FAULT_SLOW_LEARN=200000 (learn_peer's gap widened): ALL PASS
+#   slowpeeroff  the same with -DPK_NOSW_OFF: must be RED on N24
 #   netlive  plain build with the LAN up (PKERNEL_LAN=1 + key): the net_lan
 #            probe must refuse (N23 PASS, N20-N22 SKIPPED, no ALL PASS)
 #   netliveng  -DPK_NETLAN_PROBE_NO_GUARD, LAN up: must be RED on N23
@@ -87,6 +89,8 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
 expect_red off "-DPK_NOSW_OFF" "N1 N20"
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
+expect_green slowpeer "-DNETLAN_FAULT_SLOW_LEARN=200000"
+expect_red slowpeeroff "-DNETLAN_FAULT_SLOW_LEARN=200000 -DPK_NOSW_OFF" N24
 
 # POOL-ONCE: a switch inside pthread_once(pk_pool_init) left the next task's
 # pthread_once waiting, on the same OS thread, for an init that never ends.
