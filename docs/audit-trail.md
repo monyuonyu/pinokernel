@@ -1840,6 +1840,23 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — drpc pending-slot claim in one no-switch region (2026-10-08, merge `18c8ba2d` of
+  `feat/drpc-claim` 44ca931d (audit-28 PASS), `--no-ff` onto `0c24ed86`; R-DRPC (2026-10-07T06:15) was
+  put to mk_pino with a recommendation and, with no answer in 24 h, landed on it). The two conflicts
+  (`arch/linux/pool_preempt.c`, `tests/host/run_nosw.sh`) were taken from audit-30's trial `audit/a30-p6`
+  8b749fc9 (none of the three files changed on master since its base d5f3e311; `net_lan_key_sum` gone,
+  `net_lan_key_copy` x3, N26 present). The bare-metal `.text` changes DELIBERATELY (`arch/common/drpc.c`
+  claim region). Crown on a fresh clone of the trial `audit/a31-p6` 29244188, tree 58599376 = the real
+  merge's tree (gcc 13.3.0, `objcopy -O binary -j .text`; `pk-scratch/a31p.sh`, `/build/a31p`):
+    base `0c24ed86`   aarch64 6f82264d… 361532 B   x86 3826e048… 372079 B  (= the 2026-10-07 crown)
+    with drpc-claim (+20 / +76, = R-DRPC, = audit-28/30; master 18c8ba2d after the merge, same digits)
+      aarch64  3f456078fafadd17fa4f58b9e552653bd2fb47569f4adbc0926a6bde6ac4e849  361552 B
+      x86      ec4b5849f340cc00fa6fbeefe1e0faa2435f5954ddc9cadf3954139cfdc60b70  372155 B
+  On that tree: tkconf 122/0 on hosted x86_64 and aarch64 (qemu-user); x86_64 `run_nosw.sh` rc=0, all 16
+  results as expected (slowclaimoff RED on N26); vendor inventory GREEN (25); RNG0 x86 and AArch64
+  positive GREEN, control GREEN, nofix RED; bare `run_tk_conform.sh` x86 and AArch64 PASS
+  (`pk-scratch/a31v.sh`, `/build/a31v`); script modes PASS (`/build/a31p`). Crown re-measured on master after the merge (`/build/a31m`).
+  This entry was written by the run that merged; an independent re-measure is for a different run.
 - CROWN RE-BLESS — bare-metal no-switch regions + p-fs full table, one re-bless for two merges
   (2026-10-07, merges of `feat/nosw-bare` f22e70eb (audit-25 PASS, this run) and `feat/pfs-full-drop`
   4925c818 (audit-24 PASS), in that order, `--no-ff` onto `4fd52746`; R-PFSDROP (2026-10-06T20:33) and
