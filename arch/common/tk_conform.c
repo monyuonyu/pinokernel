@@ -13,15 +13,17 @@
  *  priority inheritance), and since v2 message buffers (copy, FIFO, size
  *  limits, full buffer), mailboxes (TA_MPRI order, the packet address is
  *  passed, not copied), fixed-size memory pools (hand-off to a waiter) and
- *  cyclic handlers (start / period / stop / start phase); time (tk_dly_tsk,
- *  tk_get_otm); dispatch disable (tk_dis_dsp / tk_ena_dsp / tk_ref_sys).
+ *  cyclic handlers (start / period / stop / start phase), since 2026-10-07
+ *  alarm handlers (start / restart / stop / almtim 0 / delete); time
+ *  (tk_dly_tsk, tk_get_otm); dispatch disable (tk_dis_dsp / tk_ena_dsp /
+ *  tk_ref_sys).
  *  Error codes: E_PAR, E_ID, E_NOEXS, E_OBJ, E_QOVR, E_TMOUT, E_DLT, E_ILUSE,
  *  E_CTX.
  *  v1's expectations were checked against the μT-Kernel 3.0 specification
  *  text (TRON Forum, mtk3_spec_jp) by audit-15; v2's were written from that
  *  text. Checks whose expectation is the reference kernel's own reading, not
- *  the spec's, are marked [impl] (check_impl below): S6 and C7 (audit-17
- *  moved the mark from C8, which the spec does cover, to C7).
+ *  the spec's, are marked [impl] (check_impl below): S6, C7 (audit-17
+ *  moved the mark from C8, which the spec does cover, to C7) and A6.
  *
  *  Output: one "[tkc] PASS|FAIL <id> <what>" line per check, then
  *  "[tkc] <p> PASS / <f> FAIL". Driven by tests/host/run_tk_conform.sh.
@@ -611,6 +613,88 @@ static void suite_cyc(void)
     if (c > 0) tk_del_cyc(c);
 }
 
+/* ---- alarm handlers (time_calls.c) ------------------------------------------ *
+ * spec (tk_cre_alm / tk_sta_alm / tk_stp_alm / tk_del_alm / tk_ref_alm):      *
+ * created with no start time; tk_sta_alm(almtim) calls the handler after      *
+ * almtim has passed (a lower bound; that it has come by ~2x is a timeliness   *
+ * assumption, as C4's); a second tk_sta_alm cancels the first setting;        *
+ * almtim = 0 calls it right after the setting; tk_stp_alm cancels and does    *
+ * nothing when already stopped; tk_ref_alm gives exinf, TALM_STA / TALM_STP   *
+ * and almtim >= lfttim >= 0 while started; E_PAR for a bad almhdr; E_NOEXS    *
+ * once deleted. That an alarm that has gone off is TALM_STP and is not called *
+ * again is how the reference kernel reads "指定時刻起動" (A6, [impl]).          */
+static volatile INT a_cnt;
+static void *volatile a_exinf;
+
+static void alm_count(void *exinf)
+{
+    a_exinf = exinf;
+    a_cnt++;
+}
+
+static void suite_alm(void)
+{
+    static INT tag;
+    ER er, er2; ID a; INT n; T_RALM ra;
+    T_CALM ca = { .exinf = &tag, .almatr = TA_HLNG, .almhdr = (FP)alm_count };
+    T_CALM bad = ca;
+
+    a_cnt = 0; a_exinf = NULL;
+    a = tk_cre_alm(&ca);
+    check(a > 0, "A1", "tk_cre_alm(TA_HLNG) -> ID > 0", a);
+    er = tk_ref_alm(a, &ra);
+    tk_dly_tsk(50);
+    check(er == E_OK && ra.almstat == TALM_STP && ra.exinf == &tag && a_cnt == 0,
+          "A2", "just created: TALM_STP, exinf given back, not called", (W)ra.almstat);
+    er = tk_sta_alm(a, 200);
+    er2 = tk_ref_alm(a, &ra);
+    check(er == E_OK && er2 == E_OK && ra.almstat == TALM_STA && ra.lfttim <= 200,
+          "A3", "tk_sta_alm(200) -> E_OK, TALM_STA, lfttim <= 200", (W)ra.lfttim);
+    tk_dly_tsk(100);
+    n = a_cnt;
+    check(n == 0, "A4", "no call before almtim (at ~100 of 200 ms)", n);
+    tk_dly_tsk(300);
+    n = a_cnt;
+    check(n >= 1 && a_exinf == &tag, "A5", "called by ~400 ms with the exinf given at creation", n);
+    tk_dly_tsk(200);
+    tk_ref_alm(a, &ra);
+    check_impl(a_cnt == 1 && ra.almstat == TALM_STP, "A6", "[impl] called once, then TALM_STP", a_cnt);
+
+    /* a second tk_sta_alm cancels the first setting */
+    a_cnt = 0;
+    tk_sta_alm(a, 100);
+    tk_sta_alm(a, 400);
+    tk_dly_tsk(250);
+    n = a_cnt;
+    tk_stp_alm(a);
+    check(n == 0, "A7", "tk_sta_alm(100) then tk_sta_alm(400): no call at ~250 ms", n);
+
+    /* tk_stp_alm before it goes off */
+    a_cnt = 0;
+    tk_sta_alm(a, 100);
+    er = tk_stp_alm(a);
+    tk_ref_alm(a, &ra);
+    tk_dly_tsk(300);
+    er2 = tk_stp_alm(a);
+    check(er == E_OK && er2 == E_OK && ra.almstat == TALM_STP && a_cnt == 0,
+          "A8", "tk_stp_alm -> E_OK, TALM_STP, no call; again when stopped -> E_OK", a_cnt);
+
+    a_cnt = 0;
+    er = tk_sta_alm(a, 0);
+    tk_dly_tsk(20);
+    check(er == E_OK && a_cnt == 1, "A9", "tk_sta_alm(0) -> called right after the setting", a_cnt);
+
+    bad.almhdr = NULL;
+    er = tk_cre_alm(&bad);
+    check(er == E_PAR, "A10", "tk_cre_alm almhdr=NULL -> E_PAR", er);
+    if (er > 0) tk_del_alm(er);
+
+    er = tk_del_alm(a);
+    er2 = tk_ref_alm(a, &ra);
+    check(er == E_OK && er2 == E_NOEXS && tk_sta_alm(a, 10) == E_NOEXS,
+          "A11", "tk_del_alm -> E_OK, then tk_ref_alm / tk_sta_alm -> E_NOEXS", er2);
+}
+
 /* ---- time ----------------------------------------------------------------- */
 static void suite_time(void)
 {
@@ -918,6 +1002,7 @@ static void t_runner(INT stacd, void *exinf)
     suite_mbx(r.tskpri);
     suite_mpf(r.tskpri);
     suite_cyc();
+    suite_alm();
     suite_time();
     suite_dds(r.tskpri);
 #ifdef PK_TKCONF_NOSW
