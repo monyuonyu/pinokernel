@@ -1,6 +1,6 @@
 # 差分の1ビットに誤差帰還を（研究メモ、ROADMAP 1-6・R-1 の次の段）
 
-2026-10-08。出典（本文で確認）: Karimireddy ほか "Error Feedback Fixes SignSGD"（arXiv 1901.09847、Alg.1・Lemma 8）、Sattler ほか "Sparse Ternary Compression"（STC、arXiv 1903.02891、Alg.1・§キャッシュ）、Yadav ほか ComPEFT（arXiv 2311.13171）。
+2026-10-08。出典（本文で確認）: Karimireddy ほか "Error Feedback Fixes SignSGD"（arXiv 1901.09847、Alg.1・Lemma 8）、Richtárik ほか EF21（arXiv 2106.05203、§3.1 式(10)）、Sattler ほか "Sparse Ternary Compression"（STC、arXiv 1903.02891、Alg.1・§キャッシュ）、Yadav ほか ComPEFT（arXiv 2311.13171）。
 
 ## 何が効くのか
 - 符号だけの圧縮は向きと大きさを忘れ、収束しない例がある。直し方: C(p)=(‖p‖₁/d)·sign(p) を送り、**送れなかった残り e=p−C(p) を手元に残して次の差に足す**（Alg.1）
@@ -9,7 +9,7 @@
 - ComPEFT: 上位 k＋三値＋α·σ（α は検証で選ぶ）。大きなモデルほど縮む＝小さな r3 は不利側
 
 ## p-kernel のどこに入れるか
-- 第1段（delta-quant.md）は送り手の真の重みどうしの差を送る「開いた輪」。受け手の写しはずれが溜まる。**閉じた輪**: 送り手が受け手の写し r を同じ計算で持ち、d=w−r を送り r+=C(d)。e=w−r が誤差帰還の残差そのもの
+- 第1段（delta-quant.md）は送り手の真の重みどうしの差を送る「開いた輪」。受け手の写しはずれが溜まる。**閉じた輪**: 送り手が受け手の写し r を同じ計算で持ち、d=w−r を送り r+=C(d)。e=w−r が誤差帰還の残差そのもの。EF21 の Markov 圧縮 M(vᵗ⁺¹)=M(vᵗ)+C(vᵗ⁺¹−M(vᵗ)) と同じ形。**ずれが0に向かう保証は列が収束するときだけ**で、一つの心は世代ごとに新しい事実で動く＝保証は無く、測るしかない
 - まず r3（一つの心、R_NP=21,568）の中だけで測る: hosted 専用の `mind dq`（呼び口も `_TK_HOSTED_LIBC_` の中。crown 不変を実測）。s_pretrain の下地から事実を1つずつ覚えさせ（FQ_MAX=4 なので4世代）、世代ごとに「送る」
 - 送る量: 行列10個は1ビット＋α、ノルムと偏り 352 個は fp32 → 4,100B／86,272B＝1/21.0
 - 網に載せる（受け手が送り手ごとの写しを持つ・世代が飛んだら全部）は第3段
