@@ -203,6 +203,10 @@ static void run_arm(const char *arm, int gen, int start)
           memcmp(C.w, C2.w, (size_t)C.n_params * sizeof(float)) == 0,
           G("[d5c-determ] merge twice -> byte-identical", sn));
     CHECK(rc >= 0 && C.adam_t == 0, G("Adam state reset after merge", sn));
+    /* In S1, P is trained exactly as A (I, order 1, ROUNDS): lP == lA, so this
+     * gate is "child <= A", implied by [d5c-s1-gain] - not an independent
+     * check (audit-28; brain-merge-distill.md §4). Kept as fixed before
+     * results. */
     if (start == ST_DISTILL_START_INIT && !gen)
         CHECK(rc >= 0 && lC <= lP, G("[d5c-b-plain] S1 TEST: child <= plain training from I", sn));
     st_free(&A); st_free(&B); st_free(&C); st_free(&C2);
