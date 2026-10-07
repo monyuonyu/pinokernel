@@ -473,10 +473,10 @@ static double rv_free_ce(st_model *m, const uint8_t *seq, int n, int as, int vle
     return rv_ce_at(m, seq + start, n - start, pos, k);
 }
 
-typedef struct { double mean, se; } rv_stat;
+typedef struct { double mean, se; int n; } rv_stat;
 static rv_stat rv_fin(double s, double s2, int c)
 {
-    rv_stat r = { 0.0, 0.0 };
+    rv_stat r = { 0.0, 0.0, c };
     if (c < 2) return r;
     r.mean = s / c;
     double var = (s2 - s * s / c) / (c - 1);
@@ -516,33 +516,51 @@ static rv_stat measure_S(st_model *m, int d, int nprobe, uint32_t seed, int ctx)
 }
 
 #define RV_LEN 24
-static int rv_build_repeat(uint8_t *seq, int d, uint32_t *rng)
+#define RV_PRE 16
+/* [16 filler][A: 24 random][d filler][B: 24]; B = A (same) or fresh random
+ * (diff). The first copy is NOT at the sequence start: the QUICK run showed
+ * the memo's R (CE of a copy at the start minus the second copy) stays ~1 nat
+ * with only 16 bytes of context (NC red) - the trained student expects
+ * "fact: " at the start, so R measured the position, not copying. */
+static int rv_build_repeat(uint8_t *seq, int d, uint32_t *rng, int diff)
 {
     int n = 0;
+    uint32_t fr0 = *rng ^ 0x51ED51EDu;
+    rv_filler(seq, &n, RV_PRE, &fr0);
     for (int i = 0; i < RV_LEN; i++) seq[n++] = (uint8_t)LOWER_DIG[lcg(rng) % 36];
     uint32_t fr = *rng ^ 0x9E3779B9u;
     rv_filler(seq, &n, d, &fr);
-    for (int i = 0; i < RV_LEN; i++) seq[n + i] = seq[i];
+    uint32_t br = *rng ^ 0xD1FFu;
+    for (int i = 0; i < RV_LEN; i++)
+        seq[n + i] = diff ? (uint8_t)LOWER_DIG[lcg(&br) % 36] : seq[RV_PRE + i];
     return n + RV_LEN;
 }
 
-static rv_stat measure_R(st_model *m, int d, int nprobe, uint32_t seed, int ctx)
+/* R'(d) = CE(B, bytes 2..24 | B != A) - CE(B, bytes 2..24 | B == A): the same
+ * positions and the same context length, only whether B repeats A differs.
+ * *r0 (recorded only) is the memo's R: CE(A) - CE(B == A). */
+static rv_stat measure_R(st_model *m, int d, int nprobe, uint32_t seed, int ctx, double *r0)
 {
-    uint32_t rng = seed; double s = 0.0, s2 = 0.0; int c = 0;
+    uint32_t rng = seed; double s = 0.0, s2 = 0.0, z = 0.0; int c = 0;
     for (int p = 0; p < nprobe; p++) {
-        uint8_t seq[ST_MAXSEQ];
-        int n = rv_build_repeat(seq, d, &rng);
+        uint8_t a[ST_MAXSEQ], b[ST_MAXSEQ];
+        uint32_t r1 = rng, r2 = rng;
+        int n = rv_build_repeat(a, d, &r1, 0);
+        (void)rv_build_repeat(b, d, &r2, 1);
+        rng = r1;
         if (n > ST_MAXSEQ) continue;
-        int t0 = n - RV_LEN + 1;                  /* second copy, bytes 2..24 */
+        int t0 = n - RV_LEN + 1;                  /* B, bytes 2..24 */
         int ts[RV_LEN];
-        for (int j = 0; j < RV_LEN - 1; j++) ts[j] = 1 + j;
-        double ce1 = rv_ce_at(m, seq, RV_LEN, ts, RV_LEN - 1);
         int start = (ctx > 0 && t0 - ctx > 0) ? t0 - ctx : 0;
         for (int j = 0; j < RV_LEN - 1; j++) ts[j] = t0 - start + j;
-        double ce2 = rv_ce_at(m, seq + start, n - start, ts, RV_LEN - 1);
-        double x = ce1 - ce2;
-        s += x; s2 += x * x; c++;
+        double ce_same = rv_ce_at(m, a + start, n - start, ts, RV_LEN - 1);
+        double ce_diff = rv_ce_at(m, b + start, n - start, ts, RV_LEN - 1);
+        for (int j = 0; j < RV_LEN - 1; j++) ts[j] = RV_PRE + 1 + j;
+        double ce_a = rv_ce_at(m, a, RV_PRE + RV_LEN, ts, RV_LEN - 1);
+        double x = ce_diff - ce_same;
+        s += x; s2 += x * x; z += ce_a - ce_same; c++;
     }
+    if (r0) *r0 = c ? z / c : 0.0;
     return rv_fin(s, s2, c);
 }
 
@@ -581,7 +599,7 @@ static void train_repeat(st_model *m, int rounds, int n_ex, uint32_t seed,
         for (int e = 0; e < n_ex; e++) {
             uint8_t seq[ST_MAXSEQ];
             int d = dists[lcg(&rr) % (uint32_t)ndist];
-            int n = rv_build_repeat(seq, d, &rr);
+            int n = rv_build_repeat(seq, d, &rr, 0);
             if (n > ST_MAXSEQ) continue;
             st_zero_grad(m);
             st_forward(m, seq, n, logits);
@@ -601,29 +619,37 @@ static int falsify_main(void)
     const int quick = getenv("ROTE_QUICK") != 0;
     const int NP = quick ? 8 : 64, CTX = 16, ROUNDS = quick ? 2 : 24;
     if (quick) printf("[rote] QUICK budget (8 probes, 2 rounds): timing only, not a result\n");
-    double thrS[6], thrR[6];
     printf("[rote] ==== research/rote-vs-copy.md stage A: floor, NC, PC (C1 FULL budget) ====\n");
     fflush(stdout);
     double tall = now_ms();
-    /* floor: three untrained students. thr(d) = max over seeds of mean + 3 SE */
-    for (int i = 0; i < 6; i++) { thrS[i] = -1e30; thrR[i] = -1e30; }
+    /* floor: three untrained students. A point is OVER when its own
+     * mean - 3 SE exceeds the largest floor mean at that d (the QUICK run used
+     * the floor's SE: the untrained floor is near-uniform, so its SE is tiny
+     * and a trained model's ordinary noise crossed it - the NC went red on
+     * noise). A point with fewer than NP/2 valid probes (d=192: the probe
+     * overflows 256 bytes unless K and V are short) is n/a. */
+    double flS[6], flR[6];
+    for (int i = 0; i < 6; i++) { flS[i] = -1e30; flR[i] = -1e30; }
+    #define RV_OK(st)        ((st).n >= NP / 2)
+    #define RV_OVER(st, fl)  (RV_OK(st) && (st).mean - 3.0 * (st).se > (fl))
     for (int s = 0; s < 3; s++) {
         st_model f;
         if (st_init(&f, 0xF100A000u + (uint32_t)s * 7919u) != ST_OK) { printf("init OOM\n"); return 2; }
         st_rope_set_enabled(1);
         for (int i = 0; i < 6; i++) {
+            double r0;
             rv_stat S = measure_S(&f, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, 0);
-            rv_stat R = measure_R(&f, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
-            printf("[rote] floor seed=%d d=%d S=%+.5f (se %.5f) R=%+.5f (se %.5f)\n",
-                   s, dd[i], S.mean, S.se, R.mean, R.se);
-            if (S.mean + 3 * S.se > thrS[i]) thrS[i] = S.mean + 3 * S.se;
-            if (R.mean + 3 * R.se > thrR[i]) thrR[i] = R.mean + 3 * R.se;
+            rv_stat R = measure_R(&f, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0, &r0);
+            printf("[rote] floor seed=%d d=%d S=%+.5f (se %.5f, n %d) R=%+.5f (se %.5f, n %d) R0=%+.5f\n",
+                   s, dd[i], S.mean, S.se, S.n, R.mean, R.se, R.n, r0);
+            if (RV_OK(S) && S.mean > flS[i]) flS[i] = S.mean;
+            if (RV_OK(R) && R.mean > flR[i]) flR[i] = R.mean;
         }
         fflush(stdout);
         st_free(&f);
     }
     for (int i = 0; i < 6; i++)
-        printf("[rote] thr d=%d S=%+.5f R=%+.5f\n", dd[i], thrS[i], thrR[i]);
+        printf("[rote] floor max d=%d S=%+.5f R=%+.5f\n", dd[i], flS[i], flR[i]);
 
     /* the C1 FULL student (same seed and budget as `full`) */
     st_model m;
@@ -632,24 +658,27 @@ static int falsify_main(void)
     double t0 = now_ms();
     train_ctx(&m, ROUNDS, 128, 0x7A1E77u, tdists, 6);
     printf("[rote] trained C1 FULL in %.1f s\n", (now_ms() - t0) / 1000.0);
-    int sover = 0, rover = 0, ncbad = 0;
+    int sover = 0, rover = 0, ncbad = 0, nvs = 0, nvr = 0, nvn = 0;
     for (int i = 0; i < 6; i++) {
+        double r0;
         rv_stat S = measure_S(&m, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, 0);
-        rv_stat R = measure_R(&m, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
+        rv_stat R = measure_R(&m, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0, &r0);
         float A = measure_A(&m, dd[i], NP, 0xE7A1u + (uint32_t)i * 101u, 0);
         double Af = measure_A_free(&m, dd[i], NP, 0xE7A1u + (uint32_t)i * 101u, 0);
         double Ai = measure_A_free(&m, dd[i], NP, 0xE7A1u + (uint32_t)i * 101u, 1);
-        sover += S.mean > thrS[i]; rover += R.mean > thrR[i];
-        printf("[rote] trained d=%d S=%+.5f (se %.5f)%s R=%+.5f (se %.5f)%s A=%+.5f A_free=%+.5f A_id=%+.5f\n",
-               dd[i], S.mean, S.se, S.mean > thrS[i] ? " >thr" : "", R.mean, R.se,
-               R.mean > thrR[i] ? " >thr" : "", A, Af, Ai);
+        nvs += RV_OK(S); nvr += RV_OK(R);
+        sover += RV_OVER(S, flS[i]); rover += RV_OVER(R, flR[i]);
+        printf("[rote] trained d=%d S=%+.5f (se %.5f, n %d)%s R=%+.5f (se %.5f, n %d)%s R0=%+.5f A=%+.5f A_free=%+.5f A_id=%+.5f\n",
+               dd[i], S.mean, S.se, S.n, RV_OVER(S, flS[i]) ? " OVER" : "", R.mean, R.se, R.n,
+               RV_OVER(R, flR[i]) ? " OVER" : "", r0, A, Af, Ai);
         if (dd[i] >= 32) {
             rv_stat Sn = measure_S(&m, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, CTX);
-            rv_stat Rn = measure_R(&m, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, CTX);
-            int bad = Sn.mean > thrS[i] || Rn.mean > thrR[i];
+            rv_stat Rn = measure_R(&m, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, CTX, &r0);
+            int bad = RV_OVER(Sn, flS[i]) || RV_OVER(Rn, flR[i]);
+            nvn += RV_OK(Sn) || RV_OK(Rn);
             ncbad += bad;
-            printf("[rote] nc(ctx %d) d=%d S=%+.5f R=%+.5f%s\n", CTX, dd[i], Sn.mean, Rn.mean,
-                   bad ? " ABOVE thr" : "");
+            printf("[rote] nc(ctx %d) d=%d S=%+.5f (se %.5f, n %d) R=%+.5f (se %.5f)%s\n", CTX, dd[i],
+                   Sn.mean, Sn.se, Sn.n, Rn.mean, Rn.se, bad ? " OVER" : "");
         }
         fflush(stdout);
     }
@@ -662,17 +691,18 @@ static int falsify_main(void)
     double t1 = now_ms();
     train_repeat(&pc, ROUNDS, 128, 0x9C9C9Cu, tdists, 6);
     printf("[rote] trained PC in %.1f s\n", (now_ms() - t1) / 1000.0);
-    int pcover = 0;
+    int pcover = 0, nvp = 0;
     for (int i = 0; i < 6; i++) {
-        rv_stat R = measure_R(&pc, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
-        pcover += R.mean > thrR[i];
-        printf("[rote] pc d=%d R=%+.5f (se %.5f)%s\n", dd[i], R.mean, R.se,
-               R.mean > thrR[i] ? " >thr" : "");
+        double r0;
+        rv_stat R = measure_R(&pc, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0, &r0);
+        nvp += RV_OK(R); pcover += RV_OVER(R, flR[i]);
+        printf("[rote] pc d=%d R=%+.5f (se %.5f, n %d)%s R0=%+.5f\n", dd[i], R.mean, R.se, R.n,
+               RV_OVER(R, flR[i]) ? " OVER" : "", r0);
     }
     st_free(&pc);
 
-    printf("[rote] S over thr %d/6, R over thr %d/6; NC above thr %d/5; PC R over thr %d/6\n",
-           sover, rover, ncbad, pcover);
+    printf("[rote] S over %d/%d, R over %d/%d (valid points); NC over %d/%d; PC R over %d/%d\n",
+           sover, nvs, rover, nvr, ncbad, nvn, pcover, nvp);
     printf("[rote-nc] %s\n", ncbad ? "FAIL (the ruler sees through a 16-byte window: broken)" : "PASS");
     printf("[rote-pc] %s\n", pcover >= 4 ? "PASS" : "FAIL (R cannot see copying at this size: undecidable)");
     const char *cls = (ncbad || pcover < 4) ? "UNDECIDABLE (ruler not shown sound)" :
@@ -680,6 +710,8 @@ static int falsify_main(void)
                       (sover >= 4) ? "copy inside the template only" :
                       (rover >= 4) ? "induction on random repeats, but no fact copy (not in the memo's table)" :
                       "no copy shown (habit if A != 0, else nothing)";
+    #undef RV_OK
+    #undef RV_OVER
     printf("[rote] verdict (C1 FULL student): %s\n", cls);
     printf("[rote] total %.1f s\n", (now_ms() - tall) / 1000.0);
     return 0;
