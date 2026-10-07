@@ -678,7 +678,7 @@ static void ns_poolregion(void)
 IMPORT int net_lan_probe(int on, unsigned long long *nonce);
 IMPORT int net_lan_probe_send(const void *frame, int len, unsigned char *out);
 IMPORT int net_lan_live(void);
-IMPORT unsigned net_lan_key_sum(void);
+IMPORT int net_lan_key_copy(unsigned char *out, int cap);
 static volatile INT nw_hrun, nw_hbad, nw_during, nw_busy;
 static void t_nw_high(INT stacd, void *exinf)
 {
@@ -746,15 +746,19 @@ static void ns_netlan(void)
     INT sends = 0, bad = 0;
     unsigned long long n0, n1;
     if (net_lan_live()) {
-        unsigned k0 = net_lan_key_sum();
+        unsigned char k0[64], k1[64];
+        int l0 = net_lan_key_copy(k0, sizeof k0);
         int r = net_lan_probe(1, &n0);
-        unsigned k1 = net_lan_key_sum();
+        int l1 = net_lan_key_copy(k1, sizeof k1);
+        int diff = 0;
         if (r == 0) net_lan_probe(0, &n1);
+        for (int i = 0; l0 > 0 && i < l0; i++) if (k0[i] != k1[i]) diff++;
         { char m[160];
-          snprintf(m, sizeof m, "[nosw] net_lan is live: probe %s, key sum %u -> %u\r\n",
-                   r < 0 ? "refused" : "ran", k0, k1);
+          snprintf(m, sizeof m, "[nosw] net_lan is live: probe %s, key bytes changed %d of %d\r\n",
+                   r < 0 ? "refused" : "ran", diff, l0);
           pp_out(m); }
-        pp_check(r < 0 && k1 == k0, "N23", "live LAN: the probe left the key alone (key sum during it)", (long)k1);
+        pp_check(r < 0 && l0 > 0 && l1 == l0 && memcmp(k0, k1, (size_t)l0) == 0, "N23",
+                 "live LAN: the probe left the key alone (key bytes changed during it)", (long)diff);
         pp_out("[nosw] SKIP N20 N21 N22  net_lan is live (the probe needs its own zero key)\r\n");
         pp_out("[nosw] SKIP N24 N25  net_lan is live (the probe empties the peer table)\r\n");
         pp_skip += 5;
