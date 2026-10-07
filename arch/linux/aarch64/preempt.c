@@ -155,9 +155,240 @@ void knl_idle_wait(void)
     sigprocmask(SIG_SETMASK, &prev, NULL);
 }
 
-static void sigalrm_handler(int sig)
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+/* ---- ROADMAP 0-1, RNG0 on hosted Linux aarch64 (= Android): switch at the
+ * "interrupt" exit (ledger RNG0-HOSTED-NO-SIGNAL-EXIT-DISPATCH). The x86_64
+ * sibling (arch/linux/x86_64/preempt.c) has the full story; the rules are the
+ * same: knl_dispatch is entered from task context only, never inside the
+ * handler; only when the interrupted PC is in p-kernel's own text
+ * (pk_text_begin..pk_text_end, checked at boot) and not in the trampoline; not
+ * while the shared matmul pool is out (pk_parallel_busy).
+ *
+ * What differs: AArch64 user code cannot restore every register and then
+ * branch to the interrupted PC (`br xN` / `ret` need a register that may be
+ * live at that PC). So the handler COPIES the kernel's signal frame (siginfo +
+ * ucontext, i.e. every register, NZCV, the FP/SIMD state and the signal mask
+ * at the interruption) to the top of this task's side stack and resumes the
+ * task at arch_preempt_tramp with SP just below the copy. The trampoline calls
+ * arch_preempt_dispatch (the dispatch frame lives on the side stack while the
+ * task is switched out), clears the busy word and issues rt_sigreturn with SP
+ * at the copy: the kernel restores the whole interrupted context exactly as
+ * an ordinary signal return would. A frame with an extra_context record (its
+ * data lives outside the copied bytes) is not preempted (old behaviour).
+ * pk_nosw.h regions work as on x86_64 (per-task depth; leaving the outermost
+ * one makes the skipped switch).
+ * -DPK_HOSTED_NO_EXIT_DISPATCH: the old behaviour (negative control). */
+#include <ucontext.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <pthread.h>
+
+extern void * volatile knl_ctxtsk;
+extern volatile int knl_dispatch_disabled;
+extern volatile int knl_taskindp;
+extern void knl_dispatch_entry(void);
+extern int tk_get_tid(void);
+extern char pk_text_begin[], pk_text_end[];  /* pk_text_begin.c / pk_text_end.c */
+void arch_preempt_tramp(void);
+void arch_preempt_dispatch(void);
+extern char arch_preempt_tramp_end[];
+
+#define SIDE_SLOTS 129                       /* task ids 1..128 (CNF_MAX_TSKID) */
+#define SIDE_SZ    16384                     /* frame copy (~4.7 KB) + dispatch */
+#define FRAME_SZ   ((sizeof(siginfo_t) + sizeof(ucontext_t) + 15) & ~(size_t)15)
+#define EXTRA_MAGIC_A64 0x45585401u          /* asm/sigcontext.h EXTRA_MAGIC */
+#define FPSIMD_MAGIC_A64 0x46508001u         /* asm/sigcontext.h FPSIMD_MAGIC */
+#define SVE_MAGIC_A64    0x53564501u         /* asm/sigcontext.h SVE_MAGIC */
+static uint64_t side_stack[SIDE_SLOTS][SIDE_SZ / 8] __attribute__((aligned(64)));
+static int pk_text_ok;                       /* set by pk_text_check() at boot */
+
+static int in_pk_text(uintptr_t a)
 {
-    (void)sig;
+    return a >= (uintptr_t)pk_text_begin && a < (uintptr_t)pk_text_end;
+}
+
+/* the link-order bracket must hold libc outside and p-kernel inside */
+static void pk_text_check(void)
+{
+    const uintptr_t libc[] = {
+        (uintptr_t)&malloc, (uintptr_t)&free, (uintptr_t)&memcpy,
+        (uintptr_t)&printf, (uintptr_t)&pthread_mutex_lock,
+    };
+    int ok = (uintptr_t)pk_text_begin < (uintptr_t)pk_text_end &&
+             in_pk_text((uintptr_t)&arch_preempt_dispatch) &&
+             in_pk_text((uintptr_t)&knl_dispatch_entry);
+    for (unsigned i = 0; i < sizeof libc / sizeof libc[0]; i++)
+        if (in_pk_text(libc[i])) ok = 0;
+    pk_text_ok = ok;
+    if (!ok)
+        fprintf(stderr, "[preempt] p-kernel text bracket %p..%p holds libc or misses "
+                "the kernel: exit dispatch OFF (old behaviour)\n",
+                (void *)pk_text_begin, (void *)pk_text_end);
+}
+
+/* pk_nosw.h: per-task no-switch depth (index = task id) */
+static unsigned short nosw_depth[SIDE_SLOTS];
+
+/* knl_setup_context (task created / gone dormant): a task deleted while
+ * switched out inside the trampoline must not leave its id marked busy,
+ * nor a task deleted inside a no-switch region its id unpreemptable */
+void arch_preempt_forget(int tskid)
+{
+    if (tskid > 0 && tskid < SIDE_SLOTS) {
+        side_stack[tskid][SIDE_SZ / 8 - 1] = 0;
+        nosw_depth[tskid] = 0;
+    }
+}
+
+/* called by arch_preempt_tramp on the side stack, in task context */
+void arch_preempt_dispatch(void)
+{
+    arch_irq_disabled_flag = 1;
+    if (knl_ctxtsk != 0 && knl_ctxtsk != knl_schedtsk &&
+        !knl_dispatch_disabled && knl_taskindp == 0)
+        knl_dispatch_entry();               /* returns here when rescheduled */
+    arch_irq_enable_with_drain();
+}
+
+/* x19 = the frame copy (SP on entry), x20 = the busy word; both set by
+ * maybe_preempt in the live context (their interrupted values are in the copy) */
+__asm__(
+    "    .text\n"
+    "    .globl arch_preempt_tramp\n"
+    "    .globl arch_preempt_tramp_end\n"
+    "    .type  arch_preempt_tramp, %function\n"
+    "    .balign 16\n"
+    "arch_preempt_tramp:\n"
+    "    bl    arch_preempt_dispatch\n"
+    "    mov   sp, x19\n"
+    "    str   xzr, [x20]\n"                 /* busy word = 0 */
+    "    mov   x8, #139\n"                   /* __NR_rt_sigreturn */
+    "    svc   #0\n"
+    "    brk   #0x3e8\n"                     /* not reached */
+    "arch_preempt_tramp_end:\n"
+    "    .size arch_preempt_tramp, . - arch_preempt_tramp\n"
+);
+
+extern volatile int pk_parallel_busy;        /* llm/pk_parallel.c: a pool job is out */
+extern void (*pk_parallel_on_leave)(void);
+
+/* pk_parallel.c calls this when its last dispatch is joined: the switch
+ * maybe_preempt skipped while the pool was busy happens here (x86_64: `tkconf
+ * pool` P5). -DPK_POOL_NO_LEAVE_DISPATCH: skip it (negative control). */
+static void pk_pool_left(void)
+{
+#ifndef PK_POOL_NO_LEAVE_DISPATCH
+    /* the pool used inside a pk_nosw.h region: the outermost pk_nosw_leave
+     * dispatches instead. -DPK_POOL_LEAVE_IGNORES_NOSW: the old way (N18) */
+#ifndef PK_POOL_LEAVE_IGNORES_NOSW
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS && nosw_depth[id]) return;
+#endif
+    if (pk_text_ok && !arch_irq_disabled_flag)
+        arch_preempt_dispatch();
+#endif
+}
+
+/* pk_nosw.h. Outside a task (id 0, or before the kernel runs) both are no-ops. */
+void pk_nosw_enter(void)
+{
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS) nosw_depth[id]++;
+}
+
+void pk_nosw_leave(void)
+{
+    int id = tk_get_tid();
+    if (id > 0 && id < SIDE_SLOTS && nosw_depth[id] && --nosw_depth[id] == 0)
+        pk_pool_left();
+}
+
+/* the frame's records must all sit inside the copied bytes */
+static int frame_self_contained(const ucontext_t *uc)
+{
+    const unsigned char *p   = (const unsigned char *)uc->uc_mcontext.__reserved;
+    const unsigned char *end = p + sizeof uc->uc_mcontext.__reserved;
+    while (p + 8 <= end) {
+        uint32_t magic, size;
+        memcpy(&magic, p, 4); memcpy(&size, p + 4, 4);
+        if (magic == 0) return 1;
+        if (magic == EXTRA_MAGIC_A64 || size < 8 || size > (size_t)(end - p)) return 0;
+        p += size;
+    }
+    return 0;
+}
+
+/* the thread arch_timer_start ran on (the T-Kernel thread). A tick taken on
+ * any other thread (the pool's helpers are p-kernel code too) must never
+ * enter the trampoline: it would dispatch on the wrong OS thread. Counted so
+ * `tkconf pool` can show whether it happens (SIGEV_THREAD_ID should prevent
+ * it; under qemu-user it was not known). */
+static long arch_kernel_tid;
+volatile unsigned long arch_preempt_foreign_ticks;
+
+static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
+{
+    if (arch_kernel_tid && syscall(SYS_gettid) != arch_kernel_tid) {
+        arch_preempt_foreign_ticks++;
+        return;
+    }
+    if (arch_irq_disabled_flag || knl_taskindp != 0 ||
+        knl_dispatch_disabled || knl_ctxtsk == 0 || knl_ctxtsk == knl_schedtsk)
+        return;
+    if (pk_parallel_busy)
+        return;                              /* the shared pool job: on leaving */
+    uintptr_t pc = (uintptr_t)uc->uc_mcontext.pc;
+    if (!pk_text_ok || !in_pk_text(pc))
+        return;                              /* in libc etc.: not here */
+    if (pc >= (uintptr_t)arch_preempt_tramp && pc < (uintptr_t)arch_preempt_tramp_end)
+        return;                              /* on its way back */
+    int id = tk_get_tid();
+    if (id <= 0 || id >= SIDE_SLOTS) return;
+    if (nosw_depth[id]) return;              /* pk_nosw.h region: on leaving */
+    uint64_t *top = &side_stack[id][SIDE_SZ / 8];
+    if (top[-1]) return;                     /* this task is already inside */
+    /* the kernel's rt_sigframe is { siginfo; ucontext } back to back */
+    if ((unsigned char *)uc != (unsigned char *)si + sizeof(siginfo_t)) return;
+    if (!frame_self_contained(uc)) return;
+    unsigned char *copy = (unsigned char *)&top[-2] - FRAME_SZ;  /* 16-aligned */
+    memcpy(copy, si, sizeof(siginfo_t) + sizeof(ucontext_t));
+#ifdef PK_PREEMPT_DROP_FP
+    /* `tkconf fp` negative control (FP-PRESERVE): the copy loses the SIMD
+     * registers, so rt_sigreturn gives the task zeroes. F1 must go red.
+     * Both records are cleared: fpsimd's v0-v31 (head 8 + fpsr 4 + fpcr 4,
+     * then 32 x 16 bytes) and, when the CPU has SVE, sve's register data
+     * after its 16-byte header - the Z registers hold V in their low half and
+     * are restored after it (qemu-aarch64's default CPU has SVE: clearing
+     * only fpsimd left F1 green, 71 hits inside fp_chunk, 2026-10-07). */
+    {
+        unsigned char *r = (unsigned char *)((ucontext_t *)(copy + sizeof(siginfo_t)))->uc_mcontext.__reserved;
+        unsigned char *e = r + sizeof ((ucontext_t *)0)->uc_mcontext.__reserved;
+        while (r + 8 <= e) {
+            uint32_t magic, size;
+            memcpy(&magic, r, 4); memcpy(&size, r + 4, 4);
+            if (magic == 0 || size < 8 || size > (size_t)(e - r)) break;
+            if (magic == FPSIMD_MAGIC_A64 && size >= 16 + 512) memset(r + 16, 0, 512);
+            if (magic == SVE_MAGIC_A64 && size > 16) memset(r + 16, 0, size - 16);
+            r += size;
+        }
+    }
+#endif
+    top[-1] = 1;
+    uc->uc_mcontext.regs[19] = (unsigned long long)(uintptr_t)copy;
+    uc->uc_mcontext.regs[20] = (unsigned long long)(uintptr_t)&top[-1];
+    uc->uc_mcontext.sp = (unsigned long long)(uintptr_t)copy;
+    uc->uc_mcontext.pc = (unsigned long long)(uintptr_t)arch_preempt_tramp;
+}
+#else
+volatile unsigned long arch_preempt_foreign_ticks;
+void arch_preempt_forget(int tskid) { (void)tskid; }
+void pk_nosw_enter(void) { }
+void pk_nosw_leave(void) { }
+#endif
+
+static void sigalrm_handler(int sig, siginfo_t *si, void *ucv)
+{
+    (void)sig; (void)si; (void)ucv;
     /* Linux collapses missed expirations of a periodic POSIX timer
      * into a single signal delivery and exposes the count via
      * timer_getoverrun(). Replay all of them so tick count tracks
@@ -173,6 +404,9 @@ static void sigalrm_handler(int sig)
     while (to_run-- > 0) {
         knl_timer_handler_startup();
     }
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+    maybe_preempt(si, (ucontext_t *)ucv);
+#endif
 }
 
 #define SIGSTACK_SZ (64 * 1024)
@@ -184,10 +418,14 @@ void arch_signals_init(void)
         .ss_sp = signal_stack, .ss_size = SIGSTACK_SZ, .ss_flags = 0,
     };
     if (sigaltstack(&ss, NULL) < 0) { perror("sigaltstack"); exit(1); }
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+    pk_text_check();
+    if (pk_text_ok) pk_parallel_on_leave = pk_pool_left;
+#endif
 
     struct sigaction sa = { 0 };
-    sa.sa_handler = sigalrm_handler;
-    sa.sa_flags = SA_ONSTACK | SA_RESTART;
+    sa.sa_sigaction = sigalrm_handler;
+    sa.sa_flags = SA_ONSTACK | SA_RESTART | SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
     if (sigaction(SIGALRM, &sa, NULL) < 0) { perror("sigaction"); exit(1); }
 }
@@ -228,6 +466,9 @@ void arch_timer_start(unsigned long period_us)
             perror("timer_create"); exit(1);
         }
         arch_alarm_tid_created = 1;
+#ifndef PK_HOSTED_NO_EXIT_DISPATCH
+        arch_kernel_tid = (long)syscall(SYS_gettid);
+#endif
     }
     struct itimerspec its = {
         .it_interval = { .tv_sec = period_us / 1000000,

@@ -1,21 +1,21 @@
 /*
  *  pk_nosw.h — no-switch regions for the hosted exit dispatch.
  *
- *  On hosted Linux x86_64 the timer may switch tasks at any instruction of
- *  p-kernel's own code (arch/linux/x86_64/preempt.c). State shared between
+ *  On hosted Linux (x86_64, and aarch64 = Android) the timer may switch tasks
+ *  at any instruction of p-kernel's own code (arch/linux/<arch>/preempt.c). State shared between
  *  tasks that was safe only because "nobody switches me out between kernel
  *  calls" (static send buffers, kdds topic slots, ...) is bracketed with
  *  PK_NOSW_ENTER / PK_NOSW_LEAVE. The depth is per task, so a task that
  *  blocks in a tk_* call inside a region does not stop preemption of the
  *  others; leaving the outermost region makes the switch the timer skipped.
- *  The same on bare metal x86 / AArch64 (below). Everywhere else (hosted
- *  aarch64, Windows, host tests) the macros are empty. -DPK_NOSW_OFF: empty
- *  everywhere (the negative control for `tkconf nosw` and PK_TKCONF_NOSW).
+ *  The same on bare metal x86 / AArch64 (below). Everywhere else (Windows,
+ *  host tests) the macros are empty. -DPK_NOSW_OFF: empty everywhere (the
+ *  negative control for `tkconf nosw` and PK_TKCONF_NOSW).
  */
 #ifndef PK_NOSW_H
 #define PK_NOSW_H
 
-/* PK_NOSW_HOSTED: the hosted x86_64 Makefile compiles the LLM tier (student.c,
+/* PK_NOSW_HOSTED: the hosted Makefiles (x86_64 and aarch64) compile the LLM tier (student.c,
  * dlb.c, cradle.c, ...) with LLM_CFLAGS, which has no -D_LINUX_X86_64_; without
  * this second key their regions were silently empty (2026-10-06: tkconf nosw
  * N6 / N14 red with the regions, while N7 was green only because the probe
@@ -25,7 +25,7 @@
  * (R-NOSW-BARE, 2026-10-07; the depth and the exit check are in the two
  * kernel/.../sysdepend/<target>/cpu_cntl.c). Not in the AArch64 SMP self-test
  * build, which keeps its own exit path (cpu_cntl.c's SMP_SELFTEST). */
-#if ((defined(_LINUX_X86_64_) || defined(PK_NOSW_HOSTED)) ||                \
+#if ((defined(_LINUX_X86_64_) || defined(_LINUX_AARCH64_) || defined(PK_NOSW_HOSTED)) || \
      ((defined(_X86_PC_) || defined(_AARCH64_VIRT_)) && !defined(SMP_SELFTEST))) \
     && !defined(PK_NOSW_OFF)
 #define PK_NOSW_ACTIVE 1        /* a file may wrap a whole function only then */
@@ -42,7 +42,7 @@ void pk_nosw_leave(void);
 /* A whole function as one region, written in front of its body:
  *   PK_NOSW_FN(INT, pfs_get, (const U1 *id, void *buf, UW n), (id, buf, n))
  *   { ...the body, returns as before... }
- * On hosted x86_64 the body becomes `static ret name_nosw(...)` and `name`
+ * On hosted Linux the body becomes `static ret name_nosw(...)` and `name`
  * brackets it; elsewhere it is just `ret name(...)`, the same code as before. */
 #if PK_NOSW_ACTIVE
 #define PK_NOSW_FN(ret, name, params, args)                                 \

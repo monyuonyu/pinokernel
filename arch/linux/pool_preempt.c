@@ -20,11 +20,11 @@
 #include "kernel.h"
 #include "kdds.h"
 #include "pfs_block.h"
-#include "../../common/llm/pk_parallel.h"
-#include "../../common/llm/student.h"
+#include "../common/llm/pk_parallel.h"
+#include "../common/llm/student.h"
 #include "arkfs.h"
 #include "dtr.h"
-#include "../../common/llm/dlb.h"
+#include "../common/llm/dlb.h"
 #include "dkva.h"
 #include "pk_nosw.h"
 #include <stdio.h>
@@ -73,6 +73,9 @@ static ID pp_mk(void (*fn)(INT, void *), PRI pri)
 }
 
 static void (*pp_out)(const char *);
+/* arch/linux/aarch64/preempt.c: SIGALRM ticks that arrived on a thread other
+ * than the T-Kernel one (not switched). Weak: absent on x86_64. */
+extern volatile unsigned long arch_preempt_foreign_ticks __attribute__((weak));
 static const char *pp_tag = "[pool]";
 static INT pp_fail;
 static INT pp_skip;
@@ -112,6 +115,12 @@ static void t_pp_runner(INT stacd, void *exinf)
     pp_check(pp_h_runs == PP_HCALLS, "P3", "high task: calls finished (of 40)", pp_h_runs);
     pp_check(wakes > 0, "P4", "precondition: pool helper wakes", (long)wakes);
     pp_check(pp_h_during > 0, "P5", "no starvation: high calls started inside the low loop", pp_h_during);
+    if (&arch_preempt_foreign_ticks) {          /* hosted aarch64 only (weak) */
+        char m[96];
+        snprintf(m, sizeof m, "[pool] note: ticks taken on another OS thread %lu\r\n",
+                 (unsigned long)arch_preempt_foreign_ticks);
+        pp_out(m);
+    }
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     pp_done = 1;
     tk_wup_tsk(pp_caller);
@@ -840,8 +849,14 @@ INT nosw_run(void (*out)(const char *))
     if (run <= 0) { out("[nosw] FAIL setup: no runner task\r\n"); return 1; }
     tk_can_wup(TSK_SELF);
     tk_sta_tsk(run, 0);
-    while (!pp_done && tk_slp_tsk(120000) == E_OK) { }
-    if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 120 s\r\n"); pp_fail++; tk_ter_tsk(run); }
+    /* 900 s, not 120: with the regions on, the high task of the student part
+     * runs once per ST_TRAIN_STEP (the step is one region), and under
+     * qemu-aarch64-static a step of the M baby takes ~15 s. At 120 s the
+     * runner was in that phase, depth 0, ready, 6-7 steps done (2/2); with
+     * 1500 s the whole run was ALL PASS in 370 s (2026-10-07, /build/a64d-e).
+     * Native x86_64 finishes far inside either limit. */
+    while (!pp_done && tk_slp_tsk(900000) == E_OK) { }
+    if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 900 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
     out(pp_fail ? "[nosw] RED\r\n" :
         pp_skip ? "[nosw] PASS, BUT N20-N22 N24 N25 SKIPPED (net_lan is live)\r\n" :
@@ -856,8 +871,9 @@ INT nosw_run(void (*out)(const char *))
  * with dispatch disabled. The two results must be equal bit for bit.
  *   F1  doubles unlike the run without switches (of 8)
  *   F2  precondition: high FP rounds that landed inside the runner's chunks
- * -DPK_PREEMPT_DROP_FP (preempt.c: the trampoline zeroes xmm0-15 instead of
- * restoring them) must turn F1 red. */
+ * -DPK_PREEMPT_DROP_FP (preempt.c: on x86_64 the trampoline zeroes xmm0-15
+ * instead of restoring them; on aarch64 the frame copy's fpsimd record loses
+ * v0-v31) must turn F1 red. */
 #define FP_HI    60
 #define FP_ITERS 20000
 static volatile INT fp_hrun, fp_during, fp_busy;

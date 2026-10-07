@@ -14,6 +14,9 @@
 
 #include "kernel.h"
 #include "tk_conform.h"
+INT pool_preempt_run(void (*out)(const char *));   /* arch/linux/pool_preempt.c */
+INT nosw_run(void (*out)(const char *));           /* arch/linux/pool_preempt.c */
+INT fp_preserve_run(void (*out)(const char *));    /* arch/linux/pool_preempt.c */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -1144,8 +1147,21 @@ EXPORT INT usermain(void)
         } else if (starts_with(line, n, "tkconf") && (n == 6 || line[6] == ' ')) {
             /* the contract suite v1 (inbox #5, arch/common/tk_conform.c):
              * tk_* task / semaphore / time promises, normal paths + error
-             * codes. tests/host/run_tk_conform.sh greps "[tkc] N PASS / 0 FAIL". */
-            tk_conform_run(print);
+             * codes. tests/host/run_tk_conform.sh greps "[tkc] N PASS / 0 FAIL".
+             * `tkconf pool` / `tkconf nosw` / `tkconf fp`: the shared matmul
+             * pool, the shared states and the FP/SIMD registers under task
+             * switches (pool_preempt.c; not tk_* promises, so not in the
+             * count). Same as x86_64. */
+            const UB *ta = line + 6; UW tal = (UW)(n - 6);
+            while (tal && (*ta==' '||*ta=='\t')) { ta++; tal--; }
+            if (tal >= 4 && ta[0]=='p'&&ta[1]=='o'&&ta[2]=='o'&&ta[3]=='l')
+                pool_preempt_run(print);
+            else if (tal >= 4 && ta[0]=='n'&&ta[1]=='o'&&ta[2]=='s'&&ta[3]=='w')
+                nosw_run(print);          /* pool_preempt.c, pk_nosw.h */
+            else if (tal >= 2 && ta[0]=='f'&&ta[1]=='p')
+                fp_preserve_run(print);   /* pool_preempt.c, FP-PRESERVE */
+            else
+                tk_conform_run(print);
         } else if (starts_with(line, n, "fed") && (n == 3 || line[3] == ' ')) {
             /* federation F1 (docs/architecture/20-architecture/federation.md
              * §2.2/§4-F1, fed_id.h): `fed test` runs [fed-id-roundtrip], the
