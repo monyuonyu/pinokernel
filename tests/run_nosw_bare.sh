@@ -11,13 +11,17 @@
 #   [nosw-ext]    a task that tk_ext_tsk's inside a region is preemptible in
 #                 its next life
 #   [nosw-ter]    the same after tk_ter_tsk inside a region
-# Per arch, four arms; each line is judged PASS / FAIL / - (not judged):
-#   new       regions on                    bare PASS leave PASS ext PASS ter PASS
+#   [nosw-sleep]  a task asleep inside a region does not stop the interrupt-exit
+#                 switch for other tasks
+# Per arch, five arms; each line is judged PASS / FAIL / - (not judged):
+#   new       regions on              bare PASS leave PASS ext PASS ter PASS sleep PASS
 #   off       -DPK_NOSW_OFF (regions gone)  bare FAIL leave FAIL (25-35 torn
 #             reads in 2026-10-07's boots)
 #   noleave   cpu_cntl.c: leaving the region does not switch     leave FAIL
 #   noforget  cpu_task.h: a new life keeps the old region depth  ext FAIL ter FAIL
-# (noleave / noforget: audit-25 showed [nosw-bare] stays green under both.)
+#   glob      cpu_cntl.c: one depth for all tasks                 sleep FAIL
+# (noleave / noforget: audit-25 showed [nosw-bare] stays green under both;
+#  glob: audit-26 showed bare/leave/ext/ter all stay green under it.)
 #
 #   ./tests/run_nosw_bare.sh            (both arches)
 #   ARCHES=x86 ./tests/run_nosw_bare.sh
@@ -26,18 +30,18 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 ARCHES="${ARCHES:-x86 aarch64}"
-ARMS="${NOSW_ARMS:-new off noleave noforget}"
+ARMS="${NOSW_ARMS:-new off noleave noforget glob}"
 BOOT_TIMEOUT="${NOSW_BOOT_TIMEOUT:-90}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 rc_all=0
-break_kernel() {  # $1 = tree, $2 = sysdepend dir, $3 = file, $4 = old, $5 = new
-    python3 - "$1/kernel/mtkernel3/kernel/sysdepend/$2/$3" "$4" "$5" <<'EOF'
+break_kernel() {  # $1 = tree, $2 = sysdepend dir, $3 = file, $4 = old, $5 = new [, $6 = count]
+    python3 - "$1/kernel/mtkernel3/kernel/sysdepend/$2/$3" "$4" "$5" "${6:-1}" <<'EOF'
 import sys
-p, old, new = sys.argv[1:4]
+p, old, new, n = sys.argv[1:5]
 s = open(p).read()
-assert s.count(old) == 1, ('anchor not found once', p, old)
+assert s.count(old) == int(n), ('anchor not found', n, p, old)
 open(p, 'w').write(s.replace(old, new))
 EOF
 }
@@ -48,13 +52,17 @@ arm() {  # $1 = arch, $2 = arm
     mkdir -p "$d"
     tar -C "$ROOT" --exclude=./.git -cf - . | tar -C "$d" -xf -
     case "$2" in
-        new)      want="bare=PASS leave=PASS ext=PASS ter=PASS" ;;
-        off)      want="bare=FAIL leave=FAIL ext=- ter=-"; cf="$cf -DPK_NOSW_OFF" ;;
-        noleave)  want="bare=- leave=FAIL ext=- ter=-"
+        new)      want="bare=PASS leave=PASS ext=PASS ter=PASS sleep=PASS" ;;
+        off)      want="bare=FAIL leave=FAIL ext=- ter=- sleep=-"; cf="$cf -DPK_NOSW_OFF" ;;
+        noleave)  want="bare=- leave=FAIL ext=- ter=- sleep=-"
                   break_kernel "$d" "$sd" cpu_cntl.c $'\tif ( out ) {' $'\tif ( 0 && out ) {' \
                       || { echo "[result] $1 $2 anchor missing (FAIL)"; rc_all=1; return; } ;;
-        noforget) want="bare=- leave=- ext=FAIL ter=FAIL"
+        noforget) want="bare=- leave=- ext=FAIL ter=FAIL sleep=-"
                   break_kernel "$d" "$sd" cpu_task.h $'\tknl_nosw_forget(tcb->tskid);' $'\t(void)0;' \
+                      || { echo "[result] $1 $2 anchor missing (FAIL)"; rc_all=1; return; } ;;
+        glob)     want="bare=- leave=- ext=- ter=- sleep=FAIL"
+                  { break_kernel "$d" "$sd" cpu_cntl.c 'INDEX_TSK(knl_ctxtsk->tskid)]' '0]' 3 &&
+                    break_kernel "$d" "$sd" cpu_cntl.c 'INDEX_TSK(tskid)]' '0]' 1; } \
                       || { echo "[result] $1 $2 anchor missing (FAIL)"; rc_all=1; return; } ;;
         *) echo "[result] unknown arm $2"; rc_all=1; return ;;
     esac

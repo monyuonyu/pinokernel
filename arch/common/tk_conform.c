@@ -789,6 +789,9 @@ static void suite_nosw_kdds(PRI me)
  *   [nosw-ext]    a task that tk_ext_tsk's inside a region, restarted, is
  *                 preemptible at the interrupt exit (we wake within 10 ms)
  *   [nosw-ter]    the same after tk_ter_tsk while it sleeps inside a region
+ *   [nosw-sleep]  while another task sleeps inside a region, a higher task
+ *                 woken by the timer still preempts us at the interrupt exit
+ *                 (the depth is per task, not one for all; audit-26 NOSW-SLEEP)
  * Time is a 1-tick cyclic handler's counter: no tk_* call inside a region
  * (any tk_* call ends with END_CRITICAL_SECTION, which dispatches). */
 static volatile UW nr_tick;
@@ -796,8 +799,8 @@ static volatile INT nr_hran, nr_stop;
 static void nr_cyc(void *exinf) { (void)exinf; nr_tick++; }
 static void t_nr_high(INT stacd, void *exinf)
 {
-    (void)stacd; (void)exinf;
-    tk_dly_tsk(3);
+    (void)exinf;
+    tk_dly_tsk(stacd ? stacd : 3);
     nr_hran = 1;
     tk_ext_tsk();
 }
@@ -861,6 +864,22 @@ static void suite_nosw_edges(PRI me)
     el = (W)(nr_tick - t0); nr_stop = 1;
     nr_line("[nosw-ter]", el < 500, "ticks=", el, "id=", t);
     tk_dly_tsk(5);
+
+    /* h is started first: starting a task clears its region depth, and a
+     * kernel that keeps one depth for all tasks would be cleared by that */
+    nr_hran = 0;
+    h = mk_task(t_nr_high, me - 1);
+    tk_sta_tsk(h, 30);                /* runs now, sleeps 30 ms (3-4 ticks of 10 ms) */
+    tk_sta_tsk(t, 2);
+    tk_dly_tsk(1);                    /* t: enter, sleep inside the region (stays) */
+    before = nr_hran;                 /* 0: h is still asleep when we start */
+    t0 = nr_tick;
+    while (nr_tick - t0 < 60 && !nr_hran) ;   /* no tk_* call: only the exit switches */
+    el = (W)(nr_tick - t0);
+    nr_line("[nosw-sleep]", before == 0 && nr_hran == 1, "before=", before, "ticks=", el); /* 60 = never */
+    tk_dly_tsk(10);
+    tk_del_tsk(h);
+    tk_ter_tsk(t);
     tk_del_tsk(t);
     tk_del_cyc(c);
 }
