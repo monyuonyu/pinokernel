@@ -4111,6 +4111,7 @@ void r3_conscience_test(void);        /* 良心: the [law-*]/[conscience-*] cert
 static void m_law(const UB *p, const UB *end);   /* `mind law [show|verify]` */
 #ifdef _TK_HOSTED_LIBC_
 INT r3_mind_pause_test(void);         /* survival-loop L2 [mind-pause] cert    */
+void r3_dq_test(void);                /* research/delta-quant-ef.md (1-6)      */
 #endif
 
 /* the ONLY new public symbol (VII.9): `mind teach <k> <v> | ask <k> |
@@ -4147,6 +4148,7 @@ void mind_cmd(const UB *args, UW len)
     else if (m_kw(&p, end, "conflicts")) m_conflicts();        /* ROADMAP 1-3a */
     else if (m_kw(&p, end, "explain")) m_explain(p, end);      /* ROADMAP 1-4  */
     else if (m_kw(&p, end, "provenance")) m_provenance();      /* ROADMAP 1-4  */
+    else if (m_kw(&p, end, "dq")) r3_dq_test();                /* ROADMAP 1-6  */
 #endif
     /* "pause" deliberately NOT added to this usage string: it is the ONE
      * r_puts call in mind_cmd that is NOT inside a _TK_HOSTED_LIBC_ guard
@@ -5765,6 +5767,269 @@ void r3_onemind_test(void)
     }
     r_puts("[onemind] NOTE: cert verbs reset rw[] + the live queue (VII.0 #5 amnesia bomb)\r\n");
 }
+
+#ifdef _TK_HOSTED_LIBC_
+/* ================================================================== *
+ *  `mind dq` — research/delta-quant-ef.md (ROADMAP 1-6, R-1 step 2).   *
+ *  A receiver's copy r of the one mind is rebuilt from 1-bit deltas.  *
+ *  Closed loop (EF): the sender keeps r itself, sends C(w_t - r) and  *
+ *  r += C(.) — the residual w - r is the error feedback. Seven arms   *
+ *  share ONE sender trajectory w_1..w_4 (one new fact per generation) *
+ *  and are scored on the 4th-generation copy. The gates P0/G1..G4    *
+ *  were fixed in the memo (510e42dd) before this code; measurement   *
+ *  only, the wire is unchanged. Hosted only (the bare crown stays).   *
+ * ================================================================== */
+#define DQ_NMAT   10
+#define DQ_NVEC   4
+#define DQ_NARM   7
+#define DQ_NSEQ   3
+#define DQ_NGEN   4
+static const INT dq_mat[DQ_NMAT][2] = {
+    { O_WKE, O_WVE }, { O_WVE, O_WPE }, { O_WPE, O_WQ }, { O_WQ, O_WK },
+    { O_WK, O_WV }, { O_WV, O_WO }, { O_WO, O_LN1G }, { O_WF1, O_BF1 },
+    { O_WF2, O_BF2 }, { O_WCLS, O_BCLS } };
+static const char *const dq_mname[DQ_NMAT] = {
+    "wke", "wve", "wpe", "wq", "wk", "wv", "wo", "wf1", "wf2", "wcls" };
+static const INT dq_vec[DQ_NVEC][2] = {
+    { O_LN1G, O_WF1 }, { O_BF1, O_WF2 }, { O_BF2, O_WCLS }, { O_BCLS, R_NP } };
+#define DQ_MAT_N  ((O_WVE-O_WKE)+(O_WPE-O_WVE)+(O_WQ-O_WPE)+(O_WK-O_WQ)+ \
+                   (O_WV-O_WK)+(O_WO-O_WV)+(O_LN1G-O_WO)+(O_BF1-O_WF1)+ \
+                   (O_BF2-O_WF2)+(O_BCLS-O_WCLS))
+#define DQ_VEC_N  ((O_WF1-O_LN1G)+(O_WF2-O_BF1)+(O_WCLS-O_BF2)+(R_NP-O_BCLS))
+_Static_assert(DQ_MAT_N == 21216 && DQ_VEC_N == 352 && DQ_MAT_N + DQ_VEC_N == R_NP,
+               "dq: 10 matrices + 352 vector floats must tile rw[]");
+
+enum { DQA_FULL, DQA_B1EF, DQA_B1OPEN, DQA_T3EF, DQA_ZERO, DQA_ZEROM, DQA_RANDEF };
+static const char *const dq_aname[DQ_NARM] = {
+    "FULL", "B1EF", "B1OPEN", "T3EF", "ZERO", "ZEROM", "RANDEF" };
+static float dq_r[DQ_NARM][R_NP];               /* each arm's receiver copy */
+static float dq_w0[R_NP], dq_wt[R_NP], dq_wp[R_NP], dq_d[R_NP], dq_o[R_NP];
+
+/* C(d) = alpha * sign(d), alpha = sum|d| / n (Karimireddy Alg.1). Lemma 8:
+ * |C(d)-d|^2 = (1-phi)|d|^2 with phi = (sum|d|)^2 / (n sum d^2), for any
+ * sign(0). *err_ratio is the MEASURED ratio, *phi the predicted one
+ * (both -1 when |d| = 0: nothing to send, out = 0). */
+static void dq_sign(const float *d, INT n, float *out, double *err_ratio, double *phi)
+{
+    double s1 = 0.0, s2 = 0.0;
+    for (INT i = 0; i < n; i++) { double a = d[i]; s1 += a < 0 ? -a : a; s2 += a * a; }
+    if (s2 == 0.0) {
+        for (INT i = 0; i < n; i++) out[i] = 0.0f;
+        *err_ratio = -1.0; *phi = -1.0; return;
+    }
+    double alpha = s1 / (double)n;
+#ifdef DQ_BADALPHA
+    alpha *= 0.5;                                /* negative control: G4 must go red */
+#endif
+    double e = 0.0;
+    for (INT i = 0; i < n; i++) {
+        out[i] = (float)(d[i] < 0.0f ? -alpha : alpha);
+        double x = (double)out[i] - (double)d[i]; e += x * x;
+    }
+    *err_ratio = e / s2;
+    *phi = s1 * s1 / ((double)n * s2);
+}
+
+/* T3: zeros stay zero, alpha = sum|d| / (non-zero count). Recorded only. */
+static void dq_tern(const float *d, INT n, float *out)
+{
+    double s1 = 0.0; INT nz = 0;
+    for (INT i = 0; i < n; i++) if (d[i] != 0.0f) { s1 += d[i] < 0 ? -d[i] : d[i]; nz++; }
+    double alpha = nz ? s1 / (double)nz : 0.0;
+    for (INT i = 0; i < n; i++)
+        out[i] = d[i] == 0.0f ? 0.0f : (float)(d[i] < 0.0f ? -alpha : alpha);
+}
+
+/* RAND: dq_sign's alpha, signs from a fixed LCG (seeded per seq x gen x
+ * matrix) — the same bits on the wire, no information in them. */
+static void dq_rand(const float *d, INT n, float *out, UW seed)
+{
+    double s1 = 0.0;
+    for (INT i = 0; i < n; i++) s1 += d[i] < 0 ? -d[i] : d[i];
+    double alpha = s1 / (double)n;
+    UW x = seed;
+    for (INT i = 0; i < n; i++) {
+        x = x * 1664525UL + 1013904223UL;
+        out[i] = (float)((x & 0x80000000UL) ? -alpha : alpha);
+    }
+}
+
+static double dq_dist(const float *a, const float *b)
+{
+    double s = 0.0;
+    for (INT i = 0; i < R_NP; i++) { double x = (double)a[i] - (double)b[i]; s += x * x; }
+    return s;
+}
+
+/* one closed-loop / open-loop step of a 1-bit arm on the matrices; vectors
+ * are sent fp32 (r = w_t). base = r (closed) or w_{t-1} (open). */
+static void dq_step(INT arm, const float *base, UW seed, double *g4max, INT *g4n,
+                    double phis[DQ_NMAT])
+{
+    float *r = dq_r[arm];
+    for (INT m = 0; m < DQ_NMAT; m++) {
+        INT a = dq_mat[m][0], n = dq_mat[m][1] - a;
+        for (INT i = 0; i < n; i++) dq_d[a + i] = dq_wt[a + i] - base[a + i];
+        if (arm == DQA_T3EF) dq_tern(&dq_d[a], n, &dq_o[a]);
+        else if (arm == DQA_RANDEF) dq_rand(&dq_d[a], n, &dq_o[a], seed + (UW)m * 0x9E3779B9UL);
+        else {
+            double er, ph;
+            dq_sign(&dq_d[a], n, &dq_o[a], &er, &ph);
+            if (arm == DQA_B1EF) {
+                if (phis) phis[m] = ph;
+                if (er >= 0.0) {
+                    double dev = er - (1.0 - ph); if (dev < 0) dev = -dev;
+                    if (dev > *g4max) *g4max = dev;
+                    (*g4n)++;
+                }
+            }
+        }
+        for (INT i = 0; i < n; i++) r[a + i] += dq_o[a + i];
+    }
+    for (INT v = 0; v < DQ_NVEC; v++)
+        for (INT i = dq_vec[v][0]; i < dq_vec[v][1]; i++) r[i] = dq_wt[i];
+}
+
+void r3_dq_test(void)
+{
+    static const UB seqk[DQ_NSEQ][DQ_NGEN] = { {2,4,6,1}, {0,3,5,7}, {7,1,3,0} };
+    float chance = 100.0f / (float)R_VALV;
+    double g4max = 0.0; INT g4n = 0;
+    INT valid = 0, g1 = 0, g2 = 0, g3 = 0;
+
+    m_quiesce();
+    r_puts("[dq-ef] ==== research/delta-quant-ef.md: 1-bit delta with error feedback (measure) ====\r\n");
+
+    /* layout: every rw[] index in exactly one matrix or vector segment. */
+    {
+        static UB cov[R_NP]; INT bad = 0;
+        for (INT i = 0; i < R_NP; i++) cov[i] = 0;
+        for (INT m = 0; m < DQ_NMAT; m++) for (INT i = dq_mat[m][0]; i < dq_mat[m][1]; i++) cov[i]++;
+        for (INT v = 0; v < DQ_NVEC; v++) for (INT i = dq_vec[v][0]; i < dq_vec[v][1]; i++) cov[i]++;
+        for (INT i = 0; i < R_NP; i++) if (cov[i] != 1) bad++;
+        r_puts("[dq-ef] layout: matrices="); r_putdec(DQ_MAT_N); r_puts(" vectors=");
+        r_putdec(DQ_VEC_N); r_puts(" R_NP="); r_putdec(R_NP);
+        r_puts(bad ? " FAIL\r\n" : " PASS (each float in exactly one segment)\r\n");
+        if (bad) return;
+    }
+    {
+        UW mb = (DQ_MAT_N + 7) / 8, ab = DQ_NMAT * 4, vb = DQ_VEC_N * 4;
+        r_puts("[dq-ef] wire per generation: matrices "); r_putdec(DQ_MAT_N); r_puts(" bits=");
+        r_putdec(mb); r_puts("B + alpha "); r_putdec(ab); r_puts("B + vectors fp32 ");
+        r_putdec(vb); r_puts("B = "); r_putdec(mb + ab + vb); r_puts("B of ");
+        r_putdec(W_BYTES); r_puts("B full\r\n");
+    }
+
+    s_make_facts();
+    s_pretrain();
+    r3_weights_get(dq_w0);
+
+    for (INT s = 0; s < DQ_NSEQ; s++) {
+        INT p0 = 1;
+        r3_weights_set(dq_w0); s_fq_reset();
+        for (INT a = 0; a < DQ_NARM; a++) for (INT i = 0; i < R_NP; i++) dq_r[a][i] = dq_w0[i];
+        for (INT i = 0; i < R_NP; i++) dq_wp[i] = dq_w0[i];
+
+        /* P0 (first half): every fact of the sequence is unknown on the substrate. */
+        r_puts("[dq-ef] seq="); r_putdec((UW)s); r_puts(" substrate acc=");
+        for (INT g = 0; g < DQ_NGEN; g++) {
+            INT k = seqk[s][g];
+            float a0 = om_acc(k, SDICT[k]);
+            if (g) r_puts("/");
+            r_putf1(a0);
+            if (a0 > chance + 10.0f) p0 = 0;
+        }
+        r_puts(" (bar <= "); r_putf1(chance + 10.0f); r_puts(")\r\n");
+
+        for (INT t = 1; t <= DQ_NGEN; t++) {
+            UB k = seqk[s][t - 1], v = SDICT[k];
+            INT rc = r3_fact_learn(&k, &v, 1);
+            if (rc < 0) {
+                r_puts("[dq-ef] seq="); r_putdec((UW)s); r_puts(" gen="); r_putdec((UW)t);
+                r_puts(" r3_fact_learn refused key "); r_putdec(k); r_puts(" -> P0 out\r\n");
+                p0 = 0;
+            }
+            om_consolidate();
+            r3_weights_get(dq_wt);
+
+            double phis[DQ_NMAT];
+            for (INT m = 0; m < DQ_NMAT; m++) phis[m] = -1.0;
+            UW seed = 0x2545F491UL ^ ((UW)(s * 131 + t * 17) * 0x9E3779B9UL);
+            for (INT i = 0; i < R_NP; i++) dq_r[DQA_FULL][i] = dq_wt[i];
+            dq_step(DQA_B1EF,   dq_r[DQA_B1EF],   0,    &g4max, &g4n, phis);
+            dq_step(DQA_B1OPEN, dq_wp,            0,    &g4max, &g4n, NULL);
+            dq_step(DQA_T3EF,   dq_r[DQA_T3EF],   0,    &g4max, &g4n, NULL);
+            dq_step(DQA_RANDEF, dq_r[DQA_RANDEF], seed, &g4max, &g4n, NULL);
+            /* ZERO: nothing sent (stays w0). ZEROM: matrices stay w0, vectors new. */
+            for (INT vv = 0; vv < DQ_NVEC; vv++)
+                for (INT i = dq_vec[vv][0]; i < dq_vec[vv][1]; i++) dq_r[DQA_ZEROM][i] = dq_wt[i];
+
+            r_puts("[dq-ef] seq="); r_putdec((UW)s); r_puts(" gen="); r_putdec((UW)t);
+            r_puts(" phi*1000(B1EF):");
+            for (INT m = 0; m < DQ_NMAT; m++) {
+                r_puts(" "); r_puts(dq_mname[m]); r_puts("=");
+                if (phis[m] < 0.0) r_puts("-"); else r_putdec((UW)(phis[m] * 1000.0 + 0.5));
+            }
+            r_puts("\r\n");
+            for (INT i = 0; i < R_NP; i++) dq_wp[i] = dq_wt[i];
+        }
+
+        /* score every arm's 4th-generation copy; the sender is put back after. */
+        double span = dq_dist(dq_wt, dq_w0);
+        float mean[DQ_NARM], fullk[DQ_NGEN];
+        for (INT a = 0; a < DQ_NARM; a++) {
+            float acc[DQ_NGEN], sum = 0.0f;
+            r3_weights_set(dq_r[a]);
+            for (INT g = 0; g < DQ_NGEN; g++) {
+                INT k = seqk[s][g];
+                acc[g] = om_acc(k, SDICT[k]); sum += acc[g];
+                if (a == DQA_FULL) fullk[g] = acc[g];
+            }
+            mean[a] = sum / (float)DQ_NGEN;
+            double dr = dq_dist(dq_r[a], dq_wt);
+            r_puts("[dq-ef] seq="); r_putdec((UW)s); r_puts(" arm="); r_puts(dq_aname[a]);
+            r_puts(" acc=");
+            for (INT g = 0; g < DQ_NGEN; g++) { if (g) r_puts("/"); r_putf1(acc[g]); }
+            r_puts(" mean="); r_putf1(mean[a]); r_puts(" drift=");
+            r_putf3(span > 0.0 ? (float)__builtin_sqrt(dr / span) : 0.0f);
+            r_puts("\r\n");
+        }
+        r3_weights_set(dq_wt);
+
+        for (INT g = 0; g < DQ_NGEN; g++) if (fullk[g] < 75.0f) p0 = 0;
+        r_puts("[dq-ef] seq="); r_putdec((UW)s);
+        if (!p0) {
+            r_puts(" P0 OUT (a fact known on the substrate, refused, or FULL < 75%) — not judged\r\n");
+            continue;
+        }
+        valid++;
+        INT a1 = mean[DQA_B1EF] >= mean[DQA_FULL] - 10.0f;
+        INT a2 = mean[DQA_B1EF] >= mean[DQA_ZEROM] + 30.0f;
+        INT a3 = mean[DQA_B1EF] >= mean[DQA_RANDEF] + 30.0f;
+        g1 += a1; g2 += a2; g3 += a3;
+        r_puts(" P0 in  G1="); r_puts(a1 ? "pass" : "fail");
+        r_puts(" G2="); r_puts(a2 ? "pass" : "fail");
+        r_puts(" G3="); r_puts(a3 ? "pass" : "fail"); r_puts("\r\n");
+    }
+
+    /* G4: Lemma 8 holds on every B1EF send (gen x matrix). */
+    r_puts("[dq-ef-g4] sends="); r_putdec((UW)g4n);
+    r_puts(" max|err-(1-phi)|*1e6="); r_putdec((UW)(g4max * 1000000.0 + 0.5));
+    r_puts(" (bar 1000)\r\n");
+    r_puts((g4n > 0 && g4max <= 1e-3) ? "[dq-ef-g4] PASS\r\n" : "[dq-ef-g4] FAIL\r\n");
+
+    /* G1..G3: PASS only when every judged sequence passes and >= 2 are judged. */
+    const char *nm[3] = { "G1", "G2", "G3" }; INT cnt[3] = { g1, g2, g3 };
+    for (INT j = 0; j < 3; j++) {
+        r_puts("[dq-ef] "); r_puts(nm[j]); r_puts(" ");
+        if (valid < 2) r_puts("UNDECIDED");
+        else r_puts(cnt[j] == valid ? "PASS" : "FAIL");
+        r_puts(" ("); r_putdec((UW)cnt[j]); r_puts(" of "); r_putdec((UW)valid);
+        r_puts(" judged seqs)\r\n");
+    }
+    r_puts("[dq-ef] NOTE: cert verbs reset rw[] + the live queue (VII.0 #5 amnesia bomb)\r\n");
+}
+#endif /* _TK_HOSTED_LIBC_ */
 
 /* [onemind-nocentral] — order-independence at n=R_NP (the [g22-no-central]
  * proof shape, XI.4 #3). Distinct per-node models so order would matter by
