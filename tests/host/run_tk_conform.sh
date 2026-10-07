@@ -21,6 +21,8 @@
 #   NC-CYCSLOW   time_calls.h: a cyclic handler re-arms at twice its period
 #   NC-CYCPHS    time_calls.c: tk_cre_cyc ignores the start phase (cycphs)
 #   NC-NODDS     cpuctl.c: tk_dis_dsp returns E_OK but does not disable
+#   NC-ALMEARLY  time_calls.h: an alarm goes off after a quarter of almtim
+#   NC-ALMSTPNOP time_calls.c: tk_stp_alm returns E_OK but does not stop it
 # Each must go RED on its own checks (listed in the output), not on a crash.
 # (A "tk_dly_tsk returns at once" control was tried first and dropped: other
 # system tasks pace themselves with tk_dly_tsk, so it starved the whole
@@ -32,7 +34,7 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-EXPECT=111
+EXPECT=122
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 rc_all=0
@@ -94,6 +96,8 @@ nc MPFNOWAKE mempfix.c 'if ( !isQueEmpty(&mpfcb->wait_queue) ) {' 'if ( 0 ) {'
 nc CYCSLOW time_calls.h 'tm = cyccb->cyctmeb.time + cyccb->cyctim;' 'tm = cyccb->cyctmeb.time + 2 * cyccb->cyctim;'
 nc CYCPHS time_calls.c 'tm = lltoul(knl_current_time) + pk_ccyc->cycphs + TIMER_PERIOD;' 'tm = lltoul(knl_current_time) + TIMER_PERIOD;'
 nc NODDS cpuctl.c 'knl_dispatch_disabled = DDS_DISABLE;' '(void)0;'
+nc ALMEARLY time_calls.h 'tm = lltoul(knl_current_time) + reltim + TIMER_PERIOD;' 'tm = lltoul(knl_current_time) + reltim / 4 + TIMER_PERIOD;'
+nc ALMSTPNOP time_calls.c $'\t\t\tknl_timer_delete(&almcb->almtmeb);\n\t\t\talmcb->almstat &= ~TALM_STA;' $'\t\t\t(void)0;'
 
 if [ "$rc_all" -eq 0 ]; then echo "[tk-conform] PASS"; else echo "[tk-conform] FAIL"; fi
 exit "$rc_all"
