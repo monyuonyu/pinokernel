@@ -552,7 +552,11 @@ static void suite_mpf(PRI me)
  * does not get memory first even if it would fit (the spec's own example:    *
  * 400 then 100 waiting, 200 freed -> neither); tk_del_mpl -> E_DLT to the    *
  * waiters, E_NOEXS after.                                                     */
-static UW mpl_area[512 / sizeof(UW)];
+/* 16-aligned: the pool keeps its area queue (pointers with flags in the low
+ * bits) inside the buffer. With only UW alignment the 64-bit builds (hosted
+ * x86_64, bare AArch64) never returned from tk_cre_mpl (2026-10-07; bare x86
+ * was fine) - see the gap noted in the commit, not judged here. */
+static UW mpl_area[512 / sizeof(UW)] __attribute__((aligned(16)));
 static ID h_mpl;
 static volatile SZ h_msz[4];
 static volatile ER h_mer[4];
