@@ -29,6 +29,7 @@
 - §3 の4つのゲートを init の腕にもかける。加えて [d5c-b-plain]: T-real で 子 ≤ 同じ祖先から同じ歩数・学習率で正解ラベルを学んだもの（S1 は試験、S2 は両半分）。T-gen は生のデータを使わないので表示だけ
 - 陰性コントロール（rc ではなく狙いの行で判定）: ONE_TEACHER（先生 = A だけ）と RAND_XFER（でたらめな文）→ どちらも init の [d5c-s2-both] が赤
 - 第3段（guarded から）の S1 の赤は、既知の赤として記録に残す
+- 限界（監査-28 が見つけた、10-07）: S1 の plain は A と同じ手順（祖先・順番 1・同じ回数）なので、値も8桁まで A と同じ（2.19081354）。だから **S1 の [d5c-b-plain] は「子 ≤ A」で、[d5c-s1-gain] に含まれる＝独立の確かめではない**。ゲートは結果を見る前に固定したものなので変えない（締めても s1-gain と同じになる）。独立の比べ相手が要るのは S2 だけ
 
 ## 出典
 [1] Lin, Kong, Stich, Jaggi, Ensemble Distillation for Robust Model Fusion in Federated Learning, NeurIPS 2020, arXiv:2006.07242
