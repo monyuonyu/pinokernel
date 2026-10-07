@@ -12,7 +12,9 @@
  *  (AND/OR waits, TWF_BITCLR, TA_WSGL, delete), mutexes (E_ILUSE, TA_INHERIT
  *  priority inheritance), and since v2 message buffers (copy, FIFO, size
  *  limits, full buffer), mailboxes (TA_MPRI order, the packet address is
- *  passed, not copied), fixed-size memory pools (hand-off to a waiter) and
+ *  passed, not copied), fixed-size memory pools (hand-off to a waiter),
+ *  since 2026-10-07 variable-size memory pools (the head of the queue first)
+ *  and
  *  cyclic handlers (start / period / stop / start phase), since 2026-10-07
  *  alarm handlers (start / restart / stop / almtim 0 / delete); time
  *  (tk_dly_tsk, tk_get_otm); dispatch disable (tk_dis_dsp / tk_ena_dsp /
@@ -542,6 +544,89 @@ static void suite_mpf(PRI me)
     check(er == E_NOEXS, "P9", "tk_get_mpf deleted -> E_NOEXS", er);
 }
 
+/* ---- variable-size memory pools (mempool.c) ------------------------------- *
+ * spec (tk_cre_mpl / tk_get_mpl / tk_rel_mpl / tk_del_mpl / tk_ref_mpl): a   *
+ * block of blksz bytes; TMO_POL / a timeout -> E_TMOUT, tmout <= -2 -> E_PAR; *
+ * tk_ref_mpl's frsz / maxsz / wtsk (the head of the queue, 0 if none); the    *
+ * memory goes to the head of the queue first: a smaller request behind it    *
+ * does not get memory first even if it would fit (the spec's own example:    *
+ * 400 then 100 waiting, 200 freed -> neither); tk_del_mpl -> E_DLT to the    *
+ * waiters, E_NOEXS after.                                                     */
+static UW mpl_area[512 / sizeof(UW)];
+static ID h_mpl;
+static volatile SZ h_msz[4];
+static volatile ER h_mer[4];
+static void *volatile h_mblk[4];
+static volatile INT h_mdone[4];
+
+static void t_get_mpl(INT stacd, void *exinf)
+{
+    void *p = NULL;
+    (void)exinf;
+    h_mer[stacd] = tk_get_mpl(h_mpl, h_msz[stacd], &p, TMO_FEVR);
+    h_mblk[stacd] = p;
+    h_mdone[stacd] = 1;
+    tk_ext_tsk();
+}
+
+static void suite_mpl(PRI me)
+{
+    ER er, er2; ID p, ta, tb, tc; void *x = NULL, *y = NULL, *z = NULL;
+    T_RMPL r0, r1, rq; W t0, dt; INT k;
+    UB *lo = (UB *)mpl_area, *hi = (UB *)mpl_area + sizeof mpl_area;
+    T_CMPL cm = { .exinf = &h_mpl, .mplatr = TA_TFIFO | TA_USERBUF,
+                  .mplsz = sizeof mpl_area, .bufptr = mpl_area };
+
+    p = tk_cre_mpl(&cm);
+    check(p > 0, "L1", "tk_cre_mpl(512 B, TA_TFIFO) -> ID > 0", p);
+    tk_ref_mpl(p, &r0);
+    er  = tk_get_mpl(p, 200, &x, TMO_POL);
+    er2 = tk_get_mpl(p, 200, &y, TMO_POL);
+    check(er == E_OK && er2 == E_OK && (UB *)x >= lo && (UB *)x + 200 <= hi
+          && (UB *)y >= lo && (UB *)y + 200 <= hi
+          && ((UB *)y >= (UB *)x + 200 || (UB *)x >= (UB *)y + 200),
+          "L2", "two tk_get_mpl(200) -> two blocks inside the pool, not overlapping", er2);
+    tk_ref_mpl(p, &r1);
+    check(r1.frsz <= r0.frsz - 400 && r1.maxsz <= r1.frsz && r1.wtsk == 0 && r1.exinf == &h_mpl,
+          "L3", "tk_ref_mpl: frsz down by >= 400, maxsz <= frsz, wtsk 0, exinf", (W)r1.frsz);
+    er = tk_get_mpl(p, r1.maxsz + 8, &z, TMO_POL);
+    check(er == E_TMOUT, "L4", "tk_get_mpl(TMO_POL) larger than maxsz -> E_TMOUT", er);
+    t0 = now_ms();
+    er = tk_get_mpl(p, r1.maxsz + 8, &z, 50);
+    dt = now_ms() - t0;
+    check(er == E_TMOUT && dt >= 50, "L5", "tk_get_mpl(tmout 50) -> E_TMOUT after >= 50 ms", dt);
+    er = tk_get_mpl(p, 16, &z, -2);
+    check(er == E_PAR, "L6", "tk_get_mpl tmout=-2 -> E_PAR", er);
+
+    /* the head of the queue first: A asks 300, then B asks just more than
+     * fits now; freeing x makes room for B but not for A -> neither gets it */
+    h_mpl = p;
+    for (k = 0; k < 4; k++) { h_mer[k] = -999; h_mblk[k] = NULL; h_mdone[k] = 0; }
+    h_msz[1] = 300; h_msz[2] = r1.maxsz + 8; h_msz[3] = 300;
+    ta = mk_task(t_get_mpl, me - 1);
+    tb = mk_task(t_get_mpl, me - 1);
+    tc = mk_task(t_get_mpl, me - 1);
+    tk_sta_tsk(ta, 1);
+    tk_sta_tsk(tb, 2);
+    tk_ref_mpl(p, &rq);
+    check(h_mdone[1] == 0 && h_mdone[2] == 0 && rq.wtsk == ta,
+          "L7", "two waiters; tk_ref_mpl wtsk = the head of the queue (A)", (W)rq.wtsk);
+    er = tk_rel_mpl(p, x);
+    tk_ref_mpl(p, &rq);
+    check(er == E_OK && h_mdone[1] == 0 && h_mdone[2] == 0 && rq.maxsz >= h_msz[2],
+          "L8", "freed room for B (behind) but not A (head) -> neither gets memory", h_mdone[2]);
+    er = tk_rel_mpl(p, y);
+    check(er == E_OK && h_mdone[1] == 1 && h_mer[1] == E_OK
+          && (UB *)h_mblk[1] >= lo && (UB *)h_mblk[1] + 300 <= hi,
+          "L9", "freeing y makes room for A -> A gets its 300 B inside the pool", h_mer[1]);
+    tk_sta_tsk(tc, 3);                 /* C waits for 300: no room */
+    er = tk_del_mpl(p);
+    check(er == E_OK && h_mdone[3] == 1 && h_mer[3] == E_DLT, "L10", "tk_del_mpl releases a waiter with E_DLT", h_mer[3]);
+    er = tk_get_mpl(p, 16, &z, TMO_POL);
+    check(er == E_NOEXS, "L11", "tk_get_mpl deleted -> E_NOEXS", er);
+    tk_del_tsk(ta); tk_del_tsk(tb); tk_del_tsk(tc);
+}
+
 /* ---- cyclic handlers (time_calls.c) ------------------------------------------- */
 static volatile INT c_cnt;
 
@@ -990,6 +1075,7 @@ static void t_runner(INT stacd, void *exinf)
     suite_mbf(r.tskpri);
     suite_mbx(r.tskpri);
     suite_mpf(r.tskpri);
+    suite_mpl(r.tskpri);
     suite_cyc();
     suite_alm();
     suite_time();
