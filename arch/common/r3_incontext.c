@@ -6002,6 +6002,33 @@ void r3_dq_test(void)
             r_putf3(span > 0.0 ? (float)dq_sqrt(dr / span) : 0.0f);
             r_puts("\r\n");
         }
+
+        /* POST-HOC, outside the gates (added after the first run showed the
+         * newest fact at 0% on B1EF): is it the residual not yet sent? Hold
+         * w at w_4 and keep sending the closed loop. If the copy catches up
+         * the newest fact within a few extra sends, the red G1 is lag, not
+         * lost information. Each extra send costs another 4100B. */
+        {
+            static const INT farm[2] = { DQA_B1EF, DQA_T3EF };
+            double gx = 0.0; INT gn = 0;
+            for (INT x = 1; x <= 4; x++) {
+                for (INT j = 0; j < 2; j++) {
+                    INT a = farm[j]; float sum = 0.0f;
+                    dq_step(a, dq_r[a], 0, &gx, &gn, NULL);
+                    r3_weights_set(dq_r[a]);
+                    r_puts("[dq-ef-flush] seq="); r_putdec((UW)s); r_puts(" arm=");
+                    r_puts(dq_aname[a]); r_puts(" extra="); r_putdec((UW)x); r_puts(" acc=");
+                    for (INT g = 0; g < DQ_NGEN; g++) {
+                        INT k = seqk[s][g]; float ac = om_acc(k, SDICT[k]); sum += ac;
+                        if (g) r_puts("/");
+                        r_putf1(ac);
+                    }
+                    r_puts(" mean="); r_putf1(sum / (float)DQ_NGEN); r_puts(" drift=");
+                    r_putf3(span > 0.0 ? (float)dq_sqrt(dq_dist(dq_r[a], dq_wt) / span) : 0.0f);
+                    r_puts("\r\n");
+                }
+            }
+        }
         r3_weights_set(dq_wt);
 
         for (INT g = 0; g < DQ_NGEN; g++) if (fullk[g] < 75.0f) p0 = 0;
