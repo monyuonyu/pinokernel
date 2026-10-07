@@ -867,8 +867,9 @@ INT nosw_run(void (*out)(const char *))
  * with dispatch disabled. The two results must be equal bit for bit.
  *   F1  doubles unlike the run without switches (of 8)
  *   F2  precondition: high FP rounds that landed inside the runner's chunks
- * -DPK_PREEMPT_DROP_FP (preempt.c: the trampoline zeroes xmm0-15 instead of
- * restoring them) must turn F1 red. */
+ * -DPK_PREEMPT_DROP_FP (preempt.c: on x86_64 the trampoline zeroes xmm0-15
+ * instead of restoring them; on aarch64 the frame copy's fpsimd record loses
+ * v0-v31) must turn F1 red. */
 #define FP_HI    60
 #define FP_ITERS 20000
 static volatile INT fp_hrun, fp_during, fp_busy;

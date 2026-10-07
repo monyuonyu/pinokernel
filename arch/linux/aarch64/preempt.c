@@ -197,6 +197,7 @@ extern char arch_preempt_tramp_end[];
 #define SIDE_SZ    16384                     /* frame copy (~4.7 KB) + dispatch */
 #define FRAME_SZ   ((sizeof(siginfo_t) + sizeof(ucontext_t) + 15) & ~(size_t)15)
 #define EXTRA_MAGIC_A64 0x45585401u          /* asm/sigcontext.h EXTRA_MAGIC */
+#define FPSIMD_MAGIC_A64 0x46508001u         /* asm/sigcontext.h FPSIMD_MAGIC */
 static uint64_t side_stack[SIDE_SLOTS][SIDE_SZ / 8] __attribute__((aligned(64)));
 static int pk_text_ok;                       /* set by pk_text_check() at boot */
 
@@ -350,6 +351,17 @@ static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
     if (!frame_self_contained(uc)) return;
     unsigned char *copy = (unsigned char *)&top[-2] - FRAME_SZ;  /* 16-aligned */
     memcpy(copy, si, sizeof(siginfo_t) + sizeof(ucontext_t));
+#ifdef PK_PREEMPT_DROP_FP
+    /* `tkconf fp` negative control (FP-PRESERVE): the copy's fpsimd record
+     * loses v0-v31 (head 8 + fpsr 4 + fpcr 4, then 32 x 16 bytes), so
+     * rt_sigreturn gives the task zeroed SIMD registers. F1 must go red. */
+    {
+        unsigned char *r = (unsigned char *)((ucontext_t *)(copy + sizeof(siginfo_t)))->uc_mcontext.__reserved;
+        uint32_t magic;
+        memcpy(&magic, r, 4);
+        if (magic == FPSIMD_MAGIC_A64) memset(r + 16, 0, 512);
+    }
+#endif
     top[-1] = 1;
     uc->uc_mcontext.regs[19] = (unsigned long long)(uintptr_t)copy;
     uc->uc_mcontext.regs[20] = (unsigned long long)(uintptr_t)&top[-1];

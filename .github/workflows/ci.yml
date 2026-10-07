@@ -1111,7 +1111,8 @@ jobs:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"
     runs-on: ubuntu-latest
     # 15 -> 20 (2026-10-07): + tkconf / pool and a second build for the K9 NC
-    timeout-minutes: 20
+    # 20 -> 25 (2026-10-07): + tkconf fp and a third build for its NC
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchain + qemu-user
@@ -1203,6 +1204,14 @@ jobs:
           timeout 120 sh -c "printf 'tkconf pool\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee pool_a64.log
           grep -aF '[pool] ALL PASS' pool_a64.log
+      # FP-PRESERVE on aarch64: the trampoline returns through rt_sigreturn
+      # from a copied frame, so v0-v31 come back from the copy's fpsimd record.
+      - name: FP/SIMD registers across the exit dispatch on hosted aarch64 (tkconf fp, BLOCKING)
+        run: |
+          cd boot/linux
+          timeout 300 sh -c "printf 'tkconf fp\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee fp_a64.log
+          grep -aF '[fp] ALL PASS' fp_a64.log
       - name: K9 goes red without the exit dispatch (negative control, -DPK_HOSTED_NO_EXIT_DISPATCH)
         run: |
           make -C boot/linux clean >/dev/null
@@ -1211,6 +1220,14 @@ jobs:
           timeout 120 sh -c "printf 'tkconf\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee tkconf_a64_nc.log
           grep -aF '[tkc] FAIL K9' tkconf_a64_nc.log
+      - name: F1 goes red when the frame copy loses v0-v31 (negative control, -DPK_PREEMPT_DROP_FP)
+        run: |
+          make -C boot/linux clean >/dev/null
+          make -C boot/linux EXTRA_CFLAGS=-DPK_PREEMPT_DROP_FP >/dev/null
+          cd boot/linux
+          timeout 300 sh -c "printf 'tkconf fp\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee fp_a64_nc.log
+          grep -aF '[fp] FAIL F1' fp_a64_nc.log
 
   bare-metal:
     name: "ベアメタル (i686 + aarch64, ビルドのみ)"
