@@ -415,8 +415,253 @@ static uint64_t determinism_probe_fnv(void)
 #define CTX_PROBE_FNV_PIN 0x13fc6601ce8904d0ULL
 
 /* ------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
+/* `falsify` mode — research/rote-vs-copy.md stage A: is the ruler sound?      */
+/*   S(d): same intact context ("fact: K is V"), answer slot V vs a V' of the  */
+/*         same length that is not in the context; CE(V') - CE(V) over the     */
+/*         FREE answer bytes only (qz at 2,3 and the forced digit at 5 hit the  */
+/*         same way for V and V'). A template habit gives S ~ 0.               */
+/*   R(d): Olsson's induction score: 24 random bytes (the training alphabet),  */
+/*         d bytes of neutral filler, the same 24 bytes again; R = CE(first    */
+/*         copy, bytes 2..24) - CE(second copy, same bytes). No template.      */
+/*   ctx > 0 (the NC): the measured span sees only the ctx bytes in front of   */
+/*         it, so for d >= 32 the fact / first copy is out of view.            */
+/* Recorded only: A_free (A over the free bytes, 0..255 ablation as in         */
+/* measure_A) and A_id (free bytes, ablated with the filler alphabet).         */
+/* ------------------------------------------------------------------------- */
+static double rv_sqrt(double x)                  /* no -lm in the cert build */
+{
+    if (x <= 0.0) return 0.0;
+    double y = x > 1.0 ? x : 1.0;
+    for (int i = 0; i < 60; i++) y = 0.5 * (y + x / y);
+    return y;
+}
+
+static int rv_free_pos(int vlen, int *pos)
+{
+    int k = 0;
+    for (int i = 0; i < vlen; i++) if (i != 2 && i != 3 && i != 5) pos[k++] = i;
+    return k;
+}
+
+/* mean CE over the free bytes of the answer at [as, as+vlen) (the tail). */
+static double rv_free_ce(st_model *m, const uint8_t *seq, int n, int as, int vlen, int ctx)
+{
+    int pos[16], k = rv_free_pos(vlen, pos);
+    int start = (ctx > 0 && as - ctx > 0) ? as - ctx : 0;
+    const uint8_t *w = seq + start; int wn = n - start;
+    double s = 0.0;
+    for (int j = 0; j < k; j++) {
+        int t = as - start + pos[j];
+        s += (double)st_span_ce(m, w, wn, t, t + 1, 0);
+    }
+    return k ? s / k : 0.0;
+}
+
+typedef struct { double mean, se; } rv_stat;
+static rv_stat rv_fin(double s, double s2, int c)
+{
+    rv_stat r = { 0.0, 0.0 };
+    if (c < 2) return r;
+    r.mean = s / c;
+    double var = (s2 - s * s / c) / (c - 1);
+    r.se = rv_sqrt(var / c);
+    return r;
+}
+
+static void rv_filler(uint8_t *seq, int *n, int d, uint32_t *fr)
+{
+    for (int i = 0; i < d; i++) {               /* build_probe's neutral filler */
+        uint32_t r = lcg(fr);
+        if (r % 27 == 0) seq[(*n)++] = ' ';
+        else { char cc = (char)('a' + (r % 26)); if (cc == 'q') cc = 'x'; seq[(*n)++] = (uint8_t)cc; }
+    }
+}
+
+static rv_stat measure_S(st_model *m, int d, int nprobe, uint32_t seed, int ctx)
+{
+    uint32_t rng = seed; double s = 0.0, s2 = 0.0; int c = 0;
+    for (int p = 0; p < nprobe; p++) {
+        char K[16], V[16], V2[16];
+        int kl = gen_eval_tok(&rng, K);
+        int vl = gen_eval_tok(&rng, V);
+        int v2l;
+        do { v2l = gen_eval_tok(&rng, V2); } while (v2l != vl || memcmp(V, V2, (size_t)vl) == 0);
+        uint8_t a[ST_MAXSEQ], b[ST_MAXSEQ];
+        int as, al;
+        uint32_t fr = rng ^ 0x1234567u;
+        int n = build_probe(a, K, kl, V, vl, d, &fr, &as, &al, 0, 0);
+        if (n < 2 || n > ST_MAXSEQ) continue;
+        memcpy(b, a, (size_t)n);
+        memcpy(b + as, V2, (size_t)vl);          /* same context, answer V' */
+        double x = rv_free_ce(m, b, n, as, vl, ctx) - rv_free_ce(m, a, n, as, vl, ctx);
+        s += x; s2 += x * x; c++;
+    }
+    return rv_fin(s, s2, c);
+}
+
+#define RV_LEN 24
+static int rv_build_repeat(uint8_t *seq, int d, uint32_t *rng)
+{
+    int n = 0;
+    for (int i = 0; i < RV_LEN; i++) seq[n++] = (uint8_t)LOWER_DIG[lcg(rng) % 36];
+    uint32_t fr = *rng ^ 0x9E3779B9u;
+    rv_filler(seq, &n, d, &fr);
+    for (int i = 0; i < RV_LEN; i++) seq[n + i] = seq[i];
+    return n + RV_LEN;
+}
+
+static rv_stat measure_R(st_model *m, int d, int nprobe, uint32_t seed, int ctx)
+{
+    uint32_t rng = seed; double s = 0.0, s2 = 0.0; int c = 0;
+    for (int p = 0; p < nprobe; p++) {
+        uint8_t seq[ST_MAXSEQ];
+        int n = rv_build_repeat(seq, d, &rng);
+        if (n > ST_MAXSEQ) continue;
+        int t0 = n - RV_LEN + 1;                  /* second copy, bytes 2..24 */
+        double ce1 = (double)st_span_ce(m, seq, RV_LEN, 1, RV_LEN, 0);
+        int start = (ctx > 0 && t0 - ctx > 0) ? t0 - ctx : 0;
+        double ce2 = (double)st_span_ce(m, seq + start, n - start, t0 - start, n - start, 0);
+        double x = ce1 - ce2;
+        s += x; s2 += x * x; c++;
+    }
+    return rv_fin(s, s2, c);
+}
+
+/* A over the free answer bytes; idmode 0 = ablate with 0..255 (measure_A's
+ * way), 1 = ablate with the filler alphabet (in-distribution). */
+static double measure_A_free(st_model *m, int d, int nprobe, uint32_t seed, int idmode)
+{
+    uint32_t rng = seed; double s = 0.0; int c = 0;
+    for (int p = 0; p < nprobe; p++) {
+        char K[16], V[16];
+        int kl = gen_eval_tok(&rng, K);
+        int vl = gen_eval_tok(&rng, V);
+        uint8_t intact[ST_MAXSEQ], ablated[ST_MAXSEQ];
+        int as, al, fs, fl;
+        uint32_t fr = rng ^ 0x1234567u;
+        int n = build_probe(intact, K, kl, V, vl, d, &fr, &as, &al, &fs, &fl);
+        if (n < 2 || n > ST_MAXSEQ) continue;
+        memcpy(ablated, intact, (size_t)n);
+        uint32_t ar = rng ^ 0x0BADF00Du;
+        if (idmode) { int k = fs; rv_filler(ablated, &k, fl, &ar); }
+        else for (int i = fs; i < fs + fl; i++) ablated[i] = (uint8_t)(lcg(&ar) & 0xFF);
+        s += rv_free_ce(m, ablated, n, as, vl, 0) - rv_free_ce(m, intact, n, as, vl, 0);
+        c++;
+    }
+    return c ? s / c : 0.0;
+}
+
+/* the PC: the same student trained on random repeats only (no fact template) */
+static void train_repeat(st_model *m, int rounds, int n_ex, uint32_t seed,
+                         const int *dists, int ndist)
+{
+    float *logits = (float *)malloc((size_t)ST_MAXSEQ * ST_VOCAB * sizeof(float));
+    if (!logits) return;
+    for (int r = 0; r < rounds; r++) {
+        uint32_t rr = seed + (uint32_t)r * 2654435761u;
+        for (int e = 0; e < n_ex; e++) {
+            uint8_t seq[ST_MAXSEQ];
+            int d = dists[lcg(&rr) % (uint32_t)ndist];
+            int n = rv_build_repeat(seq, d, &rr);
+            if (n > ST_MAXSEQ) continue;
+            st_zero_grad(m);
+            st_forward(m, seq, n, logits);
+            st_backward(m, seq, n);
+            st_adam_step(m, 3e-3f);
+        }
+    }
+    free(logits);
+}
+
+static int falsify_main(void)
+{
+    const int dd[6] = { 16, 32, 48, 96, 128, 192 };
+    const int tdists[6] = { 8, 24, 48, 96, 128, 176 };
+    const int NP = 64, CTX = 16;
+    double thrS[6], thrR[6];
+    printf("[rote] ==== research/rote-vs-copy.md stage A: floor, NC, PC (C1 FULL budget) ====\n");
+    fflush(stdout);
+    /* floor: three untrained students. thr(d) = max over seeds of mean + 3 SE */
+    for (int i = 0; i < 6; i++) { thrS[i] = -1e30; thrR[i] = -1e30; }
+    for (int s = 0; s < 3; s++) {
+        st_model f;
+        if (st_init(&f, 0xF100A000u + (uint32_t)s * 7919u) != ST_OK) { printf("init OOM\n"); return 2; }
+        st_rope_set_enabled(1);
+        for (int i = 0; i < 6; i++) {
+            rv_stat S = measure_S(&f, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, 0);
+            rv_stat R = measure_R(&f, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
+            printf("[rote] floor seed=%d d=%d S=%+.5f (se %.5f) R=%+.5f (se %.5f)\n",
+                   s, dd[i], S.mean, S.se, R.mean, R.se);
+            if (S.mean + 3 * S.se > thrS[i]) thrS[i] = S.mean + 3 * S.se;
+            if (R.mean + 3 * R.se > thrR[i]) thrR[i] = R.mean + 3 * R.se;
+        }
+        fflush(stdout);
+        st_free(&f);
+    }
+    for (int i = 0; i < 6; i++)
+        printf("[rote] thr d=%d S=%+.5f R=%+.5f\n", dd[i], thrS[i], thrR[i]);
+
+    /* the C1 FULL student (same seed and budget as `full`) */
+    st_model m;
+    if (st_init(&m, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
+    st_rope_set_enabled(1);
+    double t0 = now_ms();
+    train_ctx(&m, 24, 128, 0x7A1E77u, tdists, 6);
+    printf("[rote] trained C1 FULL in %.1f s\n", (now_ms() - t0) / 1000.0);
+    int sover = 0, rover = 0, ncbad = 0;
+    for (int i = 0; i < 6; i++) {
+        rv_stat S = measure_S(&m, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, 0);
+        rv_stat R = measure_R(&m, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
+        float A = measure_A(&m, dd[i], NP, 0xE7A1u + (uint32_t)i * 101u, 0);
+        double Af = measure_A_free(&m, dd[i], NP, 0xE7A1u + (uint32_t)i * 101u, 0);
+        double Ai = measure_A_free(&m, dd[i], NP, 0xE7A1u + (uint32_t)i * 101u, 1);
+        sover += S.mean > thrS[i]; rover += R.mean > thrR[i];
+        printf("[rote] trained d=%d S=%+.5f (se %.5f)%s R=%+.5f (se %.5f)%s A=%+.5f A_free=%+.5f A_id=%+.5f\n",
+               dd[i], S.mean, S.se, S.mean > thrS[i] ? " >thr" : "", R.mean, R.se,
+               R.mean > thrR[i] ? " >thr" : "", A, Af, Ai);
+        if (dd[i] >= 32) {
+            rv_stat Sn = measure_S(&m, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, CTX);
+            rv_stat Rn = measure_R(&m, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, CTX);
+            int bad = Sn.mean > thrS[i] || Rn.mean > thrR[i];
+            ncbad += bad;
+            printf("[rote] nc(ctx %d) d=%d S=%+.5f R=%+.5f%s\n", CTX, dd[i], Sn.mean, Rn.mean,
+                   bad ? " ABOVE thr" : "");
+        }
+        fflush(stdout);
+    }
+    st_free(&m);
+
+    /* PC: random repeats only, same student shape, the same example count */
+    st_model pc;
+    if (st_init(&pc, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
+    st_rope_set_enabled(1);
+    train_repeat(&pc, 24, 128, 0x9C9C9Cu, tdists, 6);
+    int pcover = 0;
+    for (int i = 0; i < 6; i++) {
+        rv_stat R = measure_R(&pc, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0);
+        pcover += R.mean > thrR[i];
+        printf("[rote] pc d=%d R=%+.5f (se %.5f)%s\n", dd[i], R.mean, R.se,
+               R.mean > thrR[i] ? " >thr" : "");
+    }
+    st_free(&pc);
+
+    printf("[rote] S over thr %d/6, R over thr %d/6; NC above thr %d/5; PC R over thr %d/6\n",
+           sover, rover, ncbad, pcover);
+    printf("[rote-nc] %s\n", ncbad ? "FAIL (the ruler sees through a 16-byte window: broken)" : "PASS");
+    printf("[rote-pc] %s\n", pcover >= 4 ? "PASS" : "FAIL (R cannot see copying at this size: undecidable)");
+    const char *cls = (ncbad || pcover < 4) ? "UNDECIDABLE (ruler not shown sound)" :
+                      (sover >= 4 && rover >= 4) ? "general copy" :
+                      (sover >= 4) ? "copy inside the template only" :
+                      (rover >= 4) ? "induction on random repeats, but no fact copy (not in the memo's table)" :
+                      "no copy shown (habit if A != 0, else nothing)";
+    printf("[rote] verdict (C1 FULL student): %s\n", cls);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
+    if (argc > 1 && strcmp(argv[1], "falsify") == 0) return falsify_main();
     /* fast cross-arch determinism probe: print ONLY the fixed-probe-stream FNV
      * and exit (no training) — lets a cross-arch harness (qemu-x86_64 vs native
      * aarch64) confirm the byte-identical probe stream without paying training
