@@ -27,6 +27,8 @@
 #   netliveng  -DPK_NETLAN_PROBE_NO_GUARD, LAN up: must be RED on N23
 #   dropfp   -DPK_PREEMPT_DROP_FP (xmm0-15 zeroed, not restored): `tkconf fp`
 #            must be RED on F1 (plain also runs `tkconf fp`: ALL PASS)
+#   slowclaim  -DDRPC_FAULT_SLOW_CLAIM=200000 (drpc_claim's gap widened): ALL PASS
+#   slowclaimoff  the same with -DPK_NOSW_OFF: must be RED on N26
 # A negative-control arm that stays green fails this script.
 #
 #   tests/host/run_nosw.sh            (x86_64 host)
@@ -156,6 +158,8 @@ else
     else echo "[result] dropfp not red on F1 (UNEXPECTED: lost FP registers went unseen)"; rc_all=1; fi
     echo ""
 fi
+expect_green slowclaim "-DDRPC_FAULT_SLOW_CLAIM=200000"
+expect_red slowclaimoff "-DDRPC_FAULT_SLOW_CLAIM=200000 -DPK_NOSW_OFF" N26
 
 if [ "$rc_all" -eq 0 ]; then echo "[nosw-cert] PASS"; else echo "[nosw-cert] FAIL"; fi
 exit "$rc_all"

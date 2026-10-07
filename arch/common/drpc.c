@@ -40,6 +40,7 @@
 #include "heal.h"
 #include "dtr.h"        /* ONE BRAIN: distributed infer uses the learned dtr */
 #include "galaxy.h"     /* galaxy v1: S5 drpc emit hooks */
+#include "pk_nosw.h"     /* drpc_claim: one region from the free-slot search to in_use */
 
 /* ------------------------------------------------------------------ */
 /* Serial output helpers                                               */
@@ -150,6 +151,57 @@ typedef struct {
 
 static DRPC_PENDING pending[MAX_PENDING];
 static UH           drpc_seq_ctr = 1;   /* never wraps to 0             */
+
+/* Claim a pending slot for one call: find a free one, take a seq, fill it,
+ * in_use last. Before 2026-10-07 the search and the claim were split by
+ * tk_cre_sem (which may dispatch) and, since the exit dispatch, by any
+ * instruction: two callers could take the same slot, and one of them would
+ * wait on a semaphore nobody signals (or read the other's result). So the
+ * whole claim is one no-switch region, with no tk_* call inside (the caller
+ * creates the semaphore first). -DDRPC_FAULT_SLOW_CLAIM=<spins> widens the
+ * gap between the search and the claim for `tkconf nosw` N26. Returns the
+ * slot, or -1 if the table is full. */
+static INT drpc_claim(UB dst_node, ID sem, UH *seq_out)
+{
+    INT slot = -1;
+    PK_NOSW_ENTER();
+    for (INT i = 0; i < MAX_PENDING; i++) {
+        if (!pending[i].in_use) { slot = i; break; }
+    }
+#ifdef DRPC_FAULT_SLOW_CLAIM
+    for (volatile UW z_ = 0; z_ < (UW)(DRPC_FAULT_SLOW_CLAIM); z_++) { }
+#endif
+    if (slot >= 0) {
+        UH seq = drpc_seq_ctr++;
+        if (drpc_seq_ctr == 0) drpc_seq_ctr = 1;   /* never use seq=0 */
+        /* Write fields, in_use LAST to keep slot invisible until ready */
+        pending[slot].seq      = seq;
+        pending[slot].dst_node = dst_node;
+        pending[slot].result   = E_TMOUT;
+        pending[slot].sem      = sem;
+        pending[slot].in_use   = 1;         /* ← visible to drpc_rx from here */
+        *seq_out = seq;
+    }
+    PK_NOSW_LEAVE();
+    return slot;
+}
+
+/* `tkconf nosw` N26-N27 (hosted x86_64 pool_preempt.c): claim, check that the
+ * slot still holds this claim, release. No semaphore, no network. Hosted
+ * only, so bare metal carries just the claim. */
+#ifdef _TK_HOSTED_LIBC_
+INT drpc_probe_claim(UH *seq) { return drpc_claim(0, 0, seq); }
+BOOL drpc_probe_mine(INT slot, UH seq)
+{
+    return slot >= 0 && slot < MAX_PENDING && pending[slot].in_use && pending[slot].seq == seq;
+}
+void drpc_probe_release(INT slot)
+{
+    if (slot < 0 || slot >= MAX_PENDING) return;
+    pending[slot].seq    = 0;
+    pending[slot].in_use = 0;
+}
+#endif
 
 /* Cancel all pending calls to dst_node (called when node → DEAD) */
 static void pending_cancel_node(UB dst_node)
@@ -438,27 +490,18 @@ W drpc_call(UB dst_node, UH call_id, UW obj_id, W a0, W a1, W a2)
     /* S5 (galaxy.md): an outgoing ray leaves my star toward dst_node. */
     galaxy_emit(EV_DRPC_OUT, drpc_my_node, dst_node, call_id, 0);
 
-    /* Find a free pending slot */
-    INT slot = -1;
-    for (INT i = 0; i < MAX_PENDING; i++) {
-        if (!pending[i].in_use) { slot = i; break; }
-    }
-    if (slot < 0) { dp_puts("[drpc] pending table full\r\n"); return E_LIMIT; }
-
-    /* Create reply semaphore */
+    /* Create the reply semaphore, then claim a free pending slot */
     T_CSEM cs = { .exinf = NULL, .sematr = TA_TFIFO, .isemcnt = 0, .maxsem = 1 };
     ID sem = tk_cre_sem(&cs);
     if (sem < E_OK) return (W)sem;
 
-    UH seq = drpc_seq_ctr++;
-    if (drpc_seq_ctr == 0) drpc_seq_ctr = 1;   /* never use seq=0 */
-
-    /* Write fields, in_use LAST to keep slot invisible until ready */
-    pending[slot].seq      = seq;
-    pending[slot].dst_node = dst_node;
-    pending[slot].result   = E_TMOUT;
-    pending[slot].sem      = sem;
-    pending[slot].in_use   = 1;             /* ← visible to drpc_rx from here */
+    UH seq = 0;
+    INT slot = drpc_claim(dst_node, sem, &seq);
+    if (slot < 0) {
+        tk_del_sem(sem);
+        dp_puts("[drpc] pending table full\r\n");
+        return E_LIMIT;
+    }
 
     /* Build request packet (const after this point) */
     DRPC_PKT pkt = { 0 };
