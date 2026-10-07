@@ -22,8 +22,9 @@ FAIL=0
 
 run_arm() {  # <label> <extra cflags>
     make -C "$BOOT" clean >/dev/null 2>&1
-    if ! make -C "$BOOT" EXTRA_CFLAGS="$2" >/dev/null 2>&1; then
-        echo "[dq-ef-cert] $1 BUILD FAILED"; FAIL=1; return 1
+    if ! make -C "$BOOT" EXTRA_CFLAGS="$2" > "$WORK/$1.build.log" 2>&1; then
+        echo "[dq-ef-cert] $1 BUILD FAILED"; grep -a 'error' "$WORK/$1.build.log" | head -5
+        FAIL=1; return 1
     fi
     mkdir -p "$WORK/$1.pfs"
     printf 'mind dq\nexit\n' | timeout 900 env PKERNEL_PFS_DIR="$WORK/$1.pfs" \

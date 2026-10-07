@@ -5854,6 +5854,14 @@ static void dq_rand(const float *d, INT n, float *out, UW seed)
     }
 }
 
+static double dq_sqrt(double x)                 /* no libm in the hosted link */
+{
+    if (x <= 0.0) return 0.0;
+    double y = x > 1.0 ? x : 1.0;
+    for (INT i = 0; i < 60; i++) y = 0.5 * (y + x / y);
+    return y;
+}
+
 static double dq_dist(const float *a, const float *b)
 {
     double s = 0.0;
@@ -5991,7 +5999,7 @@ void r3_dq_test(void)
             r_puts(" acc=");
             for (INT g = 0; g < DQ_NGEN; g++) { if (g) r_puts("/"); r_putf1(acc[g]); }
             r_puts(" mean="); r_putf1(mean[a]); r_puts(" drift=");
-            r_putf3(span > 0.0 ? (float)__builtin_sqrt(dr / span) : 0.0f);
+            r_putf3(span > 0.0 ? (float)dq_sqrt(dr / span) : 0.0f);
             r_puts("\r\n");
         }
         r3_weights_set(dq_wt);
