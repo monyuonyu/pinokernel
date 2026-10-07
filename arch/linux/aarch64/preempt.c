@@ -198,6 +198,7 @@ extern char arch_preempt_tramp_end[];
 #define FRAME_SZ   ((sizeof(siginfo_t) + sizeof(ucontext_t) + 15) & ~(size_t)15)
 #define EXTRA_MAGIC_A64 0x45585401u          /* asm/sigcontext.h EXTRA_MAGIC */
 #define FPSIMD_MAGIC_A64 0x46508001u         /* asm/sigcontext.h FPSIMD_MAGIC */
+#define SVE_MAGIC_A64    0x53564501u         /* asm/sigcontext.h SVE_MAGIC */
 static uint64_t side_stack[SIDE_SLOTS][SIDE_SZ / 8] __attribute__((aligned(64)));
 static int pk_text_ok;                       /* set by pk_text_check() at boot */
 
@@ -352,14 +353,24 @@ static void maybe_preempt(siginfo_t *si, ucontext_t *uc)
     unsigned char *copy = (unsigned char *)&top[-2] - FRAME_SZ;  /* 16-aligned */
     memcpy(copy, si, sizeof(siginfo_t) + sizeof(ucontext_t));
 #ifdef PK_PREEMPT_DROP_FP
-    /* `tkconf fp` negative control (FP-PRESERVE): the copy's fpsimd record
-     * loses v0-v31 (head 8 + fpsr 4 + fpcr 4, then 32 x 16 bytes), so
-     * rt_sigreturn gives the task zeroed SIMD registers. F1 must go red. */
+    /* `tkconf fp` negative control (FP-PRESERVE): the copy loses the SIMD
+     * registers, so rt_sigreturn gives the task zeroes. F1 must go red.
+     * Both records are cleared: fpsimd's v0-v31 (head 8 + fpsr 4 + fpcr 4,
+     * then 32 x 16 bytes) and, when the CPU has SVE, sve's register data
+     * after its 16-byte header - the Z registers hold V in their low half and
+     * are restored after it (qemu-aarch64's default CPU has SVE: clearing
+     * only fpsimd left F1 green, 71 hits inside fp_chunk, 2026-10-07). */
     {
         unsigned char *r = (unsigned char *)((ucontext_t *)(copy + sizeof(siginfo_t)))->uc_mcontext.__reserved;
-        uint32_t magic;
-        memcpy(&magic, r, 4);
-        if (magic == FPSIMD_MAGIC_A64) memset(r + 16, 0, 512);
+        unsigned char *e = r + sizeof ((ucontext_t *)0)->uc_mcontext.__reserved;
+        while (r + 8 <= e) {
+            uint32_t magic, size;
+            memcpy(&magic, r, 4); memcpy(&size, r + 4, 4);
+            if (magic == 0 || size < 8 || size > (size_t)(e - r)) break;
+            if (magic == FPSIMD_MAGIC_A64 && size >= 16 + 512) memset(r + 16, 0, 512);
+            if (magic == SVE_MAGIC_A64 && size > 16) memset(r + 16, 0, size - 16);
+            r += size;
+        }
     }
 #endif
     top[-1] = 1;
