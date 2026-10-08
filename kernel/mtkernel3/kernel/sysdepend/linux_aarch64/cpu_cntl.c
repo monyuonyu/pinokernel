@@ -47,9 +47,12 @@ EXPORT UB knl_tmp_stack[KNL_TMP_STACK_SZ] __attribute__((aligned(16)));
  *	番人（tests/host/run_idle_freed_stack_a64.sh がこれで赤くなる）。
  *	linux_x86_64 の cpu_cntl.c と同じもの。
  */
-#include "../../tkernel/memory.h"
+/* libc を memory.h より先に: memory.h が引く knlinc/limits.h の MB_LEN_MAX は
+ * glibc の値と違い、後から <stdlib.h> を読むと（aarch64 クロスの既定の
+ * _FORTIFY_SOURCE で）bits/stdlib.h の #error に当たる。 */
 #include <stdio.h>
 #include <stdlib.h>
+#include "../../tkernel/memory.h"
 
 EXPORT void knl_idle_sp_check( void *sp )
 {
