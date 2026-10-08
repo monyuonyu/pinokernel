@@ -21,6 +21,8 @@
  *              for the LIVE weights if only a saved copy is cooled
  *   swa        3e-3 throughout; also prints "swa-avg", the uniform average of
  *              the weights over the second half (no extra training)
+ *   swa1       the same, averaging the FIRST half (negative control: mixing
+ *              in old weights only)
  * Every arm makes the same number of Adam steps on the same windows in the
  * same order. Prints the held-out and train loss at 0, 1/4, 1/2, 3/4, 1 of
  * the run.
@@ -73,6 +75,7 @@ static double lr_at(const char *arm, long step, long total)
     /* constant 3e-3, and the held loss of the uniform average of the weights
      * over the second half is printed too (SWA, ibid. §4.1) */
     if (!strcmp(arm, "swa"))       return 3e-3;
+    if (!strcmp(arm, "swa1"))      return 3e-3;   /* NC: average the FIRST half */
     return -1.0;
 }
 
@@ -100,7 +103,8 @@ int main(int argc, char **argv)
     uint8_t buf[ST_MAXSEQ];
     long steps = (long)rounds * trainw, s = 0;
     double lr_sum = 0;
-    int swa = !strcmp(arm, "swa");
+    int swa1 = !strcmp(arm, "swa1");
+    int swa = !strcmp(arm, "swa") || swa1;
     double *avg = swa ? (double *)calloc((size_t)m.n_params, sizeof(double)) : NULL;
     float *live = swa ? (float *)malloc((size_t)m.n_params * sizeof(float)) : NULL;
     long navg = 0;
@@ -118,7 +122,7 @@ int main(int argc, char **argv)
             st_forward(&m, buf, SEQLEN, logits);
             st_backward(&m, buf, SEQLEN);
             st_adam_step(&m, (float)lr);
-            if (swa && s >= steps / 2) {
+            if (swa && (swa1 ? s < steps / 2 : s >= steps / 2)) {
                 for (int i = 0; i < m.n_params; i++) avg[i] += m.w[i];
                 navg++;
             }
@@ -126,7 +130,7 @@ int main(int argc, char **argv)
         if (swa && navg > 0 && (r + 1) % (rounds / 4) == 0) {
             memcpy(live, m.w, (size_t)m.n_params * sizeof(float));
             for (int i = 0; i < m.n_params; i++) m.w[i] = (float)(avg[i] / (double)navg);
-            printf("[lrp] arm=swa-avg seed=%u at=%d/4 held=%.4f train=%.4f n=%ld\n", seed,
+            printf("[lrp] arm=%s-avg seed=%u at=%d/4 held=%.4f train=%.4f n=%ld\n", arm, seed,
                    (r + 1) / (rounds / 4), (double)mean_loss(&m, trainw, heldw),
                    (double)mean_loss(&m, 0, trainw), navg);
             memcpy(m.w, live, (size_t)m.n_params * sizeof(float));
