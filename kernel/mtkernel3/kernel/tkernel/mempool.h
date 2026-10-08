@@ -33,8 +33,15 @@
 typedef struct memorypool_control_block {
 	QUEUE	wait_queue;	/* メモリプール待ちキュー */
 	ID	mplid;		/* 可変長メモリプールID */
-	void	*exinf;		/* 拡張情報 */
+	/* p-kernel 変更（LP64/LLP64、2026-10-07）: mplatr を exinf の前へ。
+	 * &mplsz から IMACB にキャストするので、mplsz はポインタ境界に
+	 * 置く必要がある（IMACB は memsz の後に詰め物が入り areaque が +8）。
+	 * 旧順では mplsz が +36・areaque が +40 になり、tk_cre_mpl が
+	 * knl_searchFreeArea で SIGSEGV した（hosted x86_64・ベア AArch64）。
+	 * 32 ビットでは詰め物が無いのでどちらの順でも同じ。
+	 * mempool.c の knl_mplcb_imacb_layout が並びを検査する。 */
 	ATR	mplatr;		/* メモリプール属性 */
+	void	*exinf;		/* 拡張情報 */
 	W	mplsz;		/* メモリプール全体のサイズ */
 	QUEUE	areaque;	/* 全ブロックをつなぐキュー */
 	QUEUE	freeque;	/* 空きブロックをつなぐキュー */

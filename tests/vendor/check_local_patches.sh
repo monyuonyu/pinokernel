@@ -78,6 +78,10 @@ check L7        task_manage.c 1 'tcb == knl_ctxtsk || tcb == knl_schedtsk'
 check MEM-UPTR     memory.h     10 'KNL_UPTR'
 check MEM-UPTR-C   memory.c      1 'KNL_UPTR'
 check MEM-UPTR-MP  mempool.c     1 'KNL_UPTR'
+# --- MPL-LP64（2026-10-07）: MPLCB の並び（mplatr を exinf の前へ）と、
+#     (IMACB*)&mplsz のキャストが成り立つかのコンパイル時検査。両方消えると
+#     ビルドは通り、64 ビットの tk_cre_mpl だけが SIGSEGV する（tkconf L1〜L11）。
+check MPL-LP64     mempool.c     1 'knl_mplcb_imacb_layout'
 # --- B-SCHED（層B、2026-09-06 発見）: 同一優先度内ラウンドロビン(SCHED_RR)。
 #     kernel.h のコメントに「micro T-Kernel 2.0 ポートから移植」とあり、2.0→3.0 移行
 #     (f50c30a0) 自身に焼き込まれた真の層Bパッチ。上流 435096c9 には該当アンカーが

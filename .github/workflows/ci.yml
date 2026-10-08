@@ -123,6 +123,8 @@ jobs:
     # (measured 2026-09-27: dea715dd / 1c8e6d16, 0 tk_conform symbols).
     # 2026-10-07: + alarm handlers -> plain 122 PASS, thirteen NCs (+ an alarm
     # that goes off early, tk_stp_alm that does not stop); see the scripts.
+    # 2026-10-07: + variable-size pools -> plain 133 PASS, fourteen NCs (+ freed
+    # memory going to the tail of the queue). Needs MPL-LP64 (mempool.h).
     # Per arch: plain must be 110 PASS / 0 FAIL; eleven kernel-breaking negative
     # controls (semaphore off-by-one, tk_wai_sem without its E_PAR check, a
     # halved tk_dly_tsk, TWF_BITCLR clearing every bit, no TA_INHERIT, no
@@ -903,13 +905,13 @@ jobs:
 
       # The contract suite v2 (inbox #5, arch/common/tk_conform.c, verb tkconf):
       # the tk_* task / semaphore / event flag / mutex / message buffer /
-      # mailbox / fixed pool / cyclic handler / alarm handler / time / dispatch-disable
-      # promises user space relies on, 122 checks incl. error codes. Thirteen
+      # mailbox / fixed pool / variable pool / cyclic handler / alarm handler / time /
+      # dispatch-disable promises user space relies on, 133 checks incl. error codes. Fourteen
       # negative controls each patch ONE line of the vendored kernel in a
       # scratch copy and must go RED. The bare-metal twins run in the
       # tk-conform-bare job. 2026-10-07: + alarm handlers (A1-A11, 2 NCs);
       # timeout 600 -> 900 for the two extra builds.
-      - name: contract suite v2 (tk_* tasks / sems / flags / mutexes / msg buffers / mailboxes / pools / cyclic / alarm / time / dispatch disable + 13 kernel-breaking NCs)
+      - name: contract suite v2 (tk_* tasks / sems / flags / mutexes / msg buffers / mailboxes / pools / variable pools / cyclic / alarm / time / dispatch disable + 14 kernel-breaking NCs)
         run: |
           timeout 900 tests/host/run_tk_conform.sh | tee tk_conform.log
           grep -aF '[tk-conform] PASS' tk_conform.log
@@ -1220,7 +1222,7 @@ jobs:
           cd boot/linux
           timeout 120 sh -c "printf 'tkconf\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee tkconf_a64.log
-          grep -aF '[tkc] 122 PASS / 0 FAIL' tkconf_a64.log
+          grep -aF '[tkc] 133 PASS / 0 FAIL' tkconf_a64.log
       - name: compute pool under the exit dispatch on hosted aarch64 (non-blocking; 1 hang in 15 local runs)
         continue-on-error: true
         run: |
