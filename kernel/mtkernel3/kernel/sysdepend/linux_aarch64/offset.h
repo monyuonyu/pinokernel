@@ -34,4 +34,10 @@
 
 #define TCB_SSP		( TCB_tskctxb + CTXB_ssp )
 
+/* 強制ディスパッチ用の一時スタック（cpu_cntl.c の knl_tmp_stack）。
+ * linux_x86_64 と同じ 16 KiB。config.h の CNF_TMP_STACK_SIZE（256）は
+ * MCU 向けで、ここでは knl_idle_wait と libc のシグナルマスク操作が乗る。
+ * add の即値（12 ビット、lsl #12 つき）で表せる値にしておくこと。 */
+#define KNL_TMP_STACK_SZ	16384
+
 #endif /* _SYSDEPEND_TARGET_OFFSET_ */

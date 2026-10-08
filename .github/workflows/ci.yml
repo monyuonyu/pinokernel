@@ -1147,7 +1147,8 @@ jobs:
           # bits/libc-header-start.h. (Also pulls libc6-arm64-cross, which
           # provides /usr/aarch64-linux-gnu for the qemu-user -L below.)
           sudo apt-get install -y --no-install-recommends \
-            gcc-aarch64-linux-gnu libc6-dev-arm64-cross make qemu-user-static
+            gcc-aarch64-linux-gnu libc6-dev-arm64-cross make qemu-user-static \
+            gdb-multiarch
       - name: Cross-build (Makefile auto-selects aarch64-linux-gnu- off-host)
         run: make -C boot/linux
       - name: Verify artifact is aarch64
@@ -1235,6 +1236,13 @@ jobs:
           timeout 300 sh -c "printf 'tkconf fp\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee fp_a64.log
           grep -aF '[fp] ALL PASS' fp_a64.log
+      # D5-k on aarch64: tk_exd_tsk frees its own stack, then force-dispatches;
+      # knl_dispatch_to_schedtsk must leave it for knl_tmp_stack before idling.
+      # gdb calls drpc_local_restart from cmd_ver (no shell path reaches it).
+      # ~45 s. No NC step here: without the switch the cert is red 9/10 locally
+      # (a timing race), so an expected-red step would flake.
+      - name: idle never runs on a freed stack after tk_exd_tsk (D5-k, gdb-multiarch, BLOCKING)
+        run: bash tests/host/run_idle_freed_stack_a64.sh
       - name: K9 goes red without the exit dispatch (negative control, -DPK_HOSTED_NO_EXIT_DISPATCH)
         run: |
           make -C boot/linux clean >/dev/null

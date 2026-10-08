@@ -78,6 +78,15 @@ knl_dispatch_to_schedtsk:
     adrp x0, knl_ctxtsk
     add  x0, x0, :lo12:knl_ctxtsk
     str  xzr, [x0]              /* ctxtsk = NULL */
+    /* 一時スタックへ乗り換える（linux_x86_64・上流 armv7m / rxv2 と同じ）。
+     * tk_exd_tsk はここへ来る前に自分のシステムスタックを knl_Ifree で
+     * 解放しているので、そのまま .Lidle に落ちると idle が解放済みの
+     * 領域の上で走る（D5-k）。tk_ext_tsk でも、休止したタスクのスタックを
+     * idle が使い続けることになる。knl_tmp_stack は 16 バイト整列。 */
+    adrp x0, knl_tmp_stack
+    add  x0, x0, :lo12:knl_tmp_stack
+    add  x0, x0, #KNL_TMP_STACK_SZ
+    mov  sp, x0
     b    .Ldispatch_loop
 
 /* -----------------------------------------------------------------------
@@ -164,6 +173,8 @@ knl_dispatch_entry:
      * knl_idle_wait は SIGALRM をブロックした状態で schedtsk を
      * 再チェックするため、この隙間で実行可能になったタスクを
      * 取りこぼすことはない。 */
+    mov  x0, sp
+    bl   knl_idle_sp_check      /* 解放済み領域の上なら abort（D5-k） */
     IRQ_FLAG_CLEAR
     bl   knl_idle_wait
     IRQ_DISABLE
