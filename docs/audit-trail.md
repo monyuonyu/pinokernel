@@ -1859,6 +1859,10 @@ N-4 cross-host deferred to the ThinkPad).
   (`run_tk_conform.sh` PASS); bare `run_tk_conform.sh` x86 and AArch64 PASS; vendor inventory GREEN;
   D5-k aarch64 cert PASS; script modes, README counts and vmodel PASS.
   This entry was written by the run that merged; an independent re-measure is for a different run.
+  INDEPENDENT RE-MEASURE (2026-10-08T22:37, the 22:35 run, which did not merge): fresh clone of master
+  134ebf82 (= 3397abe4 + the README translation stamp, docs only), tree 4b330546, same recipe
+  (`pk-scratch/a34.sh`, `/build/a34`): aarch64 4b617529…c506b 361552 B, x86 4191098c…f473 372155 B —
+  all 64 digits and the size equal. The comparison's own NC (one byte flipped in a copy) differs.
 - CROWN RE-BLESS — drpc pending-slot claim in one no-switch region (2026-10-08, merge `18c8ba2d` of
   `feat/drpc-claim` 44ca931d (audit-28 PASS), `--no-ff` onto `0c24ed86`; R-DRPC (2026-10-07T06:15) was
   put to mk_pino with a recommendation and, with no answer in 24 h, landed on it). The two conflicts
