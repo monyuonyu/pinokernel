@@ -2141,9 +2141,10 @@ jobs:
     # bare-metal arch backends) flips .text and FAILS this gate.
     #
     # WHY RELATIVE, NOT AN ABSOLUTE PINNED HASH: the .text bytes are
-    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 3f456078…,
-    # x86 ec4b5849… after the drpc pending-slot claim region (R-DRPC)
-    # 2026-10-08, audit-container gcc 13.3.0; was aarch64 6f82264d…/x86
+    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 4b617529…,
+    # x86 4191098c… after the LP64 MPL control block (R-MPL64) 2026-10-08,
+    # audit-container gcc 13.3.0; was aarch64 3f456078…/x86 ec4b5849… after
+    # the drpc pending-slot claim region (R-DRPC) 2026-10-08; was aarch64 6f82264d…/x86
     # 3826e048… after the bare-metal no-switch regions (R-NOSW-BARE) + the
     # p-fs full-table fix (R-PFSDROP) 2026-10-07;
     # was aarch64 0a541605…/x86 b2e9f34b… after CPU budget stage 1 + infer

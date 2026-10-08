@@ -1840,6 +1840,25 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — variable-size memory pool control block on LP64 (2026-10-08, merge `ee48839d` of
+  `feat/mpl-lp64` 76de7622 with `feat/tkc-mpl` (audit-29 PASS), `--no-ff` onto `63592220`, made on
+  `audit/a33-mpl` and fast-forwarded; R-MPL64 (2026-10-07T22:09) was put to mk_pino with a recommendation
+  and, with no answer in 24 h, landed on it). Conflicts: only the README.md / README.zh-CN.md "translated
+  from" line (master's kept by replacing the marker block, not `checkout --ours`; re-stamped afterwards);
+  ci.yml hosted aarch64 tkconf grep 122 -> 133. The bare-metal `.text` changes DELIBERATELY (MPLCB member
+  order in `kernel/mtkernel3/kernel/tkernel/mempool.h`; the size does not change). Since audit-31's trial
+  `audit/a31-lp64` (tree 41c564d8) master gained only hosted / docs / CI changes (ump-x86_64 timeout,
+  audit-trail, D5-k linux_aarch64, lr probe), so the crown should equal that trial's. Measured on a fresh
+  clone of `audit/a33-mpl`, tree 2e4cc218 = master's tree after the fast-forward (gcc 13.3.0,
+  `objcopy -O binary -j .text`; `pk-scratch/a33m.sh`, `/build/a33m`):
+    base `63592220`  aarch64 3f456078… 361552 B   x86 ec4b5849… 372155 B  (= the drpc-claim crown)
+    with mpl-lp64 (size unchanged; = audit-31's trial on audit/a31-lp64)
+      aarch64  4b617529b8659b0ac16bd761c93a590d21a45d1668a61b38fa39ca8a55fc506b  361552 B
+      x86      4191098cea13e8cdff3ae61fa2e5f0ed3ae8a0975e6742e818227f061e9cf473  372155 B
+  On that tree: tkconf 133/0 on hosted aarch64 (the CI grep matches) and hosted x86_64
+  (`run_tk_conform.sh` PASS); bare `run_tk_conform.sh` x86 and AArch64 PASS; vendor inventory GREEN;
+  D5-k aarch64 cert PASS; script modes, README counts and vmodel PASS.
+  This entry was written by the run that merged; an independent re-measure is for a different run.
 - CROWN RE-BLESS — drpc pending-slot claim in one no-switch region (2026-10-08, merge `18c8ba2d` of
   `feat/drpc-claim` 44ca931d (audit-28 PASS), `--no-ff` onto `0c24ed86`; R-DRPC (2026-10-07T06:15) was
   put to mk_pino with a recommendation and, with no answer in 24 h, landed on it). The two conflicts
