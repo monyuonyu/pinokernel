@@ -175,7 +175,12 @@ jobs:
     # ~2.5min, run_student.sh being the slowest (~90s).
     # 20 -> 30 (2026-09-28): the job took 16m48s in CI 36338650549 and
     # MIND-GEN-0-A adds ~95 s; tk-conform v2 would add ~8 min more.
-    timeout-minutes: 30
+    # 30 -> 45 (2026-10-08): the job took 21 min in CI 36712167043 (09-30);
+    # the steps added since (tkconf nosw/pool ~6 min, pfs droptest, mind
+    # pull/explain/provenance/have, the K9 NC) took 599 s of 2017 s when the
+    # whole job was timed step by step in the audit container, i.e. ~29 min
+    # in CI by the same ratio — too close to 30.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
