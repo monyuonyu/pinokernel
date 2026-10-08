@@ -1857,6 +1857,9 @@ N-4 cross-host deferred to the ThinkPad).
   positive GREEN, control GREEN, nofix RED; bare `run_tk_conform.sh` x86 and AArch64 PASS
   (`pk-scratch/a31v.sh`, `/build/a31v`); script modes PASS (`/build/a31p`). Crown re-measured on master after the merge (`/build/a31m`).
   This entry was written by the run that merged; an independent re-measure is for a different run.
+  INDEPENDENT RE-MEASURE (2026-10-08T19:16, the 19:05 run, which did not merge): fresh clone of master
+  a3c57f21 (= d6941fa8 + the ump-x86_64 timeout merge, ci.yml only), same recipe (`pk-scratch/d5k.sh`,
+  `/build/d5k`, arm m): aarch64 3f456078…e849 361552 B, x86 ec4b5849…0b70 372155 B — every digit equal.
 - CROWN RE-BLESS — bare-metal no-switch regions + p-fs full table, one re-bless for two merges
   (2026-10-07, merges of `feat/nosw-bare` f22e70eb (audit-25 PASS, this run) and `feat/pfs-full-drop`
   4925c818 (audit-24 PASS), in that order, `--no-ff` onto `4fd52746`; R-PFSDROP (2026-10-06T20:33) and
