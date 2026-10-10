@@ -30,7 +30,8 @@
  *   ema H      no horizon, no restart: an exponential average of the weights
  *              with a half-life of H steps, printed next to live at every 1/4
  *              (and at every P=H steps, so it lines up with swaw H)
- * (P / H is the optional 5th argument.)
+ * (P / H is the optional 5th argument; for ema an optional 6th, K, folds in
+ * only every K-th step with b^K.)
  * Every arm makes the same number of Adam steps on the same windows in the
  * same order. Prints the held-out and train loss at 0, 1/4, 1/2, 3/4, 1 of
  * the run.
@@ -124,6 +125,9 @@ int main(int argc, char **argv)
     long navg = 0;
     /* ema: e <- b e + (1-b) w with b^H = 1/2; started from the first step's w */
     double beta = ema ? pow(0.5, 1.0 / (double)period) : 0.0;
+    long stride = argc > 6 ? atol(argv[6]) : 1;
+    if (stride < 1) stride = 1;
+    double betak = pow(beta, (double)stride);
     int nsave = 0, nbetter = 0;
 
     printf("[lrp] arm=%s rounds=%d seed=%u bytes=%d train=%d held=%d steps=%ld\n",
@@ -147,9 +151,11 @@ int main(int argc, char **argv)
                 for (int i = 0; i < m.n_params; i++) avg[i] += m.w[i];
                 navg++;
             }
-            if (ema) {
+            if (ema && (s + 1) % stride == 0) {
+                /* stride K: fold in only every K-th step's weights with b^K (the
+                 * resident DMN runs K=8 passes per call and can fold per call) */
                 if (navg == 0) for (int i = 0; i < m.n_params; i++) avg[i] = m.w[i];
-                else for (int i = 0; i < m.n_params; i++) avg[i] = beta * avg[i] + (1.0 - beta) * m.w[i];
+                else for (int i = 0; i < m.n_params; i++) avg[i] = betak * avg[i] + (1.0 - betak) * m.w[i];
                 navg++;
             }
             if ((swaw || ema) && (s + 1) % period == 0) {
