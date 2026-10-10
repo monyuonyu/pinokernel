@@ -110,7 +110,7 @@ int main(int argc, char **argv)
             if (!on && !(ln == (long)g_cap_len && memcmp(live_blob, g_cap, g_cap_len) == 0)) off_ident = 0;
             if (st_load(&tmp, g_cap, g_cap_len) == ST_OK) {
                 sh = heldout_loss(&tmp, ST_DMN_SEQLEN, train_end, heldw);
-                is_copy = g_ema_have && memcmp(tmp.w, g_ema, (size_t)tmp.n_params * sizeof(float)) == 0;
+                is_copy = g_ema_have && g_ema && memcmp(tmp.w, g_ema, (size_t)tmp.n_params * sizeof(float)) == 0;
                 float want = (g_ema_have && ch < lh) ? ch : lh;
                 if (!(sh == want && sh <= lh)) picks = 0;
             } else picks = 0;
