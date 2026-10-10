@@ -113,6 +113,10 @@ check B-INITTASK-EXIT  ../inittask/inittask.c  1 'tk_ext_tsk();'
 check D5K-LX64     ../sysdepend/linux_x86_64/dispatch.S  1 'leaq    knl_tmp_stack+KNL_TMP_STACK_SZ(%rip), %rsp'
 check D5K-X86PC    ../sysdepend/x86_pc/dispatch.S        1 'movl    $knl_idle_stack_top, %esp'
 check D5K-LA64     ../sysdepend/linux_aarch64/dispatch.S 1 'add  x0, x0, #KNL_TMP_STACK_SZ'
+#     audit-33: the line above alone stays OK when only the `mov  sp, x0` that
+#     actually switches the stack is lost (the BLOCKING cert catches it, this
+#     inventory did not). The only `mov  sp, x0` in this file is that one.
+check D5K-LA64-SP  ../sysdepend/linux_aarch64/dispatch.S 1 'mov  sp, x0'
 # --- RNG0（2026-09-28）: 割込みの出口での遅延ディスパッチ。消えるとビルドは
 #     （idt.c の呼び出しが残っていればリンクで）落ちるが、関数の中身だけ消えても
 #     通る。カーネルを呼ばないタスクが、時限待ちの高い優先度のタスクを飢えさせる
