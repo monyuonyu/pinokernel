@@ -23,6 +23,14 @@
  *              the weights over the second half (no extra training)
  *   swa1       the same, averaging the FIRST half (negative control: mixing
  *              in old weights only)
+ *   swaw P     no horizon (lr-schedule.md, "where it goes"): 3e-3 throughout,
+ *              a "save" every P steps writes the uniform average of the weights
+ *              SINCE THE LAST SAVE, then the sum restarts. Prints live and avg
+ *              held at every save. P=1 makes avg == live (identity control).
+ *   ema H      no horizon, no restart: an exponential average of the weights
+ *              with a half-life of H steps, printed next to live at every 1/4
+ *              (and at every P=H steps, so it lines up with swaw H)
+ * (P / H is the optional 5th argument.)
  * Every arm makes the same number of Adam steps on the same windows in the
  * same order. Prints the held-out and train loss at 0, 1/4, 1/2, 3/4, 1 of
  * the run.
@@ -76,6 +84,8 @@ static double lr_at(const char *arm, long step, long total)
      * over the second half is printed too (SWA, ibid. §4.1) */
     if (!strcmp(arm, "swa"))       return 3e-3;
     if (!strcmp(arm, "swa1"))      return 3e-3;   /* NC: average the FIRST half */
+    if (!strcmp(arm, "swaw"))      return 3e-3;
+    if (!strcmp(arm, "ema"))       return 3e-3;
     return -1.0;
 }
 
@@ -85,7 +95,10 @@ int main(int argc, char **argv)
     const char *arm = argv[2];
     int rounds = atoi(argv[3]);
     uint32_t seed = (uint32_t)strtoul(argv[4], NULL, 0);
+    long period = argc > 5 ? atol(argv[5]) : 0;
+    int swaw = !strcmp(arm, "swaw"), ema = !strcmp(arm, "ema");
     if (rounds < 4 || lr_at(arm, 0, 1) < 0) { fprintf(stderr, "bad arm or rounds\n"); return 2; }
+    if ((swaw || ema) && period < 1) { fprintf(stderr, "swaw/ema need P/H >= 1\n"); return 2; }
 
     FILE *f = fopen(argv[1], "rb");
     if (!f) { fprintf(stderr, "cannot open %s\n", argv[1]); return 2; }
@@ -105,9 +118,13 @@ int main(int argc, char **argv)
     double lr_sum = 0;
     int swa1 = !strcmp(arm, "swa1");
     int swa = !strcmp(arm, "swa") || swa1;
-    double *avg = swa ? (double *)calloc((size_t)m.n_params, sizeof(double)) : NULL;
-    float *live = swa ? (float *)malloc((size_t)m.n_params * sizeof(float)) : NULL;
+    int keep = swa || swaw || ema;
+    double *avg = keep ? (double *)calloc((size_t)m.n_params, sizeof(double)) : NULL;
+    float *live = keep ? (float *)malloc((size_t)m.n_params * sizeof(float)) : NULL;
     long navg = 0;
+    /* ema: e <- b e + (1-b) w with b^H = 1/2; started from the first step's w */
+    double beta = ema ? pow(0.5, 1.0 / (double)period) : 0.0;
+    int nsave = 0, nbetter = 0;
 
     printf("[lrp] arm=%s rounds=%d seed=%u bytes=%d train=%d held=%d steps=%ld\n",
            arm, rounds, seed, g_n, trainw, heldw, steps);
@@ -126,6 +143,30 @@ int main(int argc, char **argv)
                 for (int i = 0; i < m.n_params; i++) avg[i] += m.w[i];
                 navg++;
             }
+            if (swaw) {
+                for (int i = 0; i < m.n_params; i++) avg[i] += m.w[i];
+                navg++;
+            }
+            if (ema) {
+                if (navg == 0) for (int i = 0; i < m.n_params; i++) avg[i] = m.w[i];
+                else for (int i = 0; i < m.n_params; i++) avg[i] = beta * avg[i] + (1.0 - beta) * m.w[i];
+                navg++;
+            }
+            if ((swaw || ema) && (s + 1) % period == 0) {
+                /* a "save": the copy that would be written, next to live */
+                float lh = mean_loss(&m, trainw, heldw);
+                memcpy(live, m.w, (size_t)m.n_params * sizeof(float));
+                for (int i = 0; i < m.n_params; i++)
+                    m.w[i] = (float)(swaw ? avg[i] / (double)navg : avg[i]);
+                float ah = mean_loss(&m, trainw, heldw);
+                memcpy(m.w, live, (size_t)m.n_params * sizeof(float));
+                nsave++;
+                if (ah < lh) nbetter++;
+                printf("[lrp] arm=%s P=%ld seed=%u save=%d step=%ld live=%.4f avg=%.4f d=%+.4f n=%ld\n",
+                       arm, period, seed, nsave, s + 1, (double)lh, (double)ah,
+                       (double)(ah - lh), navg);
+                if (swaw) { memset(avg, 0, (size_t)m.n_params * sizeof(double)); navg = 0; }
+            }
         }
         if (swa && navg > 0 && (r + 1) % (rounds / 4) == 0) {
             memcpy(live, m.w, (size_t)m.n_params * sizeof(float));
@@ -141,6 +182,8 @@ int main(int argc, char **argv)
                    (double)mean_loss(&m, 0, trainw));
         fflush(stdout);
     }
+    if (swaw || ema)
+        printf("[lrp] arm=%s P=%ld seed=%u saves=%d avg_better=%d\n", arm, period, seed, nsave, nbetter);
     printf("[lrp] arm=%s seed=%u mean_lr=%.6f final held=%.4f train=%.4f\n", arm, seed,
            lr_sum / (double)steps, (double)mean_loss(&m, trainw, heldw),
            (double)mean_loss(&m, 0, trainw));
