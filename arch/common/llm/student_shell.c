@@ -300,6 +300,55 @@ static unsigned g_dmn_save_count = 0;     /* # of 22.8MB DMN writes (proof/obs) 
 #define ST_DMN_ROUNDS  2     /* tiny per-tick: prove growth, stay responsive */
 #define ST_DMN_LR      3e-3f
 
+/* SAVED-COPY EMA (research/lr-schedule.md, 2026-10-11). Opt-in with
+ * PKERNEL_STUDENT_EMA=1. The live weights train exactly as before (same
+ * update list, same operands); beside them we keep one float copy, an
+ * exponential average with a half-life of ST_EMA_HALF steps, folded once per
+ * consolidate() call (k passes -> b^k). When the DMN persists, it writes
+ * whichever of live / copy has the lower held-out loss, and the throttle
+ * compares that loss — so a saved checkpoint is never worse than today's.
+ * Every path that replaces or mutates g_student calls student_consol_abort(),
+ * which restarts the copy from the live weights (a merge / reload / human
+ * retrain is never averaged into old weights). No copy (env unset, or the
+ * allocation failed) = today's behaviour byte for byte. */
+#define ST_EMA_HALF   100.0f
+static float   *g_ema       = NULL;   /* [g_ema_np] the averaged copy          */
+static int      g_ema_np    = 0;
+static int      g_ema_have  = 0;      /* 1 once g_ema holds a fold             */
+static int      g_ema_env   = -1;     /* PKERNEL_STUDENT_EMA, read once        */
+static unsigned g_ema_saves = 0;      /* DMN saves that wrote the copy (obs)   */
+
+static int student_ema_on(void)
+{
+    if (g_ema_env < 0) {
+        const char *e = getenv("PKERNEL_STUDENT_EMA");
+        g_ema_env = (e && e[0] == '1') ? 1 : 0;
+    }
+    return g_ema_env;
+}
+
+static void student_ema_fold(const st_model *m, int steps)
+{
+    if (!student_ema_on() || steps <= 0) return;
+#ifdef EMA_FOLD_DISABLE
+    return;   /* FALSIFIER for [ema-*]: no copy is ever made -> live is always saved */
+#endif
+    if (g_ema_np != m->n_params) {
+        free(g_ema);
+        g_ema = (float *)malloc((size_t)m->n_params * sizeof(float));
+        g_ema_np = g_ema ? m->n_params : 0;
+        g_ema_have = 0;
+    }
+    if (!g_ema) return;
+    if (!g_ema_have) {
+        memcpy(g_ema, m->w, (size_t)m->n_params * sizeof(float));
+        g_ema_have = 1;
+        return;
+    }
+    float a = 1.0f - st_expf(-0.69314718f * (float)steps / ST_EMA_HALF);   /* 1 - b^k */
+    for (int i = 0; i < m->n_params; i++) g_ema[i] += a * (m->w[i] - g_ema[i]);
+}
+
 /* fable5 Wave-D2 — LIVE compounding-feeder counters. Pure-read observability
  * (like cradle_live_probe / student_dmn_save_count): the chat mouth bumps
  * gated/enq/flip as it recognises deliberate arithmetic questions, deliberates,
@@ -473,6 +522,7 @@ void student_consol_abort(void)
 {
     cradle_lesson_freeze(0);   /* release the corpus: deferred lessons ingest next poll */
     g_consol_active = 0; g_consol_idx = 0;
+    g_ema_have = 0;            /* the saved-copy EMA restarts from the new weights */
 }
 
 /* ---------------------------------------------------------------------------
@@ -770,6 +820,7 @@ int student_dmn_consolidate(void)
                                        g_consol_trainw, g_consol_rounds,
                                        g_consol_lr, g_consol_idx, budget);
     if (g_consol_idx > idx0) g_consol_triples += (unsigned long)(g_consol_idx - idx0);
+    student_ema_fold(&g_student, g_consol_idx - idx0);   /* reads w only */
 
     if (g_consol_idx < g_consol_total)
         return 0;   /* batch still draining: yield (no persist, no sleep-line) */
@@ -830,6 +881,17 @@ int student_dmn_consolidate(void)
      * checkpoint staleness). Honest heuristic: a baby that genuinely keeps
      * learning keeps persisting; the wear stops exactly when learning does. */
     float cur = heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
+    /* saved-copy EMA: the candidate is the lower-held of live and the copy.
+     * The copy is evaluated / saved by pointing w at it for the call only
+     * (single-threaded here: heldout_loss and st_save do not yield). */
+    float *live_w = g_student.w;
+    int use_ema = 0;
+    if (student_ema_on() && g_ema_have && g_ema_np == g_student.n_params) {
+        g_student.w = g_ema;
+        float ce = heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
+        g_student.w = live_w;
+        if (ce < cur) { cur = ce; use_ema = 1; }
+    }
     int improved   = !g_dmn_saved || (cur < g_dmn_saved_loss - ST_DMN_SAVE_EPS);
     int dt_elapsed = g_dmn_saved &&
                      (g_student.adam_t - g_dmn_saved_adam_t) >= ST_DMN_SAVE_DT &&
@@ -840,12 +902,15 @@ int student_dmn_consolidate(void)
         size_t need = st_blob_size(&g_student);
         unsigned char *blob = (unsigned char *)malloc(need);
         if (blob) {
+            if (use_ema) g_student.w = g_ema;
             long w = st_save(&g_student, blob, need);
+            g_student.w = live_w;
             if (w >= 0 && pfs_dur_write(STUDENT_DUR_FILE, blob, (unsigned)w) == 0) {
                 g_dmn_saved        = 1;
                 g_dmn_saved_loss   = cur;
                 g_dmn_saved_adam_t = g_student.adam_t;
                 g_dmn_save_count++;
+                if (use_ema) g_ema_saves++;
             }
             free(blob);
         }
