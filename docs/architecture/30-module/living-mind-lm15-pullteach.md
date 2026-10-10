@@ -1,4 +1,6 @@
 # living-mind LM-15 — region pull-teach
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [pull-*] `pull-teach-live` -->
 
 > Status: **implemented on `feat/lm15-pull-teach`, in-proc cert green (4/4),
 > awaiting a SEPARATE audit + merge.** The in-process cert (`mind pull`) passes

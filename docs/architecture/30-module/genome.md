@@ -1,4 +1,6 @@
 # Genome — §3 self-regeneration: growing a full cell on an empty plate
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `14_genome` -->
 
 > survival-network.md §3: 「装甲板＝細胞。各細胞は完全な設計図(DNA)を
 > 持ち、欠けた機能は隣の細胞が引き継ぎ、新しい装甲板が来れば群れが

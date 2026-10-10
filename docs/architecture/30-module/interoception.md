@@ -1,4 +1,6 @@
 # interoception — 内受容: ノードの「痛み」を一本のバスに束ねる
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [survival-l0] -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** **Slice-1（統一 stress `S_n` バス＋DMN tick 変調＋galaxy 星の色相）は SHIPPED**（[[survival-loop.md]] L0/L1）。Slice-2（apoptosis）と symbol grounding は design のまま。正本は [[gap-ledger.md]]。
 

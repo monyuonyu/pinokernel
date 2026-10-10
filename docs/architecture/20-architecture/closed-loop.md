@@ -1,4 +1,6 @@
 # Closed control loop — 鎖を環にする
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `composite-loop` `22_composite` `20_closed_loop` -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** wave-12 のこの閉ループ配線は **SHIPPED**（`[reflex-fb/learn]`、`samples/20_closed_loop`）で本文は今も正確。これを 4 スレッド統合の上位設計へ拡張したのが [[survival-loop.md]]（L0+L1 SHIPPED）。
 

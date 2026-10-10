@@ -1,4 +1,6 @@
 # R3 — non-trivial thought (closing the "the thinking is a toy" gap)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [r3-incontext-gradcheck] [r3-incontext-learned] [r3-incontext-handif] [r3-incontext-frozen] -->
 
 > Status: **SHIPPED + CI-gated (Closed wave-19)** — reconciled 2026-07-01. The
 > "design + acceptance test / written before implementation" framing below is STALE.

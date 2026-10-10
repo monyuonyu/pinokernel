@@ -1,4 +1,6 @@
 # 知識の矛盾の記録（ROADMAP 1-3、設計メモ）
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [mind-conflicts] `run_mind_conflicts.sh` `ump-x86_64` -->
 
 2026-09-28。global-rules.md の決まり2「履歴と今の信念を分ける」を作る。的は MIND-GEN-0-B の E4（負けた方が残る）と E2（勝ち負けが到着順）。
 

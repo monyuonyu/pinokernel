@@ -1,4 +1,6 @@
 # living-mind LM-12 — belief revision
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [rev-*] `mind revise` -->
 
 > Status: **SHIPPED + CI-gated.** The in-process cert (`mind revise`) and the
 > live 2-node sample (`samples/46_belief_revision/run.sh`) are both green and

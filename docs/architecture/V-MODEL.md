@@ -222,6 +222,13 @@ above is a piece of its verification. This is the top-of-V ⇄ acceptance rung.
 > ci.yml job / step / whole token or a file name, a tag must appear whole and be 3+ characters, and
 > all five tally lines must exist. Two docs merged since then got rows: mind-explain (CLOSED) and
 > android-always-on (OPEN, a design memo for an unbuilt item — OPEN_MAX 10 → 11, reason in the script).
+>
+> **2026-10-11, second slice: each design doc carries its own rung and certs** in two comment lines
+> right under its title (`<!-- vmodel rung: … -->`, `<!-- vmodel certs: … -->`). The check goes red
+> when a doc has none, or when the head and this table disagree on the rung or on the set of
+> `[tag]` / `` `name` `` tokens (the free text of the cert cell is not compared). Change both in the
+> same commit. A bare file name that more than one file has (`run.sh`) no longer proves a cert; write
+> the path. `check_vmodel.py --migrate` copies a row into a doc that has no head yet.
 
 Of the **71** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
 

@@ -1,4 +1,6 @@
 # GPU-3 — wiring the Vulkan matmul into the mind (design + verdict)
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 **Status: design + adversarial critique done 2026-06-18. Decision: DEFER implementation.**
 This document is the recorded analysis (年輪) and the gate that any future GPU-3

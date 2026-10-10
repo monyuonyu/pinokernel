@@ -1,4 +1,6 @@
 # R3b — 呼吸するパラメータ（breathing parameters / expert specialization）
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `18_breathing` -->
 
 > 監査 §4 の指摘: 「MoE のエキスパート = ノード1台だが、全ノードが同じ 635
 > パラメータの重みを持つ＝『混合』でなく『同一コピーが N 個』。専門分化

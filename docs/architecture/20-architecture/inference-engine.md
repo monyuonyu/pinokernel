@@ -1,4 +1,6 @@
 # inference-engine — p-kernel 版・自前 LLM 推論エンジン（M1）
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [result] `shipped-llm-certs` -->
 
 > Status: **M1 IMPLEMENTED**（M1a–M1d 実装済・オラクル検証あり）／2026-06-19 doc-status fix。
 > 下の「実装前」は STALE。What actually shipped: `arch/common/llm/gguf.c`（GGUF ローダ）+

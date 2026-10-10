@@ -1,4 +1,6 @@
 # N-1 — LAN-direct transport (same-WiFi auto-mesh, no relay): design plan (cert-first)
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 **Status: DESIGN PLAN on trunk `2fadc380`, awaiting commander review + a separate
 impl→audit cycle.** Read-only investigation; no code changed.

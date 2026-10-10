@@ -1,4 +1,6 @@
 # Galaxy — 銀河の観測窓 (the per-node observation window)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [galaxy-serve] [galaxy-events] [galaxy-teach] -->
 
 **Status: SHIPPED (v1 live; on the phones). 2026-06-19 doc-status fix.**
 What actually shipped: the per-node web galaxy is live — `arch/common/galaxy.c` runs the

@@ -1,4 +1,6 @@
 # survival-fs — ARK: the local filesystem that survives the flood
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `ark-crash-fuzzer` `23_durable` `arkfs-audit.md` -->
 
 > p-kernel は「全体で1つの脳」であり、その記憶は滅びてはならない。
 > しかし最下層の永続化はいまだ **FAT32** — 上書きで過去を壊し、電源喪失で

@@ -1,4 +1,6 @@
 # self-access — the inward protocol (the mind feels its own body, and grows organs for it)
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 > Status: **design only** (written before implementation, same discipline as
 > [ring3-core.md](../50-evolution/ring3-core.md) / [living-mind.md](living-mind.md) /

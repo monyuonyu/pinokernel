@@ -1,4 +1,6 @@
 # 分散ルックアップ — 中央索引なしで「X はどこか」に答える基盤
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [hrw] [hrw-l1] -->
 
 > **これは [[p-fs.md]] §6.1・[[survival-network.md]] §7・[[regions.md]] §6.2 が
 > 三方向から同時にぶつかった、同じ一枚の壁である。**

@@ -1,4 +1,6 @@
 # compat-migration-chain — the per-version migration chain + signed-OTA gate (HARDENED design)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [migrate-forward] [sign-*] -->
 
 > Status: **SHIPPED** — reconciled 2026-07-01. The "DESIGN ONLY; changes NO kernel
 > code" line below is FALSE: `arch/common/compat_ota.c`, the `lm_self_steps[]` migration

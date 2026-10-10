@@ -1,4 +1,6 @@
 # ② full SMP — making the T-Kernel scheduler symmetric-multiprocessing without splitting the mind: implementation plan (cert-first, multi-wave)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [smp-autodetect] `smp-autodetect` -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** **②.0–②.2 は SHIPPED**（`arch/aarch64/smp.c`＋`smp_async.c`/`smp_secwait.c`/`smp_onemind.c`/`mc2_smp.c`、cert `tests/aarch64/run_smp0..5.sh`）。本文の残る生きたロードマップは **②.3** のみ。旧 SMP 個別プランは `archive/` へ移設済。
 

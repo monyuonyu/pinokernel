@@ -1,4 +1,6 @@
 # Windows (mingw-w64 PE) port — P1, console boot
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: `windows-pe-build` -->
 
 > **Status: SHIPPED 2026-07-05 (`ff163ac1`) — cross-compile CI gate green, PROMOTED TO
 > BLOCKING 2026-07-12** (4 hosted runs green in a row, per the ci.yml comment).

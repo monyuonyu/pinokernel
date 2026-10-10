@@ -1,4 +1,6 @@
 # 反射と熟慮 — 二層構造と時定数の分離
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [moe-twolayer] [moe-osc] `twolayer-couple-live` -->
 
 > 脳は1枚の判断器ではない。**手が熱い鍋に触れたとき、脳は何も決めていない。**
 > 脊髄が勝手に手を引っ込め、痛みの報告が大脳に届くのはその後だ。

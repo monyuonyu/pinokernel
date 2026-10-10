@@ -1,4 +1,6 @@
 # survival-network §7 / G38 — distributed-gating wiring: implementation plan (cert-first)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [g38-*] -->
 
 **Status:** DESIGN PLAN produced by an automated design-harden workflow on trunk `1f656c3c`. NOT YET IMPLEMENTED. Awaiting commander review, then a SEPARATE impl → audit cycle (implementer ≠ auditor ≠ commander, per the constitution). The acceptance cert in §1 is authored here as a starting point; the auditor OWNS the final pass/fail formula and runs it — the implementer must not also define success (trap A1).
 

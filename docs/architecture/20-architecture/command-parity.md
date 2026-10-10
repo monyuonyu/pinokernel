@@ -1,4 +1,6 @@
 # コマンドの横並び（command parity）— 段階0の設計メモ
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: `command-matrix` -->
 
 inbox #4（2026-09-26、翔太「プラットフォームでコマンドが多い・少ないの差が出るのは嫌」）。
 段階0は**見える化だけ**。カーネルの挙動も crown も変えない。

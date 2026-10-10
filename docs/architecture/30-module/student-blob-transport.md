@@ -1,4 +1,6 @@
 # Student-Blob Transport Redesign — making SS-3 `[live]` achievable
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `run_ss3_blob.sh` `student_blob_test.c` -->
 
 > Status: **SHIPPED** — reconciled 2026-07-01. The redesign below is live: the
 > content-addressed manifest transport replaced the dead chunk-by-name path. The

@@ -1,4 +1,6 @@
 # Federation — 32 の壁から「数千ノード」へ橋を架ける
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [g23-ceiling] -->
 
 > 看板は **"thousands of nodes / 10,000 spacecraft plates / more nodes = smarter"**。
 > 現実は **`DNODE_MAX = 64`**（`arch/common/include/drpc.h:35`）が、world / moe /

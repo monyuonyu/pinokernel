@@ -1,4 +1,6 @@
 # living-mind — an ownerless mind that learns from conversation and sleeps to remember
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [dmn-*] [handoff-*] [stream-*] [lang-*] [salience-*] [self-*] [onemind-*] [wmerge-*] -->
 
 > Status: **SHIPPED (LM-1..11) + CI-gated.** — trimmed 2026-07-01 (doc-hygiene P3).
 > Every slice below shipped and is guarded in `.github/workflows/ci.yml`. The original

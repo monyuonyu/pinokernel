@@ -1,4 +1,6 @@
 # moe-distillation-survey — 既製 MoE を借りるか、蒸留して自前 MoE を育てるか
+<!-- vmodel rung: N/A -->
+<!-- vmodel certs: - -->
 
 > ⚠️ **本書の最終推薦（既製 MoE を adopt-and-run）は mk_pino により棄却（2026-06-13）。**
 > 決定は conversation.md **§3.7「赤子から ― 幼年期はスキップしない」**: 既製モデルを

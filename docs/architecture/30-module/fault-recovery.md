@@ -1,4 +1,6 @@
 # Fault recovery: task isolation + respawn from p-fs weights (wave 7)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `survival-loop` -->
 
 PR #4, hole (4): *"heal.c can only restart ring-3 ELF daemons. The
 flagship Transformer runs ring-0, so one bug = the whole node dies."*

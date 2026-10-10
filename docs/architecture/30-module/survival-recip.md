@@ -1,4 +1,6 @@
 # survival-recip — reciprocal 応援・受援 (§7 serve-side mutual aid)
+<!-- vmodel rung: DECLINED -->
+<!-- vmodel certs: [recip-*] -->
 
 > **STATUS: DECLINED 2026-07-04 — NOT IMPLEMENTED, by conscious choice.** Asked the §0
 > question, mk_pino chose **pure altruism over self-defense**: the aid economy does NOT defend

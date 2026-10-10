@@ -1,4 +1,6 @@
 # Relay HA — 複数 relay と中央なしフェイルオーバ
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [drpc-oob] `relay-tests` -->
 
 PR #4 構造ギャップ③への回答。relay/relay.c は単一 UDP フォワーダで、
 死ねば全ノード間通信が死ぬ SPOF だった。本機構で relay は「複数プロセスを

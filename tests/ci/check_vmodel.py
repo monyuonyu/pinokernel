@@ -22,17 +22,30 @@ RED when:
                 OPEN_MAX in the same change that closes one)
   tally         a count in the "Rung tally" table differs from the rows, or one
                 of its five lines is missing
+  no-head       a design doc does not carry its own rung and certs right under
+                its "# " title (second slice of 0-7, the doc is the source):
+                    <!-- vmodel rung: CLOSED -->
+                    <!-- vmodel certs: [tag] `name` -->     ("certs: -" if none)
+  head-mismatch the doc's head and its V-MODEL.md row disagree on the rung or
+                on the set of [tag] / `name` cert tokens (the table is the view
+                of the heads; free text in the cert cell is not compared)
+  ambiguous-cert a bare `name` (no '/') that is proved only by a file name
+                which occurs more than once in the repo (`run.sh`): write the
+                path from the repo root instead
 
 `--selftest` breaks a copy of the real table sixteen ways (each check, the
 three that audit-20 found green: a bare substring of ci.yml, a one-letter tag,
 a deleted tally line, and the six audit-21 found green: a missing path with a
 real basename, the row's own doc, V-MODEL.md, a directory name, a plain ci.yml
 word, a step name's first word) and requires each to go red, and the unbroken
-copy green.
-The design docs themselves carry no metadata yet (the table is the source);
-moving the source into each doc's head is the next slice of 0-7.
+copy green, and then breaks the heads four more ways (a doc without a head, a
+head with another rung, a head missing a cert token, a bare name that is two
+files) and requires each of those to go red too.
+`--migrate` writes the head into every design doc that has none, copied from
+its row (it never rewrites an existing head).
 Exit 0 = green, 1 = red.
 """
+import collections
 import os
 import re
 import sys
@@ -70,16 +83,48 @@ def rung_of(cell):
     return "?"
 
 
-def design_docs():
-    out = set()
+def design_doc_paths():
+    out = {}
     for d in LEVEL_DIRS:
         base = os.path.join(ARCH, d)
         for dp, dns, fns in os.walk(base):
             dns[:] = [x for x in dns if x not in SKIP_SUBDIRS]
             for f in fns:
                 if f.endswith(".md"):
-                    out.add(f)
+                    out[f] = os.path.join(dp, f)
     return out
+
+
+def design_docs():
+    return set(design_doc_paths())
+
+
+HEAD_RUNG = re.compile(r"^<!-- vmodel rung: (CLOSED|PARTIAL|OPEN|N/A|DECLINED) -->$")
+HEAD_CERTS = re.compile(r"^<!-- vmodel certs: (.+) -->$")
+
+
+def read_head(path):
+    """(rung, tags, names) from the two lines right under the doc's "# " title,
+    or None when they are not there."""
+    with open(path, encoding="utf-8") as fh:
+        lines = fh.read().split("\n")
+    if len(lines) < 3 or not lines[0].startswith("# "):
+        return None
+    r, c = HEAD_RUNG.match(lines[1]), HEAD_CERTS.match(lines[2])
+    if not r or not c:
+        return None
+    tags, nms = cert_tokens(c.group(1)) if c.group(1).strip() != "-" else ([], [])
+    return r.group(1), tags, nms
+
+
+def head_lines(rung, tags, nms):
+    toks = ["[%s]" % t for t in tags] + ["`%s`" % n for n in nms]
+    return ["<!-- vmodel rung: %s -->" % rung,
+            "<!-- vmodel certs: %s -->" % (" ".join(toks) if toks else "-")]
+
+
+def read_heads():
+    return {f: read_head(p) for f, p in design_doc_paths().items()}
 
 
 def root_docs():
@@ -97,6 +142,9 @@ def all_md_names():
 
 def load_corpus():
     text = []
+    count = collections.Counter()  # how many files / sample dirs carry each name
+    for dp, dns, fns in os.walk(os.path.join(ROOT, "docs")):
+        count.update(f for f in fns if f.endswith(".md"))
     names = set(all_md_names())   # a cited audit/evidence doc (`x.md`) must exist
     for d in CORPUS_DIRS:
         base = os.path.join(ROOT, d)
@@ -106,8 +154,10 @@ def load_corpus():
             if (os.path.dirname(dp) == os.path.join(ROOT, "samples")
                     and any(f.endswith(".sh") for f in fns)):
                 names.add(os.path.basename(dp))
+                count[os.path.basename(dp)] += 1
             for f in fns:
                 names.add(f)
+                count[f] += 1
                 if f.endswith(CORPUS_EXT):
                     p = os.path.join(dp, f)
                     if os.path.abspath(p) == os.path.abspath(__file__):
@@ -124,7 +174,7 @@ def load_corpus():
     jobs = set(re.findall(r"^  ([A-Za-z0-9_\-]+):\s*$", ci, flags=re.M))
     steps = {x.strip().strip("'\"").strip()
              for x in re.findall(r"^\s*-?\s*name:\s*(.+?)\s*$", ci, flags=re.M)}
-    return "\n".join(text) + "\n" + ci, ci, names, jobs | steps
+    return "\n".join(text) + "\n" + ci, ci, names, jobs | steps, count
 
 
 def cert_tokens(cell):
@@ -181,8 +231,15 @@ def name_found(n, ci, names, jobs, doc=None):
     return re.search("(?<![" + ID + "])" + re.escape(n) + "(?![" + ID + "])", ci) is not None
 
 
-def check(vtext, docs, corpus, roots=frozenset()):
-    blob, ci, names, jobs = corpus
+def name_ambiguous(n, ci, names, jobs, count):
+    """a bare name that only a file name proves, and more than one file has it"""
+    if n in jobs or "/" in n or n not in names or count.get(n, 0) < 2:
+        return False
+    return not name_found(n, ci, set(), jobs)   # does a ci.yml job/step/phrase prove it?
+
+
+def check(vtext, docs, corpus, roots=frozenset(), heads=None):
+    blob, ci, names, jobs, count = corpus
     errs = []
     rows = []
     for line in vtext.splitlines():
@@ -213,6 +270,23 @@ def check(vtext, docs, corpus, roots=frozenset()):
             if not name_found(n, ci, names, jobs, doc):
                 errs.append("unknown-cert: %s cites `%s`, not a ci.yml job / step / token or a file name"
                             % (doc, n))
+            elif name_ambiguous(n, ci, names, jobs, count):
+                errs.append("ambiguous-cert: %s cites `%s`, a file name %d files share; give the path"
+                            % (doc, n, count[n]))
+    if heads is not None:
+        for doc, cert, rung in rows:
+            if doc not in heads:
+                continue                     # a root doc: no head required
+            h = heads[doc]
+            if h is None:
+                errs.append("no-head: %s has no '<!-- vmodel rung/certs -->' lines under its title" % doc)
+                continue
+            tags, nms = cert_tokens(cert)
+            if h[0] != rung:
+                errs.append("head-mismatch: %s head says %s, V-MODEL.md says %s" % (doc, h[0], rung))
+            if set(h[1]) != set(tags) or set(h[2]) != set(nms):
+                errs.append("head-mismatch: %s head certs %s, V-MODEL.md certs %s"
+                            % (doc, sorted(set(h[1]) | set(h[2])), sorted(set(tags) | set(nms))))
     if counts.get("OPEN", 0) > OPEN_MAX:
         errs.append("open-ceiling: %d OPEN rows > OPEN_MAX %d (OPEN may only go down)"
                     % (counts.get("OPEN", 0), OPEN_MAX))
@@ -232,9 +306,9 @@ def check(vtext, docs, corpus, roots=frozenset()):
     return errs, counts
 
 
-def selftest(vtext, docs, corpus, roots):
+def selftest(vtext, docs, corpus, roots, heads):
     ok = True
-    base, _ = check(vtext, docs, corpus, roots)
+    base, _ = check(vtext, docs, corpus, roots, heads)
     if base:
         print("[vmodel] selftest: the unbroken table is not green:", base[0])
         ok = False
@@ -266,8 +340,19 @@ def selftest(vtext, docs, corpus, roots):
         ("unknown-cert", vtext.replace(closed, "| %s | x | `ARK` | ✓ CLOSED |" % cdoc), docs),
         ("dup-row", vtext.replace(closed, closed + "\n" + closed), docs),
     ]
-    for name, vt, ds in breaks:
-        errs, _ = check(vt, ds, corpus, roots)
+    # the second slice: the heads, and a bare name two files share
+    ctags, cnms = cert_tokens(ROW.match(closed).group(3))
+    drop = dict(heads); drop[cdoc] = None
+    other = dict(heads); other[cdoc] = ("PARTIAL", ctags, cnms)
+    fewer = dict(heads); fewer[cdoc] = ("CLOSED", ctags[1:], cnms) if ctags else ("CLOSED", ctags, cnms[1:])
+    breaks = [b + (heads,) for b in breaks] + [
+        ("no-head", vtext, docs, drop),
+        ("head-mismatch", vtext, docs, other),
+        ("head-mismatch", vtext, docs, fewer),
+        ("ambiguous-cert", vtext.replace(closed, "| %s | x | `run.sh` | ✓ CLOSED |" % cdoc), docs, heads),
+    ]
+    for name, vt, ds, hs in breaks:
+        errs, _ = check(vt, ds, corpus, roots, hs)
         hit = [e for e in errs if e.startswith(name)]
         print("[vmodel] selftest %-13s %s (%d error(s), %d of this kind)"
               % (name, "RED as expected" if hit else "STAYED GREEN", len(errs), len(hit)))
@@ -275,16 +360,45 @@ def selftest(vtext, docs, corpus, roots):
     return ok
 
 
+def migrate(vtext):
+    """write the head (copied from the row) into each design doc that has none"""
+    rows = {}
+    for line in vtext.splitlines():
+        m = ROW.match(line)
+        if m:
+            rows.setdefault(m.group(1), (rung_of(m.group(4)), m.group(3)))
+    n = 0
+    for doc, path in sorted(design_doc_paths().items()):
+        if doc not in rows or read_head(path) is not None:
+            continue
+        rung, cert = rows[doc]
+        tags, nms = cert_tokens(cert)
+        with open(path, encoding="utf-8") as fh:
+            lines = fh.read().split("\n")
+        if not lines[0].startswith("# "):
+            print("[vmodel] migrate: %s does not start with a '# ' title, skipped" % doc)
+            continue
+        lines[1:1] = head_lines(rung, tags, nms)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(lines))
+        n += 1
+    print("[vmodel] migrate: wrote %d head(s)" % n)
+    return 0
+
+
 def main():
     with open(VMODEL, encoding="utf-8") as fh:
         vtext = fh.read()
     docs = design_docs()
+    if "--migrate" in sys.argv:
+        return migrate(vtext)
     corpus = load_corpus()
+    heads = read_heads()
     if "--selftest" in sys.argv:
-        ok = selftest(vtext, docs, corpus, root_docs())
+        ok = selftest(vtext, docs, corpus, root_docs(), heads)
         print("[vmodel] selftest", "PASS" if ok else "FAIL")
         return 0 if ok else 1
-    errs, counts = check(vtext, docs, corpus, root_docs())
+    errs, counts = check(vtext, docs, corpus, root_docs(), heads)
     print("[vmodel] design docs %d, rows %d: %s" % (len(docs), sum(counts.values()),
           ", ".join("%s %d" % (k, counts[k]) for k in sorted(counts))))
     for e in errs:

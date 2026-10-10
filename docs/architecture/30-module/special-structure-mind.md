@@ -1,4 +1,6 @@
 # special-structure-mind — the unified, fleet-sized, sparse, cross-node mind
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [expert-growth-preserves] -->
 
 **Status: ROADMAP — PARTIALLY SHIPPED (SS-1..SS-6 live; SS-7 still design). Reconciled 2026-07-01.**
 SS-4 (function-preserving expert growth) also shipped (`student.c`, cert `tests/llm/run_ss4.sh`);
