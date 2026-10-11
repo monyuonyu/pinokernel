@@ -1238,6 +1238,16 @@ jobs:
           timeout 300 sh -c "printf 'tkconf fp\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee fp_a64.log
           grep -aF '[fp] ALL PASS' fp_a64.log
+      # ROADMAP 0-10: the relay broadcast sender (static buffer + shared nonce)
+      # under the exit dispatch, N28-N30 only (`tkconf nr`; the whole `tkconf
+      # nosw` is ~10 min here). Without the no-switch region (before 94317c79)
+      # N28 was red on this tier.
+      - name: relay sender in a no-switch region on hosted aarch64 (tkconf nr, BLOCKING, 0-10)
+        run: |
+          cd boot/linux
+          timeout 300 sh -c "printf 'tkconf nr\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee nr_a64.log
+          grep -aF '[nosw] ALL PASS' nr_a64.log
       # D5-k on aarch64: tk_exd_tsk frees its own stack, then force-dispatches;
       # knl_dispatch_to_schedtsk must leave it for knl_tmp_stack before idling.
       # gdb calls drpc_local_restart from cmd_ver (no shell path reaches it).
@@ -1261,6 +1271,14 @@ jobs:
           timeout 300 sh -c "printf 'tkconf fp\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee fp_a64_nc.log
           grep -aF '[fp] FAIL F1' fp_a64_nc.log
+      - name: N28 goes red with the no-switch regions emptied (negative control, -DPK_NOSW_OFF, 0-10)
+        run: |
+          make -C boot/linux clean >/dev/null
+          make -C boot/linux EXTRA_CFLAGS=-DPK_NOSW_OFF >/dev/null
+          cd boot/linux
+          timeout 300 sh -c "printf 'tkconf nr\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee nr_a64_nc.log
+          grep -aF '[nosw] FAIL N28' nr_a64_nc.log
 
   bare-metal:
     name: "ベアメタル (i686 + aarch64, ビルドのみ)"
