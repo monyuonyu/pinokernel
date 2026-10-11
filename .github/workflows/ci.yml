@@ -163,6 +163,24 @@ jobs:
         run: ARM=control sh tests/aarch64/run_rng0_regression.sh
       - name: RNG0 on bare AArch64 — nofix arm, expect RED (switch compiled out)
         run: ARM=nofix sh tests/aarch64/run_rng0_regression.sh
+      # 2026-10-12 (ROADMAP 0-11, gap-ledger BARE-A64-FP-NOT-SAVED): FP/SIMD
+      # across task switches on bare AArch64 (tests/aarch64/run_fp_bare.sh,
+      # -DPK_FPBARE test build only; crown unaffected). Plain must be ALL PASS;
+      # each falsifier must turn exactly its own item red (a build failure
+      # does not pass: the step asks for the item's FAIL line). 3 builds +
+      # 3 boots, each boot up to 120 s.
+      - name: FP/SIMD across task switches on bare AArch64 — plain, expect GREEN
+        run: bash tests/aarch64/run_fp_bare.sh
+      - name: FP/SIMD on bare AArch64 — NC no d8-d15 save on a voluntary switch, expect only F3 RED
+        run: |
+          FPB_EXTRA=-DPK_FP_NO_DSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_nod.log || true
+          grep -aq '^\[fpb\] FAIL F3' fpb_nod.log
+          if grep -aq '^\[fpb\] FAIL F1' fpb_nod.log; then echo "F1 red too"; exit 1; fi
+      - name: FP/SIMD on bare AArch64 — NC no q-register save at IRQ entry, expect only F1 RED
+        run: |
+          FPB_EXTRA=-DPK_FP_NO_QSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_noq.log || true
+          grep -aq '^\[fpb\] FAIL F1' fpb_noq.log
+          if grep -aq '^\[fpb\] FAIL F3' fpb_noq.log; then echo "F3 red too"; exit 1; fi
       - name: contract suite v2 on bare x86 (plain green, 11 NCs red)
         run: bash tests/x86/run_tk_conform.sh
       - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
