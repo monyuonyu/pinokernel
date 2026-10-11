@@ -95,7 +95,11 @@ void kloader_rx(UB src_node, UH dst_port, const UB *data, UH len)
 
     /* The fixed header runs through chunk_len (18 bytes); the old floor of 12
      * let total_size/chunk_idx/chunk_len be read past `len`. (ROADMAP 0-9) */
+#ifndef RXB_OLD_KLOAD_FLOOR
     if (len < KLOAD_HDR_LEN) { kloader_drop_bad++; return; }
+#else
+    if (len < 12) return;   /* the old floor (falsifier for K2/K6) */
+#endif
 
     const KLOAD_PKT *pkt = (const KLOAD_PKT *)data;
     if (pkt->magic   != KLOAD_MAGIC)   return;

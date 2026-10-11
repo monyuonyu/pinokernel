@@ -1,16 +1,19 @@
 /*
  *  rx_bounds_test.c — `tkconf rx`: input-validation cert for the UDP/pmesh
  *  receive entry points (ROADMAP 0-9). Hosted builds only (linux x86_64 /
- *  aarch64, Windows); not linked into the bare-metal kernels, so the crown is
- *  unchanged.
+ *  aarch64, Windows); this file is not linked into the bare-metal kernels, but
+ *  the guards it tests live in shared TUs and do change the bare .text
+ *  (R-RXB in the baton).
  *
  *  Each case hands one fixed packet to a production rx function and checks the
  *  module's reject counter: a well-formed control packet must leave it alone,
- *  a short or out-of-range packet must bump it by one. Each buffer is exactly
- *  `len` bytes, so under ASan a read past `len` (or a table write past its
- *  end) is a report rather than a quiet pass. For raft the cert also reads
- *  raft_log_size(), which must never exceed RAFT_LOG_MAX — that stays a FAIL
- *  even without a sanitizer.
+ *  a short or out-of-range packet must bump it by one. The verdict is the
+ *  counter only. The buffers are the full packet size with only `len` passed,
+ *  so a read past `len` stays inside the buffer and no sanitizer would see it
+ *  (the hosted builds are -static anyway, without ASan): a guard that reads
+ *  the wrong bytes but still drops shows up here only if the counter differs.
+ *  For raft the cert also reads raft_log_size(), which must never exceed
+ *  RAFT_LOG_MAX.
  *
  *  Falsifiers (each reverts one guard; the cert then goes RED for that case):
  *    -DRXB_NO_SPAWN_GUARD  spawn src_node range check
@@ -19,6 +22,8 @@
  *    -DRXB_NO_RAFT_GUARD   raft append bound (checks the wire field, not size)
  *    -DRXB_NO_KLOAD_CLEN   kloader chunk_len vs buffer / packet length
  *    -DRXB_NO_KLOAD_IDX    kloader chunk_idx ceiling (offset forming)
+ *    -DRXB_OLD_KLOAD_FLOOR kloader header floor back to 12 bytes (K6; K2 stays
+ *                          green, the chunk_len check also drops it)
  *
  *  This leaves junk raft entries and an open kloader transfer behind, so run
  *  it on a throwaway node (`tkconf rx`).
@@ -189,6 +194,16 @@ INT rx_bounds_run(void (*out)(const char *))
      * the offset-before-bound ordering mishandled. */
     kl_case("K4", "kload CHUNK idx past ceiling",  0x400000UL,        1024, (UH)(KL_HDR + 1024), 1);
     kl_case("K5", "kload CHUNK clen100 len50",     0,                 100,  (UH)(KL_HDR + 50),   1);
+    /* last: under the old 12-byte floor this START is taken (and resets the
+     * transfer); with the header floor it is dropped */
+    {
+        UB s[sizeof(KLOAD_PKT)];
+        UW before = kloader_drop_bad;
+        kl_build(s, KLOAD_START, 0, 0);
+        kloader_rx(0, KLOAD_PORT, s, 12);
+        UW d = kloader_drop_bad - before;
+        rxb_check("K6", "kload START 12-byte packet", d == 1, d, 1);
+    }
 
     out("[rxb] "); rxb_dec((UW)rxb_pass);
     out(" PASS / "); rxb_dec((UW)rxb_fail); out(" FAIL\r\n");

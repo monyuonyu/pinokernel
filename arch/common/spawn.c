@@ -52,9 +52,13 @@ static UB spawned[DNODE_MAX];    /* 配布済みフラグ   */
  * rx-bounds cert (ROADMAP 0-9); not exported in a header. */
 UW spawn_drop_bad = 0;
 
-/* Smallest `len` that lets the STATE_PUSH loop read data[0..DNODE_MAX-1]. */
+/* Smallest `len` that lets the STATE_PUSH loop read data[0..n-1], where the
+ * loop stops at n = min(DNODE_MAX, SPAWN_CHUNK_SIZE) (the same bound as the
+ * loop, so a DNODE_MAX above 256 does not reject every well-formed push). */
+#define SP_STATE_ENTRIES \
+    (DNODE_MAX < SPAWN_CHUNK_SIZE ? DNODE_MAX : SPAWN_CHUNK_SIZE)
 #define SP_STATE_MIN_LEN \
-    ((UH)(sizeof(SPAWN_PKT) - SPAWN_CHUNK_SIZE + DNODE_MAX))
+    ((UH)(sizeof(SPAWN_PKT) - SPAWN_CHUNK_SIZE + SP_STATE_ENTRIES))
 
 /* ------------------------------------------------------------------ */
 /* ノード IP アドレス                                                  */
