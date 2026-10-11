@@ -1,4 +1,6 @@
 # webd-user-space — move the web server out of the substrate
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 Status: **Slice A partial (landed)**. The `arch/common/ui_api.c` capability
 boundary is live in the hosted builds: the event/console/module seam is routed

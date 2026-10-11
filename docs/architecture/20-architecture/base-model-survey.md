@@ -1,4 +1,6 @@
 # base-model-survey — どの OSS base を借りるか（分岐 A2 の調査波）
+<!-- vmodel rung: N/A -->
+<!-- vmodel certs: - -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** この調査（分岐 A2＝既存小型モデルを借りる）の結論は取られなかった：p-kernel は **自前の ownerless student**（living-mind, ~21.5K param, R3 基盤）を育てる道を選んだ。本文は A2 分岐を検討した 年輪。教育方針は memory `project_teacher_student_architecture`。
 

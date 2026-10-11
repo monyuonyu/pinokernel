@@ -1,4 +1,6 @@
 # native-student — 赤子から育つ、器に合った脳（the growable native student）
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `shipped-llm-certs` `student_test.c` -->
 
 > Status: **NS-1 SHIPPED**（赤子＝Cradle baby は実装済・APK 0.9.0 で chat ⑥ を駆動）／
 > 2026-06-19 doc-status fix。下の「design DRAFT 実装前」は STALE。

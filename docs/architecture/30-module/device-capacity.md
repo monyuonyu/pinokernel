@@ -1,4 +1,6 @@
 # device-capacity — 器に合った担当量: 端末の性能で各ノードの「ニューロン数」を連続変調する
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [device-fit] -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** この叩き台の「端末を測って自動で合わせる」方向のうち **mind-sizing 半分は SHIPPED**（DEVFIT-1: `arch/common/llm/dev_capacity.c` + cert `tests/llm/run_devfit.sh`）、cores 半分（SMP-AUTODETECT）も着地済。本文の tier/連続変調（ニューロン数の連続調整）は引き続き設計提案。正本は [[gap-ledger.md]]。**本書がこのクラスタの正準（umbrella）**であり、旧 `device-capacity-verdict.md`（監査 verdict）と `device-capacity-mind-sizing-plan.md`（DEVFIT-1 設計）は下の §0.5 に要約を畳んだ上で `archive/` へ移した。
 

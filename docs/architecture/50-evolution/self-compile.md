@@ -1,4 +1,6 @@
 # Self-compilation (selfc) — first milestone
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [selfc-isolated] [selfc-rollback] [selfc-lineage] -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** この first milestone は **SHIPPED**：selfc は fork() germ ＋ capability 境界で自己コンパイルコードを隔離し（wave-31）、SIGN-2（wave-43）で fleet-signed germ まで到達した。本文はマイルストーンの 年輪。正本は [[gap-ledger.md]]。
 

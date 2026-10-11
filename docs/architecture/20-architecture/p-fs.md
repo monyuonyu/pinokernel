@@ -1,4 +1,6 @@
 # p-fs — 内容アドレスで gossip 複製される、死なないファイルシステム
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [pfs] [pfs-durswallow] [pfs-dagrefs] [hrw] -->
 
 > p-kernel は「全体で1つの脳」である。ならば**記憶もまた、1台の中に閉じてはならない。**
 > 今のファイルシステムは IDE 上の FAT32 — 1台のディスクに縛られた、中央を持つ記憶である。

@@ -1,4 +1,6 @@
 # Regions — 台数でスケールする region 分割 locality-MoE
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [capacity-score] [g13-arrival] [g23-ceiling] `parallel-infer-live` -->
 
 > p-kernel は「全体で1つの脳」である。しかし**1つの脳とは、均一な1枚の網のことではない。**
 > 脳は領域（region）に分かれ、近い領域は密に、遠い領域は疎に繋がる。

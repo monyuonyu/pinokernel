@@ -1,4 +1,6 @@
 # Android の常駐の作り直し（inbox #7 の1、設計メモ）
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 2026-10-04。ストアは新しいアプリに targetSdk 36 を求める。今のアプリは targetSdk 34、常駐は `PKernelService`（foregroundServiceType=dataSync）。
 

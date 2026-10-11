@@ -1,4 +1,6 @@
 # Connect From Anywhere — hardening Thread N connectivity
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `connect-anywhere-certs` -->
 
 Status: Slice 1 (heartbeat) + Slice 3 (plain-TCP fallback) + Slice 4 (automatic
 UDP<->TCP relay-transport fallback) SHIPPED + AUDITED + integrated to master

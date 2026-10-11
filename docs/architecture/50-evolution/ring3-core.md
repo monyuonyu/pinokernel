@@ -1,4 +1,6 @@
 # ring3-core — moving the self-modifying AI core down to ring3/EL0
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [iso-userptr] [ring3-survival] [ring3-mind] [dproc-teardown] [fpu-ctx] `ring3-survival` -->
 
 > Status: **SHIPPED for the inference path (Waves A+B+C); training modules still design** —
 > 2026-06-19 doc-status fix. The "written before implementation" line below is STALE.

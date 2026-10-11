@@ -1,4 +1,6 @@
 # compatibility — 出荷後に進化し続ける群れで、古いノードと新しいノードが分裂しないために
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [migrate-forward] -->
 
 > Status: **design DRAFT**（実装前・commander + mk_pino が叩くための叩き台）。
 > 確信を装わない。提案し、未解決を §「open problems」で正直に旗立てし、二読みできる

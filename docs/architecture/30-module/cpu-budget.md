@@ -1,4 +1,6 @@
 # CPU の予算と見張り（ROADMAP 0-1 の後半、設計）
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: `run_cpu_budget.sh` `rng0-regression-monitor` -->
 
 2026-09-28。`feat/rng0-exit-dispatch`（割込みの出口での遅延ディスパッチ）の上に作る。
 

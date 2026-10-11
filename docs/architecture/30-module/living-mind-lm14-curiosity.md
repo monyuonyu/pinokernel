@@ -1,4 +1,6 @@
 # living-mind LM-14 — curiosity
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [curio-*] `mind curious` -->
 
 > Status: **implemented on `feat/lm14-curiosity`, in-proc cert green, awaiting a
 > SEPARATE audit + merge.** The in-process cert (`mind curious`) passes 7/7 and

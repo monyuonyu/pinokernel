@@ -1,4 +1,6 @@
 # self-access — the node touches its own body (READ-ONLY first slice)
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 BACKLOG 🅰 — mk_pino's *「自分の体を触る」* / the MCP-analogue embodiment. A
 resident mind that lives on p-kernel should be able to *perceive its own body*

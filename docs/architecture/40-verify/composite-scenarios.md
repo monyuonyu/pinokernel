@@ -1,4 +1,6 @@
 # Composite scenarios — closing the survival loop (audit G19)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `composite-loop` `22_composite` -->
 
 ## Why composite verification is needed
 

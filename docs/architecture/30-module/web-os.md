@@ -1,4 +1,6 @@
 # web-os — the imaginary UI (the mind conjures tools), and the galaxy becomes a conversation
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 > Status: **design only** (written before implementation, same discipline as
 > [self-access.md](self-access-design.md) / [ring3-core.md](../50-evolution/ring3-core.md) /

@@ -1,4 +1,6 @@
 # DMOE-A — distributed-MoE expert bank (fleet capacity that GROWS with N)
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [dmoe-*] `distributed-moe` -->
 
 > **Status: SHIPPED 2026-07-05 (`8f754c3b`) — CI green** (job "distributed-MoE capacity
 > ([dmoe-*] bank; hosted-only, crown-neutral)", confirmed green on run `33812013193`,

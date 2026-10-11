@@ -1,4 +1,6 @@
 # Frontier Mouth — CONSULT / TEACH (module)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [frontier-*] [teach-prov] -->
 
 The ownerless mind's **optional** socket onto stronger brains. Design source:
 `frontier_mouth_design.md` (companion to `conscience.md` — the immutable floor

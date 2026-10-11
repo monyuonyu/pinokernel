@@ -1,4 +1,6 @@
 # Generational migration succession — a mind crosses an architecture gap without dying
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [generation-survives] [gen-floor-invariant] -->
 
 > Evolution layer capstone. Companion to `10-requirements/compat-migration-chain-plan.md`
 > (the FORMAT-migration chain) and `compatibility.md` §5.3/§5.4. The full design

@@ -1,4 +1,6 @@
 # Death-piercing — 推論の途中で死んでも、群れは答える
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `survival-loop` `13_survival_loop` -->
 
 wave 8 / 配線③。第三のレビューの核心への回答:
 

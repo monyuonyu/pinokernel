@@ -1,4 +1,6 @@
 # R3 — 網を太らせる（model widening / weight distribution）
+<!-- vmodel rung: N/A -->
+<!-- vmodel certs: [lang-capacity-v2] -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** この「635 param の玩具を太らせる」問いは living-mind で **回答済**：R3 in-context 基盤は `R_NP`=21,568・`R_DM`=48 まで広がり、LM-9 で comfortable-N が 4→16 になった（[[living-mind.md]] の SHIPPED 表、Closed wave-39）。本文は widening 論拠の 年輪。
 

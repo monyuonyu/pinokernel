@@ -1,4 +1,6 @@
 # Measured-Capability Supernode Auto-Promotion (N-2d)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: `connect-anywhere-certs` -->
 
 Status: SHIPPED + AUDITED + integrated to master (23811db7), 2026-06-27.
 design->implement->audit by SEPARATE agents; auditor PASS (both crowns

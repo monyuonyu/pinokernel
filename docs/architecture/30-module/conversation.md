@@ -1,4 +1,6 @@
 # conversation — 語彙の檻を出る（the scale wall）
+<!-- vmodel rung: N/A -->
+<!-- vmodel certs: - -->
 
 > Status: **design exploration**（実装前・戦略分岐を炙り出す段階）。位置づけ:
 > product-soul が言う「人が使いたくなる理由」＝会話、を可能にする本丸。

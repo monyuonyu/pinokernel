@@ -1,4 +1,6 @@
 # conversational-teaching — a live teacher node educates the child over the network
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [teach-arrival] [teach-live] [teach-consolidated] -->
 
 > **Status: SHIPPED (cradle live L1/L2/L3, wave 2026-06-26) — reconciled 2026-07-01.**
 > The live-teacher wire is real: `arch/common/cradle_net.c` publishes a **40-byte**

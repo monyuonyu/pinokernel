@@ -1,4 +1,6 @@
 # Living-body inspector — the star's organs ARE wired to REAL vitals
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 **Status: SHIPPED (organs wired to REAL vitals; on the phones). HONEST-GLOW is the law
 and is enforced in code.**

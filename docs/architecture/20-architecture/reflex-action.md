@@ -1,4 +1,6 @@
 # 反射の行動 — 思考に手足を付ける（推論結果 → 局所即時防御）
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [g38-confidence-live] [g38-learning-improves-guarding] [g38-guard-feeds-learning] [g33-controlled] -->
 
 > 第9波・配線②。`arch/common/reflex.c` / `arch/common/include/reflex.h`。
 > 関連: [[survival-network.md]] §2（守る単位と守る力の分離）・§8（反射＝速い時定数・局所閉ループ）、

@@ -1,4 +1,6 @@
 # living-mind LM-13 — graceful forgetting
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [forget-*] `mind forget` -->
 
 > Status: **SHIPPED + CI-gated.** The in-process cert (`mind forget`) is green
 > and grepped in `.github/workflows/ci.yml` (the `[forget-*]` gates, appended

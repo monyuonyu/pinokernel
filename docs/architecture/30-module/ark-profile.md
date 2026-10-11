@@ -1,4 +1,6 @@
 # Ark-profile — 人類の記憶 (humanity's memory): the human chapter of the autobiography
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [ark-consent] [ark-profile] [ark-provenance] [i18n-manifesto] -->
 
 **Status: SHIPPED (v1 live). wave-33; 2026-06-19 doc-status fix.**
 What actually shipped: `arch/common/ark_profile.c` (+ `include/ark_profile.h`) implements the

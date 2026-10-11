@@ -1,4 +1,6 @@
 # 記憶→思考 — forward パスが p-fs を読む (Wave 8 ①)
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: [persist-mind] -->
 
 ## §9 への答え
 

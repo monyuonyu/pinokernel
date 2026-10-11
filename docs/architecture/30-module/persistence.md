@@ -1,4 +1,6 @@
 # persistence — 忘れない方舟（the ark must remember）
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [persist-identity] [persist-mind] [persist-mind-stale] -->
 
 > Status: **SHIPPED (SLICE 0+1+2)** — 0.4.7／2026-06-19 doc-status fix. 下の
 > 「実装前」「再起動で全部忘れる」は STALE。今は身元も学んだ心も再起動を生き延びる。

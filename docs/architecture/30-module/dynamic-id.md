@@ -1,4 +1,6 @@
 # Dynamic node ID — churn 耐性のある同一性、中央なしへの道筋
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [swim-incarn] -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** G6 の第一歩（relay lease による node-id）は方向として生きている。UX キューに **鍵派生 node-id** が積まれている（product-soul／UX）。完全自己編成トポロジは引き続き設計。正本は [[gap-ledger.md]]。
 

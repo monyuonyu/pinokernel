@@ -1,4 +1,6 @@
 # 良心 — The Conscience Floor (implemented 2026-07-05)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [law-*] [conscience-*] -->
 
 **Status: SHIPPED (feat/conscience-floor).** Design origin: the 2026-07-04
 requirement (mk_pino) — *the mind must not answer harmful requests*

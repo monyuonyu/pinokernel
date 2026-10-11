@@ -1,4 +1,6 @@
 # selfc × ring3 — self-built units behind the immune boundary
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [selfc-isolated] [selfc-rollback] [selfc-lineage] -->
 
 > Status: **SHIPPED (v1 germ)** — wave-31; 2026-06-19 doc-status fix. The "written before
 > implementation" line below is STALE. What shipped: self-compiled code can no longer kill

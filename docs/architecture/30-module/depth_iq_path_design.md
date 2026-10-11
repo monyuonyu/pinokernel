@@ -1,4 +1,6 @@
 # 深さ（IQ）への道 — test-time DELIBERATION（DLB）の設計
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [depth-*] `run_depth.sh` -->
 
 > 「N を増やすと賢くなる」は正直に分解すると **breadth / resilience / throughput は scale するが、
 > per-thought の深さ（1回の思考の攻撃バイアス）は N に不変**だった（[scaling-law.md](../scaling-law.md)）。

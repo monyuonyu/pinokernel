@@ -1,4 +1,6 @@
 # survival-loop — 生存ループ: 内受容・分散ゲート・世界地図・冬眠・死をひとつの環に
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [survival-l0] [survival-l1] `survival-loop` -->
 
 > **現在地（2026-07-01・doc-hygiene 追記／本文は 年輪 として保存）:** **L0+L1 は SHIPPED／CI**（統一 stress バス＋STATE-aware support routing＋§8 ヒステリシス, crown-preserving, `2a068400` 系）。L2–L4（apoptosis／冬眠／環の完成）は引き続き DESIGN。正本は [[gap-ledger.md]]。
 

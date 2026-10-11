@@ -1,4 +1,6 @@
 # p2p-overlay — the Skype-original-like decentralized network (design + critique)
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [mesh-discovery] -->
 
 **Status: design done + adversarial critique VERDICT: SOUND (2026-06-19).** mk_pino: "Skypeの
 ようなネットワークを築きたい" — a P2P mesh with NO central server; the relay becomes a role,

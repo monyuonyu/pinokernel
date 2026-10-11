@@ -1,4 +1,6 @@
 # 心を説明するコマンド（ROADMAP 1-4、設計メモ）
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [mind-explain] [mind-prov] `run_mind_explain.sh` `run_mind_provenance.sh` `ump-x86_64` -->
 
 2026-10-04。外部レビュー §67「AI の記憶を人間が監査できるインターフェース」。最初の1つ `mind explain <鍵>` を作る。
 

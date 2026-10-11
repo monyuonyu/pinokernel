@@ -1,4 +1,6 @@
 # SCALE-WALL rung C1 — context carry (IMPLEMENTED)
+<!-- vmodel rung: CLOSED -->
+<!-- vmodel certs: [ctx-carry] `run_ctxcarry.sh` -->
 
 > Status: IMPLEMENTED 2026-07-05 (NS student v2). Design: `scale_wall_design.md`
 > §3/§4/§8/§9 (the doc-first wave). Cert: `tests/llm/ctxcarry_test.c` +

@@ -1,4 +1,6 @@
 # gpu-compute — 端末の GPU で心の数理を実際に回す（the body's accelerator）
+<!-- vmodel rung: OPEN -->
+<!-- vmodel certs: - -->
 
 > Status: **design DRAFT（統合目標は実装前）／ ただし Vulkan matmul バックエンドは SHIP 済**
 > — 2026-06-19 doc-status note。本書の看板目標（GPU を**心の数理に実際に使う**）はまだ未達だが、
