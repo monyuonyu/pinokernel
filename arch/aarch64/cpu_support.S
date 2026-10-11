@@ -2,7 +2,7 @@
  *  cpu_support.S (aarch64)
  *  Task dispatcher, context switch, EL1 exception vectors, timer startup
  *
- *  Dormant task stack frame (112 bytes, see cpu_task.h):
+ *  Dormant task stack frame (176 bytes, see cpu_task.h):
  *    [sp+  0]  x19  (= stacd for new task)
  *    [sp+  8]  x20  (= exinf for new task)
  *    [sp+ 16]  x21
@@ -17,6 +17,7 @@
  *    [sp+ 88]  x30 (lr)  ← trampoline addr for new, caller addr for running
  *    [sp+ 96]  taskmode
  *    [sp+104]  (padding)
+ *    [sp+112]  d8 .. d15  (8 x 8 bytes, up to sp+175; ROADMAP 0-11)
  *
  *  TCB field offsets (AArch64, extracted via offsetof — see offset.h):
  *    TCB_task = 40
@@ -562,7 +563,7 @@ _vec_el1_irq:
  *  .Lirq_resume_tramp — the resume path for an ASYNC-preempted task (②.2b-i).
  *
  *  Reached when an async-preempted task is later re-dispatched: knl_dispatch's
- *  .Ldispatch_loop has restored the task's 112-byte callee-saved frame and
+ *  .Ldispatch_loop has restored the task's 176-byte callee-saved frame and
  *  `ret`'d into here (with IRQ/FIQ UNMASKED by .Ldispatch_loop's daifclr).
  *  SP points at the [ELR_EL1|SPSR_EL1] pair we pushed at preempt time, sitting
  *  ON TOP OF the original 160-byte save_caller_regs frame.  We:
@@ -763,7 +764,7 @@ smp_dispatch_loop:
  *   Enter the PRODUCTION per-CPU dispatcher loop (.Ldispatch_loop above) on
  *   THIS CPU.  The loop reads g_smpcpu[me].schedtsk (a REAL T-Kernel TCB the
  *   driver pre-set), stores it into g_smpcpu[me].ctxtsk, loads the TCB's
- *   saved SP (tskctxb.ssp), restores its 112-byte frame, and `ret`s into the
+ *   saved SP (tskctxb.ssp), restores its 176-byte frame, and `ret`s into the
  *   real task — a genuine register-context switch into a real TCB on the
  *   secondary CPU.  Never returns to the caller (it switches stacks).  IRQ+FIQ
  *   are masked on entry exactly as knl_dispatch does.  This is how the

@@ -18,9 +18,10 @@
  *    ssp+ 88: x30 (lr) = &knl_task_entry_trampoline
  *    ssp+ 96: taskmode = 0
  *    ssp+104: (padding)
- *   ─── Total: 112 bytes (7 × 16, 16-byte aligned) ───
+ *    ssp+112: d8 .. d15 = 0 (up to ssp+175, ROADMAP 0-11)
+ *   ─── Total: 176 bytes (11 × 16, 16-byte aligned) ───
  *
- *  knl_dispatch saves/restores this 112-byte frame and does `ret` to x30.
+ *  knl_dispatch saves/restores this 176-byte frame and does `ret` to x30.
  *  For a new task, x30 → trampoline, which reads stacd from x19, exinf
  *  from x20, then calls task(stacd, exinf).
  */
