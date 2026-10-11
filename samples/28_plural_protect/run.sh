@@ -27,10 +27,11 @@
 #
 #   FOUR protected points declared SIMULTANEOUSLY across TWO owners
 #   (node1: A1,A2 ; node2: B1,B2). All four reach R replicas and report SAFE,
-#   with progress OVERLAPPING IN TIME (each owner ACTUATES BOTH its points
-#   before either completes — the control that FAILS if defense were
-#   serialized one-point-at-a-time). Then kill -9 node1: its already-replicated
-#   points A1,A2 SURVIVE on neighbours and are served back.
+#   and each owner ACTUATES BOTH its points in the same tick (the check that
+#   FAILS if defense were serialized one-point-at-a-time, -DPROTECT_SABOTAGE_
+#   SERIAL; an attempt whose declares straddle ticks is retried, not passed).
+#   Then kill -9 node1: its already-replicated points A1,A2 SURVIVE on
+#   neighbours and are served back.
 #
 # No central arbiter: every decision (the rotor, per-object age/threat) reads
 # only local/gossiped state. No 200ms aggregation window (cf. audit G13).
@@ -153,10 +154,7 @@ wait_for() {  # <file> <pattern> <secs>
     return 1
 }
 
-A1="soul-A1-owned-by-node1"
-A2="soul-A2-owned-by-node1"
-B1="soul-B1-owned-by-node2"
-B2="soul-B2-owned-by-node2"
+# the four live points (A1, A2, B1, B2) are named per attempt, below
 
 # ===========================================================================
 echo "==========================================================="
@@ -166,7 +164,7 @@ ST=/tmp/p28_selftest.log
 printf 'protect test\nexit\n' | timeout 30 "$BOOT/p-kernel" > "$ST" 2>&1 || true
 grep -E '\[(protect-ground|protect-loop|plural-protect)\]' "$ST" | sed 's/^/    /'
 grep -qE '\[plural-protect\] PASS' "$ST" \
-    && ok "[plural-protect] PASS — N points safe in ~one-point time, not N*one-point (fair, none starves)" \
+    && ok "[plural-protect] PASS — a property of the in-kernel MODEL (pp_sim), not of the live actuator: a serialized live defender passes it too; the live concurrency check is (4) below" \
     || bad "[plural-protect] self-test did not pass"
 grep -qE '\[protect-loop\] PASS' "$ST" \
     && ok "wave-14 closed loop still PASS (no single-point regression)" \
@@ -216,32 +214,75 @@ else
 fi
 
 # --- the real test: FOUR points declared at once across TWO owners ----------
-CAL_IDS=$(declare_id_set "$L1")
-SAFE_BEFORE_1=$(nsafe "$L1"); SAFE_BEFORE_2=$(nsafe "$L2")
-T0=$(now_ms)
-log "declaring 4 protected points SIMULTANEOUSLY (node1: A1,A2 ; node2: B1,B2)"
-send 1 "protect $A1"
-send 1 "protect $A2"
-send 2 "protect $B1"
-send 2 "protect $B2"
-# fire world-map peeks at a neighbour WHILE the points are still at-risk
-# (non-blocking; we grep the result later — best-effort observability).
-send 3 "world"; send 3 "world"
-
-log "waiting for ALL FOUR new points to reach SAFE (replicated to R neighbours) ..."
-deadline=$(( T0 + 40000 ))
+# An owner's two DECLAREs normally land in the same 200 ms actuator tick. If
+# they straddle ticks so far that the first point is already SAFE before the
+# second is declared, the two points never overlapped and (4) cannot judge
+# concurrency either way (audit-39: 0.3 s apart made the plain defender red
+# 2/2). That attempt is INCONCLUSIVE and is retried ONCE with fresh points;
+# it never counts as a pass. Only once: node1's registry holds
+# PROTECT_MAX_OBJS=8 points and it already has 3 calibration + 2 per attempt,
+# so a third attempt is refused ("registry full") and would read as
+# serialized. A serialized defender declares both before either is safe, so
+# it is judged (and red) on the first attempt.
+straddled() {  # <log> <ids...>: 0 if the first-declared id was SAFE before the next DECLARE
+    local f="$1"; shift
+    local first="" fl=99999999 id l s
+    for id in "$@"; do
+        l=$(grep -anE "\[protect\] DECLARE unit id=$id" "$f" | head -1 | cut -d: -f1)
+        [ -n "$l" ] && [ "$l" -lt "$fl" ] && { fl="$l"; first="$id"; }
+    done
+    [ -z "$first" ] && return 1
+    s=$(grep -anE "id=$first .*\*\*\* SAFE" "$f" | head -1 | cut -d: -f1)
+    [ -z "$s" ] && return 1
+    for id in "$@"; do
+        [ "$id" = "$first" ] && continue
+        l=$(grep -anE "\[protect\] DECLARE unit id=$id" "$f" | head -1 | cut -d: -f1)
+        [ -n "$l" ] && [ "$s" -lt "$l" ] && return 0
+    done
+    return 1
+}
+ATTEMPT=1
+JUDGED=1
 while :; do
+    A1="soul-A1-t$ATTEMPT-owned-by-node1"; A2="soul-A2-t$ATTEMPT-owned-by-node1"
+    B1="soul-B1-t$ATTEMPT-owned-by-node2"; B2="soul-B2-t$ATTEMPT-owned-by-node2"
+    PRE1=$(declare_id_set "$L1"); PRE2=$(declare_id_set "$L2")
+    SAFE_BEFORE_1=$(nsafe "$L1"); SAFE_BEFORE_2=$(nsafe "$L2")
+    T0=$(now_ms)
+    log "attempt $ATTEMPT: declaring 4 protected points SIMULTANEOUSLY (node1: A1,A2 ; node2: B1,B2)"
+    send 1 "protect $A1"
+    send 1 "protect $A2"
+    send 2 "protect $B1"
+    send 2 "protect $B2"
+    # fire world-map peeks at a neighbour WHILE the points are still at-risk
+    # (non-blocking; we grep the result later — best-effort observability).
+    send 3 "world"; send 3 "world"
+
+    log "waiting for ALL FOUR new points to reach SAFE (replicated to R neighbours) ..."
+    deadline=$(( T0 + 40000 ))
+    while :; do
+        n1=$(( $(nsafe "$L1") - SAFE_BEFORE_1 ))
+        n2=$(( $(nsafe "$L2") - SAFE_BEFORE_2 ))
+        [ "$n1" -ge 2 ] && [ "$n2" -ge 2 ] && break
+        [ "$(now_ms)" -gt "$deadline" ] && break
+        sleep 0.1
+    done
+    T_FOUR=$(( $(now_ms) - T0 ))
     n1=$(( $(nsafe "$L1") - SAFE_BEFORE_1 ))
     n2=$(( $(nsafe "$L2") - SAFE_BEFORE_2 ))
-    [ "$n1" -ge 2 ] && [ "$n2" -ge 2 ] && break
-    [ "$(now_ms)" -gt "$deadline" ] && break
-    sleep 0.1
+    NSAFE=$(( n1 + n2 ))
+    log "NEW points reaching SAFE: node1=$n1/2  node2=$n2/2  (total $NSAFE/4) in t_four=${T_FOUR}ms"
+    NEW1=$(declare_id_set "$L1" | grep -vxF "$PRE1" | sed 's/^id=//')
+    NEW2=$(declare_id_set "$L2" | grep -vxF "$PRE2" | sed 's/^id=//')
+    if straddled "$L1" $NEW1 || straddled "$L2" $NEW2; then
+        log "INCONCLUSIVE (attempt $ATTEMPT): an owner's first point was SAFE before its second was declared — the points never overlapped; retrying with fresh points"
+        ATTEMPT=$((ATTEMPT + 1))
+        if [ "$ATTEMPT" -le 2 ]; then sleep 1; continue; fi
+        bad "concurrency could not be judged: the declares straddled ticks in both attempts"
+        JUDGED=0
+    fi
+    break
 done
-T_FOUR=$(( $(now_ms) - T0 ))
-n1=$(( $(nsafe "$L1") - SAFE_BEFORE_1 ))
-n2=$(( $(nsafe "$L2") - SAFE_BEFORE_2 ))
-NSAFE=$(( n1 + n2 ))
-log "NEW points reaching SAFE: node1=$n1/2  node2=$n2/2  (total $NSAFE/4) in t_four=${T_FOUR}ms"
 
 echo "----- node3 world map (perceives the plurality via the beacon atrisk byte?) -----"
 grep -aE 'pts defended in parallel|RALLY' "$L3" | tail -4 | sed 's/^/    /'
@@ -289,12 +330,12 @@ new_driven_together() {  # <log> <ids...>: how many of ids were driven with >=2 
     done
     echo "$n"
 }
-NEW1=$(declare_id_set "$L1" | grep -vxF "$CAL_IDS" | sed 's/^id=//')
-NEW2=$(declare_id_set "$L2" | sed 's/^id=//')
 DT1=$(new_driven_together "$L1" $NEW1); DT2=$(new_driven_together "$L2" $NEW2)
 log "concurrency (information): t_one=${T_ONE}ms  t_four=${T_FOUR}ms"
 log "concurrency: new points driven in a tick with >=2 at risk — node1=${DT1}/2 node2=${DT2}/2"
-if [ "$DT1" -eq 2 ] && [ "$DT2" -eq 2 ]; then
+if [ "$JUDGED" -eq 0 ]; then
+    log "concurrency: not judged (both attempts straddled; FAIL above)"
+elif [ "$DT1" -eq 2 ] && [ "$DT2" -eq 2 ]; then
     ok "PARALLEL: each owner drove both of its points in the same tick (a serialized defender drives the second only after the first is safe)"
 else
     bad "concurrency: node1=${DT1}/2 node2=${DT2}/2 points driven together (looks serialized) — see $L1 $L2"
@@ -352,10 +393,11 @@ fi
 echo "==========================================================="
 echo " RESULT: PASS — MANY protected points were defended IN PARALLEL."
 echo " Four points declared at once across two owners all reached R durable"
-echo " replicas concurrently (each owner drove BOTH its points before either"
-echo " finished — overlapping, not serialized), in ~the time of one point,"
-echo " fairly round-robin over a finite announce bandwidth, with no central"
-echo " arbiter. Then the owner of two of them was killed and both survived."
-echo " §2 ∧ §5 — defend many, at once, cleanly distributed — proven in numbers."
+echo " replicas, and each owner drove BOTH of its points in the same actuator"
+echo " tick (a serialized defender drives the second only after the first is"
+echo " safe, and fails this run), with no central arbiter. Then the owner of"
+echo " two of them was killed and both survived. Times are information only:"
+echo " here one point replicates within one tick, so a time bound cannot tell"
+echo " parallel from serialized."
 echo "==========================================================="
 exit 0

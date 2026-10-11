@@ -1534,11 +1534,14 @@ jobs:
     if: ${{ always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) }}
     timeout-minutes: 15
     # enforces the LIVE §2 ∧ §5 path (G35): FOUR protected points declared at
-    # once across TWO owners all reach R durable replicas concurrently — in ~the
-    # time of ONE point (calibrated in-run), far under the 4*t_one serialized
-    # bound — fairly, none starving; then the owner of two of them is killed and
-    # both already-replicated points survive. Proves protection is plural (no
-    # single-consciousness collapse), not just the single-point loop.
+    # once across TWO owners all reach R durable replicas, each owner driving
+    # both of its points in the same actuator tick (a serialized defender does
+    # not: the negative-control step below); then the owner of two of them is
+    # killed and both already-replicated points survive. The t_one / t_four
+    # times are printed as information only (one point replicates within one
+    # tick, so a time bound passed the serialized defender too; gap-ledger
+    # PLURAL-PROTECT-NOT-SHOWN-PARALLEL). The in-kernel [plural-protect]
+    # self-test checks a model (pp_sim), not the live actuator.
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
