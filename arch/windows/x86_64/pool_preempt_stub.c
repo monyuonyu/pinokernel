@@ -2,7 +2,8 @@
  *  arch/windows/x86_64/pool_preempt_stub.c
  *
  *  The shared hosted shell (arch/linux/x86_64/usermain.c) dispatches
- *  `tkconf pool` / `tkconf nosw` / `tkconf fp` to arch/linux/pool_preempt.c.
+ *  `tkconf pool` / `tkconf nosw` / `tkconf fp` / `tkconf nr` to
+ *  arch/linux/pool_preempt.c.
  *  Those probes test the hosted exit dispatch (SIGALRM + arch/linux/<arch>/
  *  preempt.c), which the Windows port does not have (Fiber dispatcher,
  *  no preempt.c; pk_nosw.h is empty here). This TU provides honest stubs
@@ -23,3 +24,4 @@ static INT not_here(void (*out)(const char *), const char *what)
 INT pool_preempt_run(void (*out)(const char *)) { return not_here(out, "pool"); }
 INT nosw_run(void (*out)(const char *))         { return not_here(out, "nosw"); }
 INT fp_preserve_run(void (*out)(const char *))  { return not_here(out, "fp"); }
+INT nosw_relay_run(void (*out)(const char *))   { return not_here(out, "nr"); }
