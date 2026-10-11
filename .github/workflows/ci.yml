@@ -33,8 +33,11 @@
 name: CI
 
 on:
+  # 2026-10-11: master への push では走らせない。master は、候補の枝 feat/next で全部のジョブが
+  # 緑（tests/ci/known-red.txt の許した赤を除く）になった同じコミットだけが進む（~/pkernel-promote.py）。
+  # 同じコミットを2回走らせない（ThinkPad の15ジョブは順番に走るので、2回だと時間が倍になる）。
   push:
-    branches: [master, 'feat/**']
+    branches: ['feat/**']
   pull_request:
     branches: [master, 'feat/**']
 
