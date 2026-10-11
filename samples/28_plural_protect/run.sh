@@ -299,15 +299,27 @@ echo "==========================================================="
 log "*** kill -9 node1 (pid ${NODE_PID[1]}) — owner of A1 and A2 dies ***"
 kill -9 "${NODE_PID[1]}" 2>/dev/null; NODE_PID[1]=0; sleep 1
 
-send 2 "pfs get $A1"
-send 3 "pfs get $A2"
+# Ask BOTH survivors for each point. When the regions are still smaller than 3
+# at DECLARE time the kernel caps R at 1, and the one replica can sit on either
+# survivor; asking a fixed node then fails although the point survived (CI run
+# 38135129386 and a local run: "need R=1", the other survivor held it).
+send 2 "pfs get $A1"; send 3 "pfs get $A1"
+send 2 "pfs get $A2"; send 3 "pfs get $A2"
+served_by() {  # <name> -> prints node2/node3 if either served it within 10 s
+    local i=0
+    while [ "$i" -lt 40 ]; do
+        grep -aqE "\[pfs\] get: $1" "$L2" 2>/dev/null && { echo node2; return 0; }
+        grep -aqE "\[pfs\] get: $1" "$L3" 2>/dev/null && { echo node3; return 0; }
+        sleep 0.25; i=$((i + 1))
+    done
+    return 1
+}
 S=0
-if wait_for "$L2" "\[pfs\] get: $A1" 10; then
-    ok "A1 SURVIVED node1's death — served back from node2's durable store"; S=$((S+1))
-else bad "A1 was NOT served back after node1 died — see $L2"; fi
-if wait_for "$L3" "\[pfs\] get: $A2" 10; then
-    ok "A2 SURVIVED node1's death — served back from node3's durable store"; S=$((S+1))
-else bad "A2 was NOT served back after node1 died — see $L3"; fi
+for P in "$A1" "$A2"; do
+    if W=$(served_by "$P"); then
+        ok "${P%%-owned*} SURVIVED node1's death — served back from $W's durable store"; S=$((S+1))
+    else bad "${P%%-owned*} was NOT served back by node2 or node3 after node1 died — see $L2 $L3"; fi
+done
 echo "----- survivors served by neighbours -----"
 grep -aE '\[pfs\] get' "$L2" "$L3" | tail -4 | sed 's/^/    /'
 echo "------------------------------------------"
