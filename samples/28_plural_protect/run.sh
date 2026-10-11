@@ -214,9 +214,12 @@ fi
 # they straddle ticks so far that the first point is already SAFE before the
 # second is declared, the two points never overlapped and (4) cannot judge
 # concurrency either way (audit-39: 0.3 s apart made the plain defender red
-# 2/2). That attempt is INCONCLUSIVE and is retried with fresh points, up to
-# 3 attempts; it never counts as a pass. A serialized defender declares both
-# before either is safe, so it is judged (and red) on the first attempt.
+# 2/2). That attempt is INCONCLUSIVE and is retried ONCE with fresh points;
+# it never counts as a pass. Only once: node1's registry holds
+# PROTECT_MAX_OBJS=8 points and it already has 3 calibration + 2 per attempt,
+# so a third attempt is refused ("registry full") and would read as
+# serialized. A serialized defender declares both before either is safe, so
+# it is judged (and red) on the first attempt.
 straddled() {  # <log> <ids...>: 0 if the first-declared id was SAFE before the next DECLARE
     local f="$1"; shift
     local first="" fl=99999999 id l s
@@ -235,6 +238,7 @@ straddled() {  # <log> <ids...>: 0 if the first-declared id was SAFE before the 
     return 1
 }
 ATTEMPT=1
+JUDGED=1
 while :; do
     A1="soul-A1-t$ATTEMPT-owned-by-node1"; A2="soul-A2-t$ATTEMPT-owned-by-node1"
     B1="soul-B1-t$ATTEMPT-owned-by-node2"; B2="soul-B2-t$ATTEMPT-owned-by-node2"
@@ -269,8 +273,9 @@ while :; do
     if straddled "$L1" $NEW1 || straddled "$L2" $NEW2; then
         log "INCONCLUSIVE (attempt $ATTEMPT): an owner's first point was SAFE before its second was declared — the points never overlapped; retrying with fresh points"
         ATTEMPT=$((ATTEMPT + 1))
-        if [ "$ATTEMPT" -le 3 ]; then sleep 1; continue; fi
-        bad "concurrency could not be judged: the declares straddled ticks in 3 attempts"
+        if [ "$ATTEMPT" -le 2 ]; then sleep 1; continue; fi
+        bad "concurrency could not be judged: the declares straddled ticks in both attempts"
+        JUDGED=0
     fi
     break
 done
@@ -324,7 +329,9 @@ new_driven_together() {  # <log> <ids...>: how many of ids were driven with >=2 
 DT1=$(new_driven_together "$L1" $NEW1); DT2=$(new_driven_together "$L2" $NEW2)
 log "concurrency (information): t_one=${T_ONE}ms  t_four=${T_FOUR}ms"
 log "concurrency: new points driven in a tick with >=2 at risk — node1=${DT1}/2 node2=${DT2}/2"
-if [ "$DT1" -eq 2 ] && [ "$DT2" -eq 2 ]; then
+if [ "$JUDGED" -eq 0 ]; then
+    log "concurrency: not judged (both attempts straddled; FAIL above)"
+elif [ "$DT1" -eq 2 ] && [ "$DT2" -eq 2 ]; then
     ok "PARALLEL: each owner drove both of its points in the same tick (a serialized defender drives the second only after the first is safe)"
 else
     bad "concurrency: node1=${DT1}/2 node2=${DT2}/2 points driven together (looks serialized) — see $L1 $L2"
