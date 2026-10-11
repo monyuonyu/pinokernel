@@ -924,6 +924,9 @@ int student_dmn_consolidate(void)
              * tick writes nothing (the writer's own path persists). One region:
              * the check and the snapshot of live's fields are not split. */
             long w = -1;
+#ifdef EMA_GEN_DISABLE
+            (void)ema_gen;
+#endif
             PK_NOSW_ENTER();
             if (!use_ema) {
                 w = st_save(&g_student, blob, need);
