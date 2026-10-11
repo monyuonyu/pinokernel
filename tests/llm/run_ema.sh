@@ -6,7 +6,12 @@
 #   ON arm  (PKERNEL_STUDENT_EMA=1, 8 ticks): live unchanged, the lower-held
 #           copy is written, every second-half write is the copy.
 #   FALSIFIER (-DEMA_FOLD_DISABLE, ON, 8 ticks): must FAIL ([ema-helps] RED).
-# exit 0 = OFF and ON PASS and the falsifier FAILS.
+#   WRITER arm (ON): a higher writer of g_student runs inside the copy's
+#           held-out evaluation (-Wl,--wrap=st_eval_loss); its update stays in
+#           live and the stale copy is not written ([ema-writer-kept]).
+#   FALSIFIER (-DEMA_VIEW_DISABLE: the repointing audit-35 failed): the writer
+#           arm must FAIL.
+# exit 0 = OFF, ON and WRITER PASS and both falsifiers FAIL.
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -25,10 +30,14 @@ printf '%s\n' \
 SRC="$SRC $STUB"
 CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off"
 
+LDWRAP="-Wl,--wrap=st_eval_loss"   # the writer arm's hook; a pass-through otherwise
+
 echo "[build] compiling saved-copy EMA cert ..."
-"$CC" $CFLAGS $SRC -lm -o "$WORK/ema" || { echo "[build] FAILED"; exit 1; }
+"$CC" $CFLAGS $SRC $LDWRAP -lm -o "$WORK/ema" || { echo "[build] FAILED"; exit 1; }
 echo "[build] compiling falsifier (-DEMA_FOLD_DISABLE) ..."
-"$CC" $CFLAGS -DEMA_FOLD_DISABLE $SRC -lm -o "$WORK/ema_nofold" || { echo "[build] falsifier FAILED"; exit 1; }
+"$CC" $CFLAGS -DEMA_FOLD_DISABLE $SRC $LDWRAP -lm -o "$WORK/ema_nofold" || { echo "[build] falsifier FAILED"; exit 1; }
+echo "[build] compiling falsifier (-DEMA_VIEW_DISABLE) ..."
+"$CC" $CFLAGS -DEMA_VIEW_DISABLE $SRC $LDWRAP -lm -o "$WORK/ema_noview" || { echo "[build] falsifier FAILED"; exit 1; }
 
 echo ""; echo "=== OFF (PKERNEL_STUDENT_EMA unset; must PASS) ==="
 ( cd "$ROOT" && env -u PKERNEL_STUDENT_EMA "$WORK/ema" 2 ); OFF_RC=$?
@@ -36,11 +45,16 @@ echo ""; echo "=== ON (PKERNEL_STUDENT_EMA=1; must PASS) ==="
 ( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema" 8 ); ON_RC=$?
 echo ""; echo "=== falsifier -DEMA_FOLD_DISABLE, ON (must FAIL = RED) ==="
 ( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema_nofold" 8 ); NF_RC=$?
+echo ""; echo "=== WRITER (PKERNEL_STUDENT_EMA=1; must PASS) ==="
+( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema" writer ); WR_RC=$?
+echo ""; echo "=== falsifier -DEMA_VIEW_DISABLE, WRITER (must FAIL = RED) ==="
+( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema_noview" writer ); NV_RC=$?
 
 echo ""
-if [ "$OFF_RC" -eq 0 ] && [ "$ON_RC" -eq 0 ] && [ "$NF_RC" -ne 0 ]; then
-  echo "[result] PASS  saved-copy EMA: off identical, on helps, falsifier RED"
+if [ "$OFF_RC" -eq 0 ] && [ "$ON_RC" -eq 0 ] && [ "$NF_RC" -ne 0 ] && \
+   [ "$WR_RC" -eq 0 ] && [ "$NV_RC" -eq 1 ]; then
+  echo "[result] PASS  saved-copy EMA: off identical, on helps, writer kept, both falsifiers RED"
   exit 0
 fi
-echo "[result] FAIL  off_rc=$OFF_RC on_rc=$ON_RC falsifier_rc=$NF_RC (want 0 0 !=0)"
+echo "[result] FAIL  off_rc=$OFF_RC on_rc=$ON_RC falsifier_rc=$NF_RC writer_rc=$WR_RC noview_rc=$NV_RC (want 0 0 !=0 0 1)"
 exit 1

@@ -61,8 +61,59 @@ static int g_pass = 0, g_fail = 0;
     if (cond) { printf("  PASS  %s\n", (msg)); g_pass++; } \
     else      { printf("  FAIL  %s\n", (msg)); g_fail++; } } while (0)
 
+/* [ema-writer-kept] (audit-35): the copy's held-out evaluation is many
+ * st_eval_loss calls, and the exit dispatch may run a higher writer of
+ * g_student between two of them. Linked with -Wl,--wrap=st_eval_loss, the
+ * first evaluation of the copy (m->w == g_ema) runs such a writer once, as the
+ * `student` retrain / merge paths do: student_consol_abort(), then a write to
+ * g_student.w. The write must stay in live, and the DMN must not then write
+ * the copy it evaluated before the abort. */
+float __real_st_eval_loss(st_model *m, const uint8_t *b, int n, int *np);
+static int    g_wr_armed = 0, g_wr_done = 0;
+static float *g_wr_live = NULL;
+static float  g_wr_v0 = 0.0f;
+float __wrap_st_eval_loss(st_model *m, const uint8_t *b, int n, int *np)
+{
+    if (g_wr_armed && !g_wr_done && g_ema && m->w == g_ema) {
+        g_wr_done = 1;
+        g_wr_v0 = g_wr_live[0];
+        student_consol_abort();
+        g_student.w[0] += 0.5f;
+    }
+    return __real_st_eval_loss(m, b, n, np);
+}
+
+static int writer_arm(void)
+{
+    printf("[ema] writer arm: a higher writer runs inside the copy's evaluation\n");
+    g_have_student = 0; g_consol_active = 0; g_consol_idx = 0;
+    if (student_ensure(0) != 0) { printf("[ema] student_ensure OOM\n"); return 2; }
+    unsigned wrote_after = 0;
+    for (int t = 1; t <= 4 && !g_wr_done; t++) {
+        int rc = 0, calls = 0;
+        do {
+            unsigned before = g_cap_count;
+            g_wr_live = g_student.w;
+            g_wr_armed = 1;
+            rc = student_dmn_consolidate(); calls++;
+            g_wr_armed = 0;
+            if (g_wr_done) wrote_after = g_cap_count - before;
+        } while (rc == 0 && calls < 100000 && !g_wr_done);
+    }
+    if (!g_wr_done) { printf("[ema] the copy was never evaluated\n"); return 2; }
+    float dv = g_wr_live[0] - g_wr_v0;   /* later Adam steps move w[0] by ~1e-2 at most */
+    printf("[ema] live[0] %.6f -> %.6f (writer added 0.5), DMN writes in that call: %u\n",
+           (double)g_wr_v0, (double)g_wr_live[0], wrote_after);
+    CHECK(g_student.w == g_wr_live && dv > 0.25f && dv < 0.75f,
+          "[ema-writer-kept] the writer's update is in live");
+    CHECK(wrote_after == 0, "[ema-writer-kept] the copy evaluated before the abort is not written");
+    printf("[result] %s (%d pass, %d fail)\n", g_fail ? "FAIL" : "PASS", g_pass, g_fail);
+    return g_fail ? 1 : 0;
+}
+
 int main(int argc, char **argv)
 {
+    if (argc > 1 && !strcmp(argv[1], "writer")) return writer_arm();
     int T = argc > 1 ? atoi(argv[1]) : 8;
     int on = student_ema_on();
     int corpus_n  = (int)sizeof(TEACHER_FIXTURE) - 1;

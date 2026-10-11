@@ -317,6 +317,7 @@ static int      g_ema_np    = 0;
 static int      g_ema_have  = 0;      /* 1 once g_ema holds a fold             */
 static int      g_ema_env   = -1;     /* PKERNEL_STUDENT_EMA, read once        */
 static unsigned g_ema_saves = 0;      /* DMN saves that wrote the copy (obs)   */
+static unsigned g_ema_gen   = 0;      /* bumped by student_consol_abort        */
 
 static int student_ema_on(void)
 {
@@ -523,6 +524,7 @@ void student_consol_abort(void)
     cradle_lesson_freeze(0);   /* release the corpus: deferred lessons ingest next poll */
     g_consol_active = 0; g_consol_idx = 0;
     g_ema_have = 0;            /* the saved-copy EMA restarts from the new weights */
+    g_ema_gen++;               /* ...and a copy evaluated before this is not written */
 }
 
 /* ---------------------------------------------------------------------------
@@ -882,14 +884,29 @@ int student_dmn_consolidate(void)
      * learning keeps persisting; the wear stops exactly when learning does. */
     float cur = heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
     /* saved-copy EMA: the candidate is the lower-held of live and the copy.
-     * The copy is evaluated / saved by pointing w at it for the call only
-     * (single-threaded here: heldout_loss and st_save do not yield). */
-    float *live_w = g_student.w;
+     * The copy is evaluated / saved through a VIEW (g_student's fields, w =
+     * the copy, its own activation cache): g_student.w is never repointed.
+     * heldout_loss is many forwards and the exit dispatch may switch between
+     * two of them (pk_nosw.h regions are one forward each); a higher writer
+     * (`student` retrain, merge, load) must land in live, not in the copy
+     * (audit-35: repointing lost such a write). st_forward frees and
+     * reallocates m->cache on every call, so the view must not share it. */
     int use_ema = 0;
+    unsigned ema_gen = g_ema_gen;
     if (student_ema_on() && g_ema_have && g_ema_np == g_student.n_params) {
+#ifdef EMA_VIEW_DISABLE
+        /* FALSIFIER for [ema-writer-kept]: the repointing audit-35 failed */
+        float *live_w = g_student.w;
         g_student.w = g_ema;
         float ce = heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
         g_student.w = live_w;
+#else
+        st_model view = g_student;
+        view.w = g_ema;
+        view.cache = NULL;
+        float ce = heldout_loss(&view, ST_DMN_SEQLEN, train_end, heldw);
+        free(view.cache);
+#endif
         if (ce < cur) { cur = ce; use_ema = 1; }
     }
     int improved   = !g_dmn_saved || (cur < g_dmn_saved_loss - ST_DMN_SAVE_EPS);
@@ -902,9 +919,22 @@ int student_dmn_consolidate(void)
         size_t need = st_blob_size(&g_student);
         unsigned char *blob = (unsigned char *)malloc(need);
         if (blob) {
-            if (use_ema) g_student.w = g_ema;
-            long w = st_save(&g_student, blob, need);
-            g_student.w = live_w;
+            /* the copy is written only if no writer restarted it (abort bumps
+             * g_ema_gen) or regrew the model since it was evaluated; else this
+             * tick writes nothing (the writer's own path persists). One region:
+             * the check and the snapshot of live's fields are not split. */
+            long w = -1;
+            PK_NOSW_ENTER();
+            if (!use_ema) {
+                w = st_save(&g_student, blob, need);
+            } else if (g_ema_gen == ema_gen && g_ema_have &&
+                       g_ema_np == g_student.n_params &&
+                       st_blob_size(&g_student) == need) {
+                st_model view = g_student;
+                view.w = g_ema;
+                w = st_save(&view, blob, need);
+            }
+            PK_NOSW_LEAVE();
             if (w >= 0 && pfs_dur_write(STUDENT_DUR_FILE, blob, (unsigned)w) == 0) {
                 g_dmn_saved        = 1;
                 g_dmn_saved_loss   = cur;

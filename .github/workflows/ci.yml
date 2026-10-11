@@ -2381,7 +2381,9 @@ jobs:
       - name: saved-copy EMA cert (the DMN writes the lower-held of live / EMA copy; off = today byte-identical)
         # research/lr-schedule.md. Opt-in PKERNEL_STUDENT_EMA=1. OFF arm byte-identical
         # writes, ON arm live unchanged + lower-held written + second-half writes are the
-        # copy, -DEMA_FOLD_DISABLE falsifier RED. ~7 min here (this job ran ~10 of 25 min).
+        # copy, -DEMA_FOLD_DISABLE falsifier RED; a writer inside the copy's evaluation
+        # stays in live, -DEMA_VIEW_DISABLE (repointing g_student.w) RED (audit-35).
+        # ~7 min here (this job ran ~10 of 25 min).
         run: bash tests/llm/run_ema.sh
 
   sanitizer-build:
