@@ -853,6 +853,75 @@ static void ns_drpc(void)
     pp_check(dc_during > 0, "N27", "no starvation: high claims while the runner was claiming", dc_during);
 }
 
+/* N28-N30: net_relay_send's static packet buffer and the relay's nonce
+ * counter (relay_bcast in arch/linux/<arch>/net_relay.c; ROADMAP 0-10, hosted
+ * aarch64 had no region there). The same shape as N20-N22: the runner sends
+ * 1000-byte frames of 0xAA, a pri-19 task wakes every 2 ms and sends 0xBB,
+ * 60 times, into private buffers on the v2 wire with a zero key.
+ *   N28  packets that are not the sender's own (payload or MAC)
+ *   N29  nonces lost: next_nonce advanced less than the number of sends
+ *   N30  no starvation: sends landed while the runner was busy
+ * -DPK_NOSW_OFF must turn N28 red. While the relay is up the probe refuses
+ * and N28-N30 are SKIPPED. `tkconf nr` runs only this part. */
+IMPORT int net_relay_nosw_probe(int on, unsigned long long *nonce);
+IMPORT int net_relay_nosw_send(const void *frame, int len, unsigned char *out);
+IMPORT int net_relay_live(void);
+static volatile INT nr_hrun, nr_hbad, nr_during, nr_busy;
+static void t_nr_high(INT stacd, void *exinf)
+{
+    static UB f[NW_LEN], o[NW_LEN + 64];
+    (void)stacd; (void)exinf;
+    memset(f, 0xBB, sizeof f);
+    for (INT n = 0; n < NW_HI; n++) {
+        tk_dly_tsk(2);
+        if (nr_busy) nr_during++;
+        if (!net_relay_nosw_send(f, NW_LEN, o)) nr_hbad++;
+        nr_hrun++;
+    }
+    tk_ext_tsk();
+}
+static void ns_netrelay(void)
+{
+    static UB f[NW_LEN], o[NW_LEN + 64];
+    INT sends = 0, bad = 0;
+    unsigned long long n0, n1;
+    if (net_relay_live() || net_relay_nosw_probe(1, &n0) < 0) {
+        pp_out("[nosw] SKIP N28 N29 N30  the relay is live (the probe needs its own zero key)\r\n");
+        pp_skip += 3;
+        return;
+    }
+    memset(f, 0xAA, sizeof f);
+    nr_hrun = nr_hbad = nr_during = 0;
+    ID t = pp_mk(t_nr_high, 19);
+    if (t > 0) tk_sta_tsk(t, 0);
+    nr_busy = 1;
+    while (nr_hrun < NW_HI && sends < 20000000) {
+        if (!net_relay_nosw_send(f, NW_LEN, o)) bad++;
+        sends++;
+    }
+    nr_busy = 0;
+    for (INT n = 0; n < 200 && nr_hrun < NW_HI; n++) tk_dly_tsk(10);
+    if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    net_relay_nosw_probe(0, &n1);
+    long long lost = (long long)(sends + nr_hrun) - (long long)(n1 - n0);
+    { char m[200];
+      snprintf(m, sizeof m, "[nosw] net_relay: %d runner sends, %d high sends, nonces %llu\r\n",
+               (int)sends, (int)nr_hrun, n1 - n0);
+      pp_out(m); }
+    pp_check(bad + nr_hbad == 0, "N28", "net_relay packets that were not the sender's own", bad + nr_hbad);
+    pp_check(lost == 0, "N29", "net_relay nonces lost (sends - nonces minted)", (INT)lost);
+    pp_check(nr_during > 0, "N30", "no starvation: net_relay sends while the runner was busy", nr_during);
+}
+
+static void t_nr_runner(INT stacd, void *exinf)
+{
+    (void)stacd; (void)exinf;
+    ns_netrelay();
+    pp_done = 1;
+    tk_wup_tsk(pp_caller);
+    tk_ext_tsk();
+}
+
 static void t_ns_runner(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -889,6 +958,7 @@ static void t_ns_runner(INT stacd, void *exinf)
     ns_dkva();
     ns_poolregion();
     ns_netlan();
+    ns_netrelay();
     ns_drpc();
 done:
     pp_done = 1;
@@ -915,7 +985,28 @@ INT nosw_run(void (*out)(const char *))
     if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 900 s\r\n"); pp_fail++; tk_ter_tsk(run); }
     tk_del_tsk(run);
     out(pp_fail ? "[nosw] RED\r\n" :
-        pp_skip ? "[nosw] PASS, BUT N20-N22 N24 N25 SKIPPED (net_lan is live)\r\n" :
+        pp_skip ? "[nosw] PASS, BUT SOME CHECKS SKIPPED (see the SKIP lines: net_lan or the relay is live)\r\n" :
+                  "[nosw] ALL PASS\r\n");
+    return pp_fail;
+}
+
+/* `tkconf nr`: only N28-N30 (the relay sender), short enough for the hosted
+ * aarch64 CI step where the whole `tkconf nosw` (~10 min under qemu-user) is
+ * not run. */
+INT nosw_relay_run(void (*out)(const char *))
+{
+    pp_out = out; pp_fail = 0; pp_skip = 0; pp_done = 0; pp_tag = "[nosw]";
+    out("[nosw] the relay sender under task switches (runner pri 20, sender pri 19)\r\n");
+    pp_caller = tk_get_tid();
+    ID run = pp_mk(t_nr_runner, 20);
+    if (run <= 0) { out("[nosw] FAIL setup: no runner task\r\n"); return 1; }
+    tk_can_wup(TSK_SELF);
+    tk_sta_tsk(run, 0);
+    while (!pp_done && tk_slp_tsk(300000) == E_OK) { }
+    if (!pp_done) { out("[nosw] FAIL setup: the runner did not finish within 300 s\r\n"); pp_fail++; tk_ter_tsk(run); }
+    tk_del_tsk(run);
+    out(pp_fail ? "[nosw] RED\r\n" :
+        pp_skip ? "[nosw] PASS, BUT N28-N30 SKIPPED (the relay is live)\r\n" :
                   "[nosw] ALL PASS\r\n");
     return pp_fail;
 }
