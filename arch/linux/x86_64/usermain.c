@@ -17,6 +17,7 @@
 INT pool_preempt_run(void (*out)(const char *));   /* pool_preempt.c */
 INT nosw_run(void (*out)(const char *));           /* pool_preempt.c */
 INT fp_preserve_run(void (*out)(const char *));    /* pool_preempt.c */
+INT rx_bounds_run(void (*out)(const char *));      /* rx_bounds_test.c (0-9) */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -1158,6 +1159,8 @@ EXPORT INT usermain(void)
                 nosw_run(print);          /* pool_preempt.c, pk_nosw.h */
             else if (tal >= 2 && ta[0]=='f'&&ta[1]=='p')
                 fp_preserve_run(print);   /* pool_preempt.c, FP-PRESERVE */
+            else if (tal >= 2 && ta[0]=='r'&&ta[1]=='x')
+                rx_bounds_run(print);     /* rx_bounds_test.c, ROADMAP 0-9 */
             else
                 tk_conform_run(print);
         } else if (starts_with(line, n, "fed") && (n == 3 || line[3] == ' ')) {

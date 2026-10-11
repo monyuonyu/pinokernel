@@ -48,6 +48,14 @@ static UW spawn_push_cnt  = 0;   /* push した回数    */
 static UW spawn_offer_cnt = 0;   /* offer 受信回数   */
 static UB spawned[DNODE_MAX];    /* 配布済みフラグ   */
 
+/* Count of packets rejected as malformed (bad range / short). Read by the
+ * rx-bounds cert (ROADMAP 0-9); not exported in a header. */
+UW spawn_drop_bad = 0;
+
+/* Smallest `len` that lets the STATE_PUSH loop read data[0..DNODE_MAX-1]. */
+#define SP_STATE_MIN_LEN \
+    ((UH)(sizeof(SPAWN_PKT) - SPAWN_CHUNK_SIZE + DNODE_MAX))
+
 /* ------------------------------------------------------------------ */
 /* ノード IP アドレス                                                  */
 /* ------------------------------------------------------------------ */
@@ -117,6 +125,14 @@ void spawn_rx(UW src_ip, UH src_port, const UB *data, UH len)
     const SPAWN_PKT *pkt = (const SPAWN_PKT *)data;
     if (pkt->magic != SPAWN_MAGIC || pkt->version != SPAWN_VERSION) return;
 
+    /* src_node is a UB (0..255) straight off the wire; it indexes spawned[]
+     * (DNODE_MAX entries) in the READY case below. Reject out-of-range ids so
+     * the table write stays in bounds. spawn_on_new_node() already does this;
+     * the rx path did not. (ROADMAP 0-9) */
+#ifndef RXB_NO_SPAWN_GUARD
+    if (pkt->src_node >= DNODE_MAX) { spawn_drop_bad++; return; }
+#endif
+
     switch (pkt->type) {
 
     case SPAWN_OFFER: {
@@ -165,6 +181,13 @@ void spawn_rx(UW src_ip, UH src_port, const UB *data, UH len)
     }
 
     case SPAWN_STATE_PUSH: {
+        /* The loop below reads pkt->data[0..DNODE_MAX-1], but the length check
+         * at the top only guaranteed the header. Require those bytes to be
+         * present before reading them. (ROADMAP 0-9) */
+#ifndef RXB_NO_SPAWN_LEN
+        if (len < SP_STATE_MIN_LEN) { spawn_drop_bad++; return; }
+#endif
+
         /* リーダーからのクラスタ状態を受信 */
         sp_puts("[spawn] cluster state received  leader=");
         sp_putdec(pkt->raft_leader);

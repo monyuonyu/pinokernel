@@ -40,6 +40,15 @@ static void kl_putdec(UW v)
 
 #define KLOAD_BUF_MAX   (8 * 1024 * 1024)  /* 最大 8 MB */
 
+/* Fixed header length (bytes before data[]) and the chunk-index ceiling that
+ * keeps chunk_idx*KLOAD_CHUNK_SIZE inside kload_buf without a 32-bit multiply
+ * overflow. (ROADMAP 0-9) */
+#define KLOAD_HDR_LEN   ((UH)(sizeof(KLOAD_PKT) - KLOAD_CHUNK_SIZE))
+#define KLOAD_MAX_CHUNK (KLOAD_BUF_MAX / KLOAD_CHUNK_SIZE)
+
+/* Packets rejected as malformed. Read by the rx-bounds cert (ROADMAP 0-9). */
+UW kloader_drop_bad = 0;
+
 static UB  kload_buf[KLOAD_BUF_MAX];
 static UW  kload_total   = 0;
 static UW  kload_written = 0;
@@ -84,7 +93,9 @@ void kloader_rx(UB src_node, UH dst_port, const UB *data, UH len)
 {
     (void)src_node; (void)dst_port;
 
-    if (len < 12) return;   /* ヘッダ最低サイズ */
+    /* The fixed header runs through chunk_len (18 bytes); the old floor of 12
+     * let total_size/chunk_idx/chunk_len be read past `len`. (ROADMAP 0-9) */
+    if (len < KLOAD_HDR_LEN) { kloader_drop_bad++; return; }
 
     const KLOAD_PKT *pkt = (const KLOAD_PKT *)data;
     if (pkt->magic   != KLOAD_MAGIC)   return;
@@ -106,8 +117,25 @@ void kloader_rx(UB src_node, UH dst_port, const UB *data, UH len)
     if (pkt->type == KLOAD_CHUNK) {
         if (!kload_active) return;
 
-        UW offset = (UW)pkt->chunk_idx * KLOAD_CHUNK_SIZE;
-        UH clen   = pkt->chunk_len;
+        UH clen = pkt->chunk_len;
+
+        /* clen bytes are copied from pkt->data[] (KLOAD_CHUNK_SIZE long) and
+         * must actually be present in this packet. Without this a chunk_len up
+         * to 65535 over-reads the received frame and over-writes kload_buf.
+         * (ROADMAP 0-9) */
+#ifndef RXB_NO_KLOAD_CLEN
+        if (clen > KLOAD_CHUNK_SIZE)          { kloader_drop_bad++; return; }
+        if ((UW)KLOAD_HDR_LEN + clen > len)   { kloader_drop_bad++; return; }
+#endif
+
+        /* Bound chunk_idx first, then form the offset: chunk_idx*CHUNK_SIZE in
+         * 32-bit UW wraps for large chunk_idx, so the old
+         * `offset + clen > KLOAD_BUF_MAX` check could be bypassed by a wrapped
+         * (small) offset standing in for a huge one. (ROADMAP 0-9) */
+#ifndef RXB_NO_KLOAD_IDX
+        if (pkt->chunk_idx >= KLOAD_MAX_CHUNK) { kloader_drop_bad++; return; }
+#endif
+        UW offset = pkt->chunk_idx * KLOAD_CHUNK_SIZE;
 
         if (offset + clen > KLOAD_BUF_MAX) {
             kl_puts("[kloader_task] buffer overflow — abort\r\n");

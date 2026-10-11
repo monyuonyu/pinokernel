@@ -255,8 +255,17 @@ void raft_rx(UW src_ip, UH src_port, const UB *data, UH len)
             become_follower(p->term);
         }
 
-        /* ログ複製: 新しいエントリがあれば追加 */
+        /* ログ複製: 新しいエントリがあれば追加。
+         * The write target is log_buf[log_size]; the bound must be on
+         * log_size, not on the attacker-supplied p->log_idx (which the old
+         * guard checked). log_size is a UW append counter with no other cap,
+         * so without this an entry per packet overruns log_buf[RAFT_LOG_MAX].
+         * (ROADMAP 0-9) */
+#ifdef RXB_NO_RAFT_GUARD
         if (p->log_idx < RAFT_LOG_MAX && p->entry_term > 0) {
+#else
+        if (log_size < RAFT_LOG_MAX && p->entry_term > 0) {
+#endif
             if (p->entry_idx >= log_size) {
                 log_buf[log_size].term = p->entry_term;
                 log_buf[log_size].key  = p->entry_key;
@@ -410,6 +419,7 @@ ER raft_write(UB key, UB val)
 UB raft_leader(void) { return cur_leader; }
 UB raft_role(void)   { return role; }
 UW raft_term(void)   { return cur_term; }
+UW raft_log_size(void) { return log_size; }
 
 /* ------------------------------------------------------------------ */
 /* 統計表示                                                            */
