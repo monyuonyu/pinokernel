@@ -17,6 +17,11 @@
  *          values in d8-d15, sleeps; a pri-19 task pins other values in
  *          d8-d15 and sleeps too; the runner wakes and compares (30 rounds).
  *          F4 is the precondition (the high task ran in between).
+ *   F5/F6  the FPCR rounding mode is per-task state too (AAPCS64: preserved
+ *          across calls). The runner runs in round-toward-zero, the high tasks
+ *          set round-toward-+inf; the runner's mode must come back after the
+ *          IRQ-exit switch (F5, checked after every chunk) and after the
+ *          voluntary switch of tk_wup_tsk (F6, 30 rounds).
  */
 #ifdef PK_FPBARE
 #include "kernel.h"
@@ -50,6 +55,21 @@ static ID fb_mk(void (*fn)(INT, void *), PRI pri)
     return tk_cre_tsk(&ct);
 }
 
+/* FPCR rounding mode (RMode, bits 23:22). AAPCS64 treats it as state a call
+ * must preserve, so a task's mode must survive its own switches (F5/F6). */
+#define FB_RMODE_MASK (3UL << 22)
+#define FB_RM_RP      (1UL << 22)   /* toward +inf: the high tasks */
+#define FB_RM_RZ      (3UL << 22)   /* toward zero: the runner     */
+static unsigned long fb_fpcr(void)
+{
+    unsigned long v; __asm__ volatile("mrs %0, fpcr" : "=r"(v)); return v;
+}
+static void fb_set_rmode(unsigned long m)
+{
+    unsigned long v = (fb_fpcr() & ~FB_RMODE_MASK) | m;
+    __asm__ volatile("msr fpcr, %0" :: "r"(v));
+}
+
 static int fb_same(double a, double b)
 {
     union { double d; unsigned long u; } x, y;
@@ -80,6 +100,7 @@ static void t_fb_high(INT stacd, void *exinf)
     (void)stacd; (void)exinf;
     for (INT n = 0; n < FB_HI; n++) {
         tk_dly_tsk(2);
+        fb_set_rmode(FB_RM_RP);      /* F5: a mode unlike the runner's */
         if (fb_busy) fb_during++;
         fb_chunk(x);
         fb_hrun++;
@@ -91,25 +112,33 @@ static void fb_irq_part(void)
 {
     static const double s0[8] = { 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 };
     double s[8], r[8];
-    INT chunks = 0, diff = 0;
+    INT chunks = 0, diff = 0, rbad = 0;
     for (INT i = 0; i < 8; i++) s[i] = s0[i];
     fb_hrun = fb_during = 0;
+    unsigned long fpcr0 = fb_fpcr();
+    fb_set_rmode(FB_RM_RZ);
     ID t = fb_mk(t_fb_high, 19);
     if (t > 0) tk_sta_tsk(t, 0);
     fb_busy = 1;
-    while (fb_hrun < FB_HI && chunks < 1000000) { fb_chunk(s); chunks++; }
+    while (fb_hrun < FB_HI && chunks < 1000000) {
+        fb_chunk(s); chunks++;
+        if ((fb_fpcr() & FB_RMODE_MASK) != FB_RM_RZ) { rbad++; fb_set_rmode(FB_RM_RZ); }
+    }
     fb_busy = 0;
     for (INT n = 0; n < 200 && fb_hrun < FB_HI; n++) tk_dly_tsk(10);
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
     for (INT i = 0; i < 8; i++) r[i] = s0[i];
     tk_dis_dsp();
+    fb_set_rmode(FB_RM_RZ);
     for (INT k = 0; k < chunks; k++) fb_chunk(r);
     tk_ena_dsp();
+    __asm__ volatile("msr fpcr, %0" :: "r"(fpcr0));
     for (INT i = 0; i < 8; i++) if (!fb_same(s[i], r[i])) diff++;
     fb_out("[fpb] irq part: "); fb_dec(chunks); fb_out(" chunks, high rounds ");
     fb_dec(fb_hrun); fb_out("\r\n");
     fb_check(diff == 0, "F1", "doubles unlike the run without switches (of 8)", diff);
     fb_check(fb_during > 0, "F2", "precondition: high FP rounds inside the runner's chunks", fb_during);
+    fb_check(rbad == 0, "F5", "chunks after which the runner's FPCR rounding mode had changed (IRQ-exit switch)", rbad);
 }
 
 /* ---- F3/F4: callee-saved d8-d15 across a voluntary switch ------------- */
@@ -126,6 +155,7 @@ static void t_fb_vhigh(INT stacd, void *exinf)
         __asm__ volatile("" : "+w"(h8), "+w"(h9), "+w"(h10), "+w"(h11),
                               "+w"(h12), "+w"(h13), "+w"(h14), "+w"(h15));
         fb_vhigh++;
+        fb_set_rmode(FB_RM_RP);      /* F6: a mode unlike the runner's */
         tk_slp_tsk(TMO_FEVR);
         __asm__ volatile("" : "+w"(h8), "+w"(h9), "+w"(h10), "+w"(h11),
                               "+w"(h12), "+w"(h13), "+w"(h14), "+w"(h15));
@@ -134,8 +164,9 @@ static void t_fb_vhigh(INT stacd, void *exinf)
 }
 static void fb_vol_part(void)
 {
-    INT bad = 0;
+    INT bad = 0, rbad = 0;
     fb_vhigh = 0;
+    unsigned long fpcr0 = fb_fpcr();
     ID t = fb_mk(t_fb_vhigh, 19);
     if (t > 0) tk_sta_tsk(t, 0);   /* runs at once (pri 19), pins, sleeps */
     for (INT n = 0; n < FB_VROUNDS; n++) {
@@ -145,17 +176,21 @@ static void fb_vol_part(void)
         register double r14 __asm__("d14") = 7.0 + n, r15 __asm__("d15") = 8.0 + n;
         __asm__ volatile("" : "+w"(r8), "+w"(r9), "+w"(r10), "+w"(r11),
                               "+w"(r12), "+w"(r13), "+w"(r14), "+w"(r15));
+        fb_set_rmode(FB_RM_RZ);
         if (t > 0) tk_wup_tsk(t);  /* switch to the high task now */
         __asm__ volatile("" : "+w"(r8), "+w"(r9), "+w"(r10), "+w"(r11),
                               "+w"(r12), "+w"(r13), "+w"(r14), "+w"(r15));
+        if ((fb_fpcr() & FB_RMODE_MASK) != FB_RM_RZ) rbad++;
         if (!fb_same(r8, 1.0 + n) || !fb_same(r9, 2.0 + n) ||
             !fb_same(r10, 3.0 + n) || !fb_same(r11, 4.0 + n) ||
             !fb_same(r12, 5.0 + n) || !fb_same(r13, 6.0 + n) ||
             !fb_same(r14, 7.0 + n) || !fb_same(r15, 8.0 + n)) bad++;
     }
     if (t > 0) { tk_ter_tsk(t); tk_del_tsk(t); }
+    __asm__ volatile("msr fpcr, %0" :: "r"(fpcr0));
     fb_check(bad == 0, "F3", "rounds whose d8-d15 came back changed (of 30)", bad);
     fb_check(fb_vhigh >= FB_VROUNDS, "F4", "precondition: the high task ran between (of 31)", fb_vhigh);
+    fb_check(rbad == 0, "F6", "rounds whose FPCR rounding mode came back changed (of 30, voluntary switch)", rbad);
 }
 
 static void t_fb_runner(INT stacd, void *exinf)
