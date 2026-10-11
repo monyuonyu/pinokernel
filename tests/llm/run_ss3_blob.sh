@@ -64,7 +64,9 @@ INCS="-I$ROOT/boot/linux \
       -I$ROOT/kernel/mtkernel3/include/tm \
       -I$ROOT/kernel/mtkernel3/include/compat \
       -I$ROOT/kernel/mtkernel3/config"
-KDEFS="-D_APP_AARCH64_ -D_APP_LINUX_ -D_TK_HOSTED_LIBC_ -D_LINUX_AARCH64_"
+# -DPK_NOSW_OFF: no exit dispatch in this in-process test, so pk_nosw.h's
+# regions (arkfs.c, pfs_block.c) compile away instead of needing preempt.c.
+KDEFS="-D_APP_AARCH64_ -D_APP_LINUX_ -D_TK_HOSTED_LIBC_ -D_LINUX_AARCH64_ -DPK_NOSW_OFF"
 KFLAGS="-Wall -Wextra -g -O1 -no-pie -fno-pie -fno-stack-protector -fno-common \
         -std=gnu11 -ffp-contract=off -ffunction-sections -fdata-sections \
         -Werror=vla $KDEFS $INCS"

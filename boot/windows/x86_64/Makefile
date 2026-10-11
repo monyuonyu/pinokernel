@@ -93,7 +93,8 @@ BOOT_OBJS   = main_win.o
 
 # ---- arch 層（共有 = arch/linux/x86_64、POSIX ソケットは compat で shim） ----
 # Linux 版から除外: sio/time/preempt/fault/arch_reboot（Windows 版で置換）、
-# selfc/selfc_proc（selfc_stub で置換）。
+# selfc/selfc_proc（selfc_stub で置換）、arch/linux/pool_preempt.c
+# （tkconf pool/nosw/fp。pool_preempt_stub で置換）。
 ARCH_SHARED_X86_SRCS = \
     usermain.c \
     pci.c \
@@ -117,7 +118,8 @@ ARCH_WIN_SRCS = \
     win_prim.c \
     win_mmap.c \
     net_win.c \
-    selfc_stub.c
+    selfc_stub.c \
+    pool_preempt_stub.c
 ARCH_WIN_OBJS = $(ARCH_WIN_SRCS:.c=.o)
 
 RELAY_DIR    = $(ROOT)/relay

@@ -10,7 +10,9 @@
  *  others; leaving the outermost region makes the switch the timer skipped.
  *  The same on bare metal x86 / AArch64 (below). Everywhere else (Windows,
  *  host tests) the macros are empty. -DPK_NOSW_OFF: empty everywhere (the
- *  negative control for `tkconf nosw` and PK_TKCONF_NOSW).
+ *  negative control for `tkconf nosw` and PK_TKCONF_NOSW; also builds that
+ *  use a target's defines without its exit dispatch: the ring3 core_mind
+ *  ELF, the in-process run_dmoe.sh / run_ss3_blob.sh).
  */
 #ifndef PK_NOSW_H
 #define PK_NOSW_H

@@ -24,7 +24,10 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 CC="${CC:-cc}"
-CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off -Werror=vla -D_APP_AARCH64_ -D_APP_LINUX_ -D_TK_HOSTED_LIBC_ -D_LINUX_AARCH64_"
+# -DPK_NOSW_OFF: _LINUX_AARCH64_ turns on pk_nosw.h's regions (student.c),
+# whose depth lives in arch/linux/<arch>/preempt.c; this in-process fleet has
+# no exit dispatch, so they compile away (CI run 38093212146 failed to link).
+CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off -Werror=vla -D_APP_AARCH64_ -D_APP_LINUX_ -D_TK_HOSTED_LIBC_ -D_LINUX_AARCH64_ -DPK_NOSW_OFF"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
