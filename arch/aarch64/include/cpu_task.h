@@ -30,8 +30,10 @@
 
 #include "cpu_insn.h"
 
-/* Frame size written by setup_context */
-#define DORMANT_STACK_SIZE  112
+/* Frame size written by setup_context: the 112 bytes above + d8-d15 at
+ * ssp+112..175 (zeroed; cpu_support.S knl_dispatch, ROADMAP 0-11). Kept equal
+ * to kernel/mtkernel3/kernel/sysdepend/aarch64_virt/cpu_task.h. */
+#define DORMANT_STACK_SIZE  176
 
 IMPORT void knl_task_entry_trampoline(void);
 

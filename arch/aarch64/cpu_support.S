@@ -102,8 +102,11 @@ knl_dispatch_entry:
 knl_dispatch:
     msr daifset, #0x3           /* disable IRQ+FIQ */
 
-    /* Save 112-byte context frame */
-    sub sp, sp, #112
+    /* Save 176-byte context frame. d8-d15 (callee-saved in AAPCS64) go after
+     * the original 112 bytes so every older offset stays where it was
+     * (ROADMAP 0-11, gap-ledger BARE-A64-FP-NOT-SAVED: without them a task
+     * lost d8-d15 across tk_slp_tsk / tk_wup_tsk switches). */
+    sub sp, sp, #176
     stp x19, x20, [sp,  #0]
     stp x21, x22, [sp, #16]
     stp x23, x24, [sp, #32]
@@ -113,6 +116,12 @@ knl_dispatch:
     ldr x0, =knl_taskmode
     ldr x0, [x0]
     str x0,       [sp, #96]
+#ifndef PK_FP_NO_DSAVE
+    stp d8,  d9,  [sp, #112]
+    stp d10, d11, [sp, #128]
+    stp d12, d13, [sp, #144]
+    stp d14, d15, [sp, #160]
+#endif
 
     /* Save SP to ctxtsk->tskctxb.ssp (SP cannot be stored directly) */
 #ifdef SMP_SELFTEST
@@ -224,7 +233,13 @@ knl_dispatch:
     ldp x27, x28, [sp, #64]
     ldp x29, x30, [sp, #80]
     ldr x0,       [sp, #96]
-    add sp, sp, #112
+#ifndef PK_FP_NO_DSAVE
+    ldp d8,  d9,  [sp, #112]
+    ldp d10, d11, [sp, #128]
+    ldp d12, d13, [sp, #144]
+    ldp d14, d15, [sp, #160]
+#endif
+    add sp, sp, #176
 
     ldr x1, =knl_taskmode
     str x0, [x1]
@@ -343,6 +358,63 @@ knl_timer_handler_startup:
     add sp, sp, #160
     .endm
 
+    /* The whole FP/SIMD state of the interrupted code: q0-q31 + FPCR/FPSR
+     * (528 bytes), pushed below the 160-byte caller frame by the IRQ vector.
+     * An IRQ can land at any instruction, so every q register is live; the
+     * handler's C code and, with the IRQ-exit switch, another task may use
+     * them. On the switch path the frame stays on the interrupted task's
+     * stack and .Lirq_resume_tramp pops it (ROADMAP 0-11). Clobbers x0/x1
+     * (save: after save_caller_regs; restore: before restore_caller_regs). */
+    .macro save_fp
+#ifndef PK_FP_NO_QSAVE
+    sub sp, sp, #528
+    stp q0,  q1,  [sp, #0]
+    stp q2,  q3,  [sp, #32]
+    stp q4,  q5,  [sp, #64]
+    stp q6,  q7,  [sp, #96]
+    stp q8,  q9,  [sp, #128]
+    stp q10, q11, [sp, #160]
+    stp q12, q13, [sp, #192]
+    stp q14, q15, [sp, #224]
+    stp q16, q17, [sp, #256]
+    stp q18, q19, [sp, #288]
+    stp q20, q21, [sp, #320]
+    stp q22, q23, [sp, #352]
+    stp q24, q25, [sp, #384]
+    stp q26, q27, [sp, #416]
+    stp q28, q29, [sp, #448]
+    stp q30, q31, [sp, #480]
+    mrs x0, fpcr
+    mrs x1, fpsr
+    stp x0, x1,   [sp, #512]
+#endif
+    .endm
+
+    .macro restore_fp
+#ifndef PK_FP_NO_QSAVE
+    ldp x0, x1,   [sp, #512]
+    msr fpcr, x0
+    msr fpsr, x1
+    ldp q0,  q1,  [sp, #0]
+    ldp q2,  q3,  [sp, #32]
+    ldp q4,  q5,  [sp, #64]
+    ldp q6,  q7,  [sp, #96]
+    ldp q8,  q9,  [sp, #128]
+    ldp q10, q11, [sp, #160]
+    ldp q12, q13, [sp, #192]
+    ldp q14, q15, [sp, #224]
+    ldp q16, q17, [sp, #256]
+    ldp q18, q19, [sp, #288]
+    ldp q20, q21, [sp, #320]
+    ldp q22, q23, [sp, #352]
+    ldp q24, q25, [sp, #384]
+    ldp q26, q27, [sp, #416]
+    ldp q28, q29, [sp, #448]
+    ldp q30, q31, [sp, #480]
+    add sp, sp, #528
+#endif
+    .endm
+
     .macro ventry label
     .align 7
     b \label
@@ -374,6 +446,7 @@ el1_vectors:
 
 _vec_el1_irq:
     save_caller_regs
+    save_fp
     /* Reserve a 16-byte stack slot for the ack-time value we need to
      * remember across the handler call (the GIC IAR on virt, a placeholder
      * 0 on RPi 3). w1-w18 are call-clobbered per the AArch64 ABI, so
@@ -478,6 +551,7 @@ _vec_el1_irq:
 .Lirq_return:
 #endif /* SMP_SELFTEST || !PK_RNG0_NO_EXIT_DISPATCH */
 
+    restore_fp
     restore_caller_regs
     eret
 
@@ -503,6 +577,7 @@ _irq_resume_tramp:
     ldp  x0, x1, [sp], #16      /* pop ELR_EL1/SPSR_EL1                        */
     msr  elr_el1, x0
     msr  spsr_el1, x1
+    restore_fp                  /* unwind the 528-byte FP frame (0-11)        */
     restore_caller_regs         /* unwind the 160-byte caller frame           */
     eret                        /* return to the exact interrupted PC         */
 #endif /* SMP_SELFTEST || !PK_RNG0_NO_EXIT_DISPATCH */

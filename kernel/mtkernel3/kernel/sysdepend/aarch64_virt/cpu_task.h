@@ -21,7 +21,9 @@
  *	  ssp+ 40: x24           ssp+ 80: x29 (fp)
  *	  ssp+ 48: x25           ssp+ 88: x30 (lr) ← 復帰先。新規タスクでは
  *	                                             トランポリン
- *	 ─── 合計 112 バイト（16 バイト整列）───
+ *	  ssp+112〜175: d8〜d15（AAPCS64 の callee-saved な FP。0 で始まる。
+ *	                ROADMAP 0-11、台帳 BARE-A64-FP-NOT-SAVED）
+ *	 ─── 合計 176 バイト（16 バイト整列）───
  *
  *	AAPCS64 の callee-saved レジスタは x19〜x28 + fp + lr の 12 本。
  *	ディスパッチャ（dispatch.S）は x30 スロットの値へ ret で復帰します。
@@ -36,7 +38,7 @@
  * knl_setup_context が書き込むフレームサイズ
  *	task_manage.c はこの分のスタック余裕を確保して休止処理を行います。
  */
-#define DORMANT_STACK_SIZE	112
+#define DORMANT_STACK_SIZE	176	/* 112 + d8-d15 (cpu_support.S knl_dispatch) */
 
 /*
  * 休止状態タスクのコンテキスト初期化
