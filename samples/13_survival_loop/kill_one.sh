@@ -46,6 +46,10 @@ esac
 export PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 export PKERNEL_RELAY_HOST=127.0.0.1
 export PKERNEL_RELAY_PORT=7413
+# Test-only region tau (CI-F, tests/host/run_region_tau_env.sh): on a loaded
+# runner the localhost RTT EWMA (10-50 ms seen) crosses the product 50 ms and
+# a peer leaves the region mid-test. PKERNEL_REGION_TAU_MS=50 tests the product tau.
+export PKERNEL_REGION_TAU_MS="${PKERNEL_REGION_TAU_MS:-250}"
 
 FIFO=/tmp/sl13_fifo
 NODE_PID=(0 0 0 0)            # index 1..3
