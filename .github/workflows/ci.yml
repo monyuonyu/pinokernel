@@ -2349,7 +2349,10 @@ jobs:
     # the aarch64 glibc (same emulation the ump-aarch64-cross job already uses).
     name: "接続フォールバック cert (heartbeat / UDP↔TCP / スーパーノード自動昇格)"
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 25 -> 45 (2026-10-11): with run_ema.sh added the job hit 25 min and was
+    # cancelled inside the EMA step (run 38122175153: the four steps before it
+    # took ~10 min, EMA ran >15 min without finishing).
+    timeout-minutes: 45
     env:
       # qemu-user honours QEMU_LD_PREFIX as the -L runtime library path, so the
       # cross-built aarch64 ./p-kernel finds its glibc loader/libs under binfmt.
@@ -2383,7 +2386,8 @@ jobs:
         # writes, ON arm live unchanged + lower-held written + second-half writes are the
         # copy, -DEMA_FOLD_DISABLE falsifier RED; a writer inside the copy's evaluation
         # stays in live, -DEMA_VIEW_DISABLE (repointing g_student.w) RED (audit-35).
-        # ~7 min here (this job ran ~10 of 25 min).
+        # Estimated ~7 min from a local run, but on GitHub it ran >15 min (run
+        # 38122175153, cancelled at the old 25-min job limit) - hence 45 above.
         run: bash tests/llm/run_ema.sh
 
   sanitizer-build:
