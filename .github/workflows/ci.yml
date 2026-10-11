@@ -1544,6 +1544,17 @@ jobs:
         run: |
           timeout 400 samples/28_plural_protect/run.sh | tee /tmp/p28_ci.log
           grep -q 'RESULT: PASS' /tmp/p28_ci.log
+      # The concurrency check must go red on a serialized defender (gap-ledger
+      # PLURAL-PROTECT-NOT-SHOWN-PARALLEL: the old timing rule did not).
+      - name: concurrency check goes red on a serialized defender (negative control, -DPROTECT_SABOTAGE_SERIAL)
+        run: |
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 EXTRA_CFLAGS=-DPROTECT_SABOTAGE_SERIAL >/dev/null
+          timeout 400 samples/28_plural_protect/run.sh > /tmp/p28_ci_nc.log 2>&1 || true
+          grep -a 'concurrency' /tmp/p28_ci_nc.log
+          grep -aq 'FAIL: concurrency: .*(looks serialized)' /tmp/p28_ci_nc.log
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 >/dev/null
       - name: Upload node logs on failure
         if: failure()
         uses: actions/upload-artifact@v4

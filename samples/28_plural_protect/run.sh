@@ -212,6 +212,7 @@ else
 fi
 
 # --- the real test: FOUR points declared at once across TWO owners ----------
+CAL_IDS=$(declare_id_set "$L1")
 SAFE_BEFORE_1=$(nsafe "$L1"); SAFE_BEFORE_2=$(nsafe "$L2")
 T0=$(now_ms)
 log "declaring 4 protected points SIMULTANEOUSLY (node1: A1,A2 ; node2: B1,B2)"
@@ -266,24 +267,33 @@ fi
 [ "$NSAFE" -eq 4 ] && ok "ALL FOUR protected points reached R replicas (SAFE), in parallel" \
                    || bad "only $NSAFE/4 points reached SAFE within the deadline — see $L1 $L2"
 
-# (4) CONCURRENCY control (would FAIL if serialized): four points converged in
-# ~the time of ONE plus a bounded round-robin KICKOFF, NOT 4x. Serialized
-# (one-at-a-time) defense needs ~4*t_one because each point starts only after
-# the previous one completes; parallel defense overlaps all convergences and
-# only ADDS the kickoff stagger (one announce per ~200ms tick to start all 4).
-# So the honest discriminator is additive: t_four ~= t_one + kickoff.
-#   PASS rule:  t_four < t_one + KICKOFF_BUDGET   (overlap; only kickoff added)
-#               AND t_four < 4*t_one              (the literal serialized bound)
-# With t_one ~ 1s the serialized 4*t_one (~4s) blows past t_one+budget, so a
-# serialized implementation would FAIL this check.
-KICKOFF_BUDGET=2000
-SER_BOUND=$(( 4 * T_ONE ))
-PAR_LIMIT=$(( T_ONE + KICKOFF_BUDGET ))
-log "concurrency: t_one=${T_ONE}ms  t_four=${T_FOUR}ms  serialized-bound(4*t_one)=${SER_BOUND}ms  parallel-limit(t_one+${KICKOFF_BUDGET})=${PAR_LIMIT}ms"
-if [ "$NSAFE" -eq 4 ] && [ "$T_FOUR" -lt "$PAR_LIMIT" ] && [ "$T_FOUR" -lt "$SER_BOUND" ]; then
-    ok "PARALLEL proven: 4 points safe in ${T_FOUR}ms ~= t_one+kickoff — far under the 4*t_one=${SER_BOUND}ms serialized bound"
+# (4) CONCURRENCY control (would FAIL if serialized). Structural, not timing:
+# each owner must DRIVE BOTH of its new points in the same actuator tick,
+# i.e. both ACTUATE lines carry ">=2 pts at-risk" (n_atrisk is counted at the
+# start of the tick). A serialized defender drives the second point only in a
+# later tick, after the first is safe, so its second ACTUATE says "1 pts
+# at-risk". Measured 2026-10-11 (gap-ledger PLURAL-PROTECT-NOT-SHOWN-PARALLEL):
+# plain 2/2 on both owners in 16 of 16 runs (8 interleaved, 7 others, the CI
+# run 38135129386), -DPROTECT_SABOTAGE_SERIAL 1/1 in 8 of 8.
+# The old timing rule (t_four < t_one+2000 AND < 4*t_one) passed the
+# serialized defender 8/8: one point replicates within one 200 ms tick, so
+# times cannot tell them apart here. It is kept as information only.
+new_driven_together() {  # <log> <ids...>: how many of ids were driven with >=2 at risk
+    local f="$1"; shift; local n=0 id
+    for id in "$@"; do
+        grep -aqE "ACTUATE id=$id .* ([2-9]|[0-9][0-9]) pts at-risk" "$f" && n=$((n + 1))
+    done
+    echo "$n"
+}
+NEW1=$(declare_id_set "$L1" | grep -vxF "$CAL_IDS" | sed 's/^id=//')
+NEW2=$(declare_id_set "$L2" | sed 's/^id=//')
+DT1=$(new_driven_together "$L1" $NEW1); DT2=$(new_driven_together "$L2" $NEW2)
+log "concurrency (information): t_one=${T_ONE}ms  t_four=${T_FOUR}ms"
+log "concurrency: new points driven in a tick with >=2 at risk — node1=${DT1}/2 node2=${DT2}/2"
+if [ "$DT1" -eq 2 ] && [ "$DT2" -eq 2 ]; then
+    ok "PARALLEL: each owner drove both of its points in the same tick (a serialized defender drives the second only after the first is safe)"
 else
-    bad "4-point time ${T_FOUR}ms not within parallel budget ${PAR_LIMIT}ms / under serialized ${SER_BOUND}ms (looks serialized) — see $L1 $L2"
+    bad "concurrency: node1=${DT1}/2 node2=${DT2}/2 points driven together (looks serialized) — see $L1 $L2"
 fi
 
 # (5) structural overlap (informational, timing-dependent): how many distinct
@@ -299,15 +309,27 @@ echo "==========================================================="
 log "*** kill -9 node1 (pid ${NODE_PID[1]}) — owner of A1 and A2 dies ***"
 kill -9 "${NODE_PID[1]}" 2>/dev/null; NODE_PID[1]=0; sleep 1
 
-send 2 "pfs get $A1"
-send 3 "pfs get $A2"
+# Ask BOTH survivors for each point. When the regions are still smaller than 3
+# at DECLARE time the kernel caps R at 1, and the one replica can sit on either
+# survivor; asking a fixed node then fails although the point survived (CI run
+# 38135129386 and a local run: "need R=1", the other survivor held it).
+send 2 "pfs get $A1"; send 3 "pfs get $A1"
+send 2 "pfs get $A2"; send 3 "pfs get $A2"
+served_by() {  # <name> -> prints node2/node3 if either served it within 10 s
+    local i=0
+    while [ "$i" -lt 40 ]; do
+        grep -aqE "\[pfs\] get: $1" "$L2" 2>/dev/null && { echo node2; return 0; }
+        grep -aqE "\[pfs\] get: $1" "$L3" 2>/dev/null && { echo node3; return 0; }
+        sleep 0.25; i=$((i + 1))
+    done
+    return 1
+}
 S=0
-if wait_for "$L2" "\[pfs\] get: $A1" 10; then
-    ok "A1 SURVIVED node1's death — served back from node2's durable store"; S=$((S+1))
-else bad "A1 was NOT served back after node1 died — see $L2"; fi
-if wait_for "$L3" "\[pfs\] get: $A2" 10; then
-    ok "A2 SURVIVED node1's death — served back from node3's durable store"; S=$((S+1))
-else bad "A2 was NOT served back after node1 died — see $L3"; fi
+for P in "$A1" "$A2"; do
+    if W=$(served_by "$P"); then
+        ok "${P%%-owned*} SURVIVED node1's death — served back from $W's durable store"; S=$((S+1))
+    else bad "${P%%-owned*} was NOT served back by node2 or node3 after node1 died — see $L2 $L3"; fi
+done
 echo "----- survivors served by neighbours -----"
 grep -aE '\[pfs\] get' "$L2" "$L3" | tail -4 | sed 's/^/    /'
 echo "------------------------------------------"
