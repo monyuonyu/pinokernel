@@ -1159,7 +1159,7 @@ jobs:
       - name: Verify artifact is aarch64
         run: file boot/linux/p-kernel | grep -F 'ARM aarch64'
       - name: Kernel self-tests under qemu-aarch64 (bonus, non-blocking)
-        continue-on-error: true
+        continue-on-error: true  # until 2026-11-30: bonus self-tests under qemu-user (the BLOCKING gates follow). ROADMAP 0-13
         run: |
           cd boot/linux
           timeout 150 sh -c "printf 'pfs\nhrw\nmoe test\ndkva test\nreflex test\nprotect test\ndtr gossip test\ndtr gossip g38\ndtr gossip ceiling\nexit\n' | \
@@ -1227,7 +1227,7 @@ jobs:
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee tkconf_a64.log
           grep -aF '[tkc] 133 PASS / 0 FAIL' tkconf_a64.log
       - name: compute pool under the exit dispatch on hosted aarch64 (non-blocking; 1 hang in 15 local runs)
-        continue-on-error: true
+        continue-on-error: true  # until 2026-11-30: 1 hang in 15 local runs, cause not found. ROADMAP 0-13
         run: |
           cd boot/linux
           timeout 120 sh -c "printf 'tkconf pool\nexit\n' | \
@@ -1348,7 +1348,7 @@ jobs:
     # NOT a code or harness-logic bug (the feed is marker-gated, see below). Kept
     # advisory so pure runner starvation does not red master ("strict CI =
     # green-when-healthy, not more-red"); re-blocking is a bigger-runner decision.
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: runner starvation (3 CPUs, occasional OOM), see above. ROADMAP 0-13
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain + QEMU + FAT tools
@@ -1924,7 +1924,7 @@ jobs:
     timeout-minutes: 25
     # bonus job: surface the G19 closed loop without blocking unrelated PRs
     # while it earns trust on hosted runners (see composite-scenarios.md).
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: bonus G19 loop, earning trust (composite-scenarios.md). ROADMAP 0-13
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
@@ -1967,7 +1967,7 @@ jobs:
     # serialized self-hosted chain (de-flake): chain TAIL, runs after composite-loop.
     needs: [composite-loop]
     if: ${{ always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: bonus re-run of the fast DEPTH cert at the chain tail. ROADMAP 0-13
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -2967,7 +2967,7 @@ jobs:
     # as permanently informational are the live options. Which one is still an
     # open maintainer decision (it needs qemu-system-aarch64 to measure, which the
     # unattended routine's host does not have).
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: smp0 mostly red since 07-12 (also tests/ci/known-red.txt). ROADMAP 0-2
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchain + qemu-system-aarch64
@@ -2998,10 +2998,15 @@ jobs:
       - name: check_readme_translations.py fixtures
         run: python3 tests/ci/test_check_readme_translations.py
       - name: check_readme_translations.py (訳が日本語版より古くないか、非BLOCKING)
-        continue-on-error: true
+        continue-on-error: true  # advisory: owner, inbox #12.4 (translations: tell, do not stop)
         run: python3 tests/ci/check_readme_translations.py .
       - name: check_script_modes.py
         run: python3 tests/ci/check_script_modes.py .
+      # ROADMAP 0-13: every allowed red says until when (an expired date reddens).
+      - name: check_ci_exceptions.py selftest (each offence reddens)
+        run: python3 tests/ci/check_ci_exceptions.py --selftest
+      - name: check_ci_exceptions.py (continue-on-error needs "# until YYYY-MM-DD:" or "# advisory:")
+        run: python3 tests/ci/check_ci_exceptions.py .
       # 2026-10-04 (ROADMAP 0-7): V-MODEL.md's design-doc <-> cert table.
       # Red on a design doc with no row, a row for a missing doc, a CLOSED/
       # PARTIAL row whose cert exists nowhere, more OPEN rows than before,
@@ -3042,7 +3047,7 @@ jobs:
     name: "MC-2 SMP-partition certs + ②.1a cross-preempt (aarch64 QEMU, run_mc2_*.sh / run_smp1.sh)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: MC-2 SMP-partition certs advisory. ROADMAP 0-2
     steps:
       - uses: actions/checkout@v4
       - name: Install cross toolchain + qemu-system-aarch64
@@ -3245,7 +3250,7 @@ jobs:
     name: "Android APK 実ビルド (NDK assembleDebug — 実機出荷物のリンク+コンパイル gate) [advisory]"
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: Android APK build advisory (inbox #7). ROADMAP 0-13
     steps:
       - uses: actions/checkout@v4
 
@@ -3342,7 +3347,7 @@ jobs:
     name: "KV-cache 等価性 cert (run_kv.sh) [advisory: 実行時間 計測中]"
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: KV-cache cert, run time still being measured. ROADMAP 0-13
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
@@ -3387,7 +3392,7 @@ jobs:
     name: "consent-card DOM cert (headless Chromium, first-run #ark→#intromount move) [advisory]"
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: consent-card DOM cert advisory (headless Chromium). ROADMAP 0-13
     steps:
       - uses: actions/checkout@v4
       - name: Install Playwright (python) + headless Chromium
@@ -3430,7 +3435,7 @@ jobs:
     name: "Android エミュレータ実行 smoke (実機起動+galaxy HTTP 検証) [advisory]"
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true
+    continue-on-error: true  # until 2026-11-30: Android emulator smoke (also known-red.txt). ROADMAP 0-2, 0-13
     steps:
       - uses: actions/checkout@v4
       - name: Enable KVM group perms (required for hardware-accelerated emulation)
