@@ -300,11 +300,21 @@ void protect_tick(UW elapsed_ms)
      * large N the per-tick kickoff (N*spacing) grows — honest finite capacity. */
     INT driven_this_tick = 0;
     for (INT scan = 0; scan < PROTECT_MAX_OBJS; scan++) {
+#ifndef PROTECT_SABOTAGE_SERIAL
         INT i = (drive_rotor + scan) % PROTECT_MAX_OBJS;
+#else
+        INT i = scan;                    /* fixed order, no rotor */
+#endif
         if (!objs[i].active) continue;
         UB t = protect_threat_for((INT)objs[i].holder_count,
                                   (INT)objs[i].target_r);
         if (t == 0) continue;
+#ifdef PROTECT_SABOTAGE_SERIAL
+        /* falsifier for samples/28's concurrency check: one point at a time,
+         * the next only after this one is safe (a serialized defender) */
+        if (objs[i].drive_age_ms < PROTECT_REANNOUNCE_MS) break;
+        if (driven_this_tick > 0) break;
+#endif
         if (objs[i].drive_age_ms < PROTECT_REANNOUNCE_MS) continue;
 
         if (driven_this_tick > 0)
