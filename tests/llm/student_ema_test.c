@@ -88,25 +88,36 @@ static int writer_arm(void)
     printf("[ema] writer arm: a higher writer runs inside the copy's evaluation\n");
     g_have_student = 0; g_consol_active = 0; g_consol_idx = 0;
     if (student_ensure(0) != 0) { printf("[ema] student_ensure OOM\n"); return 2; }
-    unsigned wrote_after = 0;
+    unsigned wrote_after = 0, copy_saves = 0;
     for (int t = 1; t <= 4 && !g_wr_done; t++) {
         int rc = 0, calls = 0;
         do {
-            unsigned before = g_cap_count;
+            unsigned before = g_cap_count, esv = g_ema_saves;
             g_wr_live = g_student.w;
             g_wr_armed = 1;
             rc = student_dmn_consolidate(); calls++;
             g_wr_armed = 0;
-            if (g_wr_done) wrote_after = g_cap_count - before;
+            if (g_wr_done) { wrote_after = g_cap_count - before; copy_saves = g_ema_saves - esv; }
         } while (rc == 0 && calls < 100000 && !g_wr_done);
     }
     if (!g_wr_done) { printf("[ema] the copy was never evaluated\n"); return 2; }
     float dv = g_wr_live[0] - g_wr_v0;   /* later Adam steps move w[0] by ~1e-2 at most */
-    printf("[ema] live[0] %.6f -> %.6f (writer added 0.5), DMN writes in that call: %u\n",
-           (double)g_wr_v0, (double)g_wr_live[0], wrote_after);
+    /* a write in that call may be live (the copy lost, or it was dropped): it
+     * must then carry the writer's update; the stale copy must not be written */
+    float saved0 = g_wr_live[0];
+    if (wrote_after) {
+        st_model chk;
+        if (st_init(&chk, STUDENT_SEED) != ST_OK || st_load(&chk, g_cap, g_cap_len) != ST_OK) return 2;
+        saved0 = chk.w[0];
+        st_free(&chk);
+    }
+    printf("[ema] live[0] %.6f -> %.6f (writer added 0.5), DMN writes in that call: %u"
+           " (copy writes %u, written w[0] %.6f)\n",
+           (double)g_wr_v0, (double)g_wr_live[0], wrote_after, copy_saves, (double)saved0);
     CHECK(g_student.w == g_wr_live && dv > 0.25f && dv < 0.75f,
           "[ema-writer-kept] the writer's update is in live");
-    CHECK(wrote_after == 0, "[ema-writer-kept] the copy evaluated before the abort is not written");
+    CHECK(copy_saves == 0 && saved0 == g_wr_live[0],
+          "[ema-writer-kept] the copy evaluated before the abort is not written (a write is live)");
     printf("[result] %s (%d pass, %d fail)\n", g_fail ? "FAIL" : "PASS", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }
