@@ -8,6 +8,10 @@
 #
 #   F1/F2  the IRQ-exit switch must give a task back its FP registers
 #   F3/F4  a voluntary switch must keep the callee-saved d8-d15
+#   F5/F6  the FPCR rounding mode must come back after the IRQ-exit (F5)
+#          and the voluntary (F6) switch
+# Falsifiers (FPB_EXTRA): -DPK_FP_NO_DSAVE (F3), -DPK_FP_NO_QSAVE (F1, F5),
+#   -DPK_FP_NO_CRSAVE (F6)
 # Exit 0 only when the plain build prints [fpb] ALL PASS.
 # ---------------------------------------------------------------------------
 set -u

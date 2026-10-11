@@ -2,7 +2,7 @@
  *  cpu_support.S (aarch64)
  *  Task dispatcher, context switch, EL1 exception vectors, timer startup
  *
- *  Dormant task stack frame (176 bytes, see cpu_task.h):
+ *  Dormant task stack frame (192 bytes, see cpu_task.h):
  *    [sp+  0]  x19  (= stacd for new task)
  *    [sp+  8]  x20  (= exinf for new task)
  *    [sp+ 16]  x21
@@ -18,6 +18,8 @@
  *    [sp+ 96]  taskmode
  *    [sp+104]  (padding)
  *    [sp+112]  d8 .. d15  (8 x 8 bytes, up to sp+175; ROADMAP 0-11)
+ *    [sp+176]  FPCR       (0 for a new task = round to nearest)
+ *    [sp+184]  (padding)
  *
  *  TCB field offsets (AArch64, extracted via offsetof — see offset.h):
  *    TCB_task = 40
@@ -103,11 +105,13 @@ knl_dispatch_entry:
 knl_dispatch:
     msr daifset, #0x3           /* disable IRQ+FIQ */
 
-    /* Save 176-byte context frame. d8-d15 (callee-saved in AAPCS64) go after
+    /* Save 192-byte context frame. d8-d15 (callee-saved in AAPCS64) go after
      * the original 112 bytes so every older offset stays where it was
      * (ROADMAP 0-11, gap-ledger BARE-A64-FP-NOT-SAVED: without them a task
-     * lost d8-d15 across tk_slp_tsk / tk_wup_tsk switches). */
-    sub sp, sp, #176
+     * lost d8-d15 across tk_slp_tsk / tk_wup_tsk switches). FPCR follows at
+     * +176: its rounding mode is preserved across calls in AAPCS64 too, and
+     * without it a task got the previous task's mode back (fp_bare_test F6). */
+    sub sp, sp, #192
     stp x19, x20, [sp,  #0]
     stp x21, x22, [sp, #16]
     stp x23, x24, [sp, #32]
@@ -122,6 +126,10 @@ knl_dispatch:
     stp d10, d11, [sp, #128]
     stp d12, d13, [sp, #144]
     stp d14, d15, [sp, #160]
+#endif
+#ifndef PK_FP_NO_CRSAVE
+    mrs x0, fpcr
+    str x0,       [sp, #176]
 #endif
 
     /* Save SP to ctxtsk->tskctxb.ssp (SP cannot be stored directly) */
@@ -240,7 +248,11 @@ knl_dispatch:
     ldp d12, d13, [sp, #144]
     ldp d14, d15, [sp, #160]
 #endif
-    add sp, sp, #176
+#ifndef PK_FP_NO_CRSAVE
+    ldr x1,       [sp, #176]
+    msr fpcr, x1
+#endif
+    add sp, sp, #192
 
     ldr x1, =knl_taskmode
     str x0, [x1]
@@ -563,7 +575,7 @@ _vec_el1_irq:
  *  .Lirq_resume_tramp — the resume path for an ASYNC-preempted task (②.2b-i).
  *
  *  Reached when an async-preempted task is later re-dispatched: knl_dispatch's
- *  .Ldispatch_loop has restored the task's 176-byte callee-saved frame and
+ *  .Ldispatch_loop has restored the task's 192-byte callee-saved frame and
  *  `ret`'d into here (with IRQ/FIQ UNMASKED by .Ldispatch_loop's daifclr).
  *  SP points at the [ELR_EL1|SPSR_EL1] pair we pushed at preempt time, sitting
  *  ON TOP OF the original 160-byte save_caller_regs frame.  We:
@@ -764,7 +776,7 @@ smp_dispatch_loop:
  *   Enter the PRODUCTION per-CPU dispatcher loop (.Ldispatch_loop above) on
  *   THIS CPU.  The loop reads g_smpcpu[me].schedtsk (a REAL T-Kernel TCB the
  *   driver pre-set), stores it into g_smpcpu[me].ctxtsk, loads the TCB's
- *   saved SP (tskctxb.ssp), restores its 176-byte frame, and `ret`s into the
+ *   saved SP (tskctxb.ssp), restores its 192-byte frame, and `ret`s into the
  *   real task — a genuine register-context switch into a real TCB on the
  *   secondary CPU.  Never returns to the caller (it switches stacks).  IRQ+FIQ
  *   are masked on entry exactly as knl_dispatch does.  This is how the

@@ -167,8 +167,8 @@ jobs:
       # across task switches on bare AArch64 (tests/aarch64/run_fp_bare.sh,
       # -DPK_FPBARE test build only; crown unaffected). Plain must be ALL PASS;
       # each falsifier must turn exactly its own item red (a build failure
-      # does not pass: the step asks for the item's FAIL line). 3 builds +
-      # 3 boots, each boot up to 120 s.
+      # does not pass: the step asks for the item's FAIL line). 4 builds +
+      # 4 boots, each boot up to 120 s.
       - name: FP/SIMD across task switches on bare AArch64 — plain, expect GREEN
         run: bash tests/aarch64/run_fp_bare.sh
       - name: FP/SIMD on bare AArch64 — NC no d8-d15 save on a voluntary switch, expect only F3 RED
@@ -181,6 +181,11 @@ jobs:
           FPB_EXTRA=-DPK_FP_NO_QSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_noq.log || true
           grep -aq '^\[fpb\] FAIL F1' fpb_noq.log
           if grep -aq '^\[fpb\] FAIL F3' fpb_noq.log; then echo "F3 red too"; exit 1; fi
+      - name: FP/SIMD on bare AArch64 — NC no FPCR in the dispatch frame, expect F6 RED (not F3/F5)
+        run: |
+          FPB_EXTRA=-DPK_FP_NO_CRSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_nocr.log || true
+          grep -aq '^\[fpb\] FAIL F6' fpb_nocr.log
+          if grep -aqE '^\[fpb\] FAIL (F3|F5)' fpb_nocr.log; then echo "F3/F5 red too"; exit 1; fi
       - name: contract suite v2 on bare x86 (plain green, 11 NCs red)
         run: bash tests/x86/run_tk_conform.sh
       - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
