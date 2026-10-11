@@ -15,7 +15,13 @@
 # train_end 960) = the 52-byte held sentence, which is absent from the training
 # region, + 232 bytes of filler (58 B x 4) that also recurs in the train region,
 # + 35 bytes of blank padding. So much of the canon drop is the filler being
-# memorised, not generalisation to unseen text. The verdict
+# memorised, not generalisation to unseen text. (And with ring_len 1279 the
+# production split is 29/10 windows, train_end 928, not 960.)
+# 2026-10-12 (ROADMAP 0-12, feat/held-indep): the lesson is now exactly 1280 B
+# (train_end 960 in both splits) and its held 320 B are the 52-byte held
+# sentence + 256 B of a held-only sentence (64 B x 4) + 12 blanks; no held
+# 16-byte k-gram occurs in a train window (tests/llm/run_held_indep.sh I1).
+# The canon drop is therefore expected to shrink; re-measure. The verdict
 # still measures THIS lesson: a same-length unrelated English lesson and a
 # ROT13 of the lesson were both taught over the wire and both went RED.
 #

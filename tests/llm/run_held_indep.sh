@@ -8,8 +8,9 @@
 #
 #   ./run_held_indep.sh        exit 0 = ALL PASS
 #
-# 2026-10-12: I1 (the canonical lesson) is RED by design of the lesson today
-# (its held tail repeats the train filler); not wired into CI until fixed.
+# 2026-10-12: I1 (the canonical lesson) was RED at 3e3370d0 (108 of 170 held
+# k-grams in train: the held tail repeated the train filler); the next commit
+# gives the tail a held-only sentence. Not wired into CI yet.
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
