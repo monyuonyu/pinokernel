@@ -97,7 +97,7 @@ L="$LOGDIR/env/node1.log"
 grep -aq "node 1 discovered\|node 1 -> ALIVE\|node 1 recovered" "$L" && ok "env: mesh formed" || bad "env: node 1 never saw node 2"
 grep -aq "\[net\] region tau=400ms (env" "$L" && ok "env: override read" || bad "env: override line missing or not 400"
 grep -aq "\[region\] .*size=2  tau=400ms" "$L" && ok "env: region prints size=2 tau=400ms" || bad "env: no 'size=2  tau=400ms' region line"
-R=$(grep -aoE "node1\(rtt=[0-9]+ms\)" "$L" | tail -1 | grep -oE "[0-9]+" | head -1)
+R=$(grep -aoE "node1\(rtt=[0-9]+ms\)" "$L" | tail -1 | sed -E 's/.*rtt=([0-9]+)ms.*/\1/')
 if [ -n "$R" ] && [ "$R" -ge 120 ]; then ok "env: admitted peer has rtt=${R}ms (> the default 50)"
 else bad "env: admitted peer rtt '${R:-none}' is not >= 120 ms"; fi
 
