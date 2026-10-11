@@ -437,6 +437,16 @@ static void cmd_net(void)
             print("[net] RTT sim zones enabled (region partitioning test)\r\n");
         }
     }
+    /* Test-only region τ (region.h, CI-F): PKERNEL_REGION_TAU_MS>0 widens the
+     * region RTT threshold for multi-node certs on a loaded runner. */
+    {
+        UW tau = env_uint("PKERNEL_REGION_TAU_MS", 0);
+        if (tau > 0) {
+            region_set_tau_ms(tau);
+            print("[net] region tau="); print_dec_s((W)region_tau_ms());
+            print("ms (env PKERNEL_REGION_TAU_MS, test only)\r\n");
+        }
+    }
 
     /* pmesh_init() already ran at boot (before kdds_init() so its
      * pmesh_socks[] zero-clear didn't wipe K-DDS's bind). Here we just

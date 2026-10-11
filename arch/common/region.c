@@ -38,6 +38,24 @@ static UB member[DNODE_MAX];   /* 1 = 自 region のメンバ        */
 static UB member_cnt = 0;      /* メンバ数 (自分を含む)         */
 static UB coord      = 0xFF;   /* coordinator = メンバ内最小 ID */
 
+#ifdef _TK_HOSTED_LIBC_
+static UW region_tau = REGION_TAU_MS;  /* test-only override, see region.h */
+
+void region_set_tau_ms(UW tau_ms)
+{
+#ifndef REGION_TAU_ENV_IGNORE           /* falsifier of run_region_tau_env.sh */
+    region_tau = tau_ms ? tau_ms : REGION_TAU_MS;
+#else
+    (void)tau_ms;
+#endif
+}
+
+UW region_tau_ms(void) { return region_tau; }
+#define REGION_TAU region_tau
+#else
+#define REGION_TAU REGION_TAU_MS
+#endif
+
 /* ------------------------------------------------------------------ */
 /* Supernode capability (N-2, p2p-overlay.md "Supernodes (N-2)")       */
 /*                                                                     */
@@ -85,7 +103,7 @@ void region_recompute(void)
         if (dnode_table[n].state != DNODE_ALIVE) continue;
         UW rtt = swim_rtt_ms(n);
         if (rtt == 0xFFFFFFFFUL) continue;   /* 未実測は判定保留 */
-        if (rtt <= REGION_TAU_MS) {
+        if (rtt <= REGION_TAU) {
             member[n] = 1;
             member_cnt++;
             if (n < coord) coord = n;
@@ -254,7 +272,7 @@ void region_print(void)
     rg_puts("  coordinator=node"); rg_putdec(coord);
     if (coord == drpc_my_node) rg_puts(" (self)");
     rg_puts("  size="); rg_putdec(member_cnt);
-    rg_puts("  tau="); rg_putdec(REGION_TAU_MS); rg_puts("ms\r\n");
+    rg_puts("  tau="); rg_putdec(REGION_TAU); rg_puts("ms\r\n");
 
     rg_puts("[region] members:");
     for (UB n = 0; n < DNODE_MAX; n++) {
