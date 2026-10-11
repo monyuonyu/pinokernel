@@ -23,6 +23,18 @@
 /* RTT がこの値 (ms) 以内なら同一 region とみなす */
 #define REGION_TAU_MS   50
 
+#ifdef _TK_HOSTED_LIBC_
+/* Test-only τ (2026-10-11, CI-F). The measured RTT of a hosted node is not the
+ * wire: it includes the relay hop and task wake-ups, and on the loaded
+ * self-hosted CI runner the localhost EWMA spreads 10-50 ms, so peers fall
+ * out of the region and back (R capped to 1, dkva "1 region peers"). A
+ * multi-node cert sets PKERNEL_REGION_TAU_MS (linux usermain injects it here);
+ * 0 or unset keeps REGION_TAU_MS. Bare metal has no env and no setter: its
+ * code is unchanged. Cert: tests/host/run_region_tau_env.sh. */
+void region_set_tau_ms(UW tau_ms);
+UW   region_tau_ms(void);
+#endif
+
 /* 現在の RTT / membership から自 region を再計算する。
  * 安価 (O(DNODE_MAX)) なので問い合わせ時に都度呼んでよい。 */
 void region_recompute(void);
