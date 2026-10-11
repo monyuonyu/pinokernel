@@ -20,6 +20,7 @@
    - 陰性コントロール: `-DMH_NO_HIST`（送らない）→ E4 はノード6 だけ赤（3/4）。`-DMH_HIST_IGNORE`（受けて捨てる）→ 同じく赤
    - 測る前に E4 の判定を締める: 今の `^\[mind\] +conflict` は `conflict rule:`・`conflict: pushed` の行にも当たる（監査-35 の読み）。記録の行（`conflict recorded`・`conflict again`・`  conflict history`）だけを数える形に、**直す前の master でも測ってから**変える（締める方向なので期待値は変えない）
    - crown: `_TK_HOSTED_LIBC_` の中だけ＝ベアメタルは変わらない（測る）
+   - **直す前の master（0dc64c8e）で2回（2026-10-11 14:50、`pk-scratch/mg0b.sh`）**: E4 の欠けは run1 ノード6、run2 ノード1・6。緩い判定で当たるノードはどれも記録の行も持つ（締めても判定は同じ）。**ノード1 の欠けは mind/hist では埋まらない**（勝った値を教えたノード1 が、修復の後に負けた値を受け取らないと記録が無い）＝H1 はノード6 について見る（ノード1 は別の欠けとして記録する）。E1〜E3 は揺れる（run1 は E2・E3 赤＝ノード1 が sky に warm、run2 は E1 赤＝ノード6 が fire に white。どちらも固化前のなめらかな答えに見える）。mind/hist の判定は同時に走らせた master との組で、各3回以上
 
 ## 決めたこと
 - **1-3a・1-3b は hosted だけ**（`_TK_HOSTED_LIBC_`）。群れの心を運ぶ `mind_net_task` を起動するのは hosted の usermain（arch/linux/*/usermain.c）だけで、ベアメタルは群れに加わらない。だから規則が機体で食い違うことは無い（1-3a を書いたときは「ベアメタルへは後で」と書いたが、調べると要らなかった）。crown は動かない（実測 10a4c009・81d5b883）
