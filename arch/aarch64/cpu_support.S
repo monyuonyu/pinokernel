@@ -386,13 +386,15 @@ knl_timer_handler_startup:
     stp q30, q31, [sp, #480]
     mrs x0, fpcr
     mrs x1, fpsr
-    stp x0, x1,   [sp, #512]
+    str x0,       [sp, #512]        /* stp's x-register offset stops at 504 */
+    str x1,       [sp, #520]
 #endif
     .endm
 
     .macro restore_fp
 #ifndef PK_FP_NO_QSAVE
-    ldp x0, x1,   [sp, #512]
+    ldr x0,       [sp, #512]
+    ldr x1,       [sp, #520]
     msr fpcr, x0
     msr fpsr, x1
     ldp q0,  q1,  [sp, #0]
