@@ -927,7 +927,10 @@ int student_dmn_consolidate(void)
             PK_NOSW_ENTER();
             if (!use_ema) {
                 w = st_save(&g_student, blob, need);
-            } else if (g_ema_gen == ema_gen && g_ema_have &&
+            } else if (
+#ifndef EMA_GEN_DISABLE   /* FALSIFIER for [ema-writer-kept]: write the stale copy */
+                       g_ema_gen == ema_gen && g_ema_have &&
+#endif
                        g_ema_np == g_student.n_params &&
                        st_blob_size(&g_student) == need) {
                 st_model view = g_student;

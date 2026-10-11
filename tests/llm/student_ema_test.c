@@ -89,12 +89,15 @@ static int writer_arm(void)
     g_have_student = 0; g_consol_active = 0; g_consol_idx = 0;
     if (student_ensure(0) != 0) { printf("[ema] student_ensure OOM\n"); return 2; }
     unsigned wrote_after = 0, copy_saves = 0;
-    for (int t = 1; t <= 4 && !g_wr_done; t++) {
+    /* armed from tick 5: the ON arm's copy wins from tick 4 on, so the DMN is
+     * about to write the copy when the writer cuts in (the generation check
+     * is exercised, not only the evaluation) */
+    for (int t = 1; t <= 8 && !g_wr_done; t++) {
         int rc = 0, calls = 0;
         do {
             unsigned before = g_cap_count, esv = g_ema_saves;
             g_wr_live = g_student.w;
-            g_wr_armed = 1;
+            g_wr_armed = t >= 5;
             rc = student_dmn_consolidate(); calls++;
             g_wr_armed = 0;
             if (g_wr_done) { wrote_after = g_cap_count - before; copy_saves = g_ema_saves - esv; }

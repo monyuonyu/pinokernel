@@ -10,8 +10,10 @@
 #           held-out evaluation (-Wl,--wrap=st_eval_loss); its update stays in
 #           live and the stale copy is not written ([ema-writer-kept]).
 #   FALSIFIER (-DEMA_VIEW_DISABLE: the repointing audit-35 failed): the writer
-#           arm must FAIL.
-# exit 0 = OFF, ON and WRITER PASS and both falsifiers FAIL.
+#           arm must FAIL. FALSIFIER (-DEMA_GEN_DISABLE: no generation check at
+#           the save -> the copy evaluated before the writer is written): the
+#           writer arm must FAIL (this is what shows the copy was about to win).
+# exit 0 = OFF, ON and WRITER PASS and the three falsifiers FAIL.
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -38,6 +40,8 @@ echo "[build] compiling falsifier (-DEMA_FOLD_DISABLE) ..."
 "$CC" $CFLAGS -DEMA_FOLD_DISABLE $SRC $LDWRAP -lm -o "$WORK/ema_nofold" || { echo "[build] falsifier FAILED"; exit 1; }
 echo "[build] compiling falsifier (-DEMA_VIEW_DISABLE) ..."
 "$CC" $CFLAGS -DEMA_VIEW_DISABLE $SRC $LDWRAP -lm -o "$WORK/ema_noview" || { echo "[build] falsifier FAILED"; exit 1; }
+echo "[build] compiling falsifier (-DEMA_GEN_DISABLE) ..."
+"$CC" $CFLAGS -DEMA_GEN_DISABLE $SRC $LDWRAP -lm -o "$WORK/ema_nogen" || { echo "[build] falsifier FAILED"; exit 1; }
 
 echo ""; echo "=== OFF (PKERNEL_STUDENT_EMA unset; must PASS) ==="
 ( cd "$ROOT" && env -u PKERNEL_STUDENT_EMA "$WORK/ema" 2 ); OFF_RC=$?
@@ -49,12 +53,14 @@ echo ""; echo "=== WRITER (PKERNEL_STUDENT_EMA=1; must PASS) ==="
 ( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema" writer ); WR_RC=$?
 echo ""; echo "=== falsifier -DEMA_VIEW_DISABLE, WRITER (must FAIL = RED) ==="
 ( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema_noview" writer ); NV_RC=$?
+echo ""; echo "=== falsifier -DEMA_GEN_DISABLE, WRITER (must FAIL = RED) ==="
+( cd "$ROOT" && PKERNEL_STUDENT_EMA=1 "$WORK/ema_nogen" writer ); NG_RC=$?
 
 echo ""
 if [ "$OFF_RC" -eq 0 ] && [ "$ON_RC" -eq 0 ] && [ "$NF_RC" -ne 0 ] && \
-   [ "$WR_RC" -eq 0 ] && [ "$NV_RC" -eq 1 ]; then
-  echo "[result] PASS  saved-copy EMA: off identical, on helps, writer kept, both falsifiers RED"
+   [ "$WR_RC" -eq 0 ] && [ "$NV_RC" -eq 1 ] && [ "$NG_RC" -eq 1 ]; then
+  echo "[result] PASS  saved-copy EMA: off identical, on helps, writer kept, three falsifiers RED"
   exit 0
 fi
-echo "[result] FAIL  off_rc=$OFF_RC on_rc=$ON_RC falsifier_rc=$NF_RC writer_rc=$WR_RC noview_rc=$NV_RC (want 0 0 !=0 0 1)"
+echo "[result] FAIL  off_rc=$OFF_RC on_rc=$ON_RC falsifier_rc=$NF_RC writer_rc=$WR_RC noview_rc=$NV_RC nogen_rc=$NG_RC (want 0 0 !=0 0 1 1)"
 exit 1
