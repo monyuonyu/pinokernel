@@ -948,6 +948,15 @@ jobs:
           timeout 300 tests/host/run_swim_selfsuspect.sh | tee swim_selfsuspect.log
           grep -aF '[swim-selfsuspect] ALL PASS' swim_selfsuspect.log
 
+      # CI-F (2026-10-11): test-only region tau. The self-hosted 3-node certs
+      # (samples/13, 27, 28) set PKERNEL_REGION_TAU_MS because a hosted node's
+      # measured RTT crosses the product 50 ms on a loaded runner. This proves
+      # the env is read, admits a peer beyond 50 ms, and is off by default.
+      - name: test-only region tau (PKERNEL_REGION_TAU_MS)
+        run: |
+          timeout 200 tests/host/run_region_tau_env.sh | tee region_tau.log
+          grep -aF '[region-tau-env] ALL PASS' region_tau.log
+
       # SLICE 0 — the durable layer stops lying (persistence.md; gap-ledger
       # DUR-SWALLOW 🔴 + DUR-REFTAB 🟠). [pfs-durswallow]: a failed durable
       # write makes pfs_put return NON-OK and pins the sole in-memory copy
