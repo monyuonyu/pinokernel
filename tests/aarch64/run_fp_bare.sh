@@ -10,8 +10,9 @@
 #   F3/F4  a voluntary switch must keep the callee-saved d8-d15
 #   F5/F6  the FPCR rounding mode must come back after the IRQ-exit (F5)
 #          and the voluntary (F6) switch
-# Falsifiers (FPB_EXTRA): -DPK_FP_NO_DSAVE (F3), -DPK_FP_NO_QSAVE (F1, F5),
-#   -DPK_FP_NO_CRSAVE (F6)
+# Falsifiers (FPB_EXTRA): -DPK_FP_NO_DSAVE (F3), -DPK_FP_NO_QSAVE (F1 only:
+#   F5 stays green, measured in audit-41 — the switch's own frame also carries
+#   FPCR, so no falsifier here turns F5 red), -DPK_FP_NO_CRSAVE (F6)
 # Exit 0 only when the plain build prints [fpb] ALL PASS.
 # ---------------------------------------------------------------------------
 set -u

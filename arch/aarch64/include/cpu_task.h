@@ -45,7 +45,7 @@ Inline void knl_setup_context(TCB *tcb)
     /* AArch64 requires sp to be 16-byte aligned for every load/store
      * that uses sp as the base register. knl_Imalloc only guarantees
      * 8-byte alignment for the task stack, so the naïve
-     * (isstack - 112) can land 8-aligned but not 16-aligned. Round
+     * (isstack - DORMANT_STACK_SIZE) can land 8-aligned but not 16-aligned. Round
      * the top of stack down to 16 here. Bare-metal builds get the
      * same guarantee for free; AArch64-Linux ones rely on it. */
     unsigned long base = ((unsigned long)tcb->isstack) & ~0xFUL;
