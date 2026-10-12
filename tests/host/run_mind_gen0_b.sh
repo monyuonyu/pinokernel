@@ -184,8 +184,14 @@ done
 [ -z "$e3" ] && res E3 PASS "sky's teacher matches its value on every node" || res E3 FAIL "$e3"
 # E4: the losing value and its teacher remain readable — no such read exists today
 # (ROADMAP 1-3). The script looks for a "conflict" record in `mind ask` output.
+# Only the record lines count (mc_add's "conflict recorded:" / "conflict again:"
+# and mc_ask_tail's "  conflict history:"), not "conflict rule:" or
+# "conflict: pushed ..." (1-3c (3): those come with a record today, so the
+# verdicts on master did not change when this was tightened — 2 runs, mg0b).
 e4=0
-for i in 1 3 5 6; do grep -aqE '^\[mind\] +conflict' "$LOGDIR/node$i.log" && e4=$((e4 + 1)); done
+for i in 1 3 5 6; do
+    grep -aqE '^\[mind\] (conflict (recorded|again):| +conflict history:)' "$LOGDIR/node$i.log" && e4=$((e4 + 1))
+done
 [ "$e4" = 4 ] && res E4 PASS "a conflict record is readable on every node" \
     || res E4 FAIL "no readable conflict record on $((4 - e4)) of 4 nodes (only the remote REVISE log line and a galaxy event exist)"
 # E5: no resurrection 30 s later
