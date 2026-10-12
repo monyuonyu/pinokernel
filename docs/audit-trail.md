@@ -1840,6 +1840,23 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — the receive entry-point checks (0-9) and bare AArch64 FP/SIMD + FPCR across a task
+  switch (0-11), one re-bless (2026-10-12, merges `7b80b30a` of `feat/rx-bounds` ca2bde91 (audit-39 PASS)
+  and `2f94375d` of `feat/bare-a64-fp` 3618269e (audit-41 PASS), `--no-ff` onto `31b9ebf9`, made on
+  `trial/m42` and fast-forwarded; R-RXB (2026-10-11T18:40) and R-FPBARE (2026-10-11T20:37) were put to
+  mk_pino with a recommendation and, with no answer in 24 h, landed on it). Conflicts: ci.yml (both the
+  0-10 `tkconf nr` steps and the 0-9 `tkconf rx` steps kept), both hosted usermain.c (both
+  `nosw_relay_run` and `rx_bounds_run`), ROADMAP, gap-ledger (both new OPEN rows, count 6). The bare
+  `.text` changes DELIBERATELY: the receive guards are in shared TUs (x86 and aarch64), and the AArch64
+  dispatch frame grows 112 -> 192 B with q0-q31/FPCR/FPSR saved at IRQ entry. Measured on a fresh clone
+  of `trial/m42`, tree 4685a9f9 (gcc 13.3.0, `objcopy -O binary -j .text`; `pk-scratch/m42.sh`, `/build/m42`):
+    base `31b9ebf9`  aarch64 4b617529… 361552 B   x86 4191098c… 372155 B
+    0-9 alone (audit-39) aarch64 040331f9… 361724 B, x86 ec6b2012… 372287 B; 0-11 alone (audit-41) aarch64 267235eb… 361800 B
+    both
+      aarch64  807bb3d6a8b5ecc0240d205a4cce71917c7e475120a1f69221aebf7c922d7f43  361972 B
+      x86      ec6b201207845897e0c35532159a4899bfc3eaeaa300ddf6c6971c6df84edf2e  372287 B
+  On that tree: build_all 24/24 ALL OK; vendor inventory GREEN; yaml, ci_exceptions, script modes, vmodel, README counts OK; hosted x86_64 tkconf 133/0, rx 15/0, nr and fp ALL PASS; hosted aarch64 rx 15/0, nr and fp ALL PASS, tkconf 132/1 (K7) under load 10-12 once, then 133/0 3/3 side by side with master 31b9ebf9 (also 3/3, /build/k7: the K7 red was the load, its 50 ms calibration was preempted); bare run_fp_bare GREEN; RNG0 AArch64 positive GREEN; bare run_tk_conform.sh x86 and AArch64 PASS (plain + 14 broken kernels). The crown was measured twice (in m42.sh and on a second fresh clone, /build/m42c) with the same digits; feat/mind-hist and feat/vendor-fp-anchor give the same crown.
+  This entry was written by the run that merged; an independent re-measure is for a different run.
 - CROWN RE-BLESS — variable-size memory pool control block on LP64 (2026-10-08, merge `ee48839d` of
   `feat/mpl-lp64` 76de7622 with `feat/tkc-mpl` (audit-29 PASS), `--no-ff` onto `63592220`, made on
   `audit/a33-mpl` and fast-forwarded; R-MPL64 (2026-10-07T22:09) was put to mk_pino with a recommendation

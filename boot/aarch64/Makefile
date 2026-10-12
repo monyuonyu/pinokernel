@@ -117,6 +117,12 @@ ARCH_C_SRCS = \
 
 ARCH_S_SRCS = cpu_support.S
 
+# FP/SIMD across task switches (ROADMAP 0-11) is linked ONLY into -DPK_FPBARE
+# test builds (tests/aarch64/run_fp_bare.sh), so the crown is unchanged.
+ifneq ($(findstring -DPK_FPBARE,$(EXTRA_CFLAGS)),)
+ARCH_C_SRCS += fp_bare_test.c
+endif
+
 ARCH_OBJS   = $(ARCH_C_SRCS:.c=.o) $(ARCH_S_SRCS:.S=.o)
 
 # ---- arch/common sources (portable across all arches) ----------------

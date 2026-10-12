@@ -200,7 +200,8 @@ COMMON_C_SRCS = \
     cradle_net.c \
     modver.c \
     scaling_cert.c \
-    tk_conform.c
+    tk_conform.c \
+    rx_bounds_test.c
 
 COMMON_OBJS = $(COMMON_C_SRCS:.c=.o)
 

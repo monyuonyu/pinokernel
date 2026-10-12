@@ -49,6 +49,10 @@ static void pm_puthex1(UB v)
 PMESH_ROUTE  pmesh_routes[DNODE_MAX];
 PMESH_STATS  pmesh_stats;
 
+/* Packets rejected as malformed (out-of-range dst_node). Read by the
+ * rx-bounds cert (ROADMAP 0-9); not exported in a header. */
+UW pmesh_drop_bad = 0;
+
 /* ------------------------------------------------------------------ */
 /* ローカル配送テーブル (pmesh_bind)                                  */
 /* ------------------------------------------------------------------ */
@@ -267,6 +271,16 @@ void pmesh_rx(UW src_ip, UH src_port, const UB *data, UH len)
 
         if (data_len > PMESH_DATA_MAX) return;
         if ((UH)(12 + data_len) > len) return;
+
+        /* dst_node is a UB off the wire; the relay branch below indexes
+         * pmesh_routes[] (DNODE_MAX entries). pmesh_send() range-checks it but
+         * the rx relay path did not. Reject out-of-range before the lookup.
+         * (The == drpc_my_node local-delivery branch does not index the table,
+         * but an out-of-range id can never be this node, so guard first.)
+         * (ROADMAP 0-9) */
+#ifndef RXB_NO_PMESH_GUARD
+        if (dst_node >= DNODE_MAX) { pmesh_drop_bad++; return; }
+#endif
 
         if (dst_node == drpc_my_node) {
             /* ローカル配送 */

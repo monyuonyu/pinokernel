@@ -92,6 +92,7 @@ void raft_rx(UW src_ip, UH src_port, const UB *data, UH len);
 UB   raft_leader(void);     /* 現在のリーダーノードID (0xFF=不明) */
 UB   raft_role(void);       /* RAFT_FOLLOWER / CANDIDATE / LEADER */
 UW   raft_term(void);       /* 現在の任期番号                    */
+UW   raft_log_size(void);   /* 現在のログ長 (rx-bounds cert 用)   */
 void raft_stat(void);       /* shell `raft stat` 用表示          */
 
 /* クラスタ設定をログへ書き込む (リーダーのみ有効) */

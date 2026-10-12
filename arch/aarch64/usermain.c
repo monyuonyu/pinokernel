@@ -278,6 +278,14 @@ EXPORT INT usermain(void)
     }
 #endif
 
+#ifdef PK_FPBARE
+    /* FP/SIMD across task switches (ROADMAP 0-11, tests/aarch64/run_fp_bare.sh); test builds only */
+    {
+        extern INT fp_bare_run(void (*out)(const char *));
+        fp_bare_run(print);
+    }
+#endif
+
 #ifdef PK_RNG0_REGR_TEST
     a16_rng0_probe();
 #endif

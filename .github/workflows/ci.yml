@@ -166,6 +166,29 @@ jobs:
         run: ARM=control sh tests/aarch64/run_rng0_regression.sh
       - name: RNG0 on bare AArch64 — nofix arm, expect RED (switch compiled out)
         run: ARM=nofix sh tests/aarch64/run_rng0_regression.sh
+      # 2026-10-12 (ROADMAP 0-11, gap-ledger BARE-A64-FP-NOT-SAVED): FP/SIMD
+      # across task switches on bare AArch64 (tests/aarch64/run_fp_bare.sh,
+      # -DPK_FPBARE test build only; crown unaffected). Plain must be ALL PASS;
+      # each falsifier must turn exactly its own item red (a build failure
+      # does not pass: the step asks for the item's FAIL line). 4 builds +
+      # 4 boots, each boot up to 120 s.
+      - name: FP/SIMD across task switches on bare AArch64 — plain, expect GREEN
+        run: bash tests/aarch64/run_fp_bare.sh
+      - name: FP/SIMD on bare AArch64 — NC no d8-d15 save on a voluntary switch, expect only F3 RED
+        run: |
+          FPB_EXTRA=-DPK_FP_NO_DSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_nod.log || true
+          grep -aq '^\[fpb\] FAIL F3' fpb_nod.log
+          if grep -aq '^\[fpb\] FAIL F1' fpb_nod.log; then echo "F1 red too"; exit 1; fi
+      - name: FP/SIMD on bare AArch64 — NC no q-register save at IRQ entry, expect only F1 RED
+        run: |
+          FPB_EXTRA=-DPK_FP_NO_QSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_noq.log || true
+          grep -aq '^\[fpb\] FAIL F1' fpb_noq.log
+          if grep -aq '^\[fpb\] FAIL F3' fpb_noq.log; then echo "F3 red too"; exit 1; fi
+      - name: FP/SIMD on bare AArch64 — NC no FPCR in the dispatch frame, expect F6 RED (not F3/F5)
+        run: |
+          FPB_EXTRA=-DPK_FP_NO_CRSAVE bash tests/aarch64/run_fp_bare.sh | tee fpb_nocr.log || true
+          grep -aq '^\[fpb\] FAIL F6' fpb_nocr.log
+          if grep -aqE '^\[fpb\] FAIL (F3|F5)' fpb_nocr.log; then echo "F3/F5 red too"; exit 1; fi
       - name: contract suite v2 on bare x86 (plain green, 11 NCs red)
         run: bash tests/x86/run_tk_conform.sh
       - name: contract suite v2 on bare AArch64 (plain green, 11 NCs red)
@@ -948,6 +971,15 @@ jobs:
           timeout 300 tests/host/run_swim_selfsuspect.sh | tee swim_selfsuspect.log
           grep -aF '[swim-selfsuspect] ALL PASS' swim_selfsuspect.log
 
+      # CI-F (2026-10-11): test-only region tau. The self-hosted 3-node certs
+      # (samples/13, 27, 28) set PKERNEL_REGION_TAU_MS because a hosted node's
+      # measured RTT crosses the product 50 ms on a loaded runner. This proves
+      # the env is read, admits a peer beyond 50 ms, and is off by default.
+      - name: test-only region tau (PKERNEL_REGION_TAU_MS)
+        run: |
+          timeout 200 tests/host/run_region_tau_env.sh | tee region_tau.log
+          grep -aF '[region-tau-env] ALL PASS' region_tau.log
+
       # SLICE 0 — the durable layer stops lying (persistence.md; gap-ledger
       # DUR-SWALLOW 🔴 + DUR-REFTAB 🟠). [pfs-durswallow]: a failed durable
       # write makes pfs_put return NON-OK and pins the sole in-memory copy
@@ -1120,6 +1152,14 @@ jobs:
           # into CI until now.
           timeout 30 sh -c "printf 'net\nbody test\nexit\n' | ./p-kernel" | tee self_access.log
           grep -aF '[self-access-r1-test] ALL PASS' self_access.log
+      # ROADMAP 0-9: malformed packets into the raft / spawn / pmesh / kloader
+      # receive functions are dropped and counted (arch/common/rx_bounds_test.c).
+      # Its own invocation: the cert leaves junk raft entries behind.
+      - name: receive entry points reject malformed packets (tkconf rx, BLOCKING, 0-9)
+        run: |
+          cd boot/linux_x86_64
+          timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" | tee rx_x64.log
+          grep -aF '[rxb] 15 PASS / 0 FAIL' rx_x64.log
 
       # RNG0 on hosted x86_64: K9 (a task woken during a no-call spin runs
       # during it) is in the contract suite above, but nothing showed that it
@@ -1251,6 +1291,12 @@ jobs:
           timeout 300 sh -c "printf 'tkconf nr\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee nr_a64.log
           grep -aF '[nosw] ALL PASS' nr_a64.log
+      - name: receive entry points reject malformed packets on hosted aarch64 (tkconf rx, BLOCKING, 0-9)
+        run: |
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf rx\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee rx_a64.log
+          grep -aF '[rxb] 15 PASS / 0 FAIL' rx_a64.log
       # D5-k on aarch64: tk_exd_tsk frees its own stack, then force-dispatches;
       # knl_dispatch_to_schedtsk must leave it for knl_tmp_stack before idling.
       # gdb calls drpc_local_restart from cmd_ver (no shell path reaches it).
@@ -1282,6 +1328,14 @@ jobs:
           timeout 300 sh -c "printf 'tkconf nr\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee nr_a64_nc.log
           grep -aF '[nosw] FAIL N28' nr_a64_nc.log
+      - name: K4 goes red without the kloader chunk_idx ceiling (negative control, -DRXB_NO_KLOAD_IDX, 0-9)
+        run: |
+          make -C boot/linux clean >/dev/null
+          make -C boot/linux EXTRA_CFLAGS=-DRXB_NO_KLOAD_IDX >/dev/null
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf rx\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee rx_a64_nc.log
+          grep -aF '[rxb] K4 FAIL' rx_a64_nc.log
 
   bare-metal:
     name: "ベアメタル (i686 + aarch64, ビルドのみ)"
@@ -1525,11 +1579,14 @@ jobs:
     if: ${{ always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) }}
     timeout-minutes: 15
     # enforces the LIVE §2 ∧ §5 path (G35): FOUR protected points declared at
-    # once across TWO owners all reach R durable replicas concurrently — in ~the
-    # time of ONE point (calibrated in-run), far under the 4*t_one serialized
-    # bound — fairly, none starving; then the owner of two of them is killed and
-    # both already-replicated points survive. Proves protection is plural (no
-    # single-consciousness collapse), not just the single-point loop.
+    # once across TWO owners all reach R durable replicas, each owner driving
+    # both of its points in the same actuator tick (a serialized defender does
+    # not: the negative-control step below); then the owner of two of them is
+    # killed and both already-replicated points survive. The t_one / t_four
+    # times are printed as information only (one point replicates within one
+    # tick, so a time bound passed the serialized defender too; gap-ledger
+    # PLURAL-PROTECT-NOT-SHOWN-PARALLEL). The in-kernel [plural-protect]
+    # self-test checks a model (pp_sim), not the live actuator.
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
@@ -2173,9 +2230,11 @@ jobs:
     # bare-metal arch backends) flips .text and FAILS this gate.
     #
     # WHY RELATIVE, NOT AN ABSOLUTE PINNED HASH: the .text bytes are
-    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 4b617529…,
-    # x86 4191098c… after the LP64 MPL control block (R-MPL64) 2026-10-08,
-    # audit-container gcc 13.3.0; was aarch64 3f456078…/x86 ec4b5849… after
+    # TOOLCHAIN-DEPENDENT. The canonical dev crown (currently aarch64 807bb3d6…,
+    # x86 ec6b2012… after the receive entry-point checks (R-RXB) + the bare AArch64
+    # FP/SIMD save (R-FPBARE) 2026-10-12, audit-container gcc 13.3.0; was
+    # aarch64 4b617529…/x86 4191098c… after the LP64 MPL control block
+    # (R-MPL64) 2026-10-08; was aarch64 3f456078…/x86 ec4b5849… after
     # the drpc pending-slot claim region (R-DRPC) 2026-10-08; was aarch64 6f82264d…/x86
     # 3826e048… after the bare-metal no-switch regions (R-NOSW-BARE) + the
     # p-fs full-table fix (R-PFSDROP) 2026-10-07;
