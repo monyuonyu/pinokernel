@@ -3283,6 +3283,7 @@ typedef struct {
     U1 lost_prov[PFS_ID_LEN];     /* content-id of v_lost's ARK_PROV     */
     U1 heard_from;                /* 0xFF = seen here; else the node whose */
                                   /* mind/hist told us (1-3c (3))         */
+    UB hist_told;                 /* mind/hist printed its first send     */
 } MC_REC;
 static MC_REC mc_hist[MC_MAX];
 static UW mc_next, mc_dropped;
@@ -3394,7 +3395,7 @@ static void mc_add(UB k, UB v_lost, UB lost_src, U1 lost_by, UW lost_stamp,
     r->lost_stamp = lost_stamp; r->now_stamp = now_stamp;
     r->lost_state = lost_state; r->lost_rounds = lost_rounds;
     r->has_prov = prov ? 1 : 0; r->n = 1; r->lost_seq = lost_seq; r->at_ms = (UW)t.lo;
-    r->heard_from = heard_from;
+    r->heard_from = heard_from; r->hist_told = 0;
     for (INT i = 0; i < PFS_ID_LEN; i++) r->lost_prov[i] = prov ? prov[i] : 0;
     mc_print(r, "[mind] conflict recorded: ");
 }
@@ -4420,53 +4421,22 @@ static void mh_tick(void)
 }
 
 /* ---- 1-3c (3): mind/hist (dtr.h MHI_HIST_PKT) ---------------------------
- * Send: when this node answers a pull for key k with value v (mq_poll_wants,
- * the first answer to an asker), the newest kept record with key k that v
- * superseded goes out on mind/hist: MHI_SENDS sends that reached somebody
- * (fanout > 0) within MHI_TICKS ticks, one a tick. Its own topic, so it does
- * not take the mind/teach tick from an answer or a push-back. One slot: a
- * newer answer's record replaces an older one. Receive: one sample a tick,
- * deduplicated per sender by hist_seq, then mc_add only (no value changes, no
- * re-send). -DMH_NO_HIST: never send. -DMH_HIST_IGNORE: receive and drop.
- * (The two negative controls of mind-conflicts.md 1-3c (3).) */
-#define MHI_SENDS 20                 /* = MC_PUSH_SENDS                          */
-#define MHI_TICKS 120                /* = MC_PUSH_TICKS                          */
+ * Send: every MHI_EVERY ticks, the next record this node saw ITSELF (not one
+ * it heard) whose winner it still holds (key k held with value v_now) goes
+ * out on mind/hist, round-robin over the ring. A beacon, not a reply to a
+ * pull: in MIND-GEN-0-B the newcomer took sky from the teacher's re-drive, not
+ * from a pull answer, so a pull-triggered send never fired (/build/mh1, the
+ * first design). Its own LATEST_ONLY topic: it does not take the mind/teach
+ * tick from an answer or a push-back. Receive: one sample a tick; recorded
+ * only if this node holds the same winner (key k = v_now), as "heard as
+ * history from node X" (mc_add skips a conflict already kept); no value
+ * changes, never sent on. -DMH_NO_HIST: never send. -DMH_HIST_IGNORE: receive
+ * and drop. (The two negative controls of mind-conflicts.md 1-3c (3).) */
+#define MHI_EVERY 4                  /* ticks, like MH_EVERY                     */
 static MHI_HIST_PKT mhi_tx, mhi_rx;
-static UB mhi_sends_left, mhi_ticks_left, mhi_sent_n;
-static UW mhi_seq;
-static UW mhi_last_seq[DNODE_MAX];
+static UB mhi_tick_n;
+static UW mhi_seq, mhi_rr;
 static UB mhi_seen[DNODE_MAX];
-
-/* caller holds m_gate (mq_poll_wants) */
-static void mhi_arm(U1 asker, UB k, UB v)
-{
-#ifdef MH_NO_HIST
-    (void)asker; (void)k; (void)v;
-#else
-    if (drpc_my_node == 0xFF) return;
-    for (UW j = 1; j <= MC_MAX; j++) {                    /* newest first */
-        MC_REC *r = &mc_hist[(mc_next + MC_MAX - j) % MC_MAX];
-        if (!r->used || r->key != k || r->v_now != v) continue;
-        mhi_tx.magic = MHI_MAGIC; mhi_tx.hist_seq = ++mhi_seq;
-        mhi_tx.lost_stamp = r->lost_stamp; mhi_tx.now_stamp = r->now_stamp;
-        mhi_tx.lost_seq = r->lost_seq; mhi_tx.origin_node = drpc_my_node;
-        mhi_tx.key = r->key; mhi_tx.v_lost = r->v_lost; mhi_tx.v_now = r->v_now;
-        mhi_tx.lost_src = r->lost_src; mhi_tx.now_src = r->now_src;
-        mhi_tx.lost_by = r->lost_by; mhi_tx.now_by = r->now_by;
-        mhi_tx.lost_state = r->lost_state; mhi_tx.lost_rounds = r->lost_rounds;
-        mhi_tx.has_prov = r->has_prov; mhi_tx.wire_ver = MT_WIRE_VER_VOCAB;
-        for (INT i = 0; i < PFS_ID_LEN; i++) mhi_tx.lost_prov[i] = r->lost_prov[i];
-        mt_vocab_fp_fill(mhi_tx.vocab_fp);
-        mhi_sends_left = MHI_SENDS; mhi_ticks_left = MHI_TICKS; mhi_sent_n = 0;
-        r_puts("[mind] mind/hist: answering node "); r_putdec((UW)asker);
-        r_puts(" on key "); r_putdec((UW)k);
-        r_puts(", sending the record of \""); r_puts(r3_vocab_val_word(r->v_lost));
-        r_puts("\" superseded by \""); r_puts(r3_vocab_val_word(v));
-        r_puts("\" (hist_seq "); r_putdec(mhi_seq); r_puts(")\r\n");
-        return;
-    }
-#endif
-}
 
 /* the sender's per-node view of a teaching node -> the receiver's MC_SRC_* */
 static UB mhi_src_here(UB src, U1 by)
@@ -4475,28 +4445,53 @@ static UB mhi_src_here(UB src, U1 by)
     return by == drpc_my_node ? MC_SRC_LOCAL : MC_SRC_REMOTE;
 }
 
+/* does this node hold key k with value v right now? (caller holds m_gate) */
+static INT mhi_holds(UB k, UB v)
+{
+    INT bind, fi = m_find_key((INT)k, &bind);
+    return fi >= 0 && r3_fq[fi].yhat[bind] == v;
+}
+
 static void mhi_tick(void)
 {
     if (drpc_my_node == 0xFF) return;
+#ifndef MH_NO_HIST
     /* send */
-    if (mhi_sends_left > 0) {
-        if (mhi_ticks_left == 0 || --mhi_ticks_left == 0) {
-            r_puts("[mind] mind/hist: gave up, "); r_putdec((UW)mhi_sent_n);
-            r_puts(" send(s) reached the region\r\n");
-            mhi_sends_left = 0;
-        } else {
-            if (mhi_pub < 0)
-                mhi_pub = kdds_open_poll_scoped(MIND_HIST_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
-            W rc = mhi_pub >= 0 ? kdds_pub(mhi_pub, &mhi_tx, (W)sizeof mhi_tx) : -1;
-            if (rc >= 0 && kdds_pub_fanout() > 0) {
-                mhi_sent_n++;
-                if (--mhi_sends_left == 0) {
-                    r_puts("[mind] mind/hist: done, "); r_putdec((UW)mhi_sent_n);
-                    r_puts(" send(s) reached the region\r\n");
-                }
+    if (++mhi_tick_n >= MHI_EVERY) {
+        mhi_tick_n = 0;
+        INT found = 0;
+        m_gate_acquire();
+        for (UW t = 0; t < MC_MAX && !found; t++) {
+            UW i = (mhi_rr + t) % MC_MAX;
+            MC_REC *r = &mc_hist[i];
+            if (!r->used || r->heard_from != 0xFF || !mhi_holds(r->key, r->v_now)) continue;
+            found = 1; mhi_rr = (i + 1) % MC_MAX;
+            mhi_tx.magic = MHI_MAGIC; mhi_tx.hist_seq = ++mhi_seq;
+            mhi_tx.lost_stamp = r->lost_stamp; mhi_tx.now_stamp = r->now_stamp;
+            mhi_tx.lost_seq = r->lost_seq; mhi_tx.origin_node = drpc_my_node;
+            mhi_tx.key = r->key; mhi_tx.v_lost = r->v_lost; mhi_tx.v_now = r->v_now;
+            mhi_tx.lost_src = r->lost_src; mhi_tx.now_src = r->now_src;
+            mhi_tx.lost_by = r->lost_by; mhi_tx.now_by = r->now_by;
+            mhi_tx.lost_state = r->lost_state; mhi_tx.lost_rounds = r->lost_rounds;
+            mhi_tx.has_prov = r->has_prov; mhi_tx.wire_ver = MT_WIRE_VER_VOCAB;
+            for (INT j = 0; j < PFS_ID_LEN; j++) mhi_tx.lost_prov[j] = r->lost_prov[j];
+            if (!r->hist_told) {            /* say it once per record */
+                r->hist_told = 1;
+                r_puts("[mind] mind/hist: sending the record of key "); r_putdec((UW)r->key);
+                r_puts(" \""); r_puts(r3_vocab_val_word(r->v_lost));
+                r_puts("\" superseded by \""); r_puts(r3_vocab_val_word(r->v_now));
+                r_puts("\" to the region (every "); r_putdec(MHI_EVERY); r_puts(" ticks)\r\n");
             }
         }
+        m_gate_release();
+        if (found) {
+            mt_vocab_fp_fill(mhi_tx.vocab_fp);
+            if (mhi_pub < 0)
+                mhi_pub = kdds_open_poll_scoped(MIND_HIST_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
+            if (mhi_pub >= 0) (void)kdds_pub(mhi_pub, &mhi_tx, (W)sizeof mhi_tx);
+        }
     }
+#endif
     /* receive */
     mh_have_open();
     if (mhi_sub < 0) return;
@@ -4505,26 +4500,27 @@ static void mhi_tick(void)
     if (mhi_rx.wire_ver != MT_WIRE_VER_VOCAB || !mt_vocab_fp_ok(mhi_rx.vocab_fp)) return;
     U1 o = mhi_rx.origin_node;
     if (o == drpc_my_node || o >= DNODE_MAX) return;
-    if (mhi_seen[o] && mhi_last_seq[o] == mhi_rx.hist_seq) return;   /* re-send */
-    mhi_seen[o] = 1; mhi_last_seq[o] = mhi_rx.hist_seq;
 #ifdef MH_HIST_IGNORE
-    r_puts("[mind] mind/hist from node "); r_putdec((UW)o);
-    r_puts(": IGNORED (MH_HIST_IGNORE)\r\n");
+    if (!mhi_seen[o]) {
+        mhi_seen[o] = 1;
+        r_puts("[mind] mind/hist from node "); r_putdec((UW)o);
+        r_puts(": IGNORED (MH_HIST_IGNORE)\r\n");
+    }
 #else
+    (void)mhi_seen;
     m_gate_acquire();
-    mc_add(mhi_rx.key, mhi_rx.v_lost, mhi_src_here(mhi_rx.lost_src, mhi_rx.lost_by),
-           mhi_rx.lost_by, mhi_rx.lost_stamp, mhi_rx.lost_state, mhi_rx.lost_rounds,
-           mhi_rx.lost_seq, mhi_rx.has_prov ? mhi_rx.lost_prov : 0,
-           mhi_rx.v_now, mhi_src_here(mhi_rx.now_src, mhi_rx.now_by),
-           mhi_rx.now_by, mhi_rx.now_stamp, o);
+    if (mhi_holds(mhi_rx.key, mhi_rx.v_now))
+        mc_add(mhi_rx.key, mhi_rx.v_lost, mhi_src_here(mhi_rx.lost_src, mhi_rx.lost_by),
+               mhi_rx.lost_by, mhi_rx.lost_stamp, mhi_rx.lost_state, mhi_rx.lost_rounds,
+               mhi_rx.lost_seq, mhi_rx.has_prov ? mhi_rx.lost_prov : 0,
+               mhi_rx.v_now, mhi_src_here(mhi_rx.now_src, mhi_rx.now_by),
+               mhi_rx.now_by, mhi_rx.now_stamp, o);
     m_gate_release();
 #endif
 }
 #define MH_TICK() do { mh_tick(); mhi_tick(); } while (0)
-#define MHI_ARM(o, k, v) mhi_arm((o), (k), (v))
 #else
 #define MH_TICK() do { } while (0)
-#define MHI_ARM(o, k, v) do { } while (0)
 #endif
 
 /* ---- answer side: ONE poll site, engram-only, forwarded provenance ---- */
@@ -4735,7 +4731,6 @@ static void mq_poll_wants(void)
 #ifdef _TK_HOSTED_LIBC_
             mq_answer_sent = 1;                /* 1-2b: no own re-drive this tick */
 #endif
-            MHI_ARM(o, k, mq_ans_pkt.val);     /* 1-3c (3): the loser history    */
             s->redrive_key = k; s->redrive_ticks = 0;
             r_puts("[mind] answering want key "); r_putdec((UW)k);
             r_puts(" (\""); r_puts(r3_vocab_key_word((INT)k));
