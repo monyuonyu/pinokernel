@@ -221,6 +221,19 @@ echo "==========================================================="
 # rigorous "EVERY node > solo via gossip" claim is the 3-node Phase A gate
 # above (and the rejoin below); here we gate on SURVIVAL + still-collective and
 # report each survivor's final honestly.
+# Kill at a FIXED point of learning (node3's round >= P32_KILL_ROUND), not
+# "as soon as Phase A passed": once the p-fs table stopped refusing blocks
+# (PFS-FLAT-FULL) the swarm passed Phase A by round 3 instead of ~6, so the
+# kill came earlier and the survivors kept less of node3's class (audit-46).
+KILL_ROUND="${P32_KILL_ROUND:-6}"
+i=0
+while [ "$i" -lt 480 ]; do      # up to 120s
+    KR=$(grep -aoE 'node=[0-9] round=[0-9]+' "$L3" 2>/dev/null | tail -1 | sed 's/.*round=//')
+    [ "${KR:-0}" -ge "$KILL_ROUND" ] && break
+    grep -aq 'RESULT rounds=' "$L3" && break
+    sleep 0.25; i=$((i + 1))
+done
+log "node3 is at round ${KR:-?} (kill at >= $KILL_ROUND)"
 log "*** kill -9 node3 (pid ${NODE_PID[3]}) mid-learning ***"
 kill -9 "${NODE_PID[3]}" 2>/dev/null; NODE_PID[3]=0
 # Post-kill FAILOVER window: the 2-node survivors must finish their remaining
