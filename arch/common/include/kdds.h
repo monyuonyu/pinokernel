@@ -37,7 +37,8 @@
 #ifdef _TK_HOSTED_LIBC_
 /* ROADMAP 1-3c adds "mind/have" (hosted only, like mind_net_task): the named
  * obligation below is paid here, 16 -> 20, on hosted only, so the bare-metal
- * tables (and the crown) do not move. */
+ * tables (and the crown) do not move. 1-3c (3) adds "mind/hist" in the same
+ * boot window (named worst case 15 + 2 = 17 of 20). */
 #define KDDS_SINGLETON_TOPICS 20
 #else
 #define KDDS_SINGLETON_TOPICS 16 /* cluster-wide SINGLE topics (NOT per-node):
