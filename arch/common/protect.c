@@ -300,11 +300,21 @@ void protect_tick(UW elapsed_ms)
      * large N the per-tick kickoff (N*spacing) grows — honest finite capacity. */
     INT driven_this_tick = 0;
     for (INT scan = 0; scan < PROTECT_MAX_OBJS; scan++) {
+#ifndef PROTECT_SABOTAGE_SERIAL
         INT i = (drive_rotor + scan) % PROTECT_MAX_OBJS;
+#else
+        INT i = scan;                    /* fixed order, no rotor */
+#endif
         if (!objs[i].active) continue;
         UB t = protect_threat_for((INT)objs[i].holder_count,
                                   (INT)objs[i].target_r);
         if (t == 0) continue;
+#ifdef PROTECT_SABOTAGE_SERIAL
+        /* falsifier for samples/28's concurrency check: one point at a time,
+         * the next only after this one is safe (a serialized defender) */
+        if (objs[i].drive_age_ms < PROTECT_REANNOUNCE_MS) break;
+        if (driven_this_tick > 0) break;
+#endif
         if (objs[i].drive_age_ms < PROTECT_REANNOUNCE_MS) continue;
 
         if (driven_this_tick > 0)
@@ -611,13 +621,16 @@ static INT st_closed_loop(void)
  *     DIFFERENT neighbours, so once a point is kicked its replicas rise in
  *     PARALLEL with every other already-kicked point (pull_rate per tick).
  *
- * Proven properties (all from local/per-object state — NO central, §7):
+ * Properties OF THIS MODEL (pp_sim below, not the live actuator — a
+ * serialized live defender, -DPROTECT_SABOTAGE_SERIAL, still passes this
+ * self-test; the live concurrency check is samples/28 step (4), gap-ledger
+ * PLURAL-PROTECT-NOT-SHOWN-PARALLEL):
  *   (1) ALL N points reach safe (threat 0)               — §5 many-at-once
  *   (2) FAIR: every point gains replicas; none starves    — §6 plural
  *   (3) CONCURRENT not serialized: total ticks ~= one-point (all kicked in the
  *       first tick, then fill in parallel), and STRICTLY < the serialized
- *       bound N*one-point — the control that FAILS if the system defended one
- *       point at a time.
+ *       bound N*one-point — a model that defended one point at a time would
+ *       fail it.
  * ================================================================== */
 /* Simulate N points under the spaced-kickoff actuator. Returns ticks-to-all-
  * safe; *all_safe_out set iff every point reached R (starvation probe). */
@@ -676,8 +689,8 @@ static INT st_plural(void)
     }
     /* (2) concurrency control: with the spaced kickoff all N points are kicked
      * in the first tick, so defending them in PARALLEL finishes in ~one-point
-     * time — NOT N*one-point. A serialized (one-at-a-time) implementation would
-     * need N*one-point ticks and FAIL this. */
+     * time — NOT N*one-point. A serialized (one-at-a-time) MODEL would need
+     * N*one-point ticks and FAIL this; the live actuator is not what runs here. */
     if (!(par <= one)) {
         pt_puts("[plural-protect] FAIL slower than one-point (kickoff not parallel)\r\n");
         fails++;

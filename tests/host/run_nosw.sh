@@ -90,7 +90,7 @@ expect_green() {  # $1 = arm, $2 = EXTRA_CFLAGS
     else echo "[result] $1 RED (UNEXPECTED)"; rc_all=1; fi
     echo ""
 }
-expect_red off "-DPK_NOSW_OFF" "N1 N20"
+expect_red off "-DPK_NOSW_OFF" "N1 N20 N28"
 expect_green slow "-DARK_FAULT_SLOW_GET=200000"
 expect_red slowoff "-DARK_FAULT_SLOW_GET=200000 -DPK_NOSW_OFF" N9
 expect_green slowpeer "-DNETLAN_FAULT_SLOW_LEARN=200000"

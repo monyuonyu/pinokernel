@@ -610,6 +610,33 @@ static void train_repeat(st_model *m, int rounds, int n_ex, uint32_t seed,
     free(logits);
 }
 
+/* stage B: a student trained by `c2` and saved with C2_SAVE=<file> */
+static int rv_save_file(const st_model *m, const char *path)
+{
+    size_t cap = st_blob_size(m);
+    unsigned char *blob = (unsigned char *)malloc(cap);
+    if (!blob) return -1;
+    long n = st_save(m, blob, cap);
+    FILE *f = n > 0 ? fopen(path, "wb") : NULL;
+    int ok = f && fwrite(blob, 1, (size_t)n, f) == (size_t)n;
+    if (f && fclose(f) != 0) ok = 0;
+    free(blob);
+    return ok ? 0 : -1;
+}
+
+static int rv_load_file(st_model *m, const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+    size_t cap = st_blob_size(m);
+    unsigned char *blob = (unsigned char *)malloc(cap + 1);
+    size_t n = blob ? fread(blob, 1, cap + 1, f) : 0;
+    fclose(f);
+    int rc = (blob && n == cap) ? st_load(m, blob, n) : -1;
+    free(blob);
+    return rc == ST_OK ? 0 : -1;
+}
+
 static int falsify_main(void)
 {
     const int dd[6] = { 16, 32, 48, 96, 128, 192 };
@@ -651,13 +678,20 @@ static int falsify_main(void)
     for (int i = 0; i < 6; i++)
         printf("[rote] floor max d=%d S=%+.5f R=%+.5f\n", dd[i], flS[i], flR[i]);
 
-    /* the C1 FULL student (same seed and budget as `full`) */
+    /* the C1 FULL student (same seed and budget as `full`), or (stage B) a
+     * student `c2` trained and saved with C2_SAVE, read from ROTE_LOAD */
     st_model m;
     if (st_init(&m, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
     st_rope_set_enabled(1);
     double t0 = now_ms();
-    train_ctx(&m, ROUNDS, 128, 0x7A1E77u, tdists, 6);
-    printf("[rote] trained C1 FULL in %.1f s\n", (now_ms() - t0) / 1000.0);
+    const char *load = getenv("ROTE_LOAD");
+    if (load) {
+        if (rv_load_file(&m, load) != 0) { printf("[rote] ROTE_LOAD %s: cannot load\n", load); return 2; }
+        printf("[rote] loaded the student under test from %s\n", load);
+    } else {
+        train_ctx(&m, ROUNDS, 128, 0x7A1E77u, tdists, 6);
+        printf("[rote] trained C1 FULL in %.1f s\n", (now_ms() - t0) / 1000.0);
+    }
     int sover = 0, rover = 0, ncbad = 0, nvs = 0, nvr = 0, nvn = 0;
     for (int i = 0; i < 6; i++) {
         double r0;
@@ -684,22 +718,50 @@ static int falsify_main(void)
     }
     st_free(&m);
 
-    /* PC: random repeats only, same student shape, the same example count */
-    st_model pc;
-    if (st_init(&pc, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
-    st_rope_set_enabled(1);
-    double t1 = now_ms();
-    train_repeat(&pc, ROUNDS, 128, 0x9C9C9Cu, tdists, 6);
-    printf("[rote] trained PC in %.1f s\n", (now_ms() - t1) / 1000.0);
+    /* PC: random repeats only, same student shape, the same example count.
+     * ROTE_NO_PC=1 skips it (deterministic: the same student and seeds as
+     * stage A, whose PC was R' over 6/6 - 98f7eb7a); counted as 6/6. */
     int pcover = 0, nvp = 0;
-    for (int i = 0; i < 6; i++) {
-        double r0;
-        rv_stat R = measure_R(&pc, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0, &r0);
-        nvp += RV_OK(R); pcover += RV_OVER(R, flR[i]);
-        printf("[rote] pc d=%d R=%+.5f (se %.5f, n %d)%s R0=%+.5f\n", dd[i], R.mean, R.se, R.n,
-               RV_OVER(R, flR[i]) ? " OVER" : "", r0);
+    if (getenv("ROTE_NO_PC")) {
+        pcover = 6; nvp = 6;
+        printf("[rote] pc skipped (ROTE_NO_PC): stage A's R' PC, over 6/6 (98f7eb7a)\n");
+    } else {
+        st_model pc;
+        if (st_init(&pc, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
+        st_rope_set_enabled(1);
+        double t1 = now_ms();
+        train_repeat(&pc, ROUNDS, 128, 0x9C9C9Cu, tdists, 6);
+        printf("[rote] trained PC in %.1f s\n", (now_ms() - t1) / 1000.0);
+        for (int i = 0; i < 6; i++) {
+            double r0;
+            rv_stat R = measure_R(&pc, dd[i], NP, 0x5EEDAu + (uint32_t)i * 101u, 0, &r0);
+            nvp += RV_OK(R); pcover += RV_OVER(R, flR[i]);
+            printf("[rote] pc d=%d R=%+.5f (se %.5f, n %d)%s R0=%+.5f\n", dd[i], R.mean, R.se, R.n,
+                   RV_OVER(R, flR[i]) ? " OVER" : "", r0);
+        }
+        st_free(&pc);
     }
-    st_free(&pc);
+
+    /* S PC (stage B): the fact template at d=8 only - short enough to copy.
+     * Pre-registered: S at d=16 OVER = the S ruler can see copying. */
+    int spc = -1;
+    {
+        st_model sp;
+        const int short_d[1] = { 8 };
+        if (st_init(&sp, 0xBABE0C1u) != ST_OK) { printf("init OOM\n"); return 2; }
+        st_rope_set_enabled(1);
+        double t2 = now_ms();
+        train_ctx(&sp, ROUNDS, 128, 0x5C5C5Cu, short_d, 1);
+        printf("[rote] trained S-PC (d=8 only) in %.1f s\n", (now_ms() - t2) / 1000.0);
+        for (int i = 0; i < 6; i++) {
+            rv_stat S = measure_S(&sp, dd[i], NP, 0x5EED5u + (uint32_t)i * 101u, 0);
+            if (i == 0) spc = RV_OVER(S, flS[i]);
+            printf("[rote] spc d=%d S=%+.5f (se %.5f, n %d)%s\n", dd[i], S.mean, S.se, S.n,
+                   RV_OVER(S, flS[i]) ? " OVER" : "");
+        }
+        st_free(&sp);
+    }
+    printf("[rote-spc] %s\n", spc ? "PASS (S sees copying at d=16)" : "FAIL (S cannot see copying: S results undecidable)");
 
     printf("[rote] S over %d/%d, R over %d/%d (valid points); NC over %d/%d; PC R over %d/%d\n",
            sover, nvs, rover, nvr, ncbad, nvn, pcover, nvp);
@@ -712,7 +774,8 @@ static int falsify_main(void)
                       "no copy shown (habit if A != 0, else nothing)";
     #undef RV_OK
     #undef RV_OVER
-    printf("[rote] verdict (C1 FULL student): %s\n", cls);
+    printf("[rote] verdict (%s): %s%s\n", load ? load : "C1 FULL student", cls,
+           spc ? "" : " [the S ruler is not shown sound: S counts are undecidable]");
     printf("[rote] total %.1f s\n", (now_ms() - tall) / 1000.0);
     return 0;
 }
@@ -757,6 +820,10 @@ int main(int argc, char **argv)
             float ac = measure_A(&m, dfull[i], 64, 0xE7A1u + (uint32_t)i * 101u, 64);
             printf("   %-4d  %+9.5f    %+9.5f\n", dfull[i], af, ac);
         }
+        const char *save = getenv("C2_SAVE");      /* rote-vs-copy.md stage B */
+        if (save)
+            printf("[scale-wall-c2] C2_SAVE %s: %s\n", save,
+                   rv_save_file(&m, save) == 0 ? "saved" : "FAILED");
         printf("\n[scale-wall-c2] same gated arms as C1 (training-budget-independent):\n");
         cert_window_mechanism(&m);
         cert_cohort_island();

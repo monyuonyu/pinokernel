@@ -17,6 +17,8 @@
 INT pool_preempt_run(void (*out)(const char *));   /* pool_preempt.c */
 INT nosw_run(void (*out)(const char *));           /* pool_preempt.c */
 INT fp_preserve_run(void (*out)(const char *));    /* pool_preempt.c */
+INT nosw_relay_run(void (*out)(const char *));     /* pool_preempt.c */
+INT rx_bounds_run(void (*out)(const char *));      /* rx_bounds_test.c (0-9) */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -433,6 +435,16 @@ static void cmd_net(void)
         if (zs > 0) {
             swim_set_sim_zone((UB)zs, env_uint("PKERNEL_RTT_ZONE_PENALTY", 200));
             print("[net] RTT sim zones enabled (region partitioning test)\r\n");
+        }
+    }
+    /* Test-only region τ (region.h, CI-F): PKERNEL_REGION_TAU_MS>0 widens the
+     * region RTT threshold for multi-node certs on a loaded runner. */
+    {
+        UW tau = env_uint("PKERNEL_REGION_TAU_MS", 0);
+        if (tau > 0) {
+            region_set_tau_ms(tau);
+            print("[net] region tau="); print_dec_s((W)region_tau_ms());
+            print("ms (env PKERNEL_REGION_TAU_MS, test only)\r\n");
         }
     }
 
@@ -1158,6 +1170,10 @@ EXPORT INT usermain(void)
                 nosw_run(print);          /* pool_preempt.c, pk_nosw.h */
             else if (tal >= 2 && ta[0]=='f'&&ta[1]=='p')
                 fp_preserve_run(print);   /* pool_preempt.c, FP-PRESERVE */
+            else if (tal >= 2 && ta[0]=='n'&&ta[1]=='r')
+                nosw_relay_run(print);    /* pool_preempt.c, N28-N30 (0-10) */
+            else if (tal >= 2 && ta[0]=='r'&&ta[1]=='x')
+                rx_bounds_run(print);     /* rx_bounds_test.c, ROADMAP 0-9 */
             else
                 tk_conform_run(print);
         } else if (starts_with(line, n, "fed") && (n == 3 || line[3] == ' ')) {

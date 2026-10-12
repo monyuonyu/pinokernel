@@ -69,6 +69,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "pk_nosw.h"
 #include "sha256.h"   /* from relay/, added to include path by Makefile.
                        * NOTE: sha256.h deliberately avoids <stdint.h> so it
                        * coexists with the T-Kernel stdint shadow that this
@@ -399,18 +400,25 @@ static void udp_send_to(int idx, const unsigned char *buf, int len)
     if (idx == cur_relay) last_send_ts = time(NULL);
 }
 
+/* pk_nosw.h: each sender below has a static buf, and build_packet takes the
+ * shared next_nonce; a switch in the middle could send another task's bytes
+ * or reuse a nonce (the peer drops it as a replay) */
 static void send_register_to(int idx)
 {
+    PK_NOSW_ENTER();
     static unsigned char buf[MAX_PKT];
     int n = build_packet(buf, REL_REGISTER, (unsigned)my_node_id, 0, NULL, 0);
     udp_send_to(idx, buf, n);
+    PK_NOSW_LEAVE();
 }
 
 static void send_keepalive_to(int idx)
 {
+    PK_NOSW_ENTER();
     static unsigned char buf[MAX_PKT];
     int n = build_packet(buf, REL_KEEPALIVE, (unsigned)my_node_id, 0, NULL, 0);
     udp_send_to(idx, buf, n);
+    PK_NOSW_LEAVE();
 }
 
 /* N-2d: a REFL1 keepalive carrying the "REF1" magic; a REFL1-aware relay
@@ -421,8 +429,10 @@ static void send_refl_probe_to(int idx)
     static unsigned char buf[MAX_PKT];
     static const unsigned char magic[4] =
         { REFL_MAGIC_0, REFL_MAGIC_1, REFL_MAGIC_2, REFL_MAGIC_3 };
+    PK_NOSW_ENTER();
     int n = build_packet(buf, REL_KEEPALIVE, (unsigned)my_node_id, 0, magic, 4);
     udp_send_to(idx, buf, n);
+    PK_NOSW_LEAVE();
 }
 
 /* Probe EVERY configured relay vantage point so CONE/SYMMETRIC has >=2 echoes
@@ -888,15 +898,65 @@ int net_relay_init(void)
     return my_node_id;
 }
 
+/* Build one broadcast in the static buffer and hand it out: to the current
+ * relay, or (sink != NULL, the `tkconf nosw` probe N28-N30) into sink. */
+static int relay_bcast(const void *frame, int len, unsigned char *sink)
+{
+    static unsigned char buf[MAX_PKT];
+    int n;
+    PK_NOSW_ENTER();                         /* see send_register_to */
+    n = build_packet(buf, REL_BROADCAST, (unsigned)my_node_id, 0, frame, len);
+    if (sink) memcpy(sink, buf, (size_t)n);
+    else      udp_send_to(cur_relay, buf, n);
+    PK_NOSW_LEAVE();
+    return n;
+}
+
 int net_relay_send(const void *frame, int len)
 {
     if (sock_fd < 0 || len <= 0 || len > MAX_PAYLOAD) return -1;
     ha_tick();
-    static unsigned char buf[MAX_PKT];
-    int n = build_packet(buf, REL_BROADCAST,
-                         (unsigned)my_node_id, 0, frame, len);
-    udp_send_to(cur_relay, buf, n);
+    (void)relay_bcast(frame, len, NULL);
     return len;
+}
+
+/* `tkconf nosw` probe (pool_preempt.c N28-N30, ROADMAP 0-10), no socket
+ * needed; the same shape as net_lan_probe. net_relay_nosw_probe(1, &n)
+ * switches to the v2 wire with an all-zero key, (0, &n) puts both back; both
+ * store next_nonce in *n. While the relay is up (sock_fd >= 0) it refuses
+ * (-1): the receive path and the heartbeat use the same key. */
+static int rprobe_on;
+static int rprobe_saved_ver;
+static u8  rprobe_saved_key[KEY_LEN];
+int net_relay_nosw_probe(int on, unsigned long long *nonce)
+{
+    if (on) {
+        if (sock_fd >= 0) return -1;
+        rprobe_saved_ver = wire_version;
+        memcpy(rprobe_saved_key, key, KEY_LEN);
+        memset(key, 0, KEY_LEN);
+        wire_version = RELAY_VER_V2;
+        rprobe_on = 1;
+    } else if (rprobe_on) {
+        wire_version = rprobe_saved_ver;
+        memcpy(key, rprobe_saved_key, KEY_LEN);
+        rprobe_on = 0;
+    }
+    *nonce = next_nonce;
+    return 0;
+}
+int net_relay_live(void) { return sock_fd >= 0; }
+/* One broadcast into out (>= MAX_PKT bytes). 1 = the packet is this call's
+ * own: its payload is `frame` and its MAC verifies; 0 = it is not. */
+int net_relay_nosw_send(const void *frame, int len, unsigned char *out)
+{
+    u8 want[HMAC_TRUNC_LEN];
+    int n = relay_bcast(frame, len, out);
+    if (n != HEAD_LEN + AUTH_LEN + len) return 0;
+    compute_mac(RELAY_VER_V2, out[5], out[6], out[7], load_u64_le(out + HEAD_LEN),
+                out + HEAD_LEN + AUTH_LEN, len, want);
+    return ct_eq(want, out + HEAD_LEN + 8, HMAC_TRUNC_LEN) &&
+           memcmp(out + HEAD_LEN + AUTH_LEN, frame, (size_t)len) == 0;
 }
 
 int net_relay_recv(void *out, int maxlen)

@@ -49,6 +49,10 @@ WRAP="${PKERNEL_WRAP:-}"
 export PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 export PKERNEL_RELAY_HOST=127.0.0.1
 export PKERNEL_RELAY_PORT=7432
+# Test-only region tau (CI-F, tests/host/run_region_tau_env.sh): on a loaded
+# runner the localhost RTT EWMA (10-50 ms seen) crosses the product 50 ms and
+# a peer leaves the region mid-test. PKERNEL_REGION_TAU_MS=50 tests the product tau.
+export PKERNEL_REGION_TAU_MS="${PKERNEL_REGION_TAU_MS:-250}"
 
 # learning schedule (rounds x local-steps). Long enough that (a) the swarm
 # clears the ~66.7% leave-one-class-out solo ceiling with margin and (b) the

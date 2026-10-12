@@ -320,6 +320,11 @@ all: $(SAMPLES)
 #     (kdds_*, dkva_cache_update, tk_cre_sem, ...) need no definitions;
 #     the live set is exactly what _start reaches
 #   * ushim.c — the III.1.3 interface shim, ZERO math
+#   * -DPK_NOSW_OFF — _X86_PC_ turns on pk_nosw.h's no-switch regions,
+#     whose depth lives in the kernel (cpu_cntl.c) and is unreachable
+#     from ring3; this ELF is one ring3 task with its own copy of the
+#     state, so the regions compile away (the pre-nosw code). Without
+#     it dtr_user.o needs pk_nosw_enter (CI run 38093212146).
 # -------------------------------------------------------------------
 ROOT      = ../..
 CORE_INC  = -I$(ROOT)/arch/x86/include -I$(ROOT)/arch/common/include \
@@ -331,7 +336,7 @@ CORE_INC  = -I$(ROOT)/arch/x86/include -I$(ROOT)/arch/common/include \
             -I$(ROOT)/kernel/mtkernel3/include/compat \
             -I$(ROOT)/kernel/mtkernel3/config \
             -I$(ROOT)/include -I$(ROOT)/include/lib/libc
-CORE_CFLAGS = $(CFLAGS) -D_APP_X86_ -D_X86_PC_ $(CORE_INC) \
+CORE_CFLAGS = $(CFLAGS) -D_APP_X86_ -D_X86_PC_ -DPK_NOSW_OFF $(CORE_INC) \
               -ffunction-sections -fdata-sections
 CORE_DIR  = 12_ring3/03_core_mind
 

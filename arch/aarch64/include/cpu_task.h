@@ -18,9 +18,11 @@
  *    ssp+ 88: x30 (lr) = &knl_task_entry_trampoline
  *    ssp+ 96: taskmode = 0
  *    ssp+104: (padding)
- *   ─── Total: 112 bytes (7 × 16, 16-byte aligned) ───
+ *    ssp+112: d8 .. d15 = 0 (up to ssp+175, ROADMAP 0-11)
+ *    ssp+176: FPCR = 0 (round to nearest), ssp+184: (padding)
+ *   ─── Total: 192 bytes (12 × 16, 16-byte aligned) ───
  *
- *  knl_dispatch saves/restores this 112-byte frame and does `ret` to x30.
+ *  knl_dispatch saves/restores this 192-byte frame and does `ret` to x30.
  *  For a new task, x30 → trampoline, which reads stacd from x19, exinf
  *  from x20, then calls task(stacd, exinf).
  */
@@ -30,8 +32,11 @@
 
 #include "cpu_insn.h"
 
-/* Frame size written by setup_context */
-#define DORMANT_STACK_SIZE  112
+/* Frame size written by setup_context: the 112 bytes above + d8-d15 at
+ * ssp+112..175 + FPCR at ssp+176 (zeroed; cpu_support.S knl_dispatch,
+ * ROADMAP 0-11). Kept equal to
+ * kernel/mtkernel3/kernel/sysdepend/aarch64_virt/cpu_task.h. */
+#define DORMANT_STACK_SIZE  192
 
 IMPORT void knl_task_entry_trampoline(void);
 

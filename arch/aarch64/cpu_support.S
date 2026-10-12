@@ -2,7 +2,7 @@
  *  cpu_support.S (aarch64)
  *  Task dispatcher, context switch, EL1 exception vectors, timer startup
  *
- *  Dormant task stack frame (112 bytes, see cpu_task.h):
+ *  Dormant task stack frame (192 bytes, see cpu_task.h):
  *    [sp+  0]  x19  (= stacd for new task)
  *    [sp+  8]  x20  (= exinf for new task)
  *    [sp+ 16]  x21
@@ -17,6 +17,9 @@
  *    [sp+ 88]  x30 (lr)  ← trampoline addr for new, caller addr for running
  *    [sp+ 96]  taskmode
  *    [sp+104]  (padding)
+ *    [sp+112]  d8 .. d15  (8 x 8 bytes, up to sp+175; ROADMAP 0-11)
+ *    [sp+176]  FPCR       (0 for a new task = round to nearest)
+ *    [sp+184]  (padding)
  *
  *  TCB field offsets (AArch64, extracted via offsetof — see offset.h):
  *    TCB_task = 40
@@ -102,8 +105,13 @@ knl_dispatch_entry:
 knl_dispatch:
     msr daifset, #0x3           /* disable IRQ+FIQ */
 
-    /* Save 112-byte context frame */
-    sub sp, sp, #112
+    /* Save 192-byte context frame. d8-d15 (callee-saved in AAPCS64) go after
+     * the original 112 bytes so every older offset stays where it was
+     * (ROADMAP 0-11, gap-ledger BARE-A64-FP-NOT-SAVED: without them a task
+     * lost d8-d15 across tk_slp_tsk / tk_wup_tsk switches). FPCR follows at
+     * +176: its rounding mode is preserved across calls in AAPCS64 too, and
+     * without it a task got the previous task's mode back (fp_bare_test F6). */
+    sub sp, sp, #192
     stp x19, x20, [sp,  #0]
     stp x21, x22, [sp, #16]
     stp x23, x24, [sp, #32]
@@ -113,6 +121,16 @@ knl_dispatch:
     ldr x0, =knl_taskmode
     ldr x0, [x0]
     str x0,       [sp, #96]
+#ifndef PK_FP_NO_DSAVE
+    stp d8,  d9,  [sp, #112]
+    stp d10, d11, [sp, #128]
+    stp d12, d13, [sp, #144]
+    stp d14, d15, [sp, #160]
+#endif
+#ifndef PK_FP_NO_CRSAVE
+    mrs x0, fpcr
+    str x0,       [sp, #176]
+#endif
 
     /* Save SP to ctxtsk->tskctxb.ssp (SP cannot be stored directly) */
 #ifdef SMP_SELFTEST
@@ -224,7 +242,17 @@ knl_dispatch:
     ldp x27, x28, [sp, #64]
     ldp x29, x30, [sp, #80]
     ldr x0,       [sp, #96]
-    add sp, sp, #112
+#ifndef PK_FP_NO_DSAVE
+    ldp d8,  d9,  [sp, #112]
+    ldp d10, d11, [sp, #128]
+    ldp d12, d13, [sp, #144]
+    ldp d14, d15, [sp, #160]
+#endif
+#ifndef PK_FP_NO_CRSAVE
+    ldr x1,       [sp, #176]
+    msr fpcr, x1
+#endif
+    add sp, sp, #192
 
     ldr x1, =knl_taskmode
     str x0, [x1]
@@ -343,6 +371,65 @@ knl_timer_handler_startup:
     add sp, sp, #160
     .endm
 
+    /* The whole FP/SIMD state of the interrupted code: q0-q31 + FPCR/FPSR
+     * (528 bytes), pushed below the 160-byte caller frame by the IRQ vector.
+     * An IRQ can land at any instruction, so every q register is live; the
+     * handler's C code and, with the IRQ-exit switch, another task may use
+     * them. On the switch path the frame stays on the interrupted task's
+     * stack and .Lirq_resume_tramp pops it (ROADMAP 0-11). Clobbers x0/x1
+     * (save: after save_caller_regs; restore: before restore_caller_regs). */
+    .macro save_fp
+#ifndef PK_FP_NO_QSAVE
+    sub sp, sp, #528
+    stp q0,  q1,  [sp, #0]
+    stp q2,  q3,  [sp, #32]
+    stp q4,  q5,  [sp, #64]
+    stp q6,  q7,  [sp, #96]
+    stp q8,  q9,  [sp, #128]
+    stp q10, q11, [sp, #160]
+    stp q12, q13, [sp, #192]
+    stp q14, q15, [sp, #224]
+    stp q16, q17, [sp, #256]
+    stp q18, q19, [sp, #288]
+    stp q20, q21, [sp, #320]
+    stp q22, q23, [sp, #352]
+    stp q24, q25, [sp, #384]
+    stp q26, q27, [sp, #416]
+    stp q28, q29, [sp, #448]
+    stp q30, q31, [sp, #480]
+    mrs x0, fpcr
+    mrs x1, fpsr
+    str x0,       [sp, #512]        /* stp's x-register offset stops at 504 */
+    str x1,       [sp, #520]
+#endif
+    .endm
+
+    .macro restore_fp
+#ifndef PK_FP_NO_QSAVE
+    ldr x0,       [sp, #512]
+    ldr x1,       [sp, #520]
+    msr fpcr, x0
+    msr fpsr, x1
+    ldp q0,  q1,  [sp, #0]
+    ldp q2,  q3,  [sp, #32]
+    ldp q4,  q5,  [sp, #64]
+    ldp q6,  q7,  [sp, #96]
+    ldp q8,  q9,  [sp, #128]
+    ldp q10, q11, [sp, #160]
+    ldp q12, q13, [sp, #192]
+    ldp q14, q15, [sp, #224]
+    ldp q16, q17, [sp, #256]
+    ldp q18, q19, [sp, #288]
+    ldp q20, q21, [sp, #320]
+    ldp q22, q23, [sp, #352]
+    ldp q24, q25, [sp, #384]
+    ldp q26, q27, [sp, #416]
+    ldp q28, q29, [sp, #448]
+    ldp q30, q31, [sp, #480]
+    add sp, sp, #528
+#endif
+    .endm
+
     .macro ventry label
     .align 7
     b \label
@@ -374,6 +461,7 @@ el1_vectors:
 
 _vec_el1_irq:
     save_caller_regs
+    save_fp
     /* Reserve a 16-byte stack slot for the ack-time value we need to
      * remember across the handler call (the GIC IAR on virt, a placeholder
      * 0 on RPi 3). w1-w18 are call-clobbered per the AArch64 ABI, so
@@ -478,6 +566,7 @@ _vec_el1_irq:
 .Lirq_return:
 #endif /* SMP_SELFTEST || !PK_RNG0_NO_EXIT_DISPATCH */
 
+    restore_fp
     restore_caller_regs
     eret
 
@@ -486,7 +575,7 @@ _vec_el1_irq:
  *  .Lirq_resume_tramp — the resume path for an ASYNC-preempted task (②.2b-i).
  *
  *  Reached when an async-preempted task is later re-dispatched: knl_dispatch's
- *  .Ldispatch_loop has restored the task's 112-byte callee-saved frame and
+ *  .Ldispatch_loop has restored the task's 192-byte callee-saved frame and
  *  `ret`'d into here (with IRQ/FIQ UNMASKED by .Ldispatch_loop's daifclr).
  *  SP points at the [ELR_EL1|SPSR_EL1] pair we pushed at preempt time, sitting
  *  ON TOP OF the original 160-byte save_caller_regs frame.  We:
@@ -503,6 +592,7 @@ _irq_resume_tramp:
     ldp  x0, x1, [sp], #16      /* pop ELR_EL1/SPSR_EL1                        */
     msr  elr_el1, x0
     msr  spsr_el1, x1
+    restore_fp                  /* unwind the 528-byte FP frame (0-11)        */
     restore_caller_regs         /* unwind the 160-byte caller frame           */
     eret                        /* return to the exact interrupted PC         */
 #endif /* SMP_SELFTEST || !PK_RNG0_NO_EXIT_DISPATCH */
@@ -686,7 +776,7 @@ smp_dispatch_loop:
  *   Enter the PRODUCTION per-CPU dispatcher loop (.Ldispatch_loop above) on
  *   THIS CPU.  The loop reads g_smpcpu[me].schedtsk (a REAL T-Kernel TCB the
  *   driver pre-set), stores it into g_smpcpu[me].ctxtsk, loads the TCB's
- *   saved SP (tskctxb.ssp), restores its 112-byte frame, and `ret`s into the
+ *   saved SP (tskctxb.ssp), restores its 192-byte frame, and `ret`s into the
  *   real task — a genuine register-context switch into a real TCB on the
  *   secondary CPU.  Never returns to the caller (it switches stacks).  IRQ+FIQ
  *   are masked on entry exactly as knl_dispatch does.  This is how the
