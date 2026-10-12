@@ -10,7 +10,8 @@
 #
 # 2026-10-12: I1 (the canonical lesson) was RED at 3e3370d0 (108 of 170 held
 # k-grams in train: the held tail repeated the train filler); the next commit
-# gives the tail a held-only sentence. Not wired into CI yet.
+# gives the tail a held-only sentence. CI: llm-engine-certs (BLOCKING), with
+# check_held_split.sh (2026-10-13, feat/held-split).
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"

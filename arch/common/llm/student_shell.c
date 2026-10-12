@@ -40,6 +40,7 @@
  *    - Single node. No weight diffusion / merge across the fleet (NS-2+).
  */
 #include "student.h"
+#include "held_indep.h"  /* st_held_split - the one train/held split (0-12) */
 #include "dev_capacity.h" /* st_init_device — measure the device, fit the mind */
 #include "gguf.h"        /* gguf_open / gguf_close — teacher GGUF probe */
 #include "forward.h"     /* lm_load / lm_free      — teacher GGUF probe */
@@ -557,9 +558,9 @@ static int student_persist(emit_fn emit)
      * blob; the next DMN write waits for a real improvement past this point. */
     {
         int corpus_n = cradle_corpus_len();
-        int total    = corpus_n / ST_DMN_SEQLEN;
-        int trainw   = total * 3 / 4; if (trainw < 2) trainw = 2;
-        int heldw    = total - trainw; if (heldw < 1) heldw = 1;
+        st_split sp = st_held_split(corpus_n, ST_DMN_SEQLEN);
+        int trainw   = sp.trainw;
+        int heldw    = sp.heldw;
         int train_end = trainw * ST_DMN_SEQLEN;
         g_dmn_saved        = 1;
         g_dmn_saved_loss   = heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
@@ -787,9 +788,9 @@ int student_dmn_consolidate(void)
          * fixture) — exactly what the [cradle-teach] cert computes train_end
          * from. Snapshotted into the cursor for the whole batch. */
         int corpus_n = cradle_corpus_len();
-        int total    = corpus_n / ST_DMN_SEQLEN;
-        int trainw   = total * 3 / 4; if (trainw < 2) trainw = 2;
-        int heldw    = total - trainw; if (heldw < 1) heldw = 1;
+        st_split sp = st_held_split(corpus_n, ST_DMN_SEQLEN);
+        int trainw   = sp.trainw;
+        int heldw    = sp.heldw;
 
         g_consol_seqlen    = ST_DMN_SEQLEN;
         g_consol_trainw    = trainw;
@@ -961,9 +962,9 @@ float student_dmn_heldout_loss(void)
 {
     if (!g_have_student) return st_logf(256.0f);
     int corpus_n  = cradle_corpus_len();
-    int total     = corpus_n / ST_DMN_SEQLEN;
-    int trainw    = total * 3 / 4; if (trainw < 2) trainw = 2;
-    int heldw     = total - trainw; if (heldw < 1) heldw = 1;
+    st_split sp = st_held_split(corpus_n, ST_DMN_SEQLEN);
+    int trainw    = sp.trainw;
+    int heldw     = sp.heldw;
     int train_end = trainw * ST_DMN_SEQLEN;
     return heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
 }
@@ -1001,9 +1002,9 @@ void cradle_live_probe(emit_fn emit)
         probe = chance;       /* no baby -> nothing learned (chance floor)      */
     } else {
         int corpus_n  = cradle_corpus_len();
-        int total     = corpus_n / ST_DMN_SEQLEN;
-        int trainw    = total * 3 / 4; if (trainw < 2) trainw = 2;
-        int heldw     = total - trainw; if (heldw < 1) heldw = 1;
+        st_split sp = st_held_split(corpus_n, ST_DMN_SEQLEN);
+        int trainw    = sp.trainw;
+        int heldw     = sp.heldw;
         int train_end = trainw * ST_DMN_SEQLEN;
         probe = heldout_loss(&g_student, ST_DMN_SEQLEN, train_end, heldw);
     }
@@ -1036,9 +1037,9 @@ void cradle_live_probe_canon(emit_fn emit)
     int n = cradle_compose_canon(canon, (int)sizeof canon, 0);
     if (n <= 0) { emit("[cradle-live] canon_probe compose FAILED\r\n"); return; }
     if (g_have_student) {
-        int total     = n / ST_DMN_SEQLEN;
-        int trainw    = total * 3 / 4; if (trainw < 2) trainw = 2;
-        int heldw     = total - trainw; if (heldw < 1) heldw = 1;
+        st_split sp = st_held_split(n, ST_DMN_SEQLEN);
+        int trainw    = sp.trainw;
+        int heldw     = sp.heldw;
         int train_end = trainw * ST_DMN_SEQLEN;
         uint8_t buf[ST_MAXSEQ];
         double s = 0.0; int got = 0;
@@ -1531,8 +1532,8 @@ int student_shell_cmd(const char *args, emit_fn emit)
     if (p[0]=='m' && p[1]=='e' && p[2]=='r' && p[3]=='g' && p[4]=='e') {
         int sl = 24, rr = 40;
         int cn = cradle_corpus_len();
-        int tot = cn / sl, tw = tot * 3 / 4; if (tw < 2) tw = 2;
-        int hw = tot - tw; if (hw < 1) hw = 1; int te = tw * sl;
+        st_split sp = st_held_split(cn, sl);
+        int tw = sp.trainw, hw = sp.heldw, te = sp.train_end;
 
         st_model peer;
         if (st_init_tier(&peer, 0x5151u, g_student.tier) != ST_OK) {
@@ -1603,8 +1604,8 @@ int student_shell_cmd(const char *args, emit_fn emit)
             return -1;
         }
         int cn = cradle_corpus_len();
-        int tot = cn / ST_DMN_SEQLEN, tw = tot * 3 / 4; if (tw < 2) tw = 2;
-        int hw = tot - tw; if (hw < 1) hw = 1; int te = tw * ST_DMN_SEQLEN;
+        st_split sp = st_held_split(cn, ST_DMN_SEQLEN);
+        int hw = sp.heldw, te = sp.train_end;
         float f32 = heldout_loss(&g_student, ST_DMN_SEQLEN, te, hw);
         float ql  = heldout_loss(&qm, ST_DMN_SEQLEN, te, hw);
         snprintf(line, sizeof line,
@@ -1641,9 +1642,9 @@ int student_shell_cmd(const char *args, emit_fn emit)
     if (rounds > 64) rounds = 64;           /* keep the shell responsive */
 
     int corpus_n = cradle_corpus_len();
-    int total    = corpus_n / seqlen;
-    int trainw   = total * 3 / 4; if (trainw < 2) trainw = 2;
-    int heldw    = total - trainw; if (heldw < 1) heldw = 1;
+    st_split sp = st_held_split(corpus_n, seqlen);
+    int trainw   = sp.trainw;
+    int heldw    = sp.heldw;
     int train_end = trainw * seqlen;
     float chance = st_logf(256.0f);
 

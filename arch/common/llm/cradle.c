@@ -34,6 +34,7 @@
  *  itself is libc-light: only <string.h> memcpy + <stdint.h>, no malloc).
  */
 #include "student.h"
+#include "held_indep.h" /* st_held_split - the one train/held split (0-12) */
 #include <string.h>     /* memcpy / memset                                  */
 
 /* ── 良心 G-LEARN gate ABI (design frontier_mouth §3 I2) ─────────────────────
@@ -383,10 +384,10 @@ static int ct_build_lesson(uint8_t *out, int cap, int seqlen, int *probe_off_out
      * exactly train_end (the FIRST never-trained window). This matches what
      * student_dmn_consolidate computes from cradle_corpus_len() — the cert's
      * split is the production split, not a test-private one (§1.2). */
-    int total     = cap / seqlen;                  /* total windows in the budget */
-    int trainw    = total * 3 / 4; if (trainw < 2) trainw = 2;
-    int heldw     = total - trainw; if (heldw < 1) heldw = 1;
-    int train_end = trainw * seqlen;               /* first held byte (boundary)  */
+    st_split sp   = st_held_split(cap, seqlen);    /* windows of the budget       */
+    int trainw    = sp.trainw;
+    int heldw     = sp.heldw;
+    int train_end = sp.train_end;                  /* first held byte (boundary)  */
 
     int len = 0;
     /* TRAIN region [0, train_end): alternate filler + the trained fact copies,
@@ -536,7 +537,7 @@ int cradle_teach_self_test(cradle_emit_fn emit)
     static uint8_t nolesson[CRADLE_RING_BYTES];
     int nl = 0; int flen = (int)strlen(CT_FILLER);
     while (nl + flen < CT_CERT_BUDGET) { memcpy(nolesson + nl, CT_FILLER, (size_t)flen); nl += flen; }
-    int ntot = nl / seqlen, ntw = ntot * 3 / 4; if (ntw < 2) ntw = 2;
+    int ntw = st_held_split(nl, seqlen).trainw;
     float a_pre  = ct_probe_loss(&BA, lesson, llen, probe_off, seqlen);
     ct_sleep_rounds(&BA, nolesson, nl, seqlen, ntw, rounds, lr, 0);
     float a_post = ct_probe_loss(&BA, lesson, llen, probe_off, seqlen);
@@ -681,10 +682,10 @@ int cradle_live_teach_test(cradle_emit_fn emit, const uint8_t *live, int live_le
         memcpy(live_corpus + ln, live, (size_t)live_len);
         ln += live_len;
     }
-    int totw = ln / seqlen;
-    int trainw = totw * 3 / 4; if (trainw < 2) trainw = 2;
-    int heldw  = totw - trainw; if (heldw < 1) heldw = 1;
-    int train_end = trainw * seqlen;
+    st_split sp = st_held_split(ln, seqlen);
+    int trainw = sp.trainw;
+    int heldw  = sp.heldw;
+    int train_end = sp.train_end;
 
     if (emit) {
         ct_emitf(emit, "[cradle-live-teach] live text bytes=", (float)live_len);

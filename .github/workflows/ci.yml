@@ -3394,6 +3394,10 @@ jobs:
         run: bash tests/llm/run_forward.sh
       - name: cradle teacher→student lesson bridge (G5; 3 falsifier arms must go RED)
         run: bash tests/llm/run_cradle_teach.sh
+      - name: "[held-indep] held set shares no 16-byte run with the train windows (ROADMAP 0-12)"
+        run: bash tests/llm/run_held_indep.sh
+      - name: one train/held split (st_held_split; a hand copy in arch/common/llm is RED)
+        run: bash tests/llm/check_held_split.sh
 
   llm-kv-equivalence:
     # KV-cache byte-equivalence of the generation path (run_kv.sh): 15 cases over
