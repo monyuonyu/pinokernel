@@ -360,6 +360,11 @@ static void ct_emitf(cradle_emit_fn e, const char *pfx, float v)
 #define CT_TRAIN_SENT  "the zorblax is a blue fox. "
 #define CT_HELD_SENT   "the zorblax runs and the blue fox hides in the den. "
 #define CT_FILLER      "rivers flow to the sea and the wind moves over the hills. "
+/* The held tail's body (ROADMAP 0-12, held-independence.md). Until 2026-10-12
+ * the tail after the probe repeated CT_FILLER, so 108 of its 170 held 16-byte
+ * k-grams were also train k-grams and the held loss partly measured the filler
+ * being memorised. This sentence occurs nowhere in the train region. */
+#define CT_HELD_FILLER "snow settles on an old stone bridge while a quiet town sleeps. "
 
 /* Build the cert lesson into out[cap]. Layout: FILLER+TRAIN sentences fill the
  * train region (the first trainw windows), then a clearly held tail begins with
@@ -395,11 +400,16 @@ static int ct_build_lesson(uint8_t *out, int cap, int seqlen, int *probe_off_out
 
     /* HELD region: the HELD continuation FIRST, at exactly train_end (so the
      * probe window starts on the boundary and is the never-trained occurrence),
-     * then filler so the held tail has body. */
+     * then a held-only body (CT_HELD_FILLER, not the train filler) so the held
+     * tail shares nothing with the train windows ([held-indep] I1). The lesson
+     * is exactly cap bytes: production splits by the corpus length, so a 1279-
+     * byte lesson split 29/10 windows while this split is 30/10 (0-12). */
     int probe_off = len;                            /* == train_end (a boundary)  */
+    const char *G = CT_HELD_FILLER;
+    int glen = (int)strlen(G);
     memcpy(out + len, H, (size_t)hlen); len += hlen;
-    while (len + flen < cap) { memcpy(out + len, F, (size_t)flen); len += flen; }
-    while (len < cap && len + 1 < cap) out[len++] = (uint8_t)' ';
+    while (len + glen <= cap) { memcpy(out + len, G, (size_t)glen); len += glen; }
+    while (len < cap) out[len++] = (uint8_t)' ';
 
     if (probe_off_out)  *probe_off_out  = probe_off;
     if (train_end_out)  *train_end_out  = train_end;

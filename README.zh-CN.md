@@ -1,6 +1,6 @@
 [English](README.md) | [日本語](README.ja.md) | **简体中文**
 
-> 译自 [README.ja.md](README.ja.md)（日文版为原文），对应提交 `ee48839d`。
+> 译自 [README.ja.md](README.ja.md)（日文版为原文），对应提交 `161cc765`。
 
 # p-kernel
 
@@ -137,7 +137,7 @@
 - 从网页上和它说话，它会一个字一个字地回复。目前还说得磕磕绊绊。
 - 老师是 SmolLM2-135M（公开模型），由不依赖任何外部库、用 C 编写的推理引擎运行。分发到群体中的只有学生，老师的权重不会分发。
 - 用老师实际写出的句子训练后，对这些句子后续内容的预测变好了（损失 5.53→2.03；用固定教材训练同样步数的对照组为 6.61）。在单个进程内测量。
-- 老师设备通过网络发送课程，老师被 kill 之后课程仍留在学生中 [live]（`samples/11_distributed/run_cradle_live.sh`，未纳入 CI；课程是固定的句子，不是 SmolLM2 的输出）。不过，改善的大部分是记住了在训练侧也出现过的文本，而不是对未见过的文本的泛化。
+- 老师设备通过网络发送课程，课程到达另一个进程中的学生并改变其权重，老师被 kill 之后这一变化仍然保留 [live]（`samples/11_distributed/run_cradle_live.sh`，未纳入 CI；课程是固定的句子，不是 SmolLM2 的输出）。不过，当用于检验的文本不再与训练侧重叠时（2026-10-12），上过课的学生反而比没上课的学生更差，这项测试是红的。之前的绿，靠的是记住在训练侧也出现过的文本。
 - **量化**（2026-09）：`student quant <8|4|2> <row|g32|tensor>` 会把自身权重的副本舍入为 int8、int4 或 int2，并自行测量变差了多少。int8（按行）几乎没有变化（CI `st-quant`）。目前只做到测量，还没有以更小的形式保存自身。笔记：[brain-quantization.md](docs/architecture/30-module/research/brain-quantization.md)
 - **合并的安全网**（2026-09）：简单平均两个大脑的权重，结果可能比较差的那一个还差。现在会尝试几种混合方式并选出最好的，绝不产生比较差的那个父代更差的结果（CI `st-merge`）。目前与其说是巧妙的合并，不如说是安全网。笔记：[brain-merge.md](docs/architecture/30-module/research/brain-merge.md)
 

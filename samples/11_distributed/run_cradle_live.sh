@@ -15,9 +15,22 @@
 # train_end 960) = the 52-byte held sentence, which is absent from the training
 # region, + 232 bytes of filler (58 B x 4) that also recurs in the train region,
 # + 35 bytes of blank padding. So much of the canon drop is the filler being
-# memorised, not generalisation to unseen text. The verdict
-# still measures THIS lesson: a same-length unrelated English lesson and a
-# ROT13 of the lesson were both taught over the wire and both went RED.
+# memorised, not generalisation to unseen text. (And with ring_len 1279 the
+# production split is 29/10 windows, train_end 928, not 960.)
+# 2026-10-12 (ROADMAP 0-12, feat/held-indep): the lesson is now exactly 1280 B
+# (train_end 960 in both splits) and its held 320 B are the 52-byte held
+# sentence + 256 B of a held-only sentence (64 B x 4) + 12 blanks; no held
+# 16-byte k-gram occurs in a train window (tests/llm/run_held_indep.sh I1).
+# Measured with this lesson (audit-41, 2026-10-12, run twice by implementer
+# and auditor, same digits): RED, rc=1. ctrl 2.8686, cure 4.3823 (scramble
+# 5.7357), death 4.3823 -> 4.3609: the lesson still arrives (ring_len 1280) and still
+# outlives T, but on held text that is not in the training windows it makes S
+# WORSE than the fixture-only control. The old 1279 B lesson was GREEN
+# (ctrl 2.7727, cure 1.5813) only because the filler was in both regions.
+# The thresholds below were NOT moved to turn this green; the harness stays
+# out of CI and the README says it is red. The verdict still measures THIS
+# lesson: a same-length unrelated English lesson and a ROT13 of the lesson
+# were both taught over the wire and both went RED.
 #
 # This cashes the multi-process [live] row deferred by the in-proc [cradle-teach]
 # cert (tests/llm/run_cradle_teach.sh, audit-trail.md:876 PASS). It is the SS-6 ->
@@ -793,6 +806,8 @@ if [ "$PASS_ALL" = "1" ]; then
   exit 0
 else
   echo "[cradle-live] OPEN: see $LOGD/cradle_live_*.log — do NOT fudge green."
+  echo "          (since 2026-10-12 the lesson's held region is held-only text; RED with"
+  echo "           cure above ctrl is the measured state, not a broken harness — see the head notes)"
   echo "          canon held probe: ctrl=${CANON_K:-?} cure=${CANON_C:-?} scramble=${CANON_S:-?} death=${CANON_D:-?} (delta $CANON_DELTA)"
   echo "          (if T never emitted: confirm PKERNEL_TEACHER_CERT=1 reached node 2;"
   echo "           if ring_len stayed 0: the p-fs body did not arrive.)"

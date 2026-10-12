@@ -1,0 +1,33 @@
+/*
+ * held_indep.h — ROADMAP 0-12: is the held-out set independent of what the
+ * model trained on? (docs/architecture/30-module/held-independence.md)
+ *
+ * Every held number in p-kernel is defined by POSITION: the student trains on
+ * windows 0..trainw-1 of one corpus and scores windows trainw..trainw+heldw-1
+ * of the same corpus (student_shell.c heldout_loss, cradle.c ct_heldout_loss),
+ * reading byte (off+i) % n. Nothing compared the bytes. This counts, for the
+ * same window geometry, the held k-grams that also occur inside a trained
+ * window, and the held windows that run past the end of the corpus (they wrap
+ * into the train region).
+ */
+#ifndef PK_HELD_INDEP_H
+#define PK_HELD_INDEP_H
+
+#include <stdint.h>
+
+#define ST_HELD_K  16   /* bytes per k-gram: half a production window (32) */
+
+typedef struct {
+    int held_kgrams;    /* k-grams inside the held windows                    */
+    int shared;         /* of those, equal to a k-gram inside a train window  */
+    int wrapped;        /* held windows that read past byte n-1 (wrap to 0)   */
+} st_held_report;
+
+/* Windows are [w*seqlen, w*seqlen+seqlen), read mod n, exactly as the
+ * student's window(). Train: w < trainw. Held: trainw <= w < trainw+heldw.
+ * Returns 0 when the held set is independent (shared == 0 and wrapped == 0),
+ * 1 when it is not, -1 on bad arguments (k > seqlen, n < 1, ...). */
+int st_held_check(const uint8_t *corpus, int n, int seqlen, int trainw,
+                  int heldw, int k, st_held_report *r);
+
+#endif /* PK_HELD_INDEP_H */

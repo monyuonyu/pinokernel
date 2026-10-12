@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `ee48839d`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `161cc765`.
 
 # p-kernel
 
@@ -138,7 +138,7 @@ The word-association brain can only learn a fixed vocabulary. So since June 2026
 - Talk to it from the web page and it replies one character at a time. For now, it still stumbles.
 - The teacher is SmolLM2-135M (a public model), run by an inference engine written in C with no external libraries. Only the student is distributed to the swarm; the teacher's weights are not.
 - Training on sentences actually written by the teacher improves prediction of how those sentences continue (loss 5.53→2.03; a control trained the same number of steps on the fixed material went to 6.61). Measured inside one process.
-- A teacher device sends lessons over the network, and they remain in the student after the teacher is killed [live] (`samples/11_distributed/run_cradle_live.sh`, not in CI; the lessons are fixed sentences, not SmolLM2 output). However, much of the improvement is memorizing text that also appears on the training side, not generalizing to unseen text.
+- A teacher device sends a lesson over the network; it reaches a student in a separate process and changes its weights, and that change remains after the teacher is killed [live] (`samples/11_distributed/run_cradle_live.sh`, not in CI; the lessons are fixed sentences, not SmolLM2 output). However, once the text used for checking no longer overlaps the training side (2026-10-12), the taught student does worse than an untaught one, and this test is red. The earlier green rested on memorizing text that also appears on the training side.
 - **Quantization** (2026-09): `student quant <8|4|2> <row|g32|tensor>` rounds a copy of its own weights to int8, int4, or int2 and measures how much worse it gets. int8 (per row) barely changes it (CI `st-quant`). For now it only measures; it does not yet store itself in the smaller form. Notes: [brain-quantization.md](docs/architecture/30-module/research/brain-quantization.md)
 - **A safety net for merging** (2026-09): simply averaging the weights of two brains can end up worse than the worse parent. It now tries several ways of mixing, picks the best, and never produces a result worse than the worse parent (CI `st-merge`). So far this is a safety net rather than clever merging. Notes: [brain-merge.md](docs/architecture/30-module/research/brain-merge.md)
 
