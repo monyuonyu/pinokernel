@@ -21,9 +21,10 @@
  * 2) are trained and the rest (at least 1) are held; train_end is the first
  * held byte. student_shell.c and cradle.c take every split from here (they
  * had 11 hand copies); tests/llm/check_held_split.sh is red on a new copy.
- * wrapped = held windows that read past byte n-1 (the student's window()
- * reads mod n, so they score train bytes) — counted, not acted on yet. */
-typedef struct { int total, trainw, heldw, train_end, wrapped; } st_split;
+ * st_held_wrapped counts the held windows that read past byte n-1 (the
+ * student's window() reads mod n, so they score train bytes) — not acted on
+ * yet. */
+typedef struct { int total, trainw, heldw, train_end; } st_split;
 
 static inline st_split st_held_split(int n, int seqlen)
 {
@@ -32,10 +33,15 @@ static inline st_split st_held_split(int n, int seqlen)
     s.trainw = s.total * 3 / 4; if (s.trainw < 2) s.trainw = 2;
     s.heldw  = s.total - s.trainw; if (s.heldw < 1) s.heldw = 1;
     s.train_end = s.trainw * seqlen;
-    s.wrapped = 0;
-    for (int w = s.trainw; w < s.trainw + s.heldw; w++)
-        if (w * seqlen + seqlen > n) s.wrapped++;
     return s;
+}
+
+static inline int st_held_wrapped(st_split s, int n, int seqlen)
+{
+    int wrapped = 0;
+    for (int w = s.trainw; w < s.trainw + s.heldw; w++)
+        if (w * seqlen + seqlen > n) wrapped++;
+    return wrapped;
 }
 
 typedef struct {

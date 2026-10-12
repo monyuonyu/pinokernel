@@ -92,11 +92,12 @@ int main(void)
                 q.wrapped = 0;
                 for (int w = etw; w < etw + ehw; w++) if (w * sl + sl > nn) q.wrapped++;
             } else (void)st_held_check(buf, nn, sl, etw, ehw, ST_HELD_K, &q);
-            cases++; if (sp.wrapped) wrapcases++;
-            if (sp.trainw != etw || sp.heldw != ehw || sp.train_end != etw * sl || sp.wrapped != q.wrapped) {
+            int spw = st_held_wrapped(sp, nn, sl);
+            cases++; if (spw) wrapcases++;
+            if (sp.trainw != etw || sp.heldw != ehw || sp.train_end != etw * sl || spw != q.wrapped) {
                 bad = 1;
                 printf("[held-indep] I5 mismatch n=%d seqlen=%d: split %d/%d/%d wrap %d, expected %d/%d/%d wrap %d\n",
-                       nn, sl, sp.trainw, sp.heldw, sp.train_end, sp.wrapped, etw, ehw, etw * sl, q.wrapped);
+                       nn, sl, sp.trainw, sp.heldw, sp.train_end, spw, etw, ehw, etw * sl, q.wrapped);
             }
         }
     printf("[held-indep] %s I5  st_held_split = the 3/4 split, wrapped = the byte check  (%d geometries, %d wrap)\n",
