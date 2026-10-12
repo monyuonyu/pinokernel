@@ -404,6 +404,20 @@ PK_NOSW_FN(INT, pfs_get, (const U1 id[PFS_ID_LEN], void *buf, UW maxlen),
 
 INT pfs_has(const U1 id[PFS_ID_LEN])
 {
+    if (find_slot(id) >= 0) return 1;
+#ifdef _TK_HOSTED_LIBC_
+    /* PFS-FLAT-FULL: an evicted block is still held (its file). Without this
+     * pfs_repl neither serves it to a peer's WANT nor stops re-wanting it
+     * (first measurement: 72-76 "gave up" per node in samples/32, master 0).
+     * Read through pfs_get so a rotted file does not count. */
+    if (pfs_flat_evicts() && pfs_get(id, 0, 0) >= 0) return 1;
+#endif
+    return 0;
+}
+
+/* in P0 itself (not only in a file behind it) — `pfs flattest` */
+INT pfs_resident(const U1 id[PFS_ID_LEN])
+{
     return find_slot(id) >= 0 ? 1 : 0;
 }
 
@@ -893,7 +907,7 @@ INT pfs_flatfull_self_test(void (*emit)(const char *))
     UW good = 0, from_file = 0;
     for (UW k = 0; k < stored; k++) {
         flat_block(b, k);
-        if (!pfs_has(flat_ids[k])) from_file++;
+        if (!pfs_resident(flat_ids[k])) from_file++;
         if (pfs_get(flat_ids[k], rb, 16) == 16 && pfs_memcmp(rb, b, 16) == 0) good++;
     }
     if (good != stored || (stored == FLAT_N && from_file == 0)) {
