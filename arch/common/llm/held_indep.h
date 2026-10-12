@@ -17,6 +17,27 @@
 
 #define ST_HELD_K  16   /* bytes per k-gram: half a production window (32) */
 
+/* THE train/held split. Of total = n/seqlen windows, the first 3/4 (at least
+ * 2) are trained and the rest (at least 1) are held; train_end is the first
+ * held byte. student_shell.c and cradle.c take every split from here (they
+ * had 11 hand copies); tests/llm/check_held_split.sh is red on a new copy.
+ * wrapped = held windows that read past byte n-1 (the student's window()
+ * reads mod n, so they score train bytes) — counted, not acted on yet. */
+typedef struct { int total, trainw, heldw, train_end, wrapped; } st_split;
+
+static inline st_split st_held_split(int n, int seqlen)
+{
+    st_split s;
+    s.total  = n / seqlen;
+    s.trainw = s.total * 3 / 4; if (s.trainw < 2) s.trainw = 2;
+    s.heldw  = s.total - s.trainw; if (s.heldw < 1) s.heldw = 1;
+    s.train_end = s.trainw * seqlen;
+    s.wrapped = 0;
+    for (int w = s.trainw; w < s.trainw + s.heldw; w++)
+        if (w * seqlen + seqlen > n) s.wrapped++;
+    return s;
+}
+
 typedef struct {
     int held_kgrams;    /* k-grams inside the held windows                    */
     int shared;         /* of those, equal to a k-gram inside a train window  */
