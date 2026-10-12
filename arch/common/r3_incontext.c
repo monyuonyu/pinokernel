@@ -3281,6 +3281,9 @@ typedef struct {
     UW lost_stamp, now_stamp;     /* 1-3b Lamport stamps of both values  */
     UW at_ms;                     /* local time of the first supersede   */
     U1 lost_prov[PFS_ID_LEN];     /* content-id of v_lost's ARK_PROV     */
+    U1 heard_from;                /* 0xFF = seen here; else the node whose */
+                                  /* mind/hist told us (1-3c (3))         */
+    UB hist_told;                 /* mind/hist printed its first send     */
 } MC_REC;
 static MC_REC mc_hist[MC_MAX];
 static UW mc_next, mc_dropped;
@@ -3318,6 +3321,10 @@ static void mc_print(const MC_REC *r, const char *lead)
     r_puts(", stamp "); r_putdec(r->now_stamp);
     r_puts(" at "); r_putdec(r->at_ms); r_puts(" ms");
     if (r->n > 1) { r_puts(", seen "); r_putdec((UW)r->n); r_puts(" times"); }
+    if (r->heard_from != 0xFF) {     /* 1-3c (3): not seen here */
+        r_puts(", heard as history from node "); r_putdec((UW)r->heard_from);
+        r_puts(" (not seen here)");
+    }
     r_puts("\r\n");
 }
 
@@ -3360,15 +3367,24 @@ static UW mc_stamp_of(UW local_seq, U1 *origin_out)
     return local_seq;
 }
 
+/* heard_from: 0xFF when this node saw the conflict itself; else the node
+ * whose mind/hist record this is (1-3c (3)) — such a record is only added if
+ * no record of the same conflict is kept, and never counts as "seen again". */
 static void mc_add(UB k, UB v_lost, UB lost_src, U1 lost_by, UW lost_stamp,
                    UB lost_state, UB lost_rounds, UW lost_seq, const U1 *prov,
-                   UB v_now, UB now_src, U1 now_by, UW now_stamp)
+                   UB v_now, UB now_src, U1 now_by, UW now_stamp, U1 heard_from)
 {
     for (INT i = 0; i < MC_MAX; i++) {
         MC_REC *r = &mc_hist[i];
         if (r->used && r->key == k && r->v_lost == v_lost &&
             r->lost_src == lost_src && r->lost_by == lost_by &&
             r->v_now == v_now) {
+            if (heard_from != 0xFF) return;   /* already kept: nothing new */
+            if (r->heard_from != 0xFF) {      /* heard first, now seen here too */
+                r->heard_from = 0xFF;
+                mc_print(r, "[mind] conflict seen here too: ");
+                return;
+            }
             if (r->n < 255) r->n++;
             mc_print(r, "[mind] conflict again: ");
             return;
@@ -3384,6 +3400,7 @@ static void mc_add(UB k, UB v_lost, UB lost_src, U1 lost_by, UW lost_stamp,
     r->lost_stamp = lost_stamp; r->now_stamp = now_stamp;
     r->lost_state = lost_state; r->lost_rounds = lost_rounds;
     r->has_prov = prov ? 1 : 0; r->n = 1; r->lost_seq = lost_seq; r->at_ms = (UW)t.lo;
+    r->heard_from = heard_from; r->hist_told = 0;
     for (INT i = 0; i < PFS_ID_LEN; i++) r->lost_prov[i] = prov ? prov[i] : 0;
     mc_print(r, "[mind] conflict recorded: ");
 }
@@ -3401,7 +3418,7 @@ static void mc_note(INT fi, INT bind, UB v_now, UB now_src, U1 now_by, UW now_st
     U1 o; UW lost_stamp = mc_stamp_of(seq, &o);
     mc_add(r3_fq[fi].key[bind], r3_fq[fi].yhat[bind], lost_src, lost_by, lost_stamp,
            r3_fq[fi].state, r3_fq[fi].rounds_done, seq, prov,
-           v_now, now_src, now_by, now_stamp);
+           v_now, now_src, now_by, now_stamp, 0xFF);
 }
 
 /* 1-3b, at the remote-revise site: does the incoming (stamp s_in, teacher
@@ -3453,7 +3470,7 @@ static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
     UB now_src = rp ? MC_SRC_REMOTE : MC_SRC_LOCAL;
     mc_add(r3_fq[fi].key[bind], v_in, MC_SRC_REMOTE, org, s_in,
            MC_NEVER_HELD, 0, 0, prov_in,
-           r3_fq[fi].yhat[bind], now_src, o_cur, s_cur);
+           r3_fq[fi].yhat[bind], now_src, o_cur, s_cur, 0xFF);
     if (drpc_my_node == 0xFF) return;
     mc_push_pkt.magic       = MT_MAGIC;
     mc_push_pkt.fact_seq    = s_cur;
@@ -4334,10 +4351,13 @@ static MH_HAVE_PKT mh_tx, mh_rx;     /* file-static (no task-stack packets)     
 static UB mh_tick_n, mh_off = 0xFF;  /* 0xFF = env not read yet                  */
 static UW mh_hints;                  /* keys wanted because of a summary         */
 
+static W mhi_sub = -1, mhi_pub = -1;  /* 1-3c (3): mind/hist (below)          */
 static void mh_have_open(void)
 {
     if (mh_sub < 0)
         mh_sub = kdds_open_poll_scoped(MIND_HAVE_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
+    if (mhi_sub < 0)                 /* same boot window, same singleton budget */
+        mhi_sub = kdds_open_poll_scoped(MIND_HIST_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
 }
 
 static void mh_tick(void)
@@ -4404,7 +4424,124 @@ static void mh_tick(void)
     }
     m_gate_release();
 }
-#define MH_TICK() mh_tick()
+
+/* ---- 1-3c (3): mind/hist (dtr.h MHI_HIST_PKT) ---------------------------
+ * Send: every MHI_EVERY ticks, the next record this node saw ITSELF (not one
+ * it heard) whose winner it still holds (key k held with value v_now) goes
+ * out on mind/hist, round-robin over the ring. A beacon, not a reply to a
+ * pull: in MIND-GEN-0-B the newcomer took sky from the teacher's re-drive, not
+ * from a pull answer, so a pull-triggered send never fired (/build/mh1, the
+ * first design). Its own LATEST_ONLY topic: it does not take the mind/teach
+ * tick from an answer or a push-back. Receive: one sample a tick; recorded
+ * only if this node holds the same winner (key k = v_now), as "heard as
+ * history from node X" (mc_add skips a conflict already kept); no value
+ * changes, never sent on. A key / value id outside the word lists is dropped.
+ * -DMH_NO_HIST: never send. -DMH_HIST_IGNORE: receive and drop. (The two
+ * negative controls of mind-conflicts.md 1-3c (3).) -DMH_HIST_BADVAL: send
+ * v_lost = 200; with -DMH_HIST_NOGUARD the receiver skips the range check. */
+#define MHI_EVERY 4                  /* ticks, like MH_EVERY                     */
+static MHI_HIST_PKT mhi_tx, mhi_rx;
+static UB mhi_tick_n;
+static UW mhi_seq, mhi_rr;
+static UB mhi_seen[DNODE_MAX];
+static UB mhi_bad[DNODE_MAX];        /* "out of range" printed once per sender  */
+
+/* the sender's per-node view of a teaching node -> the receiver's MC_SRC_* */
+static UB mhi_src_here(UB src, U1 by)
+{
+    if (src == MC_SRC_UNKNOWN || by == 0xFF) return MC_SRC_UNKNOWN;
+    return by == drpc_my_node ? MC_SRC_LOCAL : MC_SRC_REMOTE;
+}
+
+/* does this node hold key k with value v right now? (caller holds m_gate) */
+static INT mhi_holds(UB k, UB v)
+{
+    INT bind, fi = m_find_key((INT)k, &bind);
+    return fi >= 0 && r3_fq[fi].yhat[bind] == v;
+}
+
+static void mhi_tick(void)
+{
+    if (drpc_my_node == 0xFF) return;
+#ifndef MH_NO_HIST
+    /* send */
+    if (++mhi_tick_n >= MHI_EVERY) {
+        mhi_tick_n = 0;
+        INT found = 0;
+        m_gate_acquire();
+        for (UW t = 0; t < MC_MAX && !found; t++) {
+            UW i = (mhi_rr + t) % MC_MAX;
+            MC_REC *r = &mc_hist[i];
+            if (!r->used || r->heard_from != 0xFF || !mhi_holds(r->key, r->v_now)) continue;
+            found = 1; mhi_rr = (i + 1) % MC_MAX;
+            mhi_tx.magic = MHI_MAGIC; mhi_tx.hist_seq = ++mhi_seq;
+            mhi_tx.lost_stamp = r->lost_stamp; mhi_tx.now_stamp = r->now_stamp;
+            mhi_tx.lost_seq = r->lost_seq; mhi_tx.origin_node = drpc_my_node;
+            mhi_tx.key = r->key; mhi_tx.v_lost = r->v_lost; mhi_tx.v_now = r->v_now;
+#ifdef MH_HIST_BADVAL                /* test: an answer id outside the R_VALV words */
+            mhi_tx.v_lost = 200;
+#endif
+            mhi_tx.lost_src = r->lost_src; mhi_tx.now_src = r->now_src;
+            mhi_tx.lost_by = r->lost_by; mhi_tx.now_by = r->now_by;
+            mhi_tx.lost_state = r->lost_state; mhi_tx.lost_rounds = r->lost_rounds;
+            mhi_tx.has_prov = r->has_prov; mhi_tx.wire_ver = MT_WIRE_VER_VOCAB;
+            for (INT j = 0; j < PFS_ID_LEN; j++) mhi_tx.lost_prov[j] = r->lost_prov[j];
+            if (!r->hist_told) {            /* say it once per record */
+                r->hist_told = 1;
+                r_puts("[mind] mind/hist: sending the record of key "); r_putdec((UW)r->key);
+                r_puts(" \""); r_puts(r3_vocab_val_word(r->v_lost));
+                r_puts("\" superseded by \""); r_puts(r3_vocab_val_word(r->v_now));
+                r_puts("\" to the region (every "); r_putdec(MHI_EVERY); r_puts(" ticks)\r\n");
+            }
+        }
+        m_gate_release();
+        if (found) {
+            mt_vocab_fp_fill(mhi_tx.vocab_fp);
+            if (mhi_pub < 0)
+                mhi_pub = kdds_open_poll_scoped(MIND_HIST_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_REGION);
+            if (mhi_pub >= 0) (void)kdds_pub(mhi_pub, &mhi_tx, (W)sizeof mhi_tx);
+        }
+    }
+#endif
+    /* receive */
+    mh_have_open();
+    if (mhi_sub < 0) return;
+    W r = kdds_sub(mhi_sub, &mhi_rx, (W)sizeof mhi_rx, 0);
+    if (r < (W)sizeof mhi_rx || mhi_rx.magic != MHI_MAGIC) return;
+    if (mhi_rx.wire_ver != MT_WIRE_VER_VOCAB || !mt_vocab_fp_ok(mhi_rx.vocab_fp)) return;
+    U1 o = mhi_rx.origin_node;
+    if (o == drpc_my_node || o >= DNODE_MAX) return;
+#ifndef MH_HIST_NOGUARD
+    /* ids from the wire index the word lists when the record is printed
+     * (r3_vocab_*_word returns NULL outside them) — drop, like mind/teach */
+    if (mhi_rx.key >= R_KEYV || mhi_rx.v_lost >= R_VALV || mhi_rx.v_now >= R_VALV) {
+        if (!mhi_bad[o]) {
+            mhi_bad[o] = 1;
+            r_puts("[mind] mind/hist from node "); r_putdec((UW)o);
+            r_puts(": id out of range, dropped\r\n");
+        }
+        return;
+    }
+#endif
+#ifdef MH_HIST_IGNORE
+    if (!mhi_seen[o]) {
+        mhi_seen[o] = 1;
+        r_puts("[mind] mind/hist from node "); r_putdec((UW)o);
+        r_puts(": IGNORED (MH_HIST_IGNORE)\r\n");
+    }
+#else
+    (void)mhi_seen;
+    m_gate_acquire();
+    if (mhi_holds(mhi_rx.key, mhi_rx.v_now))
+        mc_add(mhi_rx.key, mhi_rx.v_lost, mhi_src_here(mhi_rx.lost_src, mhi_rx.lost_by),
+               mhi_rx.lost_by, mhi_rx.lost_stamp, mhi_rx.lost_state, mhi_rx.lost_rounds,
+               mhi_rx.lost_seq, mhi_rx.has_prov ? mhi_rx.lost_prov : 0,
+               mhi_rx.v_now, mhi_src_here(mhi_rx.now_src, mhi_rx.now_by),
+               mhi_rx.now_by, mhi_rx.now_stamp, o);
+    m_gate_release();
+#endif
+}
+#define MH_TICK() do { mh_tick(); mhi_tick(); } while (0)
 #else
 #define MH_TICK() do { } while (0)
 #endif

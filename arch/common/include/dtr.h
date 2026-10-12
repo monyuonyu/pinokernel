@@ -490,6 +490,32 @@ typedef struct {
     MH_ENTRY e[MH_MAX];
 } __attribute__((packed)) MH_HAVE_PKT;   /* 4+4+8+16*6 = 112 B (<= KDDS_DATA_MAX) */
 
+/* ROADMAP 1-3c (3), mind-conflicts.md: the loser HISTORY. Every few ticks a
+ * node sends one conflict record it saw itself whose winner it still holds
+ * (a beacon, round-robin over its ring), so a node that only ever took the
+ * winner (a newcomer, a node repaired after the conflict) can still read what
+ * lost and who taught it. The receiver records it ("heard as history from
+ * node X") only if it holds the same winner and every id is inside the word
+ * lists: it never changes a value and never sends it on. Hosted only, like
+ * mind/have. */
+#define MIND_HIST_TOPIC  "mind/hist"
+#define MHI_MAGIC        0x5348494DUL   /* "MIHS" LE -- free magic              */
+typedef struct {
+    UW magic;                     /* MHI_MAGIC                                */
+    UW hist_seq;                  /* sender's send counter (per-sender dedup) */
+    UW lost_stamp, now_stamp;     /* 1-3b stamps of both values               */
+    UW lost_seq;                  /* the SENDER's local seq of the lost engram */
+    U1 origin_node;               /* the sending node                         */
+    U1 key, v_lost, v_now;        /* token ids                                */
+    U1 lost_src, now_src;         /* MC_SRC_* as seen by the sender           */
+    U1 lost_by, now_by;           /* teaching nodes (0xFF = unknown)          */
+    U1 lost_state, lost_rounds;   /* how firmly v_lost was held at the sender */
+    U1 has_prov;
+    U1 wire_ver;                  /* MT_WIRE_VER_VOCAB                         */
+    U1 lost_prov[PFS_ID_LEN];     /* content-id of v_lost's ARK_PROV           */
+    U1 vocab_fp[MT_VOCAB_FP_LEN]; /* same word list (wave-47)                  */
+} __attribute__((packed)) MHI_HIST_PKT;  /* 20+12+32+8 = 72 B (<= KDDS_DATA_MAX) */
+
 /* ================================================================== */
 /* Thread T — the lesson BRIDGE (T-fix-b / T-1, thread-t-impl-plan.md  */
 /* §2.1). A TEACHER-capable node (SWIM capability bit 1, T-fix-a) emits */
