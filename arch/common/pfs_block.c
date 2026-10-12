@@ -410,7 +410,9 @@ INT pfs_has(const U1 id[PFS_ID_LEN])
      * (first measurement: 72-76 "gave up" per node in samples/32, master 0).
      * Read through pfs_get so a rotted file does not count. (Hosted only:
      * the bare-metal body below is unchanged, crown.) */
+#ifndef PFS_FLAT_HAS_RESIDENT_ONLY    /* test: the pre-224b57e3 pfs_has */
     if (find_slot(id) < 0 && pfs_flat_evicts() && pfs_get(id, 0, 0) >= 0) return 1;
+#endif
 #endif
     return find_slot(id) >= 0 ? 1 : 0;
 }
@@ -868,7 +870,8 @@ INT pfs_drop_self_test(void (*emit)(const char *))
  * block reads back byte-exact (the evicted ones from their files), and every
  * drop makes the block unreadable, the evicted ones too (their files go).
  * Single node only, like droptest. Negative controls: -DPFS_FLAT_NO_EVICT
- * (refuses at 64, step 1 red), -DPFS_FLAT_DROP_KEEPFILE (a dropped evicted
+ * (refuses at 64, step 1 red), -DPFS_FLAT_HAS_RESIDENT_ONLY (pfs_has misses
+ * the evicted blocks, step 2 red), -DPFS_FLAT_DROP_KEEPFILE (a dropped evicted
  * block reads back, step 3 red). */
 #define FLAT_N (PFS_MAX_BLOCKS + 8)
 static U1 flat_ids[FLAT_N][PFS_ID_LEN];
@@ -906,18 +909,19 @@ INT pfs_flatfull_self_test(void (*emit)(const char *))
         emit(" puts into a 64-slot table, none refused (evicted)\r\n");
     }
     /* 2. every block reads back byte-exact; some come from their files */
-    UW good = 0, from_file = 0;
+    UW good = 0, from_file = 0, held = 0;
     for (UW k = 0; k < stored; k++) {
         flat_block(b, k);
         if (!pfs_resident(flat_ids[k])) from_file++;
         if (pfs_get(flat_ids[k], rb, 16) == 16 && pfs_memcmp(rb, b, 16) == 0) good++;
+        if (pfs_has(flat_ids[k])) held++;   /* pfs_repl serves / stops wanting */
     }
-    if (good != stored || (stored == FLAT_N && from_file == 0)) {
+    if (good != stored || held != stored || (stored == FLAT_N && from_file == 0)) {
         emit("[pfs-flat] FAIL read back "); emit_dec(emit, good);
-        emit(" of "); emit_dec(emit, stored); emit(" (not resident ");
-        emit_dec(emit, from_file); emit(")\r\n"); fails++;
+        emit(" of "); emit_dec(emit, stored); emit(", pfs_has "); emit_dec(emit, held);
+        emit(" (not resident "); emit_dec(emit, from_file); emit(")\r\n"); fails++;
     } else {
-        emit("[pfs-flat] ok  all "); emit_dec(emit, good); emit(" read back, ");
+        emit("[pfs-flat] ok  all "); emit_dec(emit, good); emit(" read back and held, ");
         emit_dec(emit, from_file); emit(" of them from their files\r\n");
     }
     /* 3. a dropped block is gone, resident or evicted */
