@@ -213,7 +213,10 @@ for i in 1 3 5 6; do
     while IFS='|' read -r k w; do
         [ -n "$k" ] || continue
         case "$k" in fire|snow|sky) ;; *) continue ;; esac
-        [ "$w" = "${A1[$i.$k]:-none}" ] || h2="$h2 node$i:heard-$k=$w-holds-${A1[$i.$k]:-none}"
+        # the receiver held the winner when it recorded: round 1 or, if the
+        # node took the key between the rounds, round 2 names it
+        [ "$w" = "${A1[$i.$k]:-none}" ] || [ "$w" = "${A2[$i.$k]:-none}" ] ||
+            h2="$h2 node$i:heard-$k=$w-holds-${A1[$i.$k]:-none}/${A2[$i.$k]:-none}"
     done < <(grep -a 'heard as history from node' "$lg" | grep -a '^\[mind\] conflict recorded:' |
              sed -nE 's/.*key [0-9]+ "([a-z]+)".* superseded by "([a-z]+)".*/\1|\2/p')
 done
