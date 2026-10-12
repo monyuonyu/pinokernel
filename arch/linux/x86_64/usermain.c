@@ -735,8 +735,12 @@ static void cmd_pfs(const UB *line, INT n)
         pfs_dag_self_test(print);
     } else if (p < end && starts_with(p, (INT)(end - p), "droptest")) {
         /* PFS-FULL-SILENT-DROP cert: a full table refuses AND counts it;
-         * pfs_drop frees the slot (and the flat file). Single node only. */
+         * pfs_drop frees the slot. Memory-only (no PKERNEL_PFS_DIR). */
         pfs_drop_self_test(print);
+    } else if (p < end && starts_with(p, (INT)(end - p), "flattest")) {
+        /* PFS-FLAT-FULL cert: with PKERNEL_PFS_DIR a full table evicts, the
+         * evicted blocks read back from their files, a drop removes them. */
+        pfs_flatfull_self_test(print);
     } else if (p < end && starts_with(p, (INT)(end - p), "ls")) {
         pfs_repl_ls();
     } else {
