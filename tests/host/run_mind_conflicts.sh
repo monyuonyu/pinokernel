@@ -37,6 +37,9 @@ res() { echo "[mind-conflicts] $1 $2"; [ "$2" = FAIL ] && REDS="$REDS $1"; retur
 cleanup() {
     for p in "$PA" "$PB" "$RELAY" "$QA" "$QB" "$QC" "$R1" "$R2" "$RH" "$RS" "$SA" "$SB"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
     exec 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&- 2>/dev/null; wait 2>/dev/null
+    # the node stores are ~176 MB a run; keep them (with the logs) only when red
+    [ -z "$REDS" ] && rm -rf "$WORK"/dl "$WORK"/da "$WORK"/db "$WORK"/eqa "$WORK"/eqb \
+        "$WORK"/eqc "$WORK"/esa "$WORK"/esb
 }
 trap cleanup EXIT
 wait_for() {  # <file> <ERE> <secs>

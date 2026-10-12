@@ -42,6 +42,9 @@ res() { echo "[mind-have] $1 $2"; [ "$2" = FAIL ] && REDS="$REDS $1"; return 0; 
 cleanup() {
     for p in "$A" "$B" "$RELAY"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
     exec 3>&- 4>&- 2>/dev/null; wait 2>/dev/null
+    # the node stores are ~44 MB a run; keep them (with the logs) only when red
+    # (audit-21 read a red run's stores)
+    [ -z "$REDS" ] && rm -rf "$WORK"/ea "$WORK"/eb
 }
 trap cleanup EXIT
 wait_for() {  # <file> <ERE> <secs>
