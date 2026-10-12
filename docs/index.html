@@ -723,9 +723,10 @@
     device, grows by being taught, and answers free text token by token — clumsily. Its teacher,
     SmolLM2-135M, runs on an inference engine written from scratch inside the kernel. In September:
     trained on text the teacher really generated, its loss on the unseen tail of that text fell 5.53 → 2.03
-    while a control rose to 6.61 (in-proc, not in CI); and a lesson sent over the wire stayed in a separate
-    student process after the teacher was killed (live, not in CI — most of that drop is memorised filler,
-    not generalisation).
+    while a control rose to 6.61 (in-proc, not in CI); a lesson sent over the wire changes the weights of a
+    separate student process and the change stays after the teacher is killed (live, not in CI), but on
+    checking text that does not overlap the training side the taught student does worse than an untaught one
+    (October; that test is red — the earlier green was memorised filler).
   </p>
   <p>
     <span class="text-bright">Brain research, stage 1.</span> The baby can round a copy of itself to int8 / int4 / int2
