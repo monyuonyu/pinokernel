@@ -1,4 +1,6 @@
 # 評価の物差しの独立（ROADMAP 0-12）
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: [held-indep] `run_held_indep.sh` -->
 
 2026-10-12。held（確かめに使う保持データ）が、学習に使うデータと重ならないことを機械で確かめる。
 
