@@ -49,6 +49,9 @@ cleanup() {
     done
     for p in "$R1" "$R2" "$RH"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
     wait 2>/dev/null
+    # the node stores are ~130 MB a run (14 were left in the audit container);
+    # the logs stay (they are in $LOGDIR, inside $WORK only when not given)
+    rm -rf "$WORK"/d[0-9] "$WORK"/f[0-9]
 }
 trap cleanup EXIT
 
