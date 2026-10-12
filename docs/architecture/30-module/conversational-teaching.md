@@ -3,6 +3,7 @@
 <!-- vmodel certs: [teach-arrival] [teach-live] [teach-consolidated] -->
 
 > **Status: SHIPPED (cradle live L1/L2/L3, wave 2026-06-26) — reconciled 2026-07-01.**
+> **2026-10-12 (0-12): the wire still works, but with held text that does not overlap train the `run_cradle_live.sh` verdict is RED (taught 4.38 vs control 2.87) - see held-independence.md.**
 > The live-teacher wire is real: `arch/common/cradle_net.c` publishes a **40-byte**
 > `CRADLE_TEACH_PKT` (`dtr.h:446-460`) on the region-scoped `cradle/teach` topic, a child
 > pulls the p-fs lesson body and trains during DMN sleep; cert `tests/llm/run_cradle_teach.sh`

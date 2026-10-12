@@ -22,8 +22,8 @@
 # sentence + 256 B of a held-only sentence (64 B x 4) + 12 blanks; no held
 # 16-byte k-gram occurs in a train window (tests/llm/run_held_indep.sh I1).
 # Measured with this lesson (audit-41, 2026-10-12, run twice by implementer
-# and auditor, same digits): RED, rc=1. ctrl 2.8686, cure 4.3823 / 5.7357,
-# death 4.3823 -> 4.3609: the lesson still arrives (ring_len 1280) and still
+# and auditor, same digits): RED, rc=1. ctrl 2.8686, cure 4.3823 (scramble
+# 5.7357), death 4.3823 -> 4.3609: the lesson still arrives (ring_len 1280) and still
 # outlives T, but on held text that is not in the training windows it makes S
 # WORSE than the fixture-only control. The old 1279 B lesson was GREEN
 # (ctrl 2.7727, cure 1.5813) only because the filler was in both regions.

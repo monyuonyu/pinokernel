@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `ee48839d`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `161cc765`.
 
 # p-kernel
 
