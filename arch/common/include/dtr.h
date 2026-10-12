@@ -490,12 +490,14 @@ typedef struct {
     MH_ENTRY e[MH_MAX];
 } __attribute__((packed)) MH_HAVE_PKT;   /* 4+4+8+16*6 = 112 B (<= KDDS_DATA_MAX) */
 
-/* ROADMAP 1-3c (3), mind-conflicts.md: the loser HISTORY. A node that answers
- * a pull for a key whose answered value won a recorded conflict also sends the
- * latest such record, so a node that only ever pulled the winner (a newcomer,
- * a node repaired after the conflict) can still read what lost and who taught
- * it. The receiver only records it ("heard as history from node X"): it never
- * changes a value and never sends it on. Hosted only, like mind/have. */
+/* ROADMAP 1-3c (3), mind-conflicts.md: the loser HISTORY. Every few ticks a
+ * node sends one conflict record it saw itself whose winner it still holds
+ * (a beacon, round-robin over its ring), so a node that only ever took the
+ * winner (a newcomer, a node repaired after the conflict) can still read what
+ * lost and who taught it. The receiver records it ("heard as history from
+ * node X") only if it holds the same winner and every id is inside the word
+ * lists: it never changes a value and never sends it on. Hosted only, like
+ * mind/have. */
 #define MIND_HIST_TOPIC  "mind/hist"
 #define MHI_MAGIC        0x5348494DUL   /* "MIHS" LE -- free magic              */
 typedef struct {

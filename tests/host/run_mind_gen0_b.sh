@@ -12,7 +12,8 @@
 #
 # Env: MG0B_NC=1 skips the heal (negative control: E1 must go red).
 #      MG0B_PORT (default 7471; uses PORT, PORT+1, PORT+2), MG0B_LOGDIR.
-# Output: "[mind-gen0-b] E<n> PASS|FAIL ..." per expectation, then
+# Output: "[mind-gen0-b] E<n> PASS|FAIL ..." per expectation, H2 and ALIVE
+#   (mind/hist, added at audit-43 — not part of E1..E5), then
 #   [mind-gen0-b] ALL PASS (exit 0) or [mind-gen0-b] RED: <list> (exit 1).
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -198,6 +199,32 @@ done
 e5=""
 for i in 1 3 5 6; do [ "${A1[$i.sky]:-none}" = "${A2[$i.sky]:-none}" ] || e5="$e5 node$i:${A1[$i.sky]:-none}->${A2[$i.sky]:-none}"; done
 [ -z "$e5" ] && res E5 PASS "sky answers unchanged after 30 s" || res E5 FAIL "changed:$e5"
+
+# H2 (mind-conflicts.md 1-3c (3), mind/hist): only a node that saw a conflict
+# itself sends its record, and a heard record names the winner the node holds.
+# Audit-43: breaking either rule left E1..E5 unchanged, so they are read here.
+h2=""
+for i in 1 3 5 6; do
+    lg="$LOGDIR/node$i.log"
+    if grep -aq '^\[mind\] mind/hist: sending' "$lg" &&
+       ! grep -aE '^\[mind\] conflict (recorded|seen here too):' "$lg" | grep -avq 'heard as history'; then
+        h2="$h2 node$i:sent-without-own-record"
+    fi
+    while IFS='|' read -r k w; do
+        [ -n "$k" ] || continue
+        case "$k" in fire|snow|sky) ;; *) continue ;; esac
+        [ "$w" = "${A1[$i.$k]:-none}" ] || h2="$h2 node$i:heard-$k=$w-holds-${A1[$i.$k]:-none}"
+    done < <(grep -a 'heard as history from node' "$lg" | grep -a '^\[mind\] conflict recorded:' |
+             sed -nE 's/.*key [0-9]+ "([a-z]+)".* superseded by "([a-z]+)".*/\1|\2/p')
+done
+[ -z "$h2" ] && res H2 PASS "mind/hist sent only by nodes that saw a conflict; heard records name the held winner" \
+    || res H2 FAIL "$h2"
+# every node not killed by the script is still alive (audit-43 B3: an
+# out-of-range id on mind/hist crashed the receiver; the "Segmentation fault"
+# line goes to this script's stderr, not to the node log)
+cr=""
+for i in 1 3 5 6; do kill -0 "${PID[$i]}" 2>/dev/null || cr="$cr node$i"; done
+[ -z "$cr" ] && res ALIVE PASS "nodes 1,3,5,Z alive at the end" || res ALIVE FAIL "dead:$cr"
 
 grep -ah "remote REVISE" "$LOGDIR"/node*.log | sed 's/^/[mind-gen0-b]   revise: /' | head -8
 if [ -z "$REDS" ]; then echo "[mind-gen0-b] ALL PASS"; exit 0; fi

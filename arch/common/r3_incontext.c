@@ -3380,6 +3380,11 @@ static void mc_add(UB k, UB v_lost, UB lost_src, U1 lost_by, UW lost_stamp,
             r->lost_src == lost_src && r->lost_by == lost_by &&
             r->v_now == v_now) {
             if (heard_from != 0xFF) return;   /* already kept: nothing new */
+            if (r->heard_from != 0xFF) {      /* heard first, now seen here too */
+                r->heard_from = 0xFF;
+                mc_print(r, "[mind] conflict seen here too: ");
+                return;
+            }
             if (r->n < 255) r->n++;
             mc_print(r, "[mind] conflict again: ");
             return;
@@ -4430,13 +4435,16 @@ static void mh_tick(void)
  * tick from an answer or a push-back. Receive: one sample a tick; recorded
  * only if this node holds the same winner (key k = v_now), as "heard as
  * history from node X" (mc_add skips a conflict already kept); no value
- * changes, never sent on. -DMH_NO_HIST: never send. -DMH_HIST_IGNORE: receive
- * and drop. (The two negative controls of mind-conflicts.md 1-3c (3).) */
+ * changes, never sent on. A key / value id outside the word lists is dropped.
+ * -DMH_NO_HIST: never send. -DMH_HIST_IGNORE: receive and drop. (The two
+ * negative controls of mind-conflicts.md 1-3c (3).) -DMH_HIST_BADVAL: send
+ * v_lost = 200; with -DMH_HIST_NOGUARD the receiver skips the range check. */
 #define MHI_EVERY 4                  /* ticks, like MH_EVERY                     */
 static MHI_HIST_PKT mhi_tx, mhi_rx;
 static UB mhi_tick_n;
 static UW mhi_seq, mhi_rr;
 static UB mhi_seen[DNODE_MAX];
+static UB mhi_bad[DNODE_MAX];        /* "out of range" printed once per sender  */
 
 /* the sender's per-node view of a teaching node -> the receiver's MC_SRC_* */
 static UB mhi_src_here(UB src, U1 by)
@@ -4470,6 +4478,9 @@ static void mhi_tick(void)
             mhi_tx.lost_stamp = r->lost_stamp; mhi_tx.now_stamp = r->now_stamp;
             mhi_tx.lost_seq = r->lost_seq; mhi_tx.origin_node = drpc_my_node;
             mhi_tx.key = r->key; mhi_tx.v_lost = r->v_lost; mhi_tx.v_now = r->v_now;
+#ifdef MH_HIST_BADVAL                /* test: an answer id outside the R_VALV words */
+            mhi_tx.v_lost = 200;
+#endif
             mhi_tx.lost_src = r->lost_src; mhi_tx.now_src = r->now_src;
             mhi_tx.lost_by = r->lost_by; mhi_tx.now_by = r->now_by;
             mhi_tx.lost_state = r->lost_state; mhi_tx.lost_rounds = r->lost_rounds;
@@ -4500,6 +4511,18 @@ static void mhi_tick(void)
     if (mhi_rx.wire_ver != MT_WIRE_VER_VOCAB || !mt_vocab_fp_ok(mhi_rx.vocab_fp)) return;
     U1 o = mhi_rx.origin_node;
     if (o == drpc_my_node || o >= DNODE_MAX) return;
+#ifndef MH_HIST_NOGUARD
+    /* ids from the wire index the word lists when the record is printed
+     * (r3_vocab_*_word returns NULL outside them) — drop, like mind/teach */
+    if (mhi_rx.key >= R_KEYV || mhi_rx.v_lost >= R_VALV || mhi_rx.v_now >= R_VALV) {
+        if (!mhi_bad[o]) {
+            mhi_bad[o] = 1;
+            r_puts("[mind] mind/hist from node "); r_putdec((UW)o);
+            r_puts(": id out of range, dropped\r\n");
+        }
+        return;
+    }
+#endif
 #ifdef MH_HIST_IGNORE
     if (!mhi_seen[o]) {
         mhi_seen[o] = 1;
