@@ -4460,9 +4460,9 @@ static void mhi_arm(U1 asker, UB k, UB v)
         mhi_sends_left = MHI_SENDS; mhi_ticks_left = MHI_TICKS; mhi_sent_n = 0;
         r_puts("[mind] mind/hist: answering node "); r_putdec((UW)asker);
         r_puts(" on key "); r_putdec((UW)k);
-        r_puts(", sending the record of ""); r_puts(r3_vocab_val_word(r->v_lost));
-        r_puts("" superseded by ""); r_puts(r3_vocab_val_word(v));
-        r_puts("" (hist_seq "); r_putdec(mhi_seq); r_puts(")\r\n");
+        r_puts(", sending the record of \""); r_puts(r3_vocab_val_word(r->v_lost));
+        r_puts("\" superseded by \""); r_puts(r3_vocab_val_word(v));
+        r_puts("\" (hist_seq "); r_putdec(mhi_seq); r_puts(")\r\n");
         return;
     }
 #endif
