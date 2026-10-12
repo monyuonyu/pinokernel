@@ -126,6 +126,13 @@ check RNG0-X86PC   ../sysdepend/x86_pc/cpu_cntl.c        1 'knl_ctxtsk != NULL &
 #     リンクが落ちるが、中身だけ消えても通る。tests/aarch64/run_rng0_regression.sh
 #     の positive の腕が赤になる。
 check RNG0-A64     ../sysdepend/aarch64_virt/cpu_cntl.c  1 'knl_ctxtsk != NULL && knl_ctxtsk != knl_schedtsk'
+# --- BARE-A64-FP（2026-10-12、0-11）: 初めて動くタスクの切替えのフレームの大きさ。
+#     knl_dispatch のフレームは d8〜d15 と FPCR で 112→192 バイトになった。ベアの
+#     AArch64 で使われる cpu_task.h はこのベンダ側（boot/aarch64/Makefile の -I で
+#     MTK3_SYSDEP が先）で、arch/aarch64/include/cpu_task.h ではない。112 に戻っても
+#     ビルドは通り、起動で落ちる（tests/aarch64/run_fp_bare.sh が赤、監査-41 の M3）。
+#     アンカーの空白はタブ（ベンダの書き方のまま）。
+check FP-A64-DORMANT ../sysdepend/aarch64_virt/cpu_task.h  1 '#define DORMANT_STACK_SIZE	192'
 
 echo
 echo "pass=$pass lost=$fail"
