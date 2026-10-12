@@ -50,7 +50,9 @@ step x86_64-san   "make -C boot/linux_x86_64 clean >/dev/null && make -C boot/li
 # 3 of 14). The sanitizer build above is the one with -f flags (it needs LDFLAGS).
 while IFS=$'\t' read -r dir flags; do
     [ -n "$dir" ] || continue
-    name="$(basename "$dir")$(echo "$flags" | sed 's/-D/-/g; s/ //g')"
+    # A "/" in the flags (-include a/b.h) would make the log path a missing
+    # directory and a 0 s false FAIL before make (audit-41), so it becomes "_".
+    name="$(basename "$dir")$(echo "$flags" | sed 's/-D/-/g; s/ //g; s|/|_|g')"
     step "$name" "make -C $dir clean >/dev/null && make -C $dir EXTRA_CFLAGS='$flags'"
 done < <(python3 - "$ROOT/.github/workflows/ci.yml" <<'PY'
 import re, sys
