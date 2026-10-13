@@ -1,12 +1,12 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `161cc765`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `8a04023a`.
 
 # p-kernel
 
 **An OS where AI never dies** — a research kernel written from scratch.
 
-The idea: instead of living in one company's data center, an AI is spread across many ordinary devices — PCs, phones, small boards — so that as long as any one of them is still running, the whole does not stop. p-kernel builds that "home for an AI that no one owns" starting from the kernel, the lowest layer of the OS.
+The idea: instead of living in one company's data center, an AI is spread across many ordinary devices — PCs, phones, small boards — so that as long as any one of them is still running, a failure does not kill it. p-kernel builds that "home for an AI that participants bring together, and participants can stop" starting from the kernel, the lowest layer of the OS.
 
 This README keeps **what runs today, what is being designed, and what is only a vision** clearly apart. If anything here overstates reality, that is a bug and gets fixed. Open problems are published in one place, the [gap-ledger](docs/architecture/gap-ledger.md).
 
@@ -34,12 +34,15 @@ The project's goal, as written in the Japanese README (with dated notes):
 
 ## What p-kernel is
 
-Today's AI can only run inside a particular company's servers. If that company turns it off, the AI is gone. p-kernel asks the opposite question: if an AI lived spread across many machines, would there be any single place left from which it could be erased?
+Today's AI can only run inside a particular company's servers. If those servers break or the service ends, the AI is gone, along with everything it learned. p-kernel asks: if an AI lived spread across many machines, could we build a mind that does not die from a failure or from the circumstances of any one place?
+
+But **"does not die" does not mean "cannot be stopped."** Only devices whose owners have agreed take part. An owner can remove their device from the swarm at any time. People will be able to stop the whole swarm. p-kernel will not have any feature that spreads by breaking into other machines. These are design rules (rule 9 of the overarching rules in the [ROADMAP](docs/architecture/ROADMAP.md)). The owner's consent record and the signing allowlist already exist. A test that nothing is left on a removed device, the path to stop the whole swarm, and identifying the protocol name and version on the wire are still to be built and confirmed by tests.
 
 In research terms, p-kernel explores **an operating substrate for distributed artificial life (an Artificial Life substrate)**. This is not a claim to have created life or consciousness. It is an experiment in building a base on which small minds can persist across failures, share memory and knowledge, and evolve within explicit safety boundaries.
 
 To get there, it is built on these principles:
 
+- **Runs only on devices that agreed, and people can stop it.** As described above. It spreads only among devices that agreed.
 - **No center.** No central server, registry, or coordinator. Devices watch each other to track who is alive (SWIM), and the rest keep running when any one of them disappears.
 - **Built from the kernel up.** The core is μT-Kernel 3.0, a real-time kernel conforming to IEEE 2050-2018. Working as a swarm is implemented as a kernel feature, not bolted on as an application.
 - **A small brain that genuinely learns.** The path from "learned something" to "fixed into the weights while idle (sleep)" really runs, and forgetting has been reproduced and its cure measured. The size, however, is still toy-scale.
