@@ -63,17 +63,61 @@ int st_held_check(const uint8_t *corpus, int n, int seqlen, int trainw,
     return (z.shared == 0 && z.wrapped == 0) ? 0 : 1;
 }
 
-/* STUB (test-first): the record is not implemented yet */
-void st_seen_clear(st_seen *s) { (void)s; }
+/* The record: 3 bit positions from one 64-bit hash (17 bits at 0, 21, 42). */
+_Static_assert((ST_SEEN_BITS & (ST_SEEN_BITS - 1)) == 0 && ST_SEEN_BITS <= (1 << 21),
+               "ST_SEEN_BITS: a power of two that fits a 21-bit slice");
+static uint32_t hs_pos(uint64_t h, int j)
+{
+    return (uint32_t)(h >> (21 * j)) & (ST_SEEN_BITS - 1);
+}
+
+void st_seen_clear(st_seen *s)
+{
+    if (!s) return;
+    for (int i = 0; i < ST_SEEN_BITS / 8; i++) s->bits[i] = 0;
+    s->added = 0;
+}
+
 void st_seen_add(st_seen *s, const uint8_t *span, int n, int k)
-{ (void)s; (void)span; (void)n; (void)k; }
+{
+    if (!s || !span || k < 1) return;
+    for (long o = 0; o + k <= n; o++) {
+        uint64_t h = hi_hash(span, n, o, k);
+        for (int j = 0; j < 3; j++) {
+            uint32_t p = hs_pos(h, j);
+            s->bits[p >> 3] |= (uint8_t)(1u << (p & 7));
+        }
+        s->added++;
+    }
+}
+
+static int hs_has(const st_seen *s, uint64_t h)
+{
+    for (int j = 0; j < 3; j++) {
+        uint32_t p = hs_pos(h, j);
+        if (!(s->bits[p >> 3] & (1u << (p & 7)))) return 0;
+    }
+    return 1;
+}
+
 int st_held_check_record(const uint8_t *corpus, int n, int seqlen, int trainw,
                          int heldw, const st_seen *s, int k, st_held_report *r)
 {
     st_held_report z = { 0, 0, 0 };
-    (void)corpus; (void)n; (void)seqlen; (void)trainw; (void)heldw; (void)s; (void)k;
     if (r) *r = z;
-    return 0;
+    if (!corpus || !s || n < 1 || seqlen < 1 || trainw < 0 || heldw < 0 ||
+        k < 1 || k > seqlen)
+        return -1;
+    for (int hw = trainw; hw < trainw + heldw; hw++) {
+        long hbase = (long)hw * seqlen;
+        if (hbase + seqlen > n) z.wrapped++;
+        for (int hi = 0; hi + k <= seqlen; hi++) {
+            z.held_kgrams++;
+            if (hs_has(s, hi_hash(corpus, n, hbase + hi, k))) z.shared++;
+        }
+    }
+    if (r) *r = z;
+    return (z.shared == 0 && z.wrapped == 0) ? 0 : 1;
 }
 
 int st_held_check_seen(const uint8_t *corpus, int n, int seqlen, int trainw,

@@ -216,7 +216,7 @@ int main(void)
         /* I11: the canonical lesson against the record of fixture + itself:
          * exactly 0 by the exact checks (I1, I8), the record must agree */
         rc = st_held_check_record(A, na, CRADLE_SEQLEN, sa.trainw, sa.heldw, &rec, ST_HELD_K, &bl);
-        item(rc == 0 && bl.shared == 0, "I11", "record: the canonical lesson held is still clean", &bl);
+        item(rc == 0 && bl.held_kgrams > 0 && bl.shared == 0, "I11", "record: the canonical lesson held is still clean", &bl);
 
         /* I12: random held bytes against the full record: false "seen" stays
          * rare (Bloom over-count), and an empty record sees nothing */

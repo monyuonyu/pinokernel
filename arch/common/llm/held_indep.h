@@ -82,10 +82,12 @@ int st_held_check_seen(const uint8_t *corpus, int n, int seqlen, int trainw,
  * windows misses that. The student adds the train bytes of every corpus it
  * trains and checks held windows against the whole record. A Bloom filter
  * can say "seen" for a k-gram it never saw (over-counts, never under-counts);
- * at 4000 k-grams in 65536 bits with 3 probes that is about 0.5%. The record
- * lives in memory: it starts empty at boot, so weights restored from disk
- * carry training it does not know about (the student says "since boot"). */
-#define ST_SEEN_BITS  65536
+ * at 5000 k-grams (fixture + one lesson) in 131072 bits with 3 probes that is
+ * about 0.1% (65536 bits gave 2 of 170 random held k-grams, too close to the
+ * cert's line). The record lives in memory: it starts empty at boot, so
+ * weights restored from disk carry training it does not know about (the
+ * student says "since boot"). */
+#define ST_SEEN_BITS  131072
 typedef struct {
     uint8_t  bits[ST_SEEN_BITS / 8];
     uint32_t added;     /* k-grams added (with repeats), for the fill estimate */
