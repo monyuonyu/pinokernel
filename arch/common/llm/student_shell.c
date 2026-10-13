@@ -385,6 +385,29 @@ static int cradle_corpus_len(void)
     int n; (void)cradle_corpus(&n); return n;
 }
 
+/* 0-12 step 4: the record of the bytes this baby trained on since boot (a
+ * Bloom filter, held_indep.h). A lesson replaces the ring, so the held of the
+ * new corpus is also checked against what earlier corpora taught. Added once
+ * per corpus (a fingerprint of the bytes and the train end) at the start of a
+ * DMN batch and after a `student` round. Other training paths (the dlb
+ * distill, `student merge`) are not recorded, and the record is empty after a
+ * restart while restored weights are not. */
+static st_seen  g_seen;
+static uint64_t g_seen_last;
+
+static void student_seen_note(const uint8_t *c, int n, int train_end)
+{
+#ifdef SEEN_DISABLE
+    (void)c; (void)n; (void)train_end; return;   /* falsifier: [held-seen] goes RED */
+#endif
+    uint64_t f = 1469598103934665603ULL;
+    for (int i = 0; i < n; i++) { f ^= c[i]; f *= 1099511628211ULL; }
+    f ^= (uint64_t)(unsigned)train_end * 0x9E3779B97F4A7C15ULL;
+    if (f == g_seen_last) return;
+    st_seen_add(&g_seen, c, train_end < n ? train_end : n, ST_HELD_K);
+    g_seen_last = f;
+}
+
 static void window(uint8_t *dst, int off, int len)
 {
     int n; const uint8_t *corpus = cradle_corpus(&n);
@@ -751,6 +774,10 @@ int student_dmn_consolidate(void)
          * straight-line with the pull above — no yield between — so it is atomic
          * w.r.t. the cooperative cradle_net_task. */
         cradle_lesson_freeze(1);
+        {   /* 0-12 step 4: this batch's train bytes go into the record */
+            int cn; const uint8_t *cc = cradle_corpus(&cn);
+            student_seen_note(cc, cn, g_consol_train_end);
+        }
     }
 
 #ifdef YIELD_DISABLE
@@ -1622,6 +1649,15 @@ int student_shell_cmd(const char *args, emit_fn emit)
             snprintf(line, sizeof line,
                      "[held-indep] not checked (seqlen %d < %d)\r\n", seqlen, ST_HELD_K);
         emit(line);
+        /* step 4: and against every corpus trained since boot (the record) */
+        if (st_held_check_record(cc, cn, seqlen, trainw, heldw, &g_seen, ST_HELD_K, &hr) >= 0) {
+            snprintf(line, sizeof line,
+                     "[held-indep] seen=%d/%d held runs in what this baby trained since "
+                     "boot (record %u runs; may over-count)%s\r\n", hr.shared,
+                     hr.held_kgrams, (unsigned)g_seen.added,
+                     g_loaded_from_disk ? " - weights RESTORED: earlier training not recorded" : "");
+            emit(line);
+        }
     }
 
     float pre = heldout_loss(&g_student, seqlen, train_end, heldw);
@@ -1645,6 +1681,10 @@ int student_shell_cmd(const char *args, emit_fn emit)
      * (cooperative-yield-plan.md §2.2 writer guard). */
     student_consol_abort();
     sleep_rounds(&g_student, seqlen, trainw, rounds, lr);
+    {
+        int cn; const uint8_t *cc = cradle_corpus(&cn);
+        student_seen_note(cc, cn, train_end);
+    }
 
     float post = heldout_loss(&g_student, seqlen, train_end, heldw);
     snprintf(line, sizeof line,
