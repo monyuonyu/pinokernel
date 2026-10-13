@@ -104,6 +104,15 @@ UW   pfs_full_count(void);
  * Prints [pfs-drop] PASS/FAIL. Returns 0 on PASS. */
 INT  pfs_drop_self_test(void (*emit)(const char *));
 
+/* `pfs flattest` (PFS-FLAT-FULL): with the flat backend a full table evicts,
+ * evicted blocks read back from their files, a drop removes them for good.
+ * Prints [pfs-flat] PASS/FAIL. Returns 0 on PASS. Hosted only. */
+INT  pfs_flatfull_self_test(void (*emit)(const char *));
+
+/* 1 if the block is in the in-memory table itself. pfs_has() also counts a
+ * block evicted to its flat file (PFS-FLAT-FULL). */
+INT  pfs_resident(const U1 id[PFS_ID_LEN]);
+
 /* Run the P0 self-test (dedup + round-trip + miss). Prints PASS/FAIL via
  * the supplied puts-style callback. Returns 0 on PASS, non-zero on FAIL. */
 INT  pfs_self_test(void (*emit)(const char *));

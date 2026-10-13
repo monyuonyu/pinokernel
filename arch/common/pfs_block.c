@@ -63,6 +63,23 @@ extern int  pfs_ark_get(const unsigned char *id, void *buf, unsigned maxlen);
  * branch from pfs_durswallow_self_test() — one hook per backend. */
 extern void pfs_dur_force_fail(int on);
 extern void pfs_ark_force_fail(int on);
+
+/* PFS-FLAT-FULL (2026-10-13, CI run 38288028614): the flat backend refused
+ * every put once P0 held 64 blocks, so a node rejoining a swarm filled P0
+ * with the peers' old model versions (boot sync) and then refused the newest
+ * manifest it needed (`store refused rc=3 table full 64/64`, samples/32
+ * "rejoined node3 did NOT exceed its solo ceiling"). Every flat put also
+ * writes <dir>/<id-hex>, so the flat backend gets the same get fall-through
+ * as ARK and P0 becomes a cache in front of it: a full table evicts.
+ * -DPFS_FLAT_NO_EVICT keeps the old refusal (negative control). */
+static int pfs_flat_evicts(void)
+{
+#ifdef PFS_FLAT_NO_EVICT
+    return 0;
+#else
+    return !pfs_ark_active() && pfs_dur_active();
+#endif
+}
 #endif
 
 /* NO <string.h> here. arch/common files never include libc headers
@@ -232,9 +249,10 @@ PK_NOSW_FN(INT, pfs_put_origin,
      * ARK log (each new put below persists it), and a P0 miss on a get falls
      * through to ARK (pfs_get). So when full we may safely EVICT a resident
      * block and reuse its slot — the kernel pfs store's capacity becomes ARK's
-     * capacity, not PFS_MAX_BLOCKS. WITHOUT a fall-through-capable durable
-     * backend (flat-file or bare-metal memory-only), eviction would lose data,
-     * so we keep the old PFS_E_FULL behaviour there. */
+     * capacity, not PFS_MAX_BLOCKS. The flat-file backend does the same since
+     * PFS-FLAT-FULL (its get reads <dir>/<id-hex>). WITHOUT a durable backend
+     * (memory-only, bare metal), eviction would lose data, so we keep the old
+     * PFS_E_FULL behaviour there. */
     INT slot = -1;
     for (UW i = 0; i < PFS_MAX_BLOCKS; i++) {
         if (!pfs_table[i].used) { slot = (INT)i; break; }
@@ -243,13 +261,14 @@ PK_NOSW_FN(INT, pfs_put_origin,
     U1 evicting = 0;
     if (slot < 0) {
 #ifdef _TK_HOSTED_LIBC_
-        /* Only ARK has a get fall-through, so only ARK makes eviction safe.
+        /* ARK and (PFS-FLAT-FULL) the flat files have a get fall-through, so
+         * they make eviction safe; memory-only has none and refuses.
          * (Persist the new block FIRST, below, so it too is durable before any
          * resident block is dropped.) DUR-SWALLOW: a victim marked `unevict`
          * is the ONLY copy of its content (its durable write failed earlier),
          * so FIFO eviction MUST skip it — dropping it would lose data even with
          * ARK mounted. Probe up to PFS_MAX_BLOCKS slots for an evictable one. */
-        if (!pfs_loading && pfs_ark_active()) {
+        if (!pfs_loading && (pfs_ark_active() || pfs_flat_evicts())) {
             static UW evict_clk;                 /* rotating victim, FIFO-ish */
             for (UW probe = 0; probe < PFS_MAX_BLOCKS; probe++) {
                 INT cand = (INT)(evict_clk % PFS_MAX_BLOCKS);
@@ -360,6 +379,24 @@ PK_NOSW_FN(INT, pfs_get, (const U1 id[PFS_ID_LEN], void *buf, UW maxlen),
             }
         }
     }
+    /* Flat-file (PFS-FLAT-FULL): every put also wrote <dir>/<id-hex>, so a
+     * block evicted from P0 is read back from its file, re-hashed the same
+     * way. */
+    else if (pfs_flat_evicts()) {
+        static U1 ffbuf[PFS_BLOCK_MAX];
+        char hex[2 * PFS_ID_LEN + 1];
+        id_to_hex(id, hex);
+        int fl = pfs_dur_read(hex, ffbuf, (unsigned)PFS_BLOCK_MAX);
+        if (fl >= 0 && (UW)fl <= PFS_BLOCK_MAX) {
+            U1 chk[PFS_ID_LEN];
+            pfs_id_compute(ffbuf, (UW)fl, chk);
+            if (id_eq(chk, id)) {
+                UW cpy = ((UW)fl < maxlen) ? (UW)fl : maxlen;
+                if (buf && cpy) pfs_memcpy(buf, ffbuf, (size_t)cpy);
+                return fl;
+            }
+        }
+    }
 #endif
 
     return PFS_E_NOTFOUND;
@@ -367,8 +404,26 @@ PK_NOSW_FN(INT, pfs_get, (const U1 id[PFS_ID_LEN], void *buf, UW maxlen),
 
 INT pfs_has(const U1 id[PFS_ID_LEN])
 {
+#ifdef _TK_HOSTED_LIBC_
+    /* PFS-FLAT-FULL: an evicted block is still held (its file). Without this
+     * pfs_repl neither serves it to a peer's WANT nor stops re-wanting it
+     * (first measurement: 72-76 "gave up" per node in samples/32, master 0).
+     * Read through pfs_get so a rotted file does not count. (Hosted only:
+     * the bare-metal body below is unchanged, crown.) */
+#ifndef PFS_FLAT_HAS_RESIDENT_ONLY    /* test: the pre-224b57e3 pfs_has */
+    if (find_slot(id) < 0 && pfs_flat_evicts() && pfs_get(id, 0, 0) >= 0) return 1;
+#endif
+#endif
     return find_slot(id) >= 0 ? 1 : 0;
 }
+
+#ifdef _TK_HOSTED_LIBC_
+/* in P0 itself (not only in a file behind it) — `pfs flattest` */
+INT pfs_resident(const U1 id[PFS_ID_LEN])
+{
+    return find_slot(id) >= 0 ? 1 : 0;
+}
+#endif
 
 UW pfs_count(void)
 {
@@ -384,6 +439,19 @@ UW pfs_full_count(void)
 PK_NOSW_FN(INT, pfs_drop, (const U1 id[PFS_ID_LEN]), (id))
 {
     INT s = find_slot(id);
+#ifdef _TK_HOSTED_LIBC_
+    /* PFS-FLAT-FULL: a block evicted from P0 still lives in its file, and
+     * pfs_get would read it back — remove the file, or a dropped (forgotten)
+     * block comes back. */
+    if (s < 0 && pfs_flat_evicts()) {
+        char hex[2 * PFS_ID_LEN + 1];
+        id_to_hex(id, hex);
+#ifndef PFS_FLAT_DROP_KEEPFILE        /* test: leave the evicted block's file */
+        if (pfs_dur_remove(hex) == 0) return PFS_OK;
+#endif
+        return PFS_E_NOTFOUND;
+    }
+#endif
     if (s < 0) return PFS_E_NOTFOUND;
     if (pfs_table[s].unevict) return PFS_E_DURABLE;   /* the only copy */
 #ifdef _TK_HOSTED_LIBC_
@@ -742,8 +810,9 @@ INT pfs_drop_self_test(void (*emit)(const char *))
     UW  start = pfs_count(), full0 = pfs_full_count();
     UW  n = 0;
     INT rc = PFS_OK;
-    if (pfs_ark_active()) {
-        emit("[pfs-drop] SKIP: ARK evicts instead of refusing (not this path)\r\n");
+    if (pfs_ark_active() || pfs_flat_evicts()) {
+        emit("[pfs-drop] SKIP: ARK / flat files evict instead of refusing "
+             "(run without PKERNEL_PFS_DIR; the flat path is `pfs flattest`)\r\n");
         return 1;
     }
     /* 1. fill: each block is "pfs-droptest" + a 4-byte counter (distinct ids) */
@@ -789,19 +858,89 @@ INT pfs_drop_self_test(void (*emit)(const char *))
     } else {
         (void)pfs_drop(id2);
     }
-    /* 4. flat-file: the dropped block's file is gone (a reboot won't reload) */
-    if (pfs_dur_active() && n) {
-        char hex[2 * PFS_ID_LEN + 1];
-        static U1 rb[16];
-        id_to_hex(drop_ids[0], hex);
-        if (pfs_dur_read(hex, rb, 16) >= 0) {
-            emit("[pfs-drop] FAIL dropped block's durable file still exists\r\n"); fails++;
-        } else {
-            emit("[pfs-drop] ok  dropped block's durable file removed\r\n");
-        }
-    }
+    /* (the flat-file "dropped block's file is removed" check moved to
+     * `pfs flattest`: with PKERNEL_PFS_DIR the table evicts, PFS-FLAT-FULL) */
     if (fails == 0) emit("[pfs-drop] PASS\r\n");
     else            emit("[pfs-drop] FAIL\r\n");
+    return fails;
+}
+
+/* `pfs flattest` (PFS-FLAT-FULL). With PKERNEL_PFS_DIR: fill the LIVE table
+ * past PFS_MAX_BLOCKS — every put is stored (evicting, nothing refused), every
+ * block reads back byte-exact (the evicted ones from their files), and every
+ * drop makes the block unreadable, the evicted ones too (their files go).
+ * Single node only, like droptest. Negative controls: -DPFS_FLAT_NO_EVICT
+ * (refuses at 64, step 1 red), -DPFS_FLAT_HAS_RESIDENT_ONLY (pfs_has misses
+ * the evicted blocks, step 2 red), -DPFS_FLAT_DROP_KEEPFILE (a dropped evicted
+ * block reads back, step 3 red). */
+#define FLAT_N (PFS_MAX_BLOCKS + 8)
+static U1 flat_ids[FLAT_N][PFS_ID_LEN];
+
+static void flat_block(U1 b[16], UW k)
+{
+    static const char tag[] = "pfs-flattest";
+    for (INT i = 0; i < 12; i++) b[i] = (U1)tag[i];
+    b[12] = (U1)k; b[13] = (U1)(k >> 8); b[14] = 0x3C; b[15] = 0xC3;
+}
+
+INT pfs_flatfull_self_test(void (*emit)(const char *))
+{
+    INT fails = 0;
+    if (pfs_ark_active() || !pfs_dur_active()) {
+        emit("[pfs-flat] SKIP: needs the flat backend (PKERNEL_PFS_DIR, not ARK)\r\n");
+        emit("[pfs-flat] FAIL\r\n");
+        return 1;
+    }
+    UW full0 = pfs_full_count();
+    static U1 b[16], rb[16];
+    /* 1. every put of FLAT_N distinct blocks is stored */
+    UW stored = 0;
+    for (UW k = 0; k < FLAT_N; k++) {
+        flat_block(b, k);
+        if (pfs_put(b, 16, flat_ids[k]) == PFS_OK) stored++;
+    }
+    if (stored != FLAT_N || pfs_full_count() != full0 || pfs_count() > PFS_MAX_BLOCKS) {
+        emit("[pfs-flat] FAIL a full flat table refused puts (stored ");
+        emit_dec(emit, stored); emit(" of "); emit_dec(emit, FLAT_N);
+        emit(", refusals counted "); emit_dec(emit, pfs_full_count() - full0);
+        emit(")\r\n"); fails++;
+    } else {
+        emit("[pfs-flat] ok  "); emit_dec(emit, FLAT_N);
+        emit(" puts into a 64-slot table, none refused (evicted)\r\n");
+    }
+    /* 2. every block reads back byte-exact; some come from their files */
+    UW good = 0, from_file = 0, held = 0;
+    for (UW k = 0; k < stored; k++) {
+        flat_block(b, k);
+        if (!pfs_resident(flat_ids[k])) from_file++;
+        if (pfs_get(flat_ids[k], rb, 16) == 16 && pfs_memcmp(rb, b, 16) == 0) good++;
+        if (pfs_has(flat_ids[k])) held++;   /* pfs_repl serves / stops wanting */
+    }
+    if (good != stored || held != stored || (stored == FLAT_N && from_file == 0)) {
+        emit("[pfs-flat] FAIL read back "); emit_dec(emit, good);
+        emit(" of "); emit_dec(emit, stored); emit(", pfs_has "); emit_dec(emit, held);
+        emit(" (not resident "); emit_dec(emit, from_file); emit(")\r\n"); fails++;
+    } else {
+        emit("[pfs-flat] ok  all "); emit_dec(emit, good); emit(" read back and held, ");
+        emit_dec(emit, from_file); emit(" of them from their files\r\n");
+    }
+    /* 3. a dropped block is gone, resident or evicted */
+    UW gone = 0;
+    for (UW k = 0; k < stored; k++) {
+        char hex[2 * PFS_ID_LEN + 1];
+        id_to_hex(flat_ids[k], hex);
+        if (pfs_drop(flat_ids[k]) == PFS_OK && !pfs_has(flat_ids[k]) &&
+            pfs_get(flat_ids[k], rb, 16) == PFS_E_NOTFOUND &&
+            pfs_dur_read(hex, rb, 16) < 0) gone++;
+    }
+    if (gone != stored) {
+        emit("[pfs-flat] FAIL dropped blocks still readable or their files left: gone ");
+        emit_dec(emit, gone); emit(" of "); emit_dec(emit, stored); emit("\r\n"); fails++;
+    } else {
+        emit("[pfs-flat] ok  every dropped block is gone (RAM, get and file)\r\n");
+    }
+    if (fails == 0) emit("[pfs-flat] PASS\r\n");
+    else            emit("[pfs-flat] FAIL\r\n");
     return fails;
 }
 #endif /* _TK_HOSTED_LIBC_ */
