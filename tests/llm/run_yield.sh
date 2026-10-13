@@ -40,6 +40,9 @@ trap 'rm -rf "$WORK"' EXIT
 # chat verb (it exercises student_dmn_consolidate + st_save byte-identity only),
 # but the symbols must still resolve at link time.
 SRC="$HERE/student_yield_test.c $ROOT/arch/common/llm/student.c $ROOT/arch/common/llm/cradle.c $ROOT/arch/common/llm/dlb.c"
+# held_indep.c: student_shell.c calls st_held_check (0-12 step 3, `student`
+# prints [held-indep] shared=); without it the link fails (CI 38437422357).
+SRC="$SRC $ROOT/arch/common/llm/held_indep.c"
 # yield_pull_hook.c: a strong cradle_poll_and_pull that re-offers a pending
 # lesson until it ingests (the transport's high-water rule) — Cert D needs the
 # start-of-batch pull to deliver. No-op while nothing is pending (Certs A-C).
