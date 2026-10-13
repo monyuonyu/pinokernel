@@ -41,6 +41,16 @@ on:
   pull_request:
     branches: [master, 'feat/**']
 
+# 2026-10-14: one run per branch at a time, and only the NEWEST waiting run is kept (GitHub
+# cancels a pending run when a newer one joins the group). pkernel-promote.py only judges the
+# run of the newest feat/next commit; without this the ThinkPad's 15 serial jobs ran every
+# older push first (7 docs-only pushes on 10-13 = 7 full chains in a row). The running run
+# is NOT cancelled (cancel-in-progress: false): pushes come about hourly and a full chain
+# takes 1-2 h, so cancelling it could mean no run ever finishes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   parity:
     # Drift guard (BLOCKING). check_parity.sh asserts the AI/common + shared
