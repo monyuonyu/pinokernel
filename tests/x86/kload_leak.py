@@ -46,7 +46,7 @@ for idx, c in chunks.items():
 open(out, "wb").write(bytes(img))
 print("chunks=%d bytes=%d total=%d" % (len(chunks), sum(len(c) for c in chunks.values()), total))
 
-# Optional analysis: <sk_off> <sk_len> <have_off> (offsets from 0x100000, the
+# Optional analysis: <sk_off> <sk_len> <have_off> [<pk_off>] (offsets from 0x100000, the
 # push's base). Exit 1 = the secret key came back to an unknown sender,
 # 0 = nothing came back, 2 = something came back but the key is not shown
 # (its chunk was lost, or the node had no key yet).
@@ -61,6 +61,14 @@ if len(sys.argv) > 7:
     have = img[have_off]
     nz = sum(1 for b in img[sk_off:sk_off + sk_len] if b)
     print("[kload-leak] node_have_key=%d node_sk nonzero bytes=%d/%d (offset 0x%x)" % (have, nz, sk_len, sk_off))
-    if have and nz:
+    # TweetNaCl layout: node_sk = seed || pk, so its second half must equal
+    # node_pk (sign.c) if these bytes really are the key
+    pk_ok = None
+    if len(sys.argv) > 8:
+        pk_off = int(sys.argv[8], 0)
+        if got(pk_off, 32):
+            pk_ok = img[sk_off + 32:sk_off + 64] == img[pk_off:pk_off + 32] and any(img[pk_off:pk_off + 32])
+            print("[kload-leak] node_sk[32:64] == node_pk: %s" % pk_ok)
+    if have and nz and pk_ok is not False:
         print("[kload-leak] LEAK: an unknown beacon sender received the node's secret key"); sys.exit(1)
     print("[kload-leak] pushed, but node_sk is empty (no key yet?) - inconclusive"); sys.exit(2)

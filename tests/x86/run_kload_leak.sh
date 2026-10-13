@@ -38,9 +38,9 @@ echo "[build] boot/x86 (default kernel) ..."
 ( cd "$BOOT" && make all disk ) > "$WORK/build.log" 2>&1 || { tail -20 "$WORK/build.log"; echo "[kload-leak] build FAILED"; exit 2; }
 
 sym() { "$NM" "$BOOT/bootloader.bin" | awk -v s="$1" '$3==s {print "0x"$1}'; }
-SK="$(sym node_sk)"; HAVE="$(sym node_have_key)"; KEND="$(sym _kernel_end)"
-[ -n "$SK" ] && [ -n "$HAVE" ] && [ -n "$KEND" ] || { echo "[kload-leak] symbols missing (node_sk=$SK node_have_key=$HAVE _kernel_end=$KEND)"; exit 2; }
-SK_OFF=$(( SK - 0x100000 )); HAVE_OFF=$(( HAVE - 0x100000 ))
+SK="$(sym node_sk)"; PK="$(sym node_pk)"; HAVE="$(sym node_have_key)"; KEND="$(sym _kernel_end)"
+[ -n "$SK" ] && [ -n "$PK" ] && [ -n "$HAVE" ] && [ -n "$KEND" ] || { echo "[kload-leak] symbols missing (node_sk=$SK node_have_key=$HAVE _kernel_end=$KEND)"; exit 2; }
+SK_OFF=$(( SK - 0x100000 )); PK_OFF=$(( PK - 0x100000 )); HAVE_OFF=$(( HAVE - 0x100000 ))
 echo "[kload-leak] node_sk=$SK node_have_key=$HAVE _kernel_end=$KEND (push base 0x100000)"
 [ "$SK_OFF" -ge 0 ] && [ "$(( SK + 64 ))" -le "$(( KEND ))" ] || { echo "[kload-leak] node_sk is outside the pushed range - nothing to leak here"; exit 0; }
 
@@ -67,7 +67,7 @@ sleep 3
 printf 'sign test\r' >&3
 wait_for "node keygen entropy" 120 || { tail -20 "$WORK/serial.log"; echo "[kload-leak] no key (sign test did not run)"; exit 2; }
 
-python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" 300 "$SK_OFF" 64 "$HAVE_OFF"
+python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" 300 "$SK_OFF" 64 "$HAVE_OFF" "$PK_OFF"
 rc=$?
 grep -a 'kloader_task\] \(BEACON\|auto-push\)' "$WORK/serial.log" | head -3
 exit "$rc"
