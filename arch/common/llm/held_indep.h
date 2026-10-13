@@ -44,6 +44,15 @@ static inline int st_held_wrapped(st_split s, int n, int seqlen)
     return wrapped;
 }
 
+/* 1 when a held number on this corpus is a measurement: there is a corpus
+ * and no held window wraps into the train bytes (n >= 3 windows). When 0,
+ * callers say "unmeasurable" instead of printing a loss (0-12 step 2). */
+static inline int st_held_measurable(int n, int seqlen)
+{
+    if (n < 1 || seqlen < 1) return 0;
+    return st_held_wrapped(st_held_split(n, seqlen), n, seqlen) == 0;
+}
+
 typedef struct {
     int held_kgrams;    /* k-grams inside the held windows                    */
     int shared;         /* of those, equal to a k-gram inside a train window  */
