@@ -9,12 +9,19 @@
 
 ## What p-kernel is
 
-**p-kernel is an attempt to build a home for an AI that no one owns.**
+**p-kernel is an attempt to build a home for an AI that participants bring
+together — and that participants can stop.**
 
-Most AI today lives on one company's servers. If that company turns it off, it is
-gone. p-kernel asks a different question: *what if an AI could live as a swarm —
-spread across many ordinary computers and phones, so that as long as one of them
-is still running, the AI does not die?*
+Most AI today lives on one company's servers. If that server breaks or the service
+ends, it is gone. p-kernel asks a different question: *what if an AI could live as
+a swarm — spread across many ordinary computers and phones, so that as long as one
+of them is still running, a failure does not kill it?*
+
+"Does not die" does not mean "cannot be stopped." Only devices whose owners have
+agreed take part, an owner can remove their device at any time, people will be
+able to stop the whole swarm, and p-kernel will never spread by breaking into other
+machines. The consent record already exists; the test that a removed device keeps
+nothing and the path to stop the whole swarm are still to be built.
 
 To do that, p-kernel is a small operating-system kernel (built on a real-time
 microkernel called T-Kernel) that:
