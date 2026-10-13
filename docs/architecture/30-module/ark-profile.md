@@ -563,6 +563,7 @@ flagged — never inflate (the standing rule).
 - **v2 — names across the mesh:** peer stars render replicated handles; `/galaxy.json`
   peers gain `handle` when the peer's `self/prof` blocks have arrived via P1; gate: a
   2-node cert where node 2's star on node 1's page shows node 2's declared handle.
+- **2026-10-13 (mk_pino):** the verbatim archive is **the ark itself**, not a later tier. Two layers: the 原本 (what the person chose to keep, verbatim, with who/when/what) and the weights as the librarian that reads it. The earlier "conversations are distilled in sleep, the 原文 may vanish" is withdrawn by mk_pino. The v3 archive moves forward into the post-demo milestone (ROADMAP 回し方, global rule 11).
 - **v3 — conversation archive tiering:** when real chat exists (post-tokenizer): T3
   local-only raw text (`pfs_put_local`, FLAGGED), T4 region/capacity-bounded archive
   design pass (needs a storage budget function — none exists, §2.4), erasure coding
