@@ -1664,6 +1664,14 @@ int student_shell_cmd(const char *args, emit_fn emit)
     snprintf(line, sizeof line, "[baby] held-out loss (before) = %.4f nats\r\n",
              (double)pre);
     emit(line);
+    /* 0-12 step 4: the DMN saves only when this held loss improves (and picks
+     * the EMA copy by it), so restored weights were chosen by the held set */
+    if (g_loaded_from_disk) {
+        snprintf(line, sizeof line,
+                 "[held-indep] selected-by-held: the restored weights were saved "
+                 "because this held loss improved - it is not an independent score\r\n");
+        emit(line);
+    }
 
     if (loss_only) {
         snprintf(line, sizeof line,

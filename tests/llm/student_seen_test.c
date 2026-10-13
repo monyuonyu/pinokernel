@@ -10,6 +10,9 @@
  *       train bytes: B against its own train is 0, the record says 170/170.
  *   S3  the same lesson again does not add twice (the fingerprint).
  *   S4  `student loss` prints the "[held-indep] seen=" line with that count.
+ *   S5  with restored weights it also says the held loss chose them
+ *       ("selected-by-held") and that the record misses earlier training;
+ *       fresh weights print neither.
  * Falsifier: -DSEEN_DISABLE (student_seen_note records nothing) -> S2-S4 RED.
  */
 #define _POSIX_C_SOURCE 200809L
@@ -104,6 +107,17 @@ int main(void)
     snprintf(want, sizeof want, "seen=%d/%d ", r.shared, r.held_kgrams);
     if (ln) { const char *e = strchr(ln, '\r'); printf("[held-seen] S4 %.*s\n", e ? (int)(e - ln) : 120, ln); }
     check(ln && strncmp(ln + 13, want, strlen(want)) == 0, "S4", "`student loss` prints the record's count");
+    int fresh_quiet = strstr(cap, "selected-by-held") == NULL;
+
+    /* S5: restored weights were picked by the held loss (the DMN saves on
+     * improvement): `student loss` must say the held score is not independent */
+    g_loaded_from_disk = 1;
+    cap_n = 0; cap[0] = 0;
+    (void)student_shell_cmd("loss", capture);
+    g_loaded_from_disk = 0;
+    int said = strstr(cap, "[held-indep] selected-by-held") != NULL &&
+               strstr(cap, "weights RESTORED: earlier training not recorded") != NULL;
+    check(fresh_quiet && said, "S5", "restored weights: held loss marked as selected-by-held, fresh: quiet");
 
     printf("[held-seen] %s\n", fails ? "RED" : "ALL PASS");
     return fails ? 1 : 0;
