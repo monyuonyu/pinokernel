@@ -21,6 +21,8 @@
 #          master as of 2026-10-14, the test is written before the fix,
 #      2 = inconclusive (boot/key/chunk missing), also a failure for CI.
 # ---------------------------------------------------------------------------
+# The push is the whole 0x100000.._kernel_end (about 16 MB in 1 KB chunks,
+# one tick per 4 chunks): about 2-3 minutes, node_sk is near the end.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
@@ -44,7 +46,7 @@ echo "[kload-leak] node_sk=$SK node_have_key=$HAVE _kernel_end=$KEND (push base 
 
 cp "$BOOT/disk.img" "$WORK/disk.img" 2>/dev/null || true
 mkfifo "$WORK/in"
-( cd "$BOOT" && exec timeout -k 5 300 "$QEMU" -m 256 -kernel bootloader.bin \
+( cd "$BOOT" && exec timeout -k 5 600 "$QEMU" -m 256 -kernel bootloader.bin \
     -serial stdio -display none -cpu qemu64 \
     -netdev "user,id=n0,net=10.1.0.0/24,host=10.1.0.100,dhcpstart=10.1.0.50,hostfwd=udp:127.0.0.1:$BPORT-10.1.0.1:7387" \
     -device rtl8139,netdev=n0,mac=52:54:00:00:00:01 \
@@ -65,7 +67,7 @@ sleep 3
 printf 'sign test\r' >&3
 wait_for "node keygen entropy" 120 || { tail -20 "$WORK/serial.log"; echo "[kload-leak] no key (sign test did not run)"; exit 2; }
 
-python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" 90 "$SK_OFF" 64 "$HAVE_OFF"
+python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" 300 "$SK_OFF" 64 "$HAVE_OFF"
 rc=$?
 grep -a 'kloader_task\] \(BEACON\|auto-push\)' "$WORK/serial.log" | head -3
 exit "$rc"
