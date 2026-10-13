@@ -1659,6 +1659,13 @@ int student_shell_cmd(const char *args, emit_fn emit)
         return -1;
     }
 
+    snprintf(line, sizeof line,
+             "[baby] resident=%s  corpus=%dB seqlen=%d train=%dwin held=%dwin  "
+             "chance=%.4f nats\r\n",
+             g_loaded_from_disk ? "RESTORED" : "fresh",
+             corpus_n, seqlen, trainw, heldw, (double)chance);
+    emit(line);
+
     /* 0-12 step 3: say how much of the held set the baby also trains on */
     {
         int cn; const uint8_t *cc = cradle_corpus(&cn);
@@ -1673,13 +1680,6 @@ int student_shell_cmd(const char *args, emit_fn emit)
                      "[held-indep] not checked (seqlen %d < %d)\r\n", seqlen, ST_HELD_K);
         emit(line);
     }
-
-    snprintf(line, sizeof line,
-             "[baby] resident=%s  corpus=%dB seqlen=%d train=%dwin held=%dwin  "
-             "chance=%.4f nats\r\n",
-             g_loaded_from_disk ? "RESTORED" : "fresh",
-             corpus_n, seqlen, trainw, heldw, (double)chance);
-    emit(line);
 
     float pre = heldout_loss(&g_student, seqlen, train_end, heldw);
     snprintf(line, sizeof line, "[baby] held-out loss (before) = %.4f nats\r\n",
