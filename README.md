@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `4c814148`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `700151e9`.
 
 # p-kernel
 
@@ -168,7 +168,7 @@ Not yet: the learning-side code still runs inside the kernel, and the same isola
 ### Screens and the app
 
 - **Galaxy**: each device serves its own page (`http://127.0.0.1:7800`) and draws itself and its peers as stars. The stars move with real sleep and learning events.
-- **ark (Android app, 0.9.x)**: installing it makes the phone one node. You can watch the galaxy and talk to the growing brain. It only works while charging, and it asks for consent to the project's purpose before joining. Build instructions: [docs/android.md](docs/android.md).
+- **ark (Android app, 0.9.x)**: installing it makes the phone one node. You can watch the galaxy and talk to the growing brain. It runs while charging or while the battery is above 30% (it stops below that; the 30% can be set between 10% and 50%, and with the battery-safe setting off it runs on a low battery too). It is built to resume when charging starts, but whether it really resumes on newer Android (15 and later) has not been checked. It asks for consent to the project's purpose before joining. Build instructions: [docs/android.md](docs/android.md).
 - Participants' identities are never verified. Real names, pen names, and anonymity are treated the same.
 
 ### Mechanisms for doubting itself
