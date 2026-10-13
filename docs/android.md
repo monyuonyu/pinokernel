@@ -155,8 +155,14 @@ description is essential:
 
 > p-kernel is research / hobby OS that uses a small slice of your
 > phone's CPU and network to participate in a distributed AI fabric.
-> It runs only while your phone is charging by default. You can
-> disable participation at any time.
+> By default it runs while your phone is charging or while the battery
+> is above 30% (adjustable 10-50%; the battery-safe setting can be
+> turned off). You can disable participation at any time.
+
+(2026-10-14: this used to say "only while charging", which is not what
+the app does - `PKernelService.powerAllowed()` runs while plugged in OR
+above the floor. Making charging-only the default again is the plan in
+`docs/architecture/30-module/android-always-on.md`, not done yet.)
 
 F-Droid (direct APK install) is the long-term distribution backup so
 the project doesn't depend on a single store.
