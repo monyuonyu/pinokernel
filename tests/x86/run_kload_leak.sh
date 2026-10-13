@@ -16,7 +16,8 @@
 #   3. kload_leak.py sends ONE beacon from an unknown sender and collects the
 #      push on udp 7386 (the guest sends to 10.1.0.100 = slirp = this host)
 #
-# exit 0 = nothing came back (expected once KLOAD checks the sender),
+# exit 0 = nothing came back and the node logged the beacon (expected once
+#          KLOAD checks the sender),
 #      1 = LEAK (the secret key reached the unknown sender) — expected on
 #          master as of 2026-10-14, the test is written before the fix,
 #      2 = inconclusive (boot/key/chunk missing), also a failure for CI.
@@ -70,4 +71,11 @@ wait_for "node keygen entropy" 120 || { tail -20 "$WORK/serial.log"; echo "[kloa
 python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" 300 "$SK_OFF" 64 "$HAVE_OFF" "$PK_OFF"
 rc=$?
 grep -a 'kloader_task\] \(BEACON\|auto-push\)' "$WORK/serial.log" | head -3
+# "nothing came back" is only green if the beacon really reached the node
+# (audit-49): a broken hostfwd, a dead listener or a crashed node also send
+# nothing. A fix must keep printing "[kloader_task] BEACON from" on receipt.
+if [ "$rc" = 0 ] && ! grep -aq 'kloader_task\] BEACON from' "$WORK/serial.log"; then
+    echo "[kload-leak] the node never logged the beacon - nothing came back proves nothing (inconclusive)"
+    exit 2
+fi
 exit "$rc"
