@@ -1400,7 +1400,9 @@ jobs:
     # FOLD never prints inside its window; shared_mind's consolidation/answer
     # line is absent). FIX: chain ALL self-hosted jobs to run STRICTLY SERIALLY
     # (each `needs:` the previous one) so at most ONE heavy job uses the runner
-    # at a time. We DELIBERATELY do NOT use `concurrency:` (it CANCELS) — every
+    # at a time. We DELIBERATELY do NOT use a JOB-level `concurrency:` (it CANCELS
+    # the waiting job; the workflow-level group at the top only replaces a whole
+    # pending RUN of an older commit, never a job of the running run) — every
     # job in the chain still runs regardless of a predecessor's pass/fail via
     # `if: ${{ always() && <fork-guard> }}` (no cascade-skip, no cancellation;
     # the fork-guard half preserves the existing "skip on forks" security
