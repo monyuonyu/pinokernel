@@ -1648,6 +1648,17 @@ int student_shell_cmd(const char *args, emit_fn emit)
     int train_end = trainw * seqlen;
     float chance = st_logf(256.0f);
 
+    /* 0-12: under 3 windows the held windows wrap into the train bytes, so
+     * "held-out loss" would score what the baby trains on. Say so, do not train. */
+    if (!st_held_measurable(corpus_n, seqlen)) {
+        snprintf(line, sizeof line,
+                 "[baby] held-out UNMEASURABLE: corpus %dB is under 3 windows of "
+                 "seqlen %d (held would wrap into train); not training\r\n",
+                 corpus_n, seqlen);
+        emit(line);
+        return -1;
+    }
+
     snprintf(line, sizeof line,
              "[baby] resident=%s  corpus=%dB seqlen=%d train=%dwin held=%dwin  "
              "chance=%.4f nats\r\n",
