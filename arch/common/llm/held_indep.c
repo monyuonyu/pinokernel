@@ -63,6 +63,19 @@ int st_held_check(const uint8_t *corpus, int n, int seqlen, int trainw,
     return (z.shared == 0 && z.wrapped == 0) ? 0 : 1;
 }
 
+/* STUB (test-first): the record is not implemented yet */
+void st_seen_clear(st_seen *s) { (void)s; }
+void st_seen_add(st_seen *s, const uint8_t *span, int n, int k)
+{ (void)s; (void)span; (void)n; (void)k; }
+int st_held_check_record(const uint8_t *corpus, int n, int seqlen, int trainw,
+                         int heldw, const st_seen *s, int k, st_held_report *r)
+{
+    st_held_report z = { 0, 0, 0 };
+    (void)corpus; (void)n; (void)seqlen; (void)trainw; (void)heldw; (void)s; (void)k;
+    if (r) *r = z;
+    return 0;
+}
+
 int st_held_check_seen(const uint8_t *corpus, int n, int seqlen, int trainw,
                        int heldw, const uint8_t *seen, int seen_n, int k,
                        st_held_report *r)

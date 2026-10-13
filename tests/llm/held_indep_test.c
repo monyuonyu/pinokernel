@@ -24,6 +24,12 @@
  *       TEACHER_FIXTURE bytes a node trained before the lesson came.
  *   I9  instrument for I8 (st_held_check_seen): seen = the held bytes -> all
  *       shared, seen = random bytes -> none.
+ *   I10 the training record (st_seen, a Bloom filter): fixture, lesson A, then
+ *       lesson B replaces A and B's held repeats A's train bytes. B against
+ *       its own train says 0; the record must count every one (== exact).
+ *   I11 the canonical lesson against the record stays 0 (I1 and I8 agree).
+ *   I12 random held bytes are rarely "seen" (<= 2 of 170), an empty record
+ *       sees nothing.
  *
  * Exit 0 = all PASS. Prints "[held-indep] PASS|FAIL <id> ..." per item.
  */
@@ -172,6 +178,58 @@ int main(void)
         int rc2 = st_held_check_seen(buf, n, CRADLE_SEQLEN, tw, hw, rnd, (int)sizeof rnd, ST_HELD_K, &r2);
         ok9 = ok9 && rc2 == 0 && r2.shared == 0;
         item(ok9, "I9", "instrument: seen = the held bytes -> all shared; seen = random -> none", &r);
+    }
+
+    /* I10-I12: the training record (st_seen). A node trained the fixture, then
+     * lesson A, then lesson B replaced A. B's held tail repeats bytes of A's
+     * train region: st_held_check (B against B) cannot see it, the record must. */
+    {
+        static st_seen rec;
+        static uint8_t A[CRADLE_RING_BYTES], Bl[1280], rnd[1280];
+        const uint8_t *fx = (const uint8_t *)TEACHER_FIXTURE;
+        int fxn = (int)sizeof(TEACHER_FIXTURE) - 1;
+        int na = cradle_compose_canon(A, (int)sizeof A, NULL);
+        st_split sa = st_held_split(na, CRADLE_SEQLEN);
+        st_split sb = st_held_split(1280, CRADLE_SEQLEN);
+        uint32_t s10 = 0xB0B0u;
+        for (int i = 0; i < sb.train_end; i++) {          /* B's train: lowercase LCG text */
+            s10 = s10 * 1664525u + 1013904223u;
+            Bl[i] = (uint8_t)("abcdefghijklmnopqrstuvwxyz     "[(s10 >> 16) % 31]);
+        }
+        memcpy(Bl + sb.train_end, A, (size_t)(1280 - sb.train_end));   /* held = A's train bytes */
+        for (int i = 0; i < 1280; i++) { s10 = s10 * 1664525u + 1013904223u; rnd[i] = (uint8_t)(s10 >> 16); }
+
+        st_seen_clear(&rec);
+        st_seen_add(&rec, fx, st_held_split(fxn, CRADLE_SEQLEN).train_end, ST_HELD_K);
+        st_seen_add(&rec, A, sa.train_end, ST_HELD_K);
+        st_seen_add(&rec, Bl, sb.train_end, ST_HELD_K);
+
+        st_held_report own, ex, bl;
+        (void)st_held_check(Bl, 1280, CRADLE_SEQLEN, sb.trainw, sb.heldw, ST_HELD_K, &own);
+        (void)st_held_check_seen(Bl, 1280, CRADLE_SEQLEN, sb.trainw, sb.heldw, A, sa.train_end, ST_HELD_K, &ex);
+        rc = st_held_check_record(Bl, 1280, CRADLE_SEQLEN, sb.trainw, sb.heldw, &rec, ST_HELD_K, &bl);
+        printf("[held-indep] I10 lesson B: against its own train %d/%d, against A's train (exact) %d/%d, record %d/%d\n",
+               own.shared, own.held_kgrams, ex.shared, ex.held_kgrams, bl.shared, bl.held_kgrams);
+        item(rc == 1 && own.shared == 0 && ex.shared == ex.held_kgrams && bl.shared == ex.shared,
+             "I10", "lesson swap: the record sees B's held in A's train (B's own check cannot)", &bl);
+
+        /* I11: the canonical lesson against the record of fixture + itself:
+         * exactly 0 by the exact checks (I1, I8), the record must agree */
+        rc = st_held_check_record(A, na, CRADLE_SEQLEN, sa.trainw, sa.heldw, &rec, ST_HELD_K, &bl);
+        item(rc == 0 && bl.shared == 0, "I11", "record: the canonical lesson held is still clean", &bl);
+
+        /* I12: random held bytes against the full record: false "seen" stays
+         * rare (Bloom over-count), and an empty record sees nothing */
+        rc = st_held_check_record(rnd, 1280, CRADLE_SEQLEN, sb.trainw, sb.heldw, &rec, ST_HELD_K, &bl);
+        int fp = bl.shared;
+        unsigned added = (unsigned)rec.added;
+        st_seen_clear(&rec);
+        st_held_report e0;
+        int rc0 = st_held_check_record(Bl, 1280, CRADLE_SEQLEN, sb.trainw, sb.heldw, &rec, ST_HELD_K, &e0);
+        printf("[held-indep] I12 record added %u k-grams before clear; random held: %d/%d false seen; empty record on B: %d\n",
+               added, fp, bl.held_kgrams, e0.shared);
+        item(bl.held_kgrams > 0 && fp <= 2 && rc0 == 0 && e0.shared == 0, "I12",
+             "record: random bytes are rarely 'seen' (<= 2 of 170), an empty record sees nothing", &bl);
     }
 
     printf("[held-indep] %s\n", fails ? "RED" : "ALL PASS");
