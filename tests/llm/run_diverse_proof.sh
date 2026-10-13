@@ -14,7 +14,7 @@
 # SELF-CONTAINED (no network, no GGUF, no committed *.bytes — those are
 # .gitignored): the OLD corpus is built into student_diverse_proof.c, and the
 # NEW corpus is EXTRACTED at run time from the TEACHER_FIXTURE C string literal
-# now living in arch/common/llm/student_shell.c (the single source of truth).
+# now living in arch/common/llm/teacher_fixture.h (the single source of truth).
 #
 # Re-harvesting the diverse corpus from scratch (slow, needs the GGUF) is a
 # separate manual step — see student_harvest_diverse.c — and is NOT part of CI.
@@ -28,14 +28,14 @@ CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-SHELL_C="$ROOT/arch/common/llm/student_shell.c"
+SHELL_C="$ROOT/arch/common/llm/teacher_fixture.h"
 NEW="$WORK/diverse_teacher.bytes"
 
-# ---- extract the TEACHER_FIXTURE literal from student_shell.c ----
+# ---- extract the TEACHER_FIXTURE literal from teacher_fixture.h ----
 # Pull the string-literal lines between `TEACHER_FIXTURE[] =` and the closing
 # `;`, strip the surrounding quotes, and un-escape \" and \\ so the bytes match
 # what the C compiler embeds.
-echo "[extract] TEACHER_FIXTURE from student_shell.c -> NEW corpus ..."
+echo "[extract] TEACHER_FIXTURE from teacher_fixture.h -> NEW corpus ..."
 awk '
   /TEACHER_FIXTURE\[\] *=/ { grab=1; next }
   grab {

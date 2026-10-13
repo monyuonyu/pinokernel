@@ -20,6 +20,10 @@
  *   I6  st_held_measurable is exactly "no held window wraps" on that grid.
  *   I7  cradle_live_teach_test with a live text >= the cert budget (it tiled
  *       to 0 bytes) answers UNMEASURABLE, rc 1 (was: a held loss mod 0).
+ *   I8  step 4: the canonical lesson's held windows share no k-gram with the
+ *       TEACHER_FIXTURE bytes a node trained before the lesson came.
+ *   I9  instrument for I8 (st_held_check_seen): seen = the held bytes -> all
+ *       shared, seen = random bytes -> none.
  *
  * Exit 0 = all PASS. Prints "[held-indep] PASS|FAIL <id> ..." per item.
  */
@@ -28,6 +32,7 @@
 #include <stdint.h>
 #include "../../arch/common/llm/student.h"
 #include "../../arch/common/llm/held_indep.h"
+#include "../../arch/common/llm/teacher_fixture.h"
 
 static int fails;
 
@@ -140,6 +145,34 @@ int main(void)
     printf("[held-indep] %s I7  live cert with a %d B text says UNMEASURABLE (rc %d)\n",
            i7 ? "PASS" : "FAIL", (int)sizeof live, lrc);
     if (!i7) fails++;
+
+    /* I8: before a lesson arrives a node trains the TEACHER_FIXTURE (its train
+     * windows at the DMN seqlen); the canonical lesson's held windows must not
+     * hold a k-gram from those bytes either */
+    {
+        const uint8_t *fx = (const uint8_t *)TEACHER_FIXTURE;
+        int fxn = (int)sizeof(TEACHER_FIXTURE) - 1;
+        int fx_end = st_held_split(fxn, CRADLE_SEQLEN).train_end;
+        n = cradle_compose_canon(buf, (int)sizeof buf, NULL);
+        split(n, CRADLE_SEQLEN, &tw, &hw);
+        rc = st_held_check_seen(buf, n, CRADLE_SEQLEN, tw, hw, fx, fx_end, ST_HELD_K, &r);
+        printf("[held-indep] fixture %d B, trained bytes 0..%d\n", fxn, fx_end);
+        item(rc == 0, "I8", "canonical lesson held shares no k-gram with the trained fixture", &r);
+
+        /* I9 (instrument for I8): seen = the lesson's own held bytes -> all
+         * shared; seen = LCG bytes -> none */
+        st_split sp = st_held_split(n, CRADLE_SEQLEN);
+        rc = st_held_check_seen(buf, n, CRADLE_SEQLEN, tw, hw, buf + sp.train_end,
+                                n - sp.train_end, ST_HELD_K, &r);
+        int ok9 = rc == 1 && r.held_kgrams > 0 && r.shared == r.held_kgrams;
+        static uint8_t rnd[4096];
+        uint32_t s9 = 0xC0FFEEu;
+        for (int i = 0; i < (int)sizeof rnd; i++) { s9 = s9 * 1664525u + 1013904223u; rnd[i] = (uint8_t)(s9 >> 16); }
+        st_held_report r2;
+        int rc2 = st_held_check_seen(buf, n, CRADLE_SEQLEN, tw, hw, rnd, (int)sizeof rnd, ST_HELD_K, &r2);
+        ok9 = ok9 && rc2 == 0 && r2.shared == 0;
+        item(ok9, "I9", "instrument: seen = the held bytes -> all shared; seen = random -> none", &r);
+    }
 
     printf("[held-indep] %s\n", fails ? "RED" : "ALL PASS");
     return fails ? 1 : 0;

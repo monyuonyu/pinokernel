@@ -66,4 +66,14 @@ typedef struct {
 int st_held_check(const uint8_t *corpus, int n, int seqlen, int trainw,
                   int heldw, int k, st_held_report *r);
 
+/* The same held windows against bytes the model trained on BEFORE this corpus
+ * (0-12 step 4): a node trains the fixture until a lesson arrives, and a new
+ * lesson replaces the old one in the ring. `seen` is a plain byte span (no
+ * wrap); only k-grams wholly inside it count. r->shared counts held k-grams
+ * found in `seen`; r->wrapped as in st_held_check. Returns 0 when nothing is
+ * shared and nothing wraps, 1 when something is, -1 on bad arguments. */
+int st_held_check_seen(const uint8_t *corpus, int n, int seqlen, int trainw,
+                       int heldw, const uint8_t *seen, int seen_n, int k,
+                       st_held_report *r);
+
 #endif /* PK_HELD_INDEP_H */

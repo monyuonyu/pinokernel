@@ -62,3 +62,34 @@ int st_held_check(const uint8_t *corpus, int n, int seqlen, int trainw,
     if (r) *r = z;
     return (z.shared == 0 && z.wrapped == 0) ? 0 : 1;
 }
+
+int st_held_check_seen(const uint8_t *corpus, int n, int seqlen, int trainw,
+                       int heldw, const uint8_t *seen, int seen_n, int k,
+                       st_held_report *r)
+{
+    st_held_report z = { 0, 0, 0 };
+    if (r) *r = z;
+    if (!corpus || n < 1 || seqlen < 1 || trainw < 0 || heldw < 0 ||
+        k < 1 || k > seqlen || !seen || seen_n < 0)
+        return -1;
+
+    for (int hw = trainw; hw < trainw + heldw; hw++) {
+        long hbase = (long)hw * seqlen;
+        if (hbase + seqlen > n) z.wrapped++;
+        for (int hi = 0; hi + k <= seqlen; hi++) {
+            long ho = hbase + hi;
+            uint64_t hh = hi_hash(corpus, n, ho, k);
+            int found = 0;
+            for (long so = 0; so + k <= seen_n && !found; so++) {
+                if (hi_hash(seen, seen_n, so, k) != hh) continue;
+                found = 1;
+                for (int i = 0; i < k; i++)
+                    if (hi_byte(corpus, n, ho + i) != seen[so + i]) { found = 0; break; }
+            }
+            z.held_kgrams++;
+            if (found) z.shared++;
+        }
+    }
+    if (r) *r = z;
+    return (z.shared == 0 && z.wrapped == 0) ? 0 : 1;
+}
