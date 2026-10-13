@@ -20,9 +20,28 @@ CC="${CC:-cc}"
 CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off -Werror=vla"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+FAIL=0
 
 echo "[build] held-indep cert (held_indep.c + cradle.c + student.c) ..."
 $CC $CFLAGS "$HERE/held_indep_test.c" "$ROOT/arch/common/llm/held_indep.c" \
     "$ROOT/arch/common/llm/cradle.c" "$ROOT/arch/common/llm/student.c" -o "$WORK/hi" \
     || { echo "[build] FAILED"; exit 1; }
-"$WORK/hi"
+"$WORK/hi" || FAIL=1
+
+# [held-seen] (0-12 step 4): the record wired into the real student_shell.c.
+# -DSEEN_DISABLE (records nothing) must go RED, or the cert has no teeth.
+SEEN="$HERE/student_seen_test.c $ROOT/arch/common/llm/held_indep.c $ROOT/arch/common/llm/student.c"
+SEEN="$SEEN $ROOT/arch/common/llm/cradle.c $ROOT/arch/common/llm/dlb.c $HERE/held_seen_stubs.c"
+echo "[build] held-seen cert (student_shell.c #included) ..."
+# shellcheck disable=SC2086
+$CC $CFLAGS $SEEN -lm -o "$WORK/seen" || { echo "[build] FAILED"; exit 1; }
+# shellcheck disable=SC2086
+$CC $CFLAGS -DSEEN_DISABLE $SEEN -lm -o "$WORK/seen_off" || { echo "[build] FAILED"; exit 1; }
+"$WORK/seen" || FAIL=1
+if "$WORK/seen_off" > "$WORK/seen_off.txt"; then
+    echo "[held-seen] FAIL falsifier: -DSEEN_DISABLE stayed green"; FAIL=1
+else
+    grep -E 'FAIL S[0-9]' "$WORK/seen_off.txt" | sed 's/^/[held-seen] falsifier (expected RED): /'
+fi
+[ "$FAIL" = 0 ] && echo "[held-indep+seen] ALL PASS" || echo "[held-indep+seen] RED"
+exit "$FAIL"

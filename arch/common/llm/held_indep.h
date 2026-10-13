@@ -66,4 +66,38 @@ typedef struct {
 int st_held_check(const uint8_t *corpus, int n, int seqlen, int trainw,
                   int heldw, int k, st_held_report *r);
 
+/* The same held windows against bytes the model trained on BEFORE this corpus
+ * (0-12 step 4): a node trains the fixture until a lesson arrives, and a new
+ * lesson replaces the old one in the ring. `seen` is a plain byte span (no
+ * wrap); only k-grams wholly inside it count. r->shared counts held k-grams
+ * found in `seen`; r->wrapped as in st_held_check. Returns 0 when nothing is
+ * shared and nothing wraps, 1 when something is, -1 on bad arguments. */
+int st_held_check_seen(const uint8_t *corpus, int n, int seqlen, int trainw,
+                       int heldw, const uint8_t *seen, int seen_n, int k,
+                       st_held_report *r);
+
+/* What the brain has trained on, as a Bloom filter of k-gram hashes (0-12
+ * step 4). A lesson replaces the ring, so after A then B the bytes of A are
+ * gone but the weights learned them; checking B's held only against B's train
+ * windows misses that. The student adds the train bytes of every corpus it
+ * trains and checks held windows against the whole record. A Bloom filter
+ * can say "seen" for a k-gram it never saw (over-counts, never under-counts);
+ * at 5000 k-grams (fixture + one lesson) in 131072 bits with 3 probes that is
+ * about 0.1% (65536 bits gave 2 of 170 random held k-grams, too close to the
+ * cert's line). The record lives in memory: it starts empty at boot, so
+ * weights restored from disk carry training it does not know about (the
+ * student says "since boot"). */
+#define ST_SEEN_BITS  131072
+typedef struct {
+    uint8_t  bits[ST_SEEN_BITS / 8];
+    uint32_t added;     /* k-grams added (with repeats), for the fill estimate */
+} st_seen;
+
+void st_seen_clear(st_seen *s);
+/* add every k-gram wholly inside span[0..n) */
+void st_seen_add(st_seen *s, const uint8_t *span, int n, int k);
+/* like st_held_check_seen, with the record in place of a byte span */
+int  st_held_check_record(const uint8_t *corpus, int n, int seqlen, int trainw,
+                          int heldw, const st_seen *s, int k, st_held_report *r);
+
 #endif /* PK_HELD_INDEP_H */

@@ -29,6 +29,7 @@ trap 'rm -rf "$WORK"' EXIT
 
 SRC_TEST="$HERE/student_quant_test.c"
 SRC_STU="$ROOT/arch/common/llm/student.c"
+SRC_HI="$ROOT/arch/common/llm/held_indep.c"   # [held-indep] on CORPUS (0-12 step 4)
 
 SEEDS="${ST_QUANT_SEEDS:-0xC0FFEE 1 12345}"
 
@@ -37,7 +38,7 @@ for v in plain NOOP BADSCALE; do
     def=""
     [ "$v" != plain ] && def="-DST_QUANT_$v"
     echo "[build] $v $def"
-    if ! $CC $CFLAGS $def "$SRC_TEST" "$SRC_STU" -o "$WORK/q_$v"; then
+    if ! $CC $CFLAGS $def "$SRC_TEST" "$SRC_STU" "$SRC_HI" -o "$WORK/q_$v"; then
         echo "[build] $v FAILED"; rc_all=1; continue
     fi
     if [ "$v" = plain ]; then

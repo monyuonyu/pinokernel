@@ -38,6 +38,7 @@
 #include <stdint.h>
 
 #include "../../arch/common/llm/student.h"
+#include "../../arch/common/llm/held_indep.h"
 
 static int g_pass = 0, g_fail = 0;
 #define CHECK(cond, msg) do { \
@@ -170,6 +171,13 @@ int main(int argc, char **argv)
             st_backward(&M, b, SEQLEN); st_adam_step(&M, LR);
         }
     float fp = heldout_loss(&M, held_from, held_w);
+    /* 0-12 step 4: the "held-out" windows must not repeat a 16-byte run of the
+     * train windows (CORPUS repeats short phrases: 14 of 68 8-byte runs are
+     * shared, 0 of 36 16-byte runs when this was added, 2026-10-14) */
+    st_held_report hir;
+    int hirc = st_held_check(CORPUS, (int)sizeof(CORPUS) - 1, SEQLEN, train_w, held_w,
+                             ST_HELD_K, &hir);
+    printf("  [held-indep] shared=%d/%d wrapped=%d\n", hir.shared, hir.held_kgrams, hir.wrapped);
     printf("  corpus=%dB train=%dwin held=%dwin  fp32 held-out = %.4f nats "
            "(chance %.4f)\n", (int)sizeof(CORPUS) - 1, train_w, held_w,
            (double)fp, (double)st_logf(256.0f));
@@ -198,6 +206,9 @@ int main(int argc, char **argv)
                    BITS[bi], GN[g], (double)fp, (double)ql, (double)delta[bi][g],
                    bq, np * 4, ch, nq, v);
         }
+
+    printf("\n[0] the held windows are held out\n");
+    CHECK(hirc == 0 && hir.held_kgrams > 0, "[held-indep] CORPUS held shares no 16-byte run with train");
 
     printf("\n[A] int8 per-row\n");
     CHECK(rc_ok, "st_quant_fake returned ST_OK for all 9 (bits,gran)");

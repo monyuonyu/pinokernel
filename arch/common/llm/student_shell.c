@@ -203,64 +203,7 @@ __attribute__((weak)) void cradle_poll_and_pull(void) { /* no transport: no-op *
  * The bytes were cleaned to printable ASCII + single spaces so this stays a
  * well-formed C string literal; a byte-level baby is indifferent to that.
  * ------------------------------------------------------------------------- */
-static const char TEACHER_FIXTURE[] =
-    "The cat's eyes, and a warm glow emanating from the lamp on her shoulder. "
-    "She seemed to be watching me with an intensity that was both mesmerizing "
-    "and unsettling at once - like I had been given permission by some mystical "
-    "force to explore this unknown realm without warning Once upon a time, I "
-    "remember the day my friend Alex and his brother were born in Mexico. My "
-    "grandmother used to tell me stories about them growing up during colonial "
-    "times when Spanish settlers had come into our neighborhood from across the "
-    "border. It was not always easy for them Water is a vital component of our "
-    "ecosystem, and it plays an essential role in the reproduction and survival "
-    "of many different species. It's not just for birds to eat; they also play "
-    "important roles on land as herbivores or omnivores that help maintain soil "
-    "fertility through My favorite foods? The sky was dark, and the stars "
-    "twinkled like diamonds on a velvet cloak. A lone constellation pierced by "
-    "some piercing glint of light an Orion-like figure with its arms extended "
-    "behind him as if he were waiting for his prey to follow shortly after "
-    "People learn through experience and experimentation. * **Focus on "
-    "community-driven initiatives**: Instead of spreading yourself too thin "
-    "across the entire country, focus your efforts at local organizations or "
-    "schools that share a similar mission with yours (e.g., environmental "
-    "conservation groups). In the morning, I wake up and begin to get a little "
-    "anxious. The thought of my sister still having issues with this will be "
-    "enough anxiety for me...but after that it is off on its own like usual! She "
-    "opened the other door and stepped into a room filled with books on various "
-    "subjects. \"Thank you for taking me there,\" I said, gesturing towards my own "
-    "desk where papers were neatly arranged upon it. My eyes locked onto yours "
-    "once more as we sat down Science tells us the following: When we're doing "
-    "something that's hard to do, and you have a lot of time on your hands when "
-    "everything else is going well... The only way for me not getting anything "
-    "done was because I didn't get my break The old house, you can't help but "
-    "feel a sense of longing. It was there when I first moved in with my parents "
-    "back home on summer break; it seemed like just yesterday we'd been together "
-    "as friends all over again the laughter and songs exchanged between A long "
-    "time ago. My family has always known me as Emily Wilson, a dedicated young "
-    "lady who worked tirelessly for the city's infrastructure in my hometown of "
-    "Oakdale. I've seen some changes over the years - new construction projects "
-    "and renovations have all but erased our Music can create an engaging "
-    "narrative that draws the reader in and keeps them hooked. You could also "
-    "experiment with different tones, styles or genres to find what works best "
-    "for your story's unique voice and atmosphere.\" 51708942 (3 The river flows "
-    "to the sea. This is because water cannot penetrate through a solid, such as "
-    "stone or wood that's too close together and would block its flow into it.\" "
-    "- I also used \"this\" instead of 'it' in sentences like: Children love to "
-    "celebrate the birthday boy's new best friend. They'll meet up at a park, go "
-    "for rides and have some fun together on sunny days! - A group of friends "
-    "from school are celebrating a big party this weekend - they all brought "
-    "their favorite When winter comes to a close, many people retire in their "
-    "40s or beyond. Here are some fun and exciting facts about retirement: 1) "
-    "**People who retired were twice as likely on average** when they had more "
-    "children than those without it ( The best way to ensure a secure password "
-    "is not just for passwords themselves but also the content of those "
-    "passwords. This will provide strong, unique combinations that won't be "
-    "easily guessed by an advanced program or thief with access at any time.\" "
-    "History shows that even when a person is healthy, their brain can still "
-    "experience some form of stress. The researcher's goal was to create an "
-    "experiment where the subjects were allowed time and opportunities for "
-    "self-reflection on how they managed stressors in daily life - whether it "
-    "could Birds fly Here are some ideas to get you started: 1.";
+#include "teacher_fixture.h"   /* static const char TEACHER_FIXTURE[] */
 
 /* ---------------------------------------------------------------------------
  * The resident baby. Allocated lazily; reused across verbs within one boot.
@@ -440,6 +383,29 @@ static const uint8_t *cradle_corpus(int *n_out)
 static int cradle_corpus_len(void)
 {
     int n; (void)cradle_corpus(&n); return n;
+}
+
+/* 0-12 step 4: the record of the bytes this baby trained on since boot (a
+ * Bloom filter, held_indep.h). A lesson replaces the ring, so the held of the
+ * new corpus is also checked against what earlier corpora taught. Added once
+ * per corpus (a fingerprint of the bytes and the train end) at the start of a
+ * DMN batch and after a `student` round. Other training paths (the dlb
+ * distill, `student merge`) are not recorded, and the record is empty after a
+ * restart while restored weights are not. */
+static st_seen  g_seen;
+static uint64_t g_seen_last;
+
+static void student_seen_note(const uint8_t *c, int n, int train_end)
+{
+#ifdef SEEN_DISABLE
+    (void)c; (void)n; (void)train_end; return;   /* falsifier: [held-seen] goes RED */
+#endif
+    uint64_t f = 1469598103934665603ULL;
+    for (int i = 0; i < n; i++) { f ^= c[i]; f *= 1099511628211ULL; }
+    f ^= (uint64_t)(unsigned)train_end * 0x9E3779B97F4A7C15ULL;
+    if (f == g_seen_last) return;
+    st_seen_add(&g_seen, c, train_end < n ? train_end : n, ST_HELD_K);
+    g_seen_last = f;
 }
 
 static void window(uint8_t *dst, int off, int len)
@@ -808,6 +774,10 @@ int student_dmn_consolidate(void)
          * straight-line with the pull above — no yield between — so it is atomic
          * w.r.t. the cooperative cradle_net_task. */
         cradle_lesson_freeze(1);
+        {   /* 0-12 step 4: this batch's train bytes go into the record */
+            int cn; const uint8_t *cc = cradle_corpus(&cn);
+            student_seen_note(cc, cn, g_consol_train_end);
+        }
     }
 
 #ifdef YIELD_DISABLE
@@ -1679,12 +1649,29 @@ int student_shell_cmd(const char *args, emit_fn emit)
             snprintf(line, sizeof line,
                      "[held-indep] not checked (seqlen %d < %d)\r\n", seqlen, ST_HELD_K);
         emit(line);
+        /* step 4: and against every corpus trained since boot (the record) */
+        if (st_held_check_record(cc, cn, seqlen, trainw, heldw, &g_seen, ST_HELD_K, &hr) >= 0) {
+            snprintf(line, sizeof line,
+                     "[held-indep] seen=%d/%d held runs in what this baby trained since "
+                     "boot (record %u runs; may over-count)%s\r\n", hr.shared,
+                     hr.held_kgrams, (unsigned)g_seen.added,
+                     g_loaded_from_disk ? " - weights RESTORED: earlier training not recorded" : "");
+            emit(line);
+        }
     }
 
     float pre = heldout_loss(&g_student, seqlen, train_end, heldw);
     snprintf(line, sizeof line, "[baby] held-out loss (before) = %.4f nats\r\n",
              (double)pre);
     emit(line);
+    /* 0-12 step 4: the DMN saves only when this held loss improves (and picks
+     * the EMA copy by it), so restored weights were chosen by the held set */
+    if (g_loaded_from_disk) {
+        snprintf(line, sizeof line,
+                 "[held-indep] selected-by-held: the restored weights were saved "
+                 "because this held loss improved - it is not an independent score\r\n");
+        emit(line);
+    }
 
     if (loss_only) {
         snprintf(line, sizeof line,
@@ -1702,6 +1689,10 @@ int student_shell_cmd(const char *args, emit_fn emit)
      * (cooperative-yield-plan.md §2.2 writer guard). */
     student_consol_abort();
     sleep_rounds(&g_student, seqlen, trainw, rounds, lr);
+    {
+        int cn; const uint8_t *cc = cradle_corpus(&cn);
+        student_seen_note(cc, cn, train_end);
+    }
 
     float post = heldout_loss(&g_student, seqlen, train_end, heldw);
     snprintf(line, sizeof line,
