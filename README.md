@@ -1,6 +1,6 @@
 **English** | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `8a04023a`.
+> Translated from [README.ja.md](README.ja.md) (the Japanese version is the original) at commit `4c814148`.
 
 # p-kernel
 
@@ -35,6 +35,14 @@ The project's goal, as written in the Japanese README (with dated notes):
 ## What p-kernel is
 
 Today's AI can only run inside a particular company's servers. If those servers break or the service ends, the AI is gone, along with everything it learned. p-kernel asks: if an AI lived spread across many machines, could we build a mind that does not die from a failure or from the circumstances of any one place?
+
+**Why should it not die?** The goal is not a clever AI that surpasses frontier models.
+
+What we want to keep is the record of people's lives. Even after a person is gone, "this person was really here" remains. Even if humanity is gone, the swarm starts up again and keeps the records. We want to build that kind of ark.
+
+So what we ask of the brain is to hold everyday conversation and to remember it. An ark's job is not to spread like fire, but to stay afloat.
+
+(A brain that can remember conversations and answer from them, and a procedure for starting up again, do not exist yet.)
 
 But **"does not die" does not mean "cannot be stopped."** Only devices whose owners have agreed take part. An owner can remove their device from the swarm at any time. People will be able to stop the whole swarm. p-kernel will not have any feature that spreads by breaking into other machines. These are design rules (rule 9 of the overarching rules in the [ROADMAP](docs/architecture/ROADMAP.md)). The owner's consent record and the signing allowlist already exist. A test that nothing is left on a removed device, the path to stop the whole swarm, and identifying the protocol name and version on the wire are still to be built and confirmed by tests.
 
