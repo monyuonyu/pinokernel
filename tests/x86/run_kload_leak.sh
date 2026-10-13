@@ -10,10 +10,11 @@
 #
 #   1. build boot/x86 (default kernel), read node_sk / node_have_key from
 #      bootloader.bin (the ELF QEMU boots; see run_killchurn.sh on why)
-#   2. boot QEMU (slirp, hostfwd udp <port> -> guest 7387), `sign test` so
-#      the node has a key
+#   2. boot QEMU as distributed node 0 (MAC 52:54:00:00:00:01 -> IP 10.1.0.1,
+#      the only mode that starts the kloader; slirp on 10.1.0.0/24, hostfwd
+#      udp <port> -> 10.1.0.1:7387), `sign test` so the node has a key
 #   3. kload_leak.py sends ONE beacon from an unknown sender and collects the
-#      push on udp 7386 (the guest sends to 10.0.2.2 = this host)
+#      push on udp 7386 (the guest sends to 10.1.0.100 = slirp = this host)
 #
 # exit 0 = nothing came back (expected once KLOAD checks the sender),
 #      1 = LEAK (the secret key reached the unknown sender) — expected on
@@ -29,7 +30,7 @@ NM="${NM:-nm}"
 BPORT="${KL_BEACON_PORT:-17387}"
 WORK="$(mktemp -d)"
 QPID=""
-trap '[ -n "$QPID" ] && kill "$QPID" 2>/dev/null; exec 3>&- 2>/dev/null; rm -rf "$WORK"' EXIT
+trap '[ -n "$QPID" ] && kill "$QPID" 2>/dev/null; exec 3>&- 2>/dev/null; [ -n "${KL_KEEP:-}" ] && cp "$WORK/serial.log" "$KL_KEEP" 2>/dev/null; rm -rf "$WORK"' EXIT
 
 echo "[build] boot/x86 (default kernel) ..."
 ( cd "$BOOT" && make all disk ) > "$WORK/build.log" 2>&1 || { tail -20 "$WORK/build.log"; echo "[kload-leak] build FAILED"; exit 2; }
@@ -45,7 +46,8 @@ cp "$BOOT/disk.img" "$WORK/disk.img" 2>/dev/null || true
 mkfifo "$WORK/in"
 ( cd "$BOOT" && exec timeout -k 5 300 "$QEMU" -m 256 -kernel bootloader.bin \
     -serial stdio -display none -cpu qemu64 \
-    -netdev "user,id=n0,hostfwd=udp:127.0.0.1:$BPORT-:7387" -device rtl8139,netdev=n0 \
+    -netdev "user,id=n0,net=10.1.0.0/24,host=10.1.0.100,dhcpstart=10.1.0.50,hostfwd=udp:127.0.0.1:$BPORT-10.1.0.1:7387" \
+    -device rtl8139,netdev=n0,mac=52:54:00:00:00:01 \
     -drive file="$WORK/disk.img",format=raw,if=ide,index=0 ) < "$WORK/in" > "$WORK/serial.log" 2>&1 &
 QPID=$!
 exec 3> "$WORK/in"
