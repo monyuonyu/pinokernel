@@ -35,8 +35,8 @@ SRC_TEST="$HERE/cradle_teach_proof.c"
 SRC_CRADLE="$ROOT/arch/common/llm/cradle.c"
 SRC_STU="$ROOT/arch/common/llm/student.c"
 
-echo "[build] cradle-teach cert (cradle.c + student.c) ... (-ffp-contract=off -Werror=vla)"
-$CC $CFLAGS "$SRC_TEST" "$SRC_CRADLE" "$SRC_STU" -o "$WORK/ct" \
+echo "[build] cradle-teach cert (cradle.c + student.c + held_indep.c) ... (-ffp-contract=off -Werror=vla)"
+$CC $CFLAGS "$SRC_TEST" "$SRC_CRADLE" "$SRC_STU" "$ROOT/arch/common/llm/held_indep.c" -o "$WORK/ct" \
     || { echo "[build] FAILED"; exit 1; }
 
 # ---- structural [cradle-nocentral]: the bridge never averages weights ------
