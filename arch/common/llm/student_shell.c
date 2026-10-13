@@ -1659,6 +1659,21 @@ int student_shell_cmd(const char *args, emit_fn emit)
         return -1;
     }
 
+    /* 0-12 step 3: say how much of the held set the baby also trains on */
+    {
+        int cn; const uint8_t *cc = cradle_corpus(&cn);
+        st_held_report hr;
+        if (st_held_check(cc, cn, seqlen, trainw, heldw, ST_HELD_K, &hr) >= 0)
+            snprintf(line, sizeof line,
+                     "[held-indep] shared=%d/%d held %d-byte runs also in train, "
+                     "wrapped=%d%s\r\n", hr.shared, hr.held_kgrams, ST_HELD_K,
+                     hr.wrapped, hr.shared ? " (the held loss partly measures memory)" : "");
+        else
+            snprintf(line, sizeof line,
+                     "[held-indep] not checked (seqlen %d < %d)\r\n", seqlen, ST_HELD_K);
+        emit(line);
+    }
+
     snprintf(line, sizeof line,
              "[baby] resident=%s  corpus=%dB seqlen=%d train=%dwin held=%dwin  "
              "chance=%.4f nats\r\n",

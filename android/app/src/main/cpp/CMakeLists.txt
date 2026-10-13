@@ -472,6 +472,7 @@ set(LLM_STUDENT_SRC
     ${ARCH_CO}/llm/student.c
     ${ARCH_CO}/llm/student_shell.c
     ${ARCH_CO}/llm/cradle.c
+    ${ARCH_CO}/llm/held_indep.c
     ${ARCH_CO}/llm/dlb.c
 )
 set_source_files_properties(${LLM_STUDENT_SRC} PROPERTIES
