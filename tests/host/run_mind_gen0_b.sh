@@ -222,6 +222,12 @@ for i in 1 3 5 6; do
             h2="$h2 node$i:heard-$k=$w-holds-${A1[$i.$k]:-none}/${A2[$i.$k]:-none}"
     done < <(grep -a 'heard as history from node' "$lg" | grep -a '^\[mind\] conflict recorded:' |
              sed -nE 's/.*key [0-9]+ "([a-z]+)".* superseded by "([a-z]+)".*/\1|\2/p')
+    # a heard record this node then saw itself is promoted ("seen here too"),
+    # never counted again under the heard label (audit-45: with the promotion
+    # removed node 5 printed "conflict again ... heard as history" and H2 stayed
+    # green)
+    grep -a '^\[mind\] conflict again:' "$lg" | grep -aq 'heard as history' &&
+        h2="$h2 node$i:seen-again-still-heard"
 done
 [ -z "$h2" ] && res H2 PASS "mind/hist sent only by nodes that saw a conflict; heard records name the held winner" \
     || res H2 FAIL "$h2"
