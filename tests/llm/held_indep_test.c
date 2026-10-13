@@ -17,6 +17,9 @@
  *   I5  st_held_split (held_indep.h, the one production split) is the 3/4
  *       split with its clamps, and its wrapped count equals the byte check's,
  *       for n 1..2048 x seqlen 1..64.
+ *   I6  st_held_measurable is exactly "no held window wraps" on that grid.
+ *   I7  cradle_live_teach_test with a live text >= the cert budget (it tiled
+ *       to 0 bytes) answers UNMEASURABLE, rc 1 (was: a held loss mod 0).
  *
  * Exit 0 = all PASS. Prints "[held-indep] PASS|FAIL <id> ..." per item.
  */
@@ -33,6 +36,14 @@ static void item(int ok, const char *id, const char *what, const st_held_report 
     printf("[held-indep] %s %s  %s  (held k-grams %d, shared %d, wrapped %d)\n",
            ok ? "PASS" : "FAIL", id, what, r->held_kgrams, r->shared, r->wrapped);
     if (!ok) fails++;
+}
+
+static char cap[4096];
+static int cap_n;
+static void capture(const char *s)
+{
+    int l = (int)strlen(s);
+    if (cap_n + l < (int)sizeof cap) { memcpy(cap + cap_n, s, (size_t)l + 1); cap_n += l; }
 }
 
 /* the production split: st_held_split (held_indep.h), the one every
@@ -103,6 +114,32 @@ int main(void)
     printf("[held-indep] %s I5  st_held_split = the 3/4 split, wrapped = the byte check  (%d geometries, %d wrap)\n",
            bad ? "FAIL" : "PASS", cases, wrapcases);
     if (bad) fails++;
+
+    /* I6: st_held_measurable is "the split's held windows do not wrap" (and
+     * no corpus is unmeasurable), on the same grid */
+    bad = 0;
+    if (st_held_measurable(0, 32) || st_held_measurable(100, 0)) bad = 1;
+    for (int sl = 1; sl <= 64 && !bad; sl++)
+        for (int nn = 1; nn <= 2048 && !bad; nn++)
+            if (st_held_measurable(nn, sl) != (st_held_wrapped(st_held_split(nn, sl), nn, sl) == 0)) {
+                bad = 1;
+                printf("[held-indep] I6 mismatch n=%d seqlen=%d\n", nn, sl);
+            }
+    printf("[held-indep] %s I6  st_held_measurable = no held window wraps\n", bad ? "FAIL" : "PASS");
+    if (bad) fails++;
+
+    /* I7: the CT-2 live cert tiles the live text up to the cert budget; a
+     * text at least that long tiled to 0 bytes and the held loss read
+     * corpus[x % 0]. It must say UNMEASURABLE (rc 1) instead. */
+    static uint8_t live[1300];
+    for (int i = 0; i < (int)sizeof live; i++) live[i] = (uint8_t)("the quick brown fox. "[i % 21]);
+    cap_n = 0; cap[0] = 0;
+    float ld = -1.0f, bd = -1.0f;
+    int lrc = cradle_live_teach_test(capture, live, (int)sizeof live, &ld, &bd);
+    int i7 = lrc == 1 && strstr(cap, "UNMEASURABLE") != NULL;
+    printf("[held-indep] %s I7  live cert with a %d B text says UNMEASURABLE (rc %d)\n",
+           i7 ? "PASS" : "FAIL", (int)sizeof live, lrc);
+    if (!i7) fails++;
 
     printf("[held-indep] %s\n", fails ? "RED" : "ALL PASS");
     return fails ? 1 : 0;

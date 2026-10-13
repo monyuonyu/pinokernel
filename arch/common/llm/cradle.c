@@ -122,6 +122,10 @@ static unsigned g_preempt_count = 0;    /* lifetime pre-empts taken (observabili
  * student_shell.c; cradle uses the SAME constant here (CRADLE_SEQLEN) so the
  * threshold and the train/held split match the production tick exactly. */
 #define CRADLE_MIN_LIVE  (4 * CRADLE_SEQLEN)
+/* 0-12: the fixed-seqlen held sites (the DMN tick, the probes, `student
+ * merge` at 24, `student quant`) never wrap because a live ring is >= 3
+ * windows; only `student`'s own seqlen argument can, and it checks. */
+_Static_assert(CRADLE_MIN_LIVE >= 3 * CRADLE_SEQLEN, "a live ring must hold 3 held-split windows");
 
 /* ---- the corpus-source switch (called from student_shell.c::window) ----
  * Return the live lesson ring when it is populated past the threshold, else
@@ -686,6 +690,14 @@ int cradle_live_teach_test(cradle_emit_fn emit, const uint8_t *live, int live_le
     int trainw = sp.trainw;
     int heldw  = sp.heldw;
     int train_end = sp.train_end;
+
+    /* a text at least the budget long tiles to 0 bytes; a short tiling would
+     * wrap the held windows into train. Neither is a held measurement (0-12). */
+    if (!st_held_measurable(ln, seqlen)) {
+        ct_emitf(emit, "[cradle-live-teach] UNMEASURABLE: the held windows would "
+                       "wrap into train; tiled corpus bytes=", (float)ln);
+        return 1;
+    }
 
     if (emit) {
         ct_emitf(emit, "[cradle-live-teach] live text bytes=", (float)live_len);
