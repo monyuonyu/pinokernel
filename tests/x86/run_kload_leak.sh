@@ -18,9 +18,13 @@
 #
 # exit 0 = nothing came back and the node logged the beacon (expected once
 #          KLOAD checks the sender),
-#      1 = LEAK (the secret key reached the unknown sender) — expected on
-#          master as of 2026-10-14, the test is written before the fix,
+#      1 = LEAK (the secret key reached the unknown sender) — master as of
+#          2026-10-14; since the fix (auto-push off by default, `kload
+#          autopush on` at the console) only with -DKLOAD_NO_PUSH_GATE or
+#          after the owner turned auto-push on,
 #      2 = inconclusive (boot/key/chunk missing), also a failure for CI.
+# KL_WAIT (seconds, default 300) bounds "nothing came back"; the push starts
+# within a few seconds of the beacon (kloader_task polls every 5 s).
 # ---------------------------------------------------------------------------
 # The push is the whole 0x100000.._kernel_end (about 16 MB in 1 KB chunks,
 # one tick per 4 chunks): about 2-3 minutes, node_sk is near the end.
@@ -68,7 +72,7 @@ sleep 3
 printf 'sign test\r' >&3
 wait_for "node keygen entropy" 120 || { tail -20 "$WORK/serial.log"; echo "[kload-leak] no key (sign test did not run)"; exit 2; }
 
-python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" 300 "$SK_OFF" 64 "$HAVE_OFF" "$PK_OFF"
+python3 "$HERE/kload_leak.py" "$BPORT" 7386 "$WORK/img.bin" "${KL_WAIT:-300}" "$SK_OFF" 64 "$HAVE_OFF" "$PK_OFF"
 rc=$?
 grep -a 'kloader_task\] \(BEACON\|auto-push\)' "$WORK/serial.log" | head -3
 # "nothing came back" is only green if the beacon really reached the node

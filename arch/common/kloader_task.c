@@ -54,6 +54,27 @@ static UW  kload_total   = 0;
 static UW  kload_written = 0;
 static UB  kload_active  = 0;   /* 受信中フラグ */
 
+/* KLOAD-UNAUTH (ROADMAP 0-14 S3): both doors are shut by default and only the
+ * owner at the console opens them (`kload open`, `kload autopush on`).
+ *   kload_rx_open   - accept a KLOAD_START from the mesh. Open, any mesh peer
+ *                     can replace /KL.BIN and reboot this node.
+ *   kload_auto_push - answer a BEACON with a push. The push is the live RAM
+ *                     0x100000.._kernel_end (incl. node_sk on x86) to whoever
+ *                     sent the beacon, so it stays off unless asked for.
+ * Shut-door rejections are counted apart from malformed ones. */
+static UB kload_rx_open   = 0;
+static UB kload_auto_push = 0;
+UW kloader_drop_closed    = 0;
+
+void kloader_set_rx_open(INT on)
+{
+    kload_rx_open = on ? 1 : 0;
+    if (!on) kload_active = 0;   /* closing also ends a transfer in flight */
+}
+void kloader_set_auto_push(INT on) { kload_auto_push = on ? 1 : 0; }
+INT  kloader_rx_is_open(void)      { return kload_rx_open; }
+INT  kloader_auto_push_on(void)    { return kload_auto_push; }
+
 /* ------------------------------------------------------------------ */
 /* VFS 書き込みユーティリティ                                         */
 /* ------------------------------------------------------------------ */
@@ -106,6 +127,13 @@ void kloader_rx(UB src_node, UH dst_port, const UB *data, UH len)
     if (pkt->version != KLOAD_VERSION) return;
 
     if (pkt->type == KLOAD_START) {
+#ifndef KLOAD_NO_RX_GATE
+        if (!kload_rx_open) {
+            kloader_drop_closed++;
+            kl_puts("[kloader_task] KLOAD_START refused (receiver closed; `kload open` at the console)\r\n");
+            return;
+        }
+#endif
         kload_total   = pkt->total_size;
         kload_written = 0;
         kload_active  = 1;
@@ -293,8 +321,17 @@ void kloader_beacon_rx(UW src_ip, UH src_port,
     UW push_ip = src_ip ? src_ip : b->src_ip;
     if (!push_ip) return;
 
+    /* run_kload_leak.sh needs this line to tell "refused" from "never got
+     * here" - keep printing it on receipt whatever happens next. */
     kl_puts("[kloader_task] BEACON from node ");
     kl_putdec(b->node_id);
+#ifndef KLOAD_NO_PUSH_GATE
+    if (!kload_auto_push) {
+        kloader_drop_closed++;
+        kl_puts("  -> not pushing (auto-push off; `kload autopush on` at the console)\r\n");
+        return;
+    }
+#endif
     kl_puts("  -> queuing auto-push\r\n");
 
     /* キューへ追加 (重複チェック) */

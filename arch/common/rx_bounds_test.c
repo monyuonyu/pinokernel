@@ -180,7 +180,20 @@ INT rx_bounds_run(void (*out)(const char *))
     pm_case("P2", "pmesh DATA dst=255",            255,       1);
     pm_case("P3", "pmesh DATA dst=5 (control)",    5,         0);
 
-    /* kloader: open a transfer, then controls and malformed chunks */
+    /* kloader: the receiver is shut by default (KLOAD-UNAUTH, 0-14 S3), so a
+     * well-formed START from the mesh is turned away; red with
+     * -DKLOAD_NO_RX_GATE */
+    {
+        UB s[sizeof(KLOAD_PKT)];
+        UW before = kloader_drop_closed;
+        kl_build(s, KLOAD_START, 0, 0);
+        kloader_rx(0, KLOAD_PORT, s, KL_HDR);
+        UW d = kloader_drop_closed - before;
+        rxb_check("K0", "kload START refused while closed", d == 1, d, 1);
+    }
+    /* then open it (as `kload open` does), open a transfer, then controls
+     * and malformed chunks */
+    kloader_set_rx_open(1);
     {
         UB s[sizeof(KLOAD_PKT)];
         kl_build(s, KLOAD_START, 0, 0);
@@ -204,6 +217,7 @@ INT rx_bounds_run(void (*out)(const char *))
         UW d = kloader_drop_bad - before;
         rxb_check("K6", "kload START 12-byte packet", d == 1, d, 1);
     }
+    kloader_set_rx_open(0);
 
     out("[rxb] "); rxb_dec((UW)rxb_pass);
     out(" PASS / "); rxb_dec((UW)rxb_fail); out(" FAIL\r\n");

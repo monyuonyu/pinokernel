@@ -51,6 +51,14 @@ void kloader_rx(UB src_node, UH dst_port, const UB *data, UH len);
 /* udp_bind コールバック (bare kloader ノードからの BEACON 受信) */
 void kloader_beacon_rx(UW src_ip, UH src_port, const UB *data, UH len);
 
+/* KLOAD-UNAUTH: both shut by default, opened from the console (`kload`).
+ * kloader_drop_closed counts STARTs and BEACONs turned away while shut. */
+extern UW kloader_drop_closed;
+void kloader_set_rx_open(INT on);
+void kloader_set_auto_push(INT on);
+INT  kloader_rx_is_open(void);
+INT  kloader_auto_push_on(void);
+
 /* kpush コマンド用 (shell.c から呼ぶ) */
 void kloader_push(UB target_node);
 

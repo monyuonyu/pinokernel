@@ -99,12 +99,14 @@ jobs:
     # ジョブ名 id は履歴のために変えていない。
     # 同じジョブに CPU の予算（段階1、記録だけ。docs/architecture/30-module/
     # cpu-budget.md、tests/x86/run_cpu_budget.sh）の5腕も載せた（ジョブ数を
-    # 動かさないため。ジョブ名の「3 arms」は RNG0 の腕の数）:
+    # 動かさないため。ジョブ名の「3 arms」は RNG0 の腕の数。2026-10-15 に
+    # KLOAD-UNAUTH の [kload-leak] の2腕も同じ理由でここに）:
     #   spin -> [budget] 1行、yield・nobudget・preempt -> 0行、
     #   noentrycount（preempt から knl_dispatch_entry の数えを外す）-> 1行。
     name: "RNG0 busy-task starvation 回帰試験 (x86, 3 arms)"
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 20 -> 30 (2026-10-15): + the two [kload-leak] arms (about 3 min each)
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Install i686 cross toolchain + qemu-system-x86
@@ -128,6 +130,20 @@ jobs:
         run: ARM=preempt sh tests/x86/run_cpu_budget.sh
       - name: CPU budget noentrycount arm — expect one [budget] line (switch count removed)
         run: ARM=noentrycount sh tests/x86/run_cpu_budget.sh
+      # KLOAD-UNAUTH (ROADMAP 0-14 S3, tests/x86/run_kload_leak.sh): bare x86 as
+      # distributed node 0 gets ONE beacon from an unknown sender. Before the
+      # fix it pushed its live RAM back, node_sk included. Clean builds: the
+      # steps above leave objects built with their own -D flags.
+      - name: "[kload-leak] an unknown beacon gets nothing back — expect exit 0 (0-14)"
+        run: |
+          sudo apt-get install -y --no-install-recommends dosfstools mtools
+          make -C boot/x86 clean >/dev/null
+          KL_WAIT=120 bash tests/x86/run_kload_leak.sh
+      - name: "[kload-leak] negative control: push gate compiled out — expect exit 1 (LEAK)"
+        run: |
+          make -C boot/x86 clean >/dev/null
+          rc=0; EXTRA_CFLAGS=-DKLOAD_NO_PUSH_GATE bash tests/x86/run_kload_leak.sh || rc=$?
+          echo "rc=$rc"; test "$rc" = 1
 
   tk-conform-bare:
     # The contract suite v2 on bare-metal x86 AND AArch64 under QEMU (inbox #5,
@@ -1173,7 +1189,7 @@ jobs:
         run: |
           cd boot/linux_x86_64
           timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" | tee rx_x64.log
-          grep -aF '[rxb] 15 PASS / 0 FAIL' rx_x64.log
+          grep -aF '[rxb] 16 PASS / 0 FAIL' rx_x64.log
 
       # RNG0 on hosted x86_64: K9 (a task woken during a no-call spin runs
       # during it) is in the contract suite above, but nothing showed that it
@@ -1186,6 +1202,16 @@ jobs:
           make -C boot/linux_x86_64 EXTRA_CFLAGS=-DPK_HOSTED_NO_EXIT_DISPATCH >/dev/null
           ( cd boot/linux_x86_64 && timeout 120 sh -c "printf 'tkconf\nexit\n' | ./p-kernel" ) | tee tkconf_x64_nc.log
           grep -aF '[tkc] FAIL K9' tkconf_x64_nc.log
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 >/dev/null
+      # KLOAD-UNAUTH (0-14 S3): K0 is the shut-by-default receiver; it must go
+      # red with the gate compiled out. Rebuilds the plain binary afterwards.
+      - name: K0 goes red with the kloader receiver left open (negative control, -DKLOAD_NO_RX_GATE, 0-14)
+        run: |
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 EXTRA_CFLAGS=-DKLOAD_NO_RX_GATE >/dev/null
+          ( cd boot/linux_x86_64 && timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" ) | tee rx_x64_nc.log
+          grep -aF '[rxb] K0 FAIL' rx_x64_nc.log
           make -C boot/linux_x86_64 clean >/dev/null
           make -C boot/linux_x86_64 >/dev/null
 
@@ -1310,7 +1336,7 @@ jobs:
           cd boot/linux
           timeout 120 sh -c "printf 'tkconf rx\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee rx_a64.log
-          grep -aF '[rxb] 15 PASS / 0 FAIL' rx_a64.log
+          grep -aF '[rxb] 16 PASS / 0 FAIL' rx_a64.log
       # D5-k on aarch64: tk_exd_tsk frees its own stack, then force-dispatches;
       # knl_dispatch_to_schedtsk must leave it for knl_tmp_stack before idling.
       # gdb calls drpc_local_restart from cmd_ver (no shell path reaches it).
