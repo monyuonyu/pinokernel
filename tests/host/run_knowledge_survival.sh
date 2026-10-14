@@ -111,6 +111,19 @@ done
 SPREAD=$h
 note "spread before the kill: $SPREAD / $((N * K)) after ${t}s"
 sleep 5
+# ask everyone BEFORE the kill too (v1.1): a fact every node holds but no node
+# can recall is a recall failure, not a loss (first run: ink->fresh reached all
+# 8 nodes, all answered "near", the teacher too)
+pre_any=0; pre_good=0
+for j in $(seq 0 $((K - 1))); do
+    got=0; c=0; seen=""
+    for i in $(seq 1 "$N"); do
+        ask "$i" "${KEYS[$j]}"; seen="$seen ${ANS:-none}"
+        [ "$ANS" = "${VALS[$j]}" ] && [ "$GUESS" = 0 ] && { c=$((c + 1)); got=1; }
+    done
+    pre_good=$((pre_good + c)); pre_any=$((pre_any + got))
+    note "before the kill: ${KEYS[$j]} recalled by $c/$N (answers:$seen)"
+done
 
 # ---- kill -------------------------------------------------------------------
 KILL=$(python3 -c 'import random,sys; n,f,s=int(sys.argv[1]),float(sys.argv[2]),int(sys.argv[3]); r=random.Random(s); print(" ".join(map(str,sorted(r.sample(range(1,n+1),round(f*n))))))' "$N" "$F" "$SEED")
@@ -145,6 +158,7 @@ ANYF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[2
 MEANF=$(python3 -c 'import sys; a=int(sys.argv[2]); print("%.3f" % (int(sys.argv[1]) / a if a else 0))' "$good" "$asked")
 SPF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[2])))' "$SPREAD" "$((N * K))")
 echo "[ks] f=$F N=$N seed=$SEED nc=$NC killed=[$KILL] any=$ANYF mean=$MEANF R1=$R1 R3=$R3 spread=$SPF guessed=$guessed/$asked"
+echo "[ks] before the kill: any=$pre_any/$K recalled=$pre_good/$((N * K)) (not a verdict: separates recall failures from losses)"
 
 ge() { python3 -c 'import sys; sys.exit(0 if float(sys.argv[1]) >= float(sys.argv[2]) - 1e-9 else 1)' "$1" "$2"; }
 if [ "$NC" = 1 ]; then
