@@ -68,6 +68,17 @@ holds() {  # <node> <key index>: 0 if the node taught it or logged its arrival
     [ "$i" = "$((j + 1))" ] && return 0
     grep -aq "remote teach arrived: \"${KEYS[$j]}\"->\"${VALS[$j]}\"" "$LOGDIR/node$i.log"
 }
+PROV=""
+prov() {  # <node>: sets PROV to this node's `mind provenance` key lines ("k|v" per line)
+    local i="$1" lg="$LOGDIR/node$1.log" pre lines n=0
+    lines=$(wc -l < "$lg"); pre=$(grep -ac '^\[mind\] provenance: ' "$lg")
+    send "$i" "mind provenance"
+    while [ "$(grep -ac '^\[mind\] provenance: ' "$lg")" -le "$pre" ] && [ "$n" -lt 60 ]; do sleep 0.5; n=$((n + 1)); done
+    PROV=$(tail -n +"$((lines + 1))" "$lg" | sed -nE 's/^\[mind\]   "([a-z]+)" -> "([a-z]+)": .*/\1|\2/p')
+}
+held_n() {  # <PROV text> <key> <val>: 1 if the node's record holds key -> val
+    printf '%s\n' "$1" | grep -qx "$2|$3" && echo 1 || echo 0
+}
 ANS=""; GUESS=0
 ask() {  # <node> <key>: sets ANS and GUESS (1 = "key not in the live queue")
     local i="$1" k="$2" lg="$LOGDIR/node$1.log" pre n=0
@@ -132,6 +143,18 @@ for i in $KILL; do kill -9 "${PID[$i]}"; PID[$i]=0; done
 ALIVE=""; for i in $(seq 1 "$N"); do [ "${PID[$i]}" != 0 ] && ALIVE="$ALIVE $i"; done
 sleep 20
 
+# ---- held records (v2, primary): `mind provenance` is read-only --------------
+hany=0; hgood=0
+declare -A HP
+for i in $ALIVE; do prov "$i"; HP[$i]="$PROV"; note "node$i holds: $(echo $PROV)"; done
+for j in $(seq 0 $((K - 1))); do
+    got=0
+    for i in $ALIVE; do
+        [ "$(held_n "${HP[$i]}" "${KEYS[$j]}" "${VALS[$j]}")" = 1 ] && { hgood=$((hgood + 1)); got=1; }
+    done
+    hany=$((hany + got))
+done
+
 # ---- ask --------------------------------------------------------------------
 any=0; good=0; asked=0; guessed=0
 for j in $(seq 0 $((K - 1))); do
@@ -159,11 +182,18 @@ MEANF=$(python3 -c 'import sys; a=int(sys.argv[2]); print("%.3f" % (int(sys.argv
 SPF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[2])))' "$SPREAD" "$((N * K))")
 echo "[ks] f=$F N=$N seed=$SEED nc=$NC killed=[$KILL] any=$ANYF mean=$MEANF R1=$R1 R3=$R3 spread=$SPF guessed=$guessed/$asked"
 echo "[ks] before the kill: any=$pre_any/$K recalled=$pre_good/$((N * K)) (not a verdict: separates recall failures from losses)"
+HANYF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[2])))' "$hany" "$K")
+NALIVE=$(echo $ALIVE | wc -w)
+HMEANF=$(python3 -c 'import sys; d=int(sys.argv[2]); print("%.3f" % (int(sys.argv[1]) / d if d else 0))' "$hgood" "$((NALIVE * K))")
+echo "[ks] held records (v2): held_any=$HANYF held_mean=$HMEANF R1=$R1 R3=$R3"
 
 ge() { python3 -c 'import sys; sys.exit(0 if float(sys.argv[1]) >= float(sys.argv[2]) - 1e-9 else 1)' "$1" "$2"; }
 if [ "$NC" = 1 ]; then
     ge "$R1" "$MEANF" && res S4 PASS "broken (no remote teach): mean $MEANF <= R1 $R1" || res S4 FAIL "broken: mean $MEANF > R1 $R1"
+    ge "$R1" "$HANYF" && res V4 PASS "broken: held_any $HANYF <= R1 $R1" || res V4 FAIL "broken: held_any $HANYF > R1 $R1"
 else
+    ge "$HANYF" "$R3" && res V2 PASS "held_any $HANYF >= R3 $R3" || res V2 FAIL "held_any $HANYF < R3 $R3"
+    ge "$HMEANF" "$R1" && res V3 PASS "held_mean $HMEANF >= R1 $R1" || res V3 FAIL "held_mean $HMEANF < R1 $R1"
     ge "$SPF" 0.9   && res S1 PASS "spread $SPF >= 0.9"        || res S1 FAIL "spread $SPF < 0.9"
     ge "$ANYF" "$R3" && res S2 PASS "any $ANYF >= R3 $R3"       || res S2 FAIL "any $ANYF < R3 $R3"
     ge "$MEANF" "$R1" && res S3 PASS "mean $MEANF >= R1 $R1"    || res S3 FAIL "mean $MEANF < R1 $R1"
