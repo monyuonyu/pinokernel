@@ -852,25 +852,39 @@ static void suite_dds(PRI me)
     /* K7's busy wait makes NO kernel call, so the only dispatch points are
      * interrupt exits (a loop that polled tk_get_otm would test the service-
      * call exit instead — the first draft did). Calibrate the loop first:
-     * how many 64k-iteration chunks fit in ~50 ms, then spin 3x that. */
+     * how many 64k-iteration chunks fit in ~50 ms, then spin 3x that.
+     * A spin shorter than 40 ms says nothing (the 20 ms delay may not have
+     * ended): under host load the calibration can be preempted and come out
+     * short. Such a try is not judged; recalibrate and retry, at most 3 tries,
+     * red only if all three are short. A task that ran while disabled is red
+     * at once, whatever dt. (2026-10-15; before, one short try was red.) */
     {
-        UW chunks = 0, i;
-        t0 = now_ms();
-        while (now_ms() - t0 < 50 && chunks < 20000) {   /* 3x stays < 2^32 */
-            for (i = 0; i < 65536; i++) spin++;
-            chunks++;
+        UW chunks, i; INT k7try;
+        for (k7try = 0; k7try < 3; k7try++) {
+            chunks = 0;
+            t0 = now_ms();
+            while (now_ms() - t0 < 50 && chunks < 20000) {   /* 3x stays < 2^32 */
+                for (i = 0; i < 65536; i++) spin++;
+                chunks++;
+            }
+#ifdef TKC_K7_SHORT_TRIES   /* test hook: the first N calibrations come out short */
+            if (k7try < TKC_K7_SHORT_TRIES) chunks = 1;
+#endif
+            t = mk_task(t_delay_then_flag, me - 1);
+            h_flag = 0;
+            tk_sta_tsk(t, 2);             /* runs at once, sleeps 20 ms */
+            tk_dis_dsp();
+            t0 = now_ms();
+            for (i = 0; i < chunks * 3 * 65536; i++) spin++;
+            f_dis = h_flag;               /* read before any kernel call */
+            dt = now_ms() - t0;
+            tk_ena_dsp();
+            f_ena = h_flag;
+            if (dt >= 40 || f_dis != 0) break;
+            tk_dly_tsk(40);               /* a short try: let t finish, then retry */
+            tk_del_tsk(t);
         }
-        t = mk_task(t_delay_then_flag, me - 1);
-        h_flag = 0;
-        tk_sta_tsk(t, 2);                 /* runs at once, sleeps 20 ms */
-        tk_dis_dsp();
-        t0 = now_ms();
-        for (i = 0; i < chunks * 3 * 65536; i++) spin++;
-        f_dis = h_flag;                   /* read before any kernel call */
-        dt = now_ms() - t0;
     }
-    tk_ena_dsp();
-    f_ena = h_flag;
     check(f_dis == 0 && dt >= 40, "K7", "a task whose 20 ms delay ends while disabled does not run (~150 ms busy, no kernel call)", f_dis);
     check(f_ena == 2, "K8", "... and runs as soon as tk_ena_dsp", f_ena);
     tk_del_tsk(t);
