@@ -16,8 +16,8 @@
 #   3. kload_leak.py sends ONE beacon from an unknown sender and collects the
 #      push on udp 7386 (the guest sends to 10.1.0.100 = slirp = this host)
 #
-# exit 0 = nothing came back and the node logged the beacon (expected once
-#          KLOAD checks the sender),
+# exit 0 = nothing came back, the node logged the beacon, and afterwards it
+#          still answers `kload` with both doors shut (expected since the fix),
 #      1 = LEAK (the secret key reached the unknown sender) — master as of
 #          2026-10-14; since the fix (auto-push off by default, `kload
 #          autopush on` at the console) only with -DKLOAD_NO_PUSH_GATE or
@@ -81,5 +81,16 @@ grep -a 'kloader_task\] \(BEACON\|auto-push\)' "$WORK/serial.log" | head -3
 if [ "$rc" = 0 ] && ! grep -aq 'kloader_task\] BEACON from' "$WORK/serial.log"; then
     echo "[kload-leak] the node never logged the beacon - nothing came back proves nothing (inconclusive)"
     exit 2
+fi
+# ... and only if the node is still alive and says both doors are shut
+# (audit-50: a node that logged the beacon and then hung was green).
+if [ "$rc" = 0 ]; then
+    printf 'kload\r' >&3
+    if ! wait_for '\[kload\] receiver closed  auto-push off' 30; then
+        tail -5 "$WORK/serial.log"
+        echo "[kload-leak] no '[kload] receiver closed  auto-push off' after the beacon - node hung or a door is open (inconclusive)"
+        exit 2
+    fi
+    grep -a '\[kload\] receiver' "$WORK/serial.log" | tail -1
 fi
 exit "$rc"
