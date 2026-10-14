@@ -5119,7 +5119,13 @@ void mind_net_task(INT stacd, void *exinf)
                     } else {
                         /* (5) arrival ONLY via the production mouth (G33). */
                         UB kk = k, vv = v;
+#ifdef KS_NO_REMOTE_TEACH
+                        /* 1-8 broken variant (knowledge-survival.md): drop
+                         * every remote teach, so only the teacher knows */
+                        INT rc = -1; (void)kk; (void)vv;
+#else
                         INT rc = r3_fact_learn(&kk, &vv, 1);
+#endif
                         if (rc == 0) {
                             UW local_seq = r3_fq[r3_fq_n-1].seq;
                             /* (6) record B's view of the remote provenance:
