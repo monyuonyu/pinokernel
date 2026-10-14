@@ -91,6 +91,16 @@ if [ "$rc" = 0 ]; then
         echo "[kload-leak] no '[kload] receiver closed  auto-push off' after the beacon - node hung or a door is open (inconclusive)"
         exit 2
     fi
-    grep -a '\[kload\] receiver' "$WORK/serial.log" | tail -1
+    st="$(grep -a '\[kload\] receiver' "$WORK/serial.log" | tail -1)"
+    echo "$st"
+    # kload_leak.py resends the beacon every 5 s while nothing comes back, so
+    # a receive path still alive turns away many (24 in 120 s, kl50f.sh); one
+    # that hung after the first beacon stays at 1 while the shell, another
+    # task, still answers (kl50f.sh arm hang: exit 0 before this check)
+    away="$(echo "$st" | sed -n 's/.*turned away \([0-9]*\).*/\1/p')"
+    if [ "${away:-0}" -lt 2 ]; then
+        echo "[kload-leak] only ${away:-0} beacon(s) turned away - the receive path stopped after the first (inconclusive)"
+        exit 2
+    fi
 fi
 exit "$rc"
