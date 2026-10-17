@@ -218,6 +218,7 @@ static void cmd_help(void)
     sout("カーネルローダー (Phase 10 kloader):\r\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
     sout("  kpush <node_id>        - カーネルバイナリをノードへ送信→自動再起動\r\n");
+    sout("  kload [open|close|autopush on|off] - 受け手と自動プッシュ (既定は両方閉)\r\n");
     sout("  write /shared/F text   - 書き込み→自動同期\r\n");
     sout("  rm    /shared/F        - 削除→自動tombstone伝播\r\n");
     sout("  cp src /shared/F       - コピー→自動同期\r\n");
@@ -2561,6 +2562,22 @@ static void cmd_kpush(const char *arg)
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
 }
 
+/* kload — open/shut the KLOAD doors (KLOAD-UNAUTH, ROADMAP 0-14 S3). Both are
+ * shut at boot; only someone at this console can open them. */
+static void cmd_kload(const char *arg)
+{
+    while (*arg == ' ') arg++;
+    if (str_eq(arg, "open"))              kloader_set_rx_open(1);
+    else if (str_eq(arg, "close"))        kloader_set_rx_open(0);
+    else if (str_eq(arg, "autopush on"))  kloader_set_auto_push(1);
+    else if (str_eq(arg, "autopush off")) kloader_set_auto_push(0);
+    sout("[kload] receiver ");
+    sout(kloader_rx_is_open() ? "OPEN (any mesh peer can replace /KL.BIN)" : "closed");
+    sout("  auto-push ");
+    sout(kloader_auto_push_on() ? "ON (a beacon gets this node's live RAM)" : "off");
+    sout("  turned away "); sout_dec(kloader_drop_closed); sout("\r\n");
+}
+
 /* ------------------------------------------------------------------ */
 /* mesh — メッシュルーティング                                        */
 /* ------------------------------------------------------------------ */
@@ -3056,6 +3073,10 @@ static void execute(const char *cmd)
         { cmd_mesh(cmd + 4); return; }
     if (cmd[0]=='k' && cmd[1]=='p' && cmd[2]=='u' && cmd[3]=='s' && cmd[4]=='h')
         { cmd_kpush(cmd + 5); return; }
+    if (str_eq(cmd, "kload") || str_eq(cmd, "kload open") ||
+        str_eq(cmd, "kload close") || str_eq(cmd, "kload autopush on") ||
+        str_eq(cmd, "kload autopush off"))
+        { cmd_kload(cmd + 5); return; }
     /* Phase 11: 記憶 / AI会話 */
     if (cmd[0]=='c' && cmd[1]=='h' && cmd[2]=='a' && cmd[3]=='t' && cmd[4]=='\0')
         { chat_run(0); return; }
