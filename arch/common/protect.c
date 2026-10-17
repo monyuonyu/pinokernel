@@ -292,8 +292,11 @@ void protect_tick(UW elapsed_ms)
      *   - FAIR: every at-risk point is announced every tick; the rotor only
      *     varies WHICH point goes first, so under cross-node slot contention no
      *     single point is perpetually the loser (§6 made plural);
-     *   - PARALLEL: N points converge in ~one-point time + a bounded kickoff,
-     *     NOT N* one-point (§5: many crises, each its own replication, at once);
+     *   - PARALLEL (the intent): N points converge in ~one-point time + a
+     *     bounded kickoff, NOT N* one-point (§5: many crises, each its own
+     *     replication, at once). Not shown live: one point replicates within
+     *     one 200 ms tick, so a serialized defender looks the same (gap-ledger
+     *     PLURAL-PROTECT-NOT-SHOWN-PARALLEL; samples/28 checks the drive);
      *   - NO central / NO global order: the rotor + per-object age are local
      *     state; no aggregation window re-serializes anything (cf. audit G13).
      * Note this is a fair TIME-SHARE of a finite announce bandwidth: for very
@@ -701,10 +704,12 @@ static INT st_plural(void)
     }
 
     if (fails == 0)
-        pt_puts("[plural-protect] PASS (many points defended IN PARALLEL: "
-                "all kicked off together then filled concurrently = ~one-point "
-                "time, not N*one-point; fair, none starves; per-object threat — "
-                "no single-consciousness collapse)\r\n");
+        /* the claim is the MODEL's (gap-ledger PLURAL-PROTECT-NOT-SHOWN-
+         * PARALLEL): a serialized live defender passes this too */
+        pt_puts("[plural-protect] PASS (model pp_sim: N points kicked off in "
+                "one tick reach R in one-point ticks, not N*one-point; this is "
+                "the model, not the live defender - a serialized defender also "
+                "passes it; the live check is samples/28)\r\n");
     else
         pt_puts("[plural-protect] FAIL\r\n");
     return fails;
