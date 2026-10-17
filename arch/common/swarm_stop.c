@@ -62,10 +62,39 @@ void swarm_stop_make(U1 op, U4 epoch, const U1 pk[ED25519_PUBLIC_KEY_LEN],
                  b, SWARM_STOP_BODY_LEN + ED25519_PUBLIC_KEY_LEN, sk);
 }
 
+/* accept iff (all): name+version / known op / signer in the stop table /
+ * signature over body+signer / epoch above the last accepted one */
 INT swarm_stop_apply(const U1 *cmd, UW len)
 {
-    (void)cmd; (void)len;
-    ss_stopped = 1;                   /* stage 1, test first: accepts anything */
+    static const U1 name[6] = { 'P','K','S','T','O','P' };
+    const U1 *pk, *sig;
+    U4 epoch;
+    INT i, known = 0;
+
+    if (len != SWARM_STOP_CMD_LEN) return SWARM_STOP_E_HEAD;
+    if (!ss_eq(cmd, name, 6) || cmd[6] != SWARM_STOP_VER) return SWARM_STOP_E_HEAD;
+    if (cmd[7] != SWARM_STOP_OP_STOP && cmd[7] != SWARM_STOP_OP_RESUME) return SWARM_STOP_E_OP;
+    pk  = cmd + SWARM_STOP_BODY_LEN;
+    sig = pk + ED25519_PUBLIC_KEY_LEN;
+#ifndef SWARM_STOP_NO_AUTH
+    for (i = 0; i < ss_nkeys; i++)
+        if (ss_eq(ss_keys[i], pk, ED25519_PUBLIC_KEY_LEN)) { known = 1; break; }
+    if (!known) return SWARM_STOP_E_AUTH;
+#else
+    (void)i; (void)known;
+#endif
+#ifndef SWARM_STOP_NO_SIGCHECK
+    if (!sign_verify(cmd, SWARM_STOP_BODY_LEN + ED25519_PUBLIC_KEY_LEN, sig, pk))
+        return SWARM_STOP_E_SIG;
+#else
+    (void)sig;
+#endif
+    epoch = (U4)cmd[8] | ((U4)cmd[9] << 8) | ((U4)cmd[10] << 16) | ((U4)cmd[11] << 24);
+#ifndef SWARM_STOP_NO_REPLAY
+    if (epoch <= ss_epoch) return SWARM_STOP_E_REPLAY;
+#endif
+    ss_epoch   = epoch;
+    ss_stopped = (cmd[7] == SWARM_STOP_OP_STOP);
     return SWARM_STOP_OK;
 }
 
@@ -126,10 +155,11 @@ INT swarm_stop_selftest(void (*out)(const char *))
     r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
     ss_check("T2", "stop signed by a key not in the table is refused", r != SWARM_STOP_OK && !swarm_stop_is_stopped(), r);
 
-    /* T3 one byte changed (the epoch) after signing */
+    /* T3 one byte changed (the epoch, 2 -> 258: still above the last, so
+     * only the signature can refuse it) after signing */
     swarm_stop_reset();
-    swarm_stop_make(SWARM_STOP_OP_STOP, 1, apk, ask, &c);
-    c.b[8] ^= 0x01;
+    swarm_stop_make(SWARM_STOP_OP_STOP, 2, apk, ask, &c);
+    c.b[9] ^= 0x01;
     r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
     ss_check("T3", "stop with one byte changed is refused", r != SWARM_STOP_OK && !swarm_stop_is_stopped(), r);
 
