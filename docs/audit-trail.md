@@ -1840,6 +1840,24 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — KLOAD receiver and auto-push shut at boot (0-14 S3, KLOAD-UNAUTH) (2026-10-18, merge
+  `3a96c493` of `feat/kload-sign` da87211d/ce926872 (audit-51 PASS), `--no-ff` onto `524b33ff`, made on
+  `trial/kl52` and fast-forwarded with the ledger close `43109682`; R-KLOAD (2026-10-15T02:40) was put to
+  mk_pino with a recommendation and, with no answer in 24 h, landed on it). Conflict: ROADMAP 0-12/0-13/0-14
+  (master's newer rows kept, the kload sentence added to 0-14 by hand). The bare `.text` changes
+  DELIBERATELY: `kloader_task.c` (shared x86/aarch64) gains the two door flags and checks, x86 shell.c the
+  `kload` command. Measured on a fresh clone of `trial/kl52` 3a96c493 (gcc 13.3.0, `objcopy -O binary -j
+  .text`; `pk-scratch/kl52.sh`, `/build/kl52`):
+    base `524b33ff`  aarch64 807bb3d6… 361972 B   x86 ec6b2012… 372287 B
+      aarch64  32bf195d6aca9f5300e854ff0f469a7ff8884e13686f34a53b45acbd320770cc  362144 B
+      x86      f07dd793d0965694d9f7ad3e573b6380569d8b286786ac15e26cd496867ee089  372883 B
+  (= audit-51's trial merge digits.) On that tree: hosted rx x86_64 16/0 and aarch64 16/0; bare
+  run_tk_conform.sh x86 and AArch64 133/0 and all 14 broken kernels red; `[kload-leak]` 0, and 1 (LEAK,
+  node_sk[32:64] == node_pk) with -DKLOAD_NO_PUSH_GATE after `make clean` (a first run without the clean
+  reused the plain objects and gave 0 — the harness's error, CI cleans between the two steps); build_all
+  ALL OK; script modes PASS. check_vmodel is red on this tree for an unrelated missing row
+  (knowledge-survival.md, fix on `feat/vmodel-ks`). This entry was written by the run that merged; an
+  independent re-measure is for a different run.
 - CROWN RE-BLESS — the receive entry-point checks (0-9) and bare AArch64 FP/SIMD + FPCR across a task
   switch (0-11), one re-bless (2026-10-12, merges `7b80b30a` of `feat/rx-bounds` ca2bde91 (audit-39 PASS)
   and `2f94375d` of `feat/bare-a64-fp` 3618269e (audit-41 PASS), `--no-ff` onto `31b9ebf9`, made on
