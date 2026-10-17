@@ -1,4 +1,6 @@
 # 1-8 知識の生存率（小さい版）— 設計と事前に決めた期待
+<!-- vmodel rung: PARTIAL -->
+<!-- vmodel certs: `run_knowledge_survival.sh` -->
 
 ROADMAP 1-8 の最初の段。11/30 の外向けのデモ（生存率の曲線、比べる相手つき）の土台。
 試験は `tests/host/run_knowledge_survival.sh`。**期待はこの文書を書いた時点で決め、結果を見て直さない**（直すなら理由を書いて版を上げる）。
