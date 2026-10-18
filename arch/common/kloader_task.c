@@ -353,13 +353,19 @@ INT kloader_beacon_queued(void)
 }
 
 /* empty the beacon queue through push(); returns how many were pushed.
- * The tkconf rx cert (K7) passes a counting stub instead of kloader_push_ip. */
+ * The tkconf rx cert (K7) passes a counting stub instead of kloader_push_ip.
+ * Auto-push off drops what was queued while it was on (kload finding 3):
+ * the owner's `kload autopush off` holds from the next drain, not after
+ * up to 3 more pushes. Red with -DKLOAD_NO_DRAIN_GATE (K7). */
 INT kloader_beacon_drain(void (*push)(UW ip))
 {
     INT pushed = 0;
     while (beacon_queue_head != beacon_queue_tail) {
         UW ip = beacon_queue[beacon_queue_head];
         beacon_queue_head = (UB)((beacon_queue_head + 1) % BEACON_QUEUE_MAX);
+#ifndef KLOAD_NO_DRAIN_GATE
+        if (!kload_auto_push) { kloader_drop_closed++; continue; }
+#endif
         push(ip);
         pushed++;
     }

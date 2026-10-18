@@ -217,7 +217,7 @@ static void cmd_help(void)
     vga_set_color(VGA_YELLOW, VGA_BLACK);
     sout("カーネルローダー (Phase 10 kloader):\r\n");
     vga_set_color(VGA_LIGHT_GREY, VGA_BLACK);
-    sout("  kpush <node_id>        - カーネルバイナリをノードへ送信→自動再起動\r\n");
+    sout("  kpush <node_id>        - カーネルを送る (相手が kload open のときだけ届く)\r\n");
     sout("  kload [open|close|autopush on|off] - 受け手と自動プッシュ (既定は両方閉)\r\n");
     sout("  write /shared/F text   - 書き込み→自動同期\r\n");
     sout("  rm    /shared/F        - 削除→自動tombstone伝播\r\n");
