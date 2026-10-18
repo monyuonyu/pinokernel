@@ -1190,6 +1190,13 @@ jobs:
           cd boot/linux_x86_64
           timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" | tee rx_x64.log
           grep -aF '[rxb] 16 PASS / 0 FAIL' rx_x64.log
+      # ROADMAP 0-14 S2: the signed stop command, accept rule only (in-proc,
+      # arch/common/swarm_stop.c, docs/architecture/30-module/swarm-stop.md).
+      - name: signed swarm stop - accept rule (tkconf stop, BLOCKING, 0-14 S2)
+        run: |
+          cd boot/linux_x86_64
+          timeout 60 sh -c "printf 'tkconf stop\nexit\n' | ./p-kernel" | tee stop_x64.log
+          grep -aF '[swarm-stop] 8 PASS / 0 FAIL' stop_x64.log
 
       # RNG0 on hosted x86_64: K9 (a task woken during a no-call spin runs
       # during it) is in the contract suite above, but nothing showed that it
@@ -1212,6 +1219,14 @@ jobs:
           make -C boot/linux_x86_64 EXTRA_CFLAGS=-DKLOAD_NO_RX_GATE >/dev/null
           ( cd boot/linux_x86_64 && timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" ) | tee rx_x64_nc.log
           grep -aF '[rxb] K0 FAIL' rx_x64_nc.log
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 >/dev/null
+      - name: T3 goes red without the stop signature check (negative control, -DSWARM_STOP_NO_SIGCHECK, 0-14 S2)
+        run: |
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 EXTRA_CFLAGS=-DSWARM_STOP_NO_SIGCHECK >/dev/null
+          ( cd boot/linux_x86_64 && timeout 60 sh -c "printf 'tkconf stop\nexit\n' | ./p-kernel" ) | tee stop_x64_nc.log
+          grep -aF '[swarm-stop] T3 FAIL' stop_x64_nc.log
           make -C boot/linux_x86_64 clean >/dev/null
           make -C boot/linux_x86_64 >/dev/null
 
@@ -1337,6 +1352,12 @@ jobs:
           timeout 120 sh -c "printf 'tkconf rx\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee rx_a64.log
           grep -aF '[rxb] 16 PASS / 0 FAIL' rx_a64.log
+      - name: signed swarm stop - accept rule on hosted aarch64 (tkconf stop, BLOCKING, 0-14 S2)
+        run: |
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf stop\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee stop_a64.log
+          grep -aF '[swarm-stop] 8 PASS / 0 FAIL' stop_a64.log
       # D5-k on aarch64: tk_exd_tsk frees its own stack, then force-dispatches;
       # knl_dispatch_to_schedtsk must leave it for knl_tmp_stack before idling.
       # gdb calls drpc_local_restart from cmd_ver (no shell path reaches it).
@@ -1376,6 +1397,14 @@ jobs:
           timeout 120 sh -c "printf 'tkconf rx\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee rx_a64_nc.log
           grep -aF '[rxb] K4 FAIL' rx_a64_nc.log
+      - name: T6b goes red without the stop length check (negative control, -DSWARM_STOP_NO_LENCHECK, 0-14 S2)
+        run: |
+          make -C boot/linux clean >/dev/null
+          make -C boot/linux EXTRA_CFLAGS=-DSWARM_STOP_NO_LENCHECK >/dev/null
+          cd boot/linux
+          timeout 120 sh -c "printf 'tkconf stop\nexit\n' | \
+            qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee stop_a64_nc.log
+          grep -aF '[swarm-stop] T6b FAIL' stop_a64_nc.log
 
   bare-metal:
     name: "ベアメタル (i686 + aarch64, ビルドのみ)"

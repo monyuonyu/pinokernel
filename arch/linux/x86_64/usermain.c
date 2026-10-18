@@ -19,6 +19,7 @@ INT nosw_run(void (*out)(const char *));           /* pool_preempt.c */
 INT fp_preserve_run(void (*out)(const char *));    /* pool_preempt.c */
 INT nosw_relay_run(void (*out)(const char *));     /* pool_preempt.c */
 INT rx_bounds_run(void (*out)(const char *));      /* rx_bounds_test.c (0-9) */
+INT swarm_stop_selftest(void (*out)(const char *)); /* swarm_stop.c (0-14 S2) */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -1178,6 +1179,8 @@ EXPORT INT usermain(void)
                 nosw_relay_run(print);    /* pool_preempt.c, N28-N30 (0-10) */
             else if (tal >= 2 && ta[0]=='r'&&ta[1]=='x')
                 rx_bounds_run(print);     /* rx_bounds_test.c, ROADMAP 0-9 */
+            else if (tal >= 4 && ta[0]=='s'&&ta[1]=='t'&&ta[2]=='o'&&ta[3]=='p')
+                swarm_stop_selftest(print); /* swarm_stop.c, ROADMAP 0-14 S2 */
             else
                 tk_conform_run(print);
         } else if (starts_with(line, n, "fed") && (n == 3 || line[3] == ' ')) {
