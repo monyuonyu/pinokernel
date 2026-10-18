@@ -1735,6 +1735,10 @@ void r3_migrate_forward_test(void)
 typedef struct {
     UB key[R_NPAIR];    /* the fact's bound keys (token ids)           */
     UB yhat[R_NPAIR];   /* the FAST layer's reading per key            */
+    UB val[R_NPAIR];    /* 1-8 / rule 11: the value the fact ARRIVED   *
+                         * with (the record). Sleep rounds still train *
+                         * on yhat; `mind provenance` / `explain` show *
+                         * val and name yhat when the two differ      */
     UB n;               /* bindings in this fact (<= R_NPAIR)          */
     UB state;           /* R3F_PENDING -> R3F_RETAINED                 */
     UB rounds_done;     /* idle rounds spent on this fact              */
@@ -1742,7 +1746,7 @@ typedef struct {
                          * R3_SAL_CAP; `mind ask` accrues (r3_fact_touch)*/
     UW seq;             /* arrival order (the autobiographical when)   */
 } R3_FACT;
-_Static_assert(sizeof(R3_FACT) == 24, "R3_FACT fixed size");
+_Static_assert(sizeof(R3_FACT) == 32, "R3_FACT fixed size");
 
 static R3_FACT r3_fq[R3_FQ_MAX];          /* the bounded queue          */
 static UB r3_fq_n   = 0;
@@ -1994,7 +1998,9 @@ INT r3_fact_learn(const UB *keys, const UB *vals, INT n)
     /* arrival: the FROZEN fast layer reads SUPPORT prompts built from
      * what the conversation shows; the queue stores its READING
      * (k, yhat_k) — the hippocampal trace. The oracle never trains;
-     * a misread binding is memorized wrong and the eval shows it. */
+     * a misread binding is memorized wrong and the eval shows it.
+     * 1-8 / rule 11: the value given (vals[i]) is kept next to the
+     * reading as the record (val_k); the rounds still train on yhat. */
     R3_FACT *f = &r3_fq[r3_fq_n];
     f->n = (UB)n; f->state = R3F_PENDING; f->rounds_done = 0;
     f->salience = 1; f->seq = ++r3_fq_seq;
@@ -2035,6 +2041,11 @@ INT r3_fact_learn(const UB *keys, const UB *vals, INT n)
 #endif
         f->key[i]  = keys[i];
         f->yhat[i] = best;
+#ifdef R3_RECORD_FROM_READING
+        f->val[i]  = best;       /* falsifier: the record is the reading */
+#else
+        f->val[i]  = vals[i];
+#endif
 #ifdef _TK_HOSTED_LIBC_
         if (keys[i] < R_KEYV) r3_held_keys |= 1u << keys[i];   /* 1-2b */
 #endif
@@ -3101,7 +3112,10 @@ INT r3_fact_revise(UB k, UB v_new)
     INT bind, fi = m_find_key((INT)k, &bind);
     if (fi < 0) return -1;                 /* not bound: caller does teach   */
     R3_FACT *f = &r3_fq[fi];
-    if (f->yhat[bind] == v_new) return -2; /* already this belief: no-op     */
+    /* already this record: no-op. 1-8: the record (val), not the reading,
+     * says what was taught; the callers compare the same way. With no
+     * misread val == yhat and this is the old test. */
+    if (f->val[bind] == v_new) return -2;
 
     /* ── G-LEARN (conscience.md §1.2): refuse revising INTO a forbidden value
      * (covers the local revise verb AND remote revise). The floor is not in the
@@ -3140,6 +3154,11 @@ INT r3_fact_revise(UB k, UB v_new)
      * queue slot is consumed -> the old engram is GONE from the replay
      * union (the D1 contradiction cannot form). */
     f->yhat[bind]  = best;
+#ifdef R3_RECORD_FROM_READING
+    f->val[bind]   = best;                 /* falsifier: record = reading    */
+#else
+    f->val[bind]   = v_new;                /* 1-8: the record follows the revise */
+#endif
     f->state       = R3F_PENDING;
     f->rounds_done = 0;
     f->seq         = ++r3_fq_seq;          /* the new "when" (autobiography) */
@@ -3735,7 +3754,7 @@ static void m_teach(const UB *p, const UB *end)
     INT bind, fi = m_find_key(k, &bind);           /* (4) re-teach = LM-12
                                                     * belief revision (Site 1) */
     if (fi >= 0) {
-        UB v_old = r3_fq[fi].yhat[bind];
+        UB v_old = r3_fq[fi].val[bind];             /* 1-8: the record */
         if (v_old == (UB)v) {
             r_puts("[mind] key "); r_putdec((UW)k);
             r_puts(" already believes \""); r_puts(r3_vocab_val_word(v));
@@ -3899,7 +3918,10 @@ static void m_provenance(void)
             (void)r3_fact_touch((INT)f->key[b]);
 #endif
             r_puts("[mind]   \""); r_puts(r3_vocab_key_word(f->key[b]));
-            r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->yhat[b])); r_puts("\": ");
+            r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->val[b])); r_puts("\": ");
+            if (f->yhat[b] != f->val[b]) {          /* 1-8: the record first */
+                r_puts("read \""); r_puts(r3_vocab_val_word(f->yhat[b])); r_puts("\", ");
+            }
             INT w = m_teacher_puts(f->seq);
             r_puts(", local seq "); r_putdec(f->seq);
             r_puts(f->state == R3F_RETAINED ? ", RETAINED\r\n" : ", PENDING\r\n");
@@ -3939,7 +3961,12 @@ static void m_explain(const UB *p, const UB *end)
 #endif
         R3_FACT *f = &r3_fq[fi];
         r_puts("[mind]   current: \""); r_puts(r3_vocab_key_word(k));
-        r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->yhat[bind])); r_puts("\"\r\n");
+        r_puts("\" -> \""); r_puts(r3_vocab_val_word(f->val[bind])); r_puts("\"\r\n");
+        if (f->yhat[bind] != f->val[bind]) {     /* 1-8: the record vs the reading */
+            r_puts("[mind]   read: \""); r_puts(r3_vocab_val_word(f->yhat[bind]));
+            r_puts("\" (the fast layer's reading at arrival; sleep trains on it,"
+                   " the record keeps the value given)\r\n");
+        }
         r_puts("[mind]   learned: ");
         (void)m_teacher_puts(f->seq);
         r_puts(", local seq "); r_putdec(f->seq); r_puts("\r\n");
@@ -5066,7 +5093,7 @@ void mind_net_task(INT stacd, void *exinf)
                     INT bind, fi = m_find_key((INT)k, &bind);
                     if (fi >= 0) {
                         /* (4) conflict: LOCAL teach (or a prior remote) wins. */
-                        UB cur = r3_fq[fi].yhat[bind];
+                        UB cur = r3_fq[fi].val[bind];   /* 1-8: the record */
                         if (cur == v) {
                             r_puts("[mind] remote teach key ");
                             r_putdec((UW)k); r_puts(" from node ");

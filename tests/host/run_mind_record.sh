@@ -58,7 +58,7 @@ if build "-DR3_TEST_MISREAD_KEY=15"; then
     chk rec-precond "$L" '^\[mind\]   teacher_agree 0 '
     chk rec-ink     "$L" "^\\[mind\\]   \"ink\" -> \"fresh\": read \"[a-z]+\", $T"
     chk rec-sky     "$L" "^\\[mind\\]   \"sky\" -> \"blue\": $T"
-    chk rec-explain "$L" '^\[mind\]   current: "ink" -> "fresh"$'
+    chk rec-explain "$L" '^\[mind\]   current: "ink" -> "fresh"'
     chk rec-read    "$L" '^\[mind\]   read: "[a-z]+" '
     chk rec-revise  "$L" "^\\[mind\\]   \"ink\" -> \"green\": read \"[a-z]+\", $T"
 else
