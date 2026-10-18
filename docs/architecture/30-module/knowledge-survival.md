@@ -96,6 +96,7 @@ S1〜S4（想起）はそのまま並べて出す。
 - `mind explain` の current も記録、違えば `read:` の行
 - 「同じ値か」の比べ（手元の教え直し・網の重複・revise の no-op）は記録どうし。読み違いが無ければ前と同じ
 - 試験: `tests/host/run_mind_record.sh`。1 台では ink の読み違いが起きない（教える順 7 通りと node id 1〜3・5〜8 で全部 fresh、master df557375）ので、試験用の `-DR3_TEST_MISREAD_KEY=15` で読みを 1 つずらす。陰性コントロール `-DR3_RECORD_FROM_READING`（記録＝読み）で rec-ink 赤
+- ライブ（f=0.5 種1、433af014）は ALL PASS だが、この回は読み違いが 8 台とも 0（read の行なし）＝記録の効き目はライブではまだ見ていない
 - まだ: pull の答えと 1-3 の履歴の押し返しは読みを送る、`mind ask` は重みで答える（想起の赤はそのまま）。ベアの x86・aarch64 にも入る＝crown が動く
 
 ## 限界（先に書く）
