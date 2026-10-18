@@ -1196,7 +1196,7 @@ jobs:
         run: |
           cd boot/linux_x86_64
           timeout 60 sh -c "printf 'tkconf stop\nexit\n' | ./p-kernel" | tee stop_x64.log
-          grep -aF '[swarm-stop] 8 PASS / 0 FAIL' stop_x64.log
+          grep -aF '[swarm-stop] 10 PASS / 0 FAIL' stop_x64.log
 
       # RNG0 on hosted x86_64: K9 (a task woken during a no-call spin runs
       # during it) is in the contract suite above, but nothing showed that it
@@ -1357,7 +1357,7 @@ jobs:
           cd boot/linux
           timeout 120 sh -c "printf 'tkconf stop\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee stop_a64.log
-          grep -aF '[swarm-stop] 8 PASS / 0 FAIL' stop_a64.log
+          grep -aF '[swarm-stop] 10 PASS / 0 FAIL' stop_a64.log
       # D5-k on aarch64: tk_exd_tsk frees its own stack, then force-dispatches;
       # knl_dispatch_to_schedtsk must leave it for knl_tmp_stack before idling.
       # gdb calls drpc_local_restart from cmd_ver (no shell path reaches it).
