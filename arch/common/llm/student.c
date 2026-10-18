@@ -2409,6 +2409,24 @@ int st_quant_fake(const st_model *src, st_model *dst, int bits, int gran,
 }
 
 /* ================================================================== */
+/* brain self-quantization, stage 2: GPTQ (see student.h)             */
+/* ================================================================== */
+
+int st_quant_gptq(const st_model *src, st_model *dst, int bits,
+                  const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
+{
+    (void)src; (void)dst; (void)bits; (void)calib; (void)ncalib; (void)seq; (void)bytes_q;
+    return ST_E_ARG;                               /* test first: not yet */
+}
+
+double st_quant_layer_obj(const st_model *src, const st_model *q,
+                          const uint8_t *calib, int ncalib, int seq)
+{
+    (void)src; (void)q; (void)calib; (void)ncalib; (void)seq;
+    return -1.0;
+}
+
+/* ================================================================== */
 /* one-bit delta, stage 1 (st_delta_sign — see student.h)              */
 /* ================================================================== */
 
