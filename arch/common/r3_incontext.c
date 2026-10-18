@@ -2028,6 +2028,11 @@ INT r3_fact_learn(const UB *keys, const UB *vals, INT n)
         UB best = 0;
         for (INT c = 1; c < R_VALV; c++)
             if (votes[c] > votes[best]) best = (UB)c;
+#ifdef R3_TEST_MISREAD_KEY
+        /* test builds only (run_mind_record.sh): force the misread 1-8 saw
+         * on receivers (ink -> near), which one node does not reproduce */
+        if (keys[i] == (UB)R3_TEST_MISREAD_KEY) best = (UB)((best + 1) % R_VALV);
+#endif
         f->key[i]  = keys[i];
         f->yhat[i] = best;
 #ifdef _TK_HOSTED_LIBC_
@@ -3125,6 +3130,9 @@ INT r3_fact_revise(UB k, UB v_new)
     UB best = 0;
     for (INT c = 1; c < R_VALV; c++) if (votes[c] > votes[best]) best = (UB)c;
     r3_s_rng = r_rng; r_rng = save;
+#ifdef R3_TEST_MISREAD_KEY
+    if (k == (UB)R3_TEST_MISREAD_KEY) best = (UB)((best + 1) % R_VALV);  /* test only */
+#endif
 
     /* (3) supersede IN PLACE: the old reading is overwritten by the new
      * one; the fact re-enters PENDING with a fresh arrival time (seq) so
