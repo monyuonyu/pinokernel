@@ -13,7 +13,8 @@
  *
  *  Falsifiers (expected red): -DSWARM_STOP_NO_SIGCHECK (T3),
  *  -DSWARM_STOP_NO_REPLAY (T4), -DSWARM_STOP_NO_AUTH (T2, T5),
- *  -DSWARM_STOP_NO_LENCHECK (T6b).
+ *  -DSWARM_STOP_NO_LENCHECK (T6b, T6c), -DSWARM_STOP_LEN_MIN (T6c: refuse
+ *  only short commands), -DSWARM_STOP_NO_OPCHECK (T8).
  *
  *  Limit: the stopped flag and the epoch live in RAM only. A restart clears
  *  the stop, and a command with an old epoch is accepted again after it.
@@ -75,13 +76,17 @@ INT swarm_stop_apply(const U1 *cmd, UW len)
     U4 epoch;
     INT i, known = 0;
 
-#ifndef SWARM_STOP_NO_LENCHECK
-    if (len != SWARM_STOP_CMD_LEN) return SWARM_STOP_E_HEAD;
-#else
+#if defined(SWARM_STOP_NO_LENCHECK)
     (void)len;
+#elif defined(SWARM_STOP_LEN_MIN)
+    if (len < SWARM_STOP_CMD_LEN) return SWARM_STOP_E_HEAD;   /* falsifier: T6c */
+#else
+    if (len != SWARM_STOP_CMD_LEN) return SWARM_STOP_E_HEAD;
 #endif
     if (!ss_eq(cmd, name, 6) || cmd[6] != SWARM_STOP_VER) return SWARM_STOP_E_HEAD;
+#ifndef SWARM_STOP_NO_OPCHECK
     if (cmd[7] != SWARM_STOP_OP_STOP && cmd[7] != SWARM_STOP_OP_RESUME) return SWARM_STOP_E_OP;
+#endif
     pk  = cmd + SWARM_STOP_BODY_LEN;
     sig = pk + ED25519_PUBLIC_KEY_LEN;
 #ifndef SWARM_STOP_NO_AUTH
@@ -139,6 +144,7 @@ INT swarm_stop_selftest(void (*out)(const char *))
 {
     static U1 apk[32], ask[64], epk[32], esk[64];
     static SWARM_STOP_CMD c;
+    static U1 longb[SWARM_STOP_CMD_LEN + 1];
     INT r, keys_were = ss_nkeys, stopped_was = ss_stopped;
     U4 epoch_was = ss_epoch;
     static U1 keys_save[SWARM_STOP_KEYS_MAX][ED25519_PUBLIC_KEY_LEN];
@@ -195,6 +201,34 @@ INT swarm_stop_selftest(void (*out)(const char *))
     r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);           /* same bytes, full length */
     ss_check("T6b", "a short command is refused (the same bytes at full length stop)",
              t6b && r == SWARM_STOP_OK && swarm_stop_is_stopped(), t6b ? r : r6b);
+
+    /* T6c long packet (audit-53 A3: "refuse only short" kept 8/0): a good
+     * command with one byte more is refused; the same bytes at full length stop */
+    swarm_stop_reset();
+    swarm_stop_make(SWARM_STOP_OP_STOP, 3, apk, ask, &c);
+    for (i = 0; i < SWARM_STOP_CMD_LEN; i++) longb[i] = c.b[i];
+    longb[SWARM_STOP_CMD_LEN] = 0;
+    r = swarm_stop_apply(longb, SWARM_STOP_CMD_LEN + 1);
+    INT t6c = (r != SWARM_STOP_OK && !swarm_stop_is_stopped());
+    INT r6c = r;
+    r = swarm_stop_apply(longb, SWARM_STOP_CMD_LEN);
+    ss_check("T6c", "a long command is refused (the same bytes at full length stop)",
+             t6c && r == SWARM_STOP_OK && swarm_stop_is_stopped(), t6c ? r : r6c);
+
+    /* T8 unknown op (audit-53 A2: without the op check, op 3 acted as a resume):
+     * stopped at 4, then op 3 at 5 signed by the table's key -> refused, still
+     * stopped, and the epoch did not move (a resume at 5 still works) */
+    swarm_stop_reset();
+    swarm_stop_make(SWARM_STOP_OP_STOP, 4, apk, ask, &c);
+    swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);                 /* stopped at 4 */
+    swarm_stop_make(3, 5, apk, ask, &c);
+    r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
+    INT t8a = (r != SWARM_STOP_OK && swarm_stop_is_stopped());
+    INT r8 = r;
+    swarm_stop_make(SWARM_STOP_OP_RESUME, 5, apk, ask, &c);
+    r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
+    ss_check("T8", "an unknown op signed by the table's key is refused (still stopped)",
+             t8a && r == SWARM_STOP_OK && !swarm_stop_is_stopped(), t8a ? r : r8);
 
     /* T1 the authority's stop works */
     swarm_stop_reset();
