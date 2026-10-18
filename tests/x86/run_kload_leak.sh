@@ -85,14 +85,20 @@ fi
 # ... and only if the node is still alive and says both doors are shut
 # (audit-50: a node that logged the beacon and then hung was green).
 if [ "$rc" = 0 ]; then
+    # read only the status line this `kload` produces (audit-51: a status
+    # line printed earlier on the console, e.g. by an owner's `kload open`,
+    # satisfied the wait and was read as the answer)
+    pre="$(grep -ac '\[kload\] receiver' "$WORK/serial.log")"
     printf 'kload\r' >&3
-    if ! wait_for '\[kload\] receiver closed  auto-push off' 30; then
+    n=0
+    while [ "$(grep -ac '\[kload\] receiver' "$WORK/serial.log")" -le "$pre" ] && [ "$n" -lt 30 ]; do sleep 1; n=$((n + 1)); done
+    st="$(grep -a '\[kload\] receiver' "$WORK/serial.log" | tail -n +"$((pre + 1))" | head -1)"
+    echo "$st"
+    if ! echo "$st" | grep -q '\[kload\] receiver closed  auto-push off'; then
         tail -5 "$WORK/serial.log"
-        echo "[kload-leak] no '[kload] receiver closed  auto-push off' after the beacon - node hung or a door is open (inconclusive)"
+        echo "[kload-leak] no fresh '[kload] receiver closed  auto-push off' after the beacon - node hung or a door is open (inconclusive)"
         exit 2
     fi
-    st="$(grep -a '\[kload\] receiver' "$WORK/serial.log" | tail -1)"
-    echo "$st"
     # kload_leak.py resends the beacon every 5 s while nothing comes back, so
     # a receive path still alive turns away many (24 in 120 s, kl50f.sh); one
     # that hung after the first beacon stays at 1 while the shell, another
