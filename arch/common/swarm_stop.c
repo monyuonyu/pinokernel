@@ -12,7 +12,11 @@
  *  key that may stop the swarm.
  *
  *  Falsifiers (expected red): -DSWARM_STOP_NO_SIGCHECK (T3),
- *  -DSWARM_STOP_NO_REPLAY (T4), -DSWARM_STOP_NO_AUTH (T2, T5).
+ *  -DSWARM_STOP_NO_REPLAY (T4), -DSWARM_STOP_NO_AUTH (T2, T5),
+ *  -DSWARM_STOP_NO_LENCHECK (T6b).
+ *
+ *  Limit: the stopped flag and the epoch live in RAM only. A restart clears
+ *  the stop, and a command with an old epoch is accepted again after it.
  */
 
 #include "swarm_stop.h"
@@ -71,7 +75,11 @@ INT swarm_stop_apply(const U1 *cmd, UW len)
     U4 epoch;
     INT i, known = 0;
 
+#ifndef SWARM_STOP_NO_LENCHECK
     if (len != SWARM_STOP_CMD_LEN) return SWARM_STOP_E_HEAD;
+#else
+    (void)len;
+#endif
     if (!ss_eq(cmd, name, 6) || cmd[6] != SWARM_STOP_VER) return SWARM_STOP_E_HEAD;
     if (cmd[7] != SWARM_STOP_OP_STOP && cmd[7] != SWARM_STOP_OP_RESUME) return SWARM_STOP_E_OP;
     pk  = cmd + SWARM_STOP_BODY_LEN;
@@ -176,9 +184,17 @@ INT swarm_stop_selftest(void (*out)(const char *))
     r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
     ss_check("T6", "wrong name or version is refused", t6a && r != SWARM_STOP_OK && !swarm_stop_is_stopped(), r);
 
-    /* short packet */
+    /* T6b short packet: a command that is accepted at full length (audit-52:
+     * the old T6b reused T6's wrong-version command, so the version check
+     * refused it and the length check was never reached) */
+    swarm_stop_reset();
+    swarm_stop_make(SWARM_STOP_OP_STOP, 3, apk, ask, &c);
     r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN - 1);
-    ss_check("T6b", "a short command is refused", r != SWARM_STOP_OK && !swarm_stop_is_stopped(), r);
+    INT t6b = (r != SWARM_STOP_OK && !swarm_stop_is_stopped());
+    INT r6b = r;
+    r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);           /* same bytes, full length */
+    ss_check("T6b", "a short command is refused (the same bytes at full length stop)",
+             t6b && r == SWARM_STOP_OK && swarm_stop_is_stopped(), t6b ? r : r6b);
 
     /* T1 the authority's stop works */
     swarm_stop_reset();
@@ -186,7 +202,8 @@ INT swarm_stop_selftest(void (*out)(const char *))
     r = swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
     ss_check("T1", "a stop signed by the table's key stops the node", r == SWARM_STOP_OK && swarm_stop_is_stopped(), r);
 
-    /* T4 the same command again, and an older epoch, after a resume */
+    /* T4 an older epoch (5, below the resume's 6) after a resume; the same
+     * epoch again is caught by T7b (resume at 7 after the stop at 7) */
     swarm_stop_make(SWARM_STOP_OP_RESUME, 6, apk, ask, &c);
     swarm_stop_apply(c.b, SWARM_STOP_CMD_LEN);
     swarm_stop_make(SWARM_STOP_OP_STOP, 5, apk, ask, &c);

@@ -18,8 +18,8 @@ INT pool_preempt_run(void (*out)(const char *));   /* arch/linux/pool_preempt.c 
 INT nosw_run(void (*out)(const char *));           /* arch/linux/pool_preempt.c */
 INT fp_preserve_run(void (*out)(const char *));    /* arch/linux/pool_preempt.c */
 INT nosw_relay_run(void (*out)(const char *));     /* arch/linux/pool_preempt.c */
-INT rx_bounds_run(void (*out)(const char *));
-INT swarm_stop_selftest(void (*out)(const char *));  /* swarm_stop.c (0-14 S2) */      /* rx_bounds_test.c (0-9) */
+INT rx_bounds_run(void (*out)(const char *));      /* rx_bounds_test.c (0-9) */
+INT swarm_stop_selftest(void (*out)(const char *)); /* swarm_stop.c (0-14 S2) */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
