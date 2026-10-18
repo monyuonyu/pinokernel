@@ -50,6 +50,9 @@ void kloader_rx(UB src_node, UH dst_port, const UB *data, UH len);
 
 /* udp_bind コールバック (bare kloader ノードからの BEACON 受信) */
 void kloader_beacon_rx(UW src_ip, UH src_port, const UB *data, UH len);
+/* beacons waiting for the auto-push, and the task's drain (K7 in tkconf rx) */
+INT kloader_beacon_queued(void);
+INT kloader_beacon_drain(void (*push)(UW ip));
 
 /* KLOAD-UNAUTH: both shut by default, opened from the console (`kload`).
  * kloader_drop_closed counts STARTs and BEACONs turned away while shut. */

@@ -347,6 +347,25 @@ void kloader_beacon_rx(UW src_ip, UH src_port,
 /* タスク: ビーコンキューを監視して自動プッシュ                       */
 /* ------------------------------------------------------------------ */
 
+INT kloader_beacon_queued(void)
+{
+    return (INT)((beacon_queue_tail + BEACON_QUEUE_MAX - beacon_queue_head) % BEACON_QUEUE_MAX);
+}
+
+/* empty the beacon queue through push(); returns how many were pushed.
+ * The tkconf rx cert (K7) passes a counting stub instead of kloader_push_ip. */
+INT kloader_beacon_drain(void (*push)(UW ip))
+{
+    INT pushed = 0;
+    while (beacon_queue_head != beacon_queue_tail) {
+        UW ip = beacon_queue[beacon_queue_head];
+        beacon_queue_head = (UB)((beacon_queue_head + 1) % BEACON_QUEUE_MAX);
+        push(ip);
+        pushed++;
+    }
+    return pushed;
+}
+
 void kloader_task(INT stacd, void *exinf)
 {
     (void)stacd; (void)exinf;
@@ -355,12 +374,7 @@ void kloader_task(INT stacd, void *exinf)
 
     for (;;) {
         tk_dly_tsk(500);
-
-        while (beacon_queue_head != beacon_queue_tail) {
-            UW ip = beacon_queue[beacon_queue_head];
-            beacon_queue_head = (UB)((beacon_queue_head + 1) % BEACON_QUEUE_MAX);
-            kloader_push_ip(ip);
-        }
+        kloader_beacon_drain(kloader_push_ip);
     }
 }
 

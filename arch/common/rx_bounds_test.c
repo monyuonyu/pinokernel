@@ -126,6 +126,9 @@ static void pm_case(const char *id, const char *what, UB dst, UW want)
 
 #define KL_HDR ((UH)(sizeof(KLOAD_PKT) - KLOAD_CHUNK_SIZE))
 
+static INT kl_pushed;
+static void kl_count_push(UW ip) { (void)ip; kl_pushed++; }
+
 /* KLOAD_PKT packed offsets: magic0 version4 type5 src6 _pad7 total_size8
  * chunk_idx12 chunk_len16 data18. */
 static void kl_build(UB *b, UB type, UW idx, UH clen)
@@ -221,6 +224,27 @@ INT rx_bounds_run(void (*out)(const char *))
         rxb_check("K6", "kload START 12-byte packet", d == 1, d, 1);
     }
     kloader_set_rx_open(kl_was_open);
+
+    /* K7 (kload finding 3): a beacon queued while auto-push was on must not
+     * be pushed once the owner turns auto-push off. The drain gets a counting
+     * stub, never the real push. (The kloader task drains the same queue
+     * every 5 s; it could take the beacon between the two calls below - then
+     * K7 reads queued 0 and is red, never a false green.) */
+    {
+        UB b[12];
+        INT ap_was = kloader_auto_push_on();
+        kl_pushed = 0;
+        p32(b, KLOAD_MAGIC); b[4] = KLOAD_VERSION; b[5] = KLOAD_BEACON;
+        b[6] = 9; b[7] = 0; p32(b + 8, 0x0A0100FEUL);
+        kloader_set_auto_push(1);
+        kloader_beacon_rx(0x0A0100FEUL, KLOAD_PORT_BCN, b, 12);
+        kloader_set_auto_push(0);
+        INT q = kloader_beacon_queued();
+        INT pushed = kloader_beacon_drain(kl_count_push);
+        rxb_check("K7", "beacon queued before autopush off is not pushed",
+                  q == 1 && pushed == 0 && kloader_beacon_queued() == 0, (UW)pushed, 0);
+        kloader_set_auto_push(ap_was);
+    }
 
     out("[rxb] "); rxb_dec((UW)rxb_pass);
     out(" PASS / "); rxb_dec((UW)rxb_fail); out(" FAIL\r\n");
