@@ -9,7 +9,9 @@
 #
 # Env: KS_N (8), KS_F (0.5), KS_SEED (1), KS_PORT (7491), KS_LOGDIR,
 #      KS_NC=1 = the binary was built with -DKS_NO_REMOTE_TEACH (receivers drop
-#      remote teaches): the expectation flips to S4 (mean <= R1).
+#      remote teaches): the expectation flips to S4 (mean <= R1) and, v3,
+#      S4M / V4M (mean / held_mean <= R1M, the R1 baseline as a mean rate).
+#      Plain build, v3: V5 (held_mean >= R3M).
 #      The script does not build with the flag itself; build the tree first:
 #        make -C boot/linux_x86_64 EXTRA_CFLAGS=-DKS_NO_REMOTE_TEACH
 # Output: "[ks] f=.. any=.. mean=.. R1=.. R3=.. spread=.. guessed=.." and
@@ -156,13 +158,17 @@ for j in $(seq 0 $((K - 1))); do
 done
 
 # ---- ask --------------------------------------------------------------------
-any=0; good=0; asked=0; guessed=0
+any=0; good=0; asked=0; guessed=0; unheld=0
 for j in $(seq 0 $((K - 1))); do
     k="${KEYS[$j]}"; got=0
     for i in $ALIVE; do
         ask "$i" "$k"; asked=$((asked + 1))
         if [ "$ANS" = "${VALS[$j]}" ]; then
             if [ "$GUESS" = 1 ]; then guessed=$((guessed + 1)); else good=$((good + 1)); got=1; fi
+            # v3: a right answer from a node whose provenance has no record of it
+            if [ "$GUESS" = 0 ] && [ "$(held_n "${HP[$i]}" "$k" "${VALS[$j]}")" != 1 ]; then
+                unheld=$((unheld + 1)); note "node$i answered $k right with no record (provenance: $(echo ${HP[$i]}))"
+            fi
         fi
         note "node$i ask $k -> ${ANS:-<none>} (want ${VALS[$j]}, guess=$GUESS)"
     done
@@ -170,13 +176,18 @@ for j in $(seq 0 $((K - 1))); do
 done
 
 # ---- baselines on the same kill set -------------------------------------------
-read -r R1 R3 < <(python3 -c '
+# R1/R3 are "any" rates; R1M/R3M (v3) are the same baselines as "mean" rates
+# (holder copies alive / (survivors x K)), the right partner for mean / held_mean
+read -r R1 R3 R1M R3M < <(python3 -c '
 import sys
 n, k = int(sys.argv[1]), int(sys.argv[2]); dead = set(map(int, sys.argv[3].split()))
 alive = lambda i: i not in dead
+na = sum(alive(i) for i in range(1, n + 1))
 r1 = sum(alive(j + 1) for j in range(k)) / k
 r3 = sum(any(alive((j + d) % n + 1) for d in range(3)) for j in range(k)) / k
-print("%.3f %.3f" % (r1, r3))' "$N" "$K" "$KILL")
+r1m = sum(alive(j + 1) for j in range(k)) / (na * k) if na else 0
+r3m = sum(alive((j + d) % n + 1) for j in range(k) for d in range(3)) / (na * k) if na else 0
+print("%.3f %.3f %.3f %.3f" % (r1, r3, r1m, r3m))' "$N" "$K" "$KILL")
 ANYF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[2])))' "$any" "$K")
 MEANF=$(python3 -c 'import sys; a=int(sys.argv[2]); print("%.3f" % (int(sys.argv[1]) / a if a else 0))' "$good" "$asked")
 SPF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[2])))' "$SPREAD" "$((N * K))")
@@ -186,12 +197,16 @@ HANYF=$(python3 -c 'import sys; print("%.3f" % (int(sys.argv[1]) / int(sys.argv[
 NALIVE=$(echo $ALIVE | wc -w)
 HMEANF=$(python3 -c 'import sys; d=int(sys.argv[2]); print("%.3f" % (int(sys.argv[1]) / d if d else 0))' "$hgood" "$((NALIVE * K))")
 echo "[ks] held records (v2): held_any=$HANYF held_mean=$HMEANF R1=$R1 R3=$R3"
+echo "[ks] mean baselines (v3): R1M=$R1M R3M=$R3M; right answers with no record: $unheld/$good"
 
 ge() { python3 -c 'import sys; sys.exit(0 if float(sys.argv[1]) >= float(sys.argv[2]) - 1e-9 else 1)' "$1" "$2"; }
 if [ "$NC" = 1 ]; then
     ge "$R1" "$MEANF" && res S4 PASS "broken (no remote teach): mean $MEANF <= R1 $R1" || res S4 FAIL "broken: mean $MEANF > R1 $R1"
     ge "$R1" "$HANYF" && res V4 PASS "broken: held_any $HANYF <= R1 $R1" || res V4 FAIL "broken: held_any $HANYF > R1 $R1"
+    ge "$R1M" "$MEANF" && res S4M PASS "broken: mean $MEANF <= R1M $R1M" || res S4M FAIL "broken: mean $MEANF > R1M $R1M"
+    ge "$R1M" "$HMEANF" && res V4M PASS "broken: held_mean $HMEANF <= R1M $R1M" || res V4M FAIL "broken: held_mean $HMEANF > R1M $R1M"
 else
+    ge "$HMEANF" "$R3M" && res V5 PASS "held_mean $HMEANF >= R3M $R3M" || res V5 FAIL "held_mean $HMEANF < R3M $R3M"
     ge "$HANYF" "$R3" && res V2 PASS "held_any $HANYF >= R3 $R3" || res V2 FAIL "held_any $HANYF < R3 $R3"
     ge "$HMEANF" "$R1" && res V3 PASS "held_mean $HMEANF >= R1 $R1" || res V3 FAIL "held_mean $HMEANF < R1 $R1"
     ge "$SPF" 0.9   && res S1 PASS "spread $SPF >= 0.9"        || res S1 FAIL "spread $SPF < 0.9"
