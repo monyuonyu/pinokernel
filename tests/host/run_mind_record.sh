@@ -20,6 +20,10 @@
 #                  when the reading equals the record)
 #   rec-explain  : explain "current: "ink" -> "fresh"" and a "read:" line
 #   rec-revise   : after the revise, "ink" -> "green": read "<other>"
+# A second node on the same build: teach ink fresh twice
+#   rec-reteach  : the second teach says "already believes "fresh"" (the
+#                  local re-teach compares the record, not the misread
+#                  reading; audit-54 D3 made it a REVISE and stayed green)
 # Falsifier: -DR3_RECORD_FROM_READING (the record copies the reading, the old
 # behaviour) must turn rec-ink red.
 # Output: "[mind-rec] <check> PASS|FAIL", then ALL PASS (exit 0) or RED (exit 1).
@@ -49,6 +53,11 @@ run() {  # <log>
     printf 'mind teach ink fresh\nmind teach sky blue\nmind provenance\nmind explain ink\nmind teach ink green\nmind provenance\nexit\n' \
         | timeout 180 env PKERNEL_NODE_ID=1 PKERNEL_PFS_DIR="$d" "$BOOT/p-kernel" > "$1" 2>&1
 }
+run_reteach() {  # <log>
+    local d; d="$(mktemp -d "$WORK/d.XXXXXX")"
+    printf 'mind teach ink fresh\nmind teach ink fresh\nmind provenance\nexit\n' \
+        | timeout 180 env PKERNEL_NODE_ID=1 PKERNEL_PFS_DIR="$d" "$BOOT/p-kernel" > "$1" 2>&1
+}
 T='taught here( \(node [0-9]+\))?, prov kept, local seq [0-9]+, (PENDING|RETAINED)'
 
 # ---- the forced misread, plain record ---------------------------------------
@@ -61,6 +70,9 @@ if build "-DR3_TEST_MISREAD_KEY=15"; then
     chk rec-explain "$L" '^\[mind\]   current: "ink" -> "fresh"'
     chk rec-read    "$L" '^\[mind\]   read: "[a-z]+" '
     chk rec-revise  "$L" "^\\[mind\\]   \"ink\" -> \"green\": read \"[a-z]+\", $T"
+    R="$WORK/reteach.log"
+    run_reteach "$R"
+    chk rec-reteach "$R" 'already believes "fresh"'
 else
     res build FAIL; cat "$WORK/build.log" | tail -20
 fi
