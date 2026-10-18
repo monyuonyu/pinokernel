@@ -1091,6 +1091,15 @@ jobs:
           timeout 200 tests/host/run_mind_provenance.sh | tee mind_provenance.log
           grep -aF '[mind-prov] ALL PASS' mind_provenance.log
 
+      # ROADMAP 1-8 / rule 11: the record keeps the value given next to the
+      # fast layer's reading. Forces the misread with -DR3_TEST_MISREAD_KEY=15
+      # (ink); -DR3_RECORD_FROM_READING must turn rec-ink red. Rebuilds and
+      # cleans boot/linux_x86_64 (two builds, ~2 min).
+      - name: mind record keeps the value given (ROADMAP 1-8)
+        run: |
+          timeout 600 tests/host/run_mind_record.sh | tee mind_record.log
+          grep -aF '[mind-rec] ALL PASS' mind_record.log
+
       # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
       # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
       # PKERNEL_MIND_HAVE=0 (HAVE_OFF=1) on have-fire/have-snow/have-hint. ~2 min.
