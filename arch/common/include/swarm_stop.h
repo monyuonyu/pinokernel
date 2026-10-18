@@ -40,5 +40,11 @@ INT  swarm_stop_apply(const U1 *cmd, UW len);
 INT  swarm_stop_is_stopped(void);
 void swarm_stop_reset(void);                                     /* self-test only */
 INT  swarm_stop_selftest(void (*out)(const char *));             /* [swarm-stop] */
+/* stage 2a: the console's `stop [status|now|resume|key <hex>|key clear|in <hex>|apply]`.
+ * `stop now` / `stop resume` are this node's own stop (any time, no key); a
+ * signed stop is lifted only by a signed resume. swarm_stop_is_stopped() is
+ * 1 while either holds. -DSWARM_STOP_TEST_SIGN adds `stop sign` (tests). */
+void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *));
+INT  swarm_stop_refuses_mind(const UB *a, UW n);   /* stopped and `mind teach` */
 
 #endif
