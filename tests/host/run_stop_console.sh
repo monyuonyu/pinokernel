@@ -68,26 +68,28 @@ c=${CS:200:1}; if [ "$c" = 0 ]; then n=1; else n=0; fi
 CT="${CS:0:200}${n}${CS:201}"
 
 script() {
+    # every `stop` subcommand but `in` prints a status line; the numbers are
+    # the status line each one prints
     {
         echo "stop"                                   # status 1
-        echo "stop now"
-        echo "stop"                                   # status 2
-        echo "mind teach sky blue"
-        echo "stop resume"
+        echo "stop now"                               # status 2
         echo "stop"                                   # status 3
+        echo "mind teach sky blue"
+        echo "stop resume"                            # status 4
+        echo "stop"                                   # status 5
         echo "mind teach ink fresh"
         echo "mind provenance"
-        chunks "$CS"; echo "stop apply"               # rc 1 (empty table)
-        echo "stop"                                   # status 4
-        echo "stop key $PK"
-        chunks "$CT"; echo "stop apply"               # rc 2 (bad signature)
-        chunks "$CS"; echo "stop apply"               # rc 3 (ok)
-        echo "stop"                                   # status 5
-        chunks "$CS"; echo "stop apply"               # rc 4 (replay)
-        echo "stop resume"
-        echo "stop"                                   # status 6
-        chunks "$CR"; echo "stop apply"               # rc 5 (signed resume)
+        chunks "$CS"; echo "stop apply"               # rc 1 (empty table), status 6
         echo "stop"                                   # status 7
+        echo "stop key $PK"                           # status 8
+        chunks "$CT"; echo "stop apply"               # rc 2 (bad signature), status 9
+        chunks "$CS"; echo "stop apply"               # rc 3 (ok), status 10
+        echo "stop"                                   # status 11
+        chunks "$CS"; echo "stop apply"               # rc 4 (replay), status 12
+        echo "stop resume"                            # status 13
+        echo "stop"                                   # status 14
+        chunks "$CR"; echo "stop apply"               # rc 5 (signed resume), status 15
+        echo "stop"                                   # status 16
         echo "exit"
     } > "$1"
 }
@@ -95,16 +97,16 @@ script() {
 check() {  # <log> <prefix>
     local L="$1" p="$2"
     [ "$(st "$L" 1)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] && res "${p}S1" PASS || res "${p}S1" FAIL
-    if [ "$(st "$L" 2)" = "[stop] stopped 1 local 1 signed 0 epoch 0 keys 0" ] &&
+    if [ "$(st "$L" 3)" = "[stop] stopped 1 local 1 signed 0 epoch 0 keys 0" ] &&
        grep -aq '^\[stop\] refused: mind teach' "$L" &&
        ! grep -aqE '^\[mind\]   "sky" -> ' "$L" &&
-       [ "$(st "$L" 3)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] &&
+       [ "$(st "$L" 5)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] &&
        grep -aqE '^\[mind\]   "ink" -> "fresh"' "$L"; then res "${p}S2" PASS; else res "${p}S2" FAIL; fi
-    [ "$(rc "$L" 1)" = -3 ] && [ "$(st "$L" 4)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] && res "${p}S3" PASS || res "${p}S3" FAIL
+    [ "$(rc "$L" 1)" = -3 ] && [ "$(st "$L" 7)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] && res "${p}S3" PASS || res "${p}S3" FAIL
     [ "$(rc "$L" 2)" = -4 ] && [ "$(rc "$L" 3)" = 0 ] && [ "$(rc "$L" 4)" = -5 ] &&
-      [ "$(st "$L" 5)" = "[stop] stopped 1 local 0 signed 1 epoch 5 keys 1" ] && res "${p}S4" PASS || res "${p}S4" FAIL
-    [ "$(st "$L" 6)" = "[stop] stopped 1 local 0 signed 1 epoch 5 keys 1" ] && [ "$(rc "$L" 5)" = 0 ] &&
-      [ "$(st "$L" 7)" = "[stop] stopped 0 local 0 signed 0 epoch 6 keys 1" ] && res "${p}S5" PASS || res "${p}S5" FAIL
+      [ "$(st "$L" 11)" = "[stop] stopped 1 local 0 signed 1 epoch 5 keys 1" ] && res "${p}S4" PASS || res "${p}S4" FAIL
+    [ "$(st "$L" 14)" = "[stop] stopped 1 local 0 signed 1 epoch 5 keys 1" ] && [ "$(rc "$L" 5)" = 0 ] &&
+      [ "$(st "$L" 16)" = "[stop] stopped 0 local 0 signed 0 epoch 6 keys 1" ] && res "${p}S5" PASS || res "${p}S5" FAIL
 }
 
 # ---- the plain build -----------------------------------------------------------

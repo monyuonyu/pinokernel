@@ -1229,6 +1229,14 @@ jobs:
           grep -aF '[swarm-stop] T3 FAIL' stop_x64_nc.log
           make -C boot/linux_x86_64 clean >/dev/null
           make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 stage 2a: the console's `stop` and the shell refusing
+      # `mind teach` while stopped; the falsifier -DSWARM_STOP_NO_OBEY runs
+      # inside the script. It rebuilds and cleans; the plain binary is rebuilt.
+      - name: console stop and the shell obeying it ([stop-console], BLOCKING, 0-14 S2)
+        run: |
+          timeout 900 tests/host/run_stop_console.sh | tee stop_console.log
+          grep -aF '[stop-console] ALL PASS' stop_console.log
+          make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"
