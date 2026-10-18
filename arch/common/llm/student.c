@@ -2318,29 +2318,41 @@ PK_NOSW_FN(int, st_merge_cohort, (st_model *into,
 
 /* RTN one group of n weights: src a[] -> dequantized b[]. Symmetric absmax,
  * round half away from zero (own code, no libc), clamp to [-qmax-1, qmax].   */
+/* the grid, shared by RTN and GPTQ (stage 2): the scale of one group, 0 for
+ * an all-zero group, and one value rounded onto it */
+static float st_quant_scale(const float *a, int n, int qmax)
+{
+    float amax = 0.0f;
+    for (int i = 0; i < n; i++) {
+        float v = a[i] < 0.0f ? -a[i] : a[i];
+        if (v > amax) amax = v;
+    }
+    if (amax == 0.0f) return 0.0f;
+    float s = amax / (float)qmax;
+#if defined(ST_QUANT_BADSCALE)
+    s = s * 0.25f;                                /* negative control: clips */
+#endif
+    return s;
+}
+
+static float st_quant_one(float w, float s, int qmax)
+{
+    float r = w / s;
+    int q = (int)(r >= 0.0f ? r + 0.5f : r - 0.5f);
+    if (q > qmax) q = qmax;
+    if (q < -qmax - 1) q = -qmax - 1;
+    return (float)q * s;
+}
+
 static void st_quant_group(const float *a, float *b, int n, int qmax)
 {
 #if defined(ST_QUANT_NOOP)
     (void)qmax;
     for (int i = 0; i < n; i++) b[i] = a[i];      /* negative control */
 #else
-    float amax = 0.0f;
-    for (int i = 0; i < n; i++) {
-        float v = a[i] < 0.0f ? -a[i] : a[i];
-        if (v > amax) amax = v;
-    }
-    if (amax == 0.0f) { for (int i = 0; i < n; i++) b[i] = 0.0f; return; }
-    float s = amax / (float)qmax;
-#if defined(ST_QUANT_BADSCALE)
-    s = s * 0.25f;                                /* negative control: clips */
-#endif
-    for (int i = 0; i < n; i++) {
-        float r = a[i] / s;
-        int q = (int)(r >= 0.0f ? r + 0.5f : r - 0.5f);
-        if (q > qmax) q = qmax;
-        if (q < -qmax - 1) q = -qmax - 1;
-        b[i] = (float)q * s;
-    }
+    float s = st_quant_scale(a, n, qmax);
+    if (s == 0.0f) { for (int i = 0; i < n; i++) b[i] = 0.0f; return; }
+    for (int i = 0; i < n; i++) b[i] = st_quant_one(a[i], s, qmax);
 #endif
 }
 
@@ -2412,18 +2424,285 @@ int st_quant_fake(const st_model *src, st_model *dst, int bits, int gran,
 /* brain self-quantization, stage 2: GPTQ (see student.h)             */
 /* ================================================================== */
 
+/* H = sum x x^T of each matrix's inputs over the forward of calib (double).
+ * One H per input: a_in (wq/wk/wv) and attn_o (wo) per layer, f_in (w1/w3)
+ * and e_h (w2) per (layer, expert) over the positions routed to it, o_in (out). */
+typedef struct {
+    double *ha, *ho, *hf, *hh, *hout;
+    int    *cnt;                                   /* positions per (l, e) */
+} st_gq_h;
+
+static void gq_free(st_gq_h *h)
+{
+    free(h->ha); free(h->ho); free(h->hf); free(h->hh); free(h->hout); free(h->cnt);
+}
+
+static void gq_outer(double *H, const float *x, int n)  /* upper triangle */
+{
+    for (int i = 0; i < n; i++) {
+        double xi = (double)x[i];
+        if (xi == 0.0) continue;
+        double *Hi = H + (size_t)i * n;
+        for (int k = i; k < n; k++) Hi[k] += xi * (double)x[k];
+    }
+}
+
+static void gq_mirror(double *H, int n)
+{
+    for (int i = 0; i < n; i++)
+        for (int k = i + 1; k < n; k++) H[(size_t)k * n + i] = H[(size_t)i * n + k];
+}
+
+static int gq_collect(st_model *m, const uint8_t *calib, int ncalib, int seq, st_gq_h *h)
+{
+    ST_DIMS(m);
+    size_t dd = (size_t)D * D, ff = (size_t)DFF * DFF;
+    h->ha = (double *)calloc((size_t)L * dd, sizeof(double));
+    h->ho = (double *)calloc((size_t)L * dd, sizeof(double));
+    h->hf = (double *)calloc((size_t)L * E * dd, sizeof(double));
+    h->hh = (double *)calloc((size_t)L * E * ff, sizeof(double));
+    h->hout = (double *)calloc(dd, sizeof(double));
+    h->cnt = (int *)calloc((size_t)L * E, sizeof(int));
+    float *logits = (float *)malloc((size_t)seq * V * sizeof(float));
+    if (!h->ha || !h->ho || !h->hf || !h->hh || !h->hout || !h->cnt || !logits) {
+        free(logits); return ST_E_OOM;
+    }
+    for (int o = 0; o + seq <= ncalib; o += seq) {
+        int rc = st_forward(m, calib + o, seq, logits);
+        if (rc != ST_OK) { free(logits); return rc; }
+        const st_cache *c = (const st_cache *)m->cache;
+        int n = c->n;
+        for (int l = 0; l < L; l++)
+            for (int t = 0; t < n; t++) {
+                size_t lt = (size_t)l * n + t;
+                gq_outer(h->ha + (size_t)l * dd, c->a_in + lt * D, D);
+                gq_outer(h->ho + (size_t)l * dd, c->attn_o + lt * D, D);
+                int nk = c->topk_n[lt];
+                for (int j = 0; j < nk; j++) {
+                    int e = c->topk_e[lt * E + j];
+                    if (e < 0 || e >= E) continue;
+                    gq_outer(h->hf + ((size_t)l * E + e) * dd, c->f_in + lt * D, D);
+                    gq_outer(h->hh + ((size_t)l * E + e) * ff,
+                             c->e_h + (lt * E + j) * DFF, DFF);
+                    h->cnt[l * E + e]++;
+                }
+            }
+        for (int t = 0; t < n; t++) gq_outer(h->hout, c->o_in + (size_t)t * D, D);
+    }
+    free(logits);
+    for (int l = 0; l < L; l++) { gq_mirror(h->ha + (size_t)l * dd, D); gq_mirror(h->ho + (size_t)l * dd, D); }
+    for (int x = 0; x < L * E; x++) { gq_mirror(h->hf + (size_t)x * dd, D); gq_mirror(h->hh + (size_t)x * ff, DFF); }
+    gq_mirror(h->hout, D);
+    return ST_OK;
+}
+
+/* sqrt by Newton in double (own code, no libm: the hosted kernel links none) */
+static double gq_sqrt(double s)
+{
+    if (!(s > 0.0)) return 0.0;
+    double x = s > 1.0 ? s : 1.0;
+    for (int i = 0; i < 200; i++) {
+        double nx = 0.5 * (x + s / x);
+        if (nx == x) break;
+        x = nx;
+    }
+    return x;
+}
+
+/* in-place lower Cholesky of A [n][n]; 0 if not positive definite */
+static int gq_chol(double *A, int n)
+{
+    for (int j = 0; j < n; j++) {
+        double s = A[(size_t)j * n + j];
+        for (int k = 0; k < j; k++) s -= A[(size_t)j * n + k] * A[(size_t)j * n + k];
+        if (!(s > 0.0)) return 0;
+        double d = gq_sqrt(s);
+        A[(size_t)j * n + j] = d;
+        for (int i = j + 1; i < n; i++) {
+            double t = A[(size_t)i * n + j];
+            for (int k = 0; k < j; k++) t -= A[(size_t)i * n + k] * A[(size_t)j * n + k];
+            A[(size_t)i * n + j] = t / d;
+        }
+        for (int k = j + 1; k < n; k++) A[(size_t)j * n + k] = 0.0;
+    }
+    return 1;
+}
+
+/* U (upper, U^T U = (H + lambda I)^-1) into U [n][n]; 0 on failure.
+ * Dead inputs (H_jj == 0) get H_jj = 1, as the reference code does. */
+static int gq_hinv_upper(const double *H, int n, double *U, double *T)
+{
+    double tr = 0.0;
+    for (int i = 0; i < n; i++) tr += H[(size_t)i * n + i];
+    double lam = 0.01 * tr / (double)n;
+    for (size_t i = 0; i < (size_t)n * n; i++) T[i] = H[i];
+    for (int i = 0; i < n; i++) {
+        if (T[(size_t)i * n + i] == 0.0) T[(size_t)i * n + i] = 1.0;
+        T[(size_t)i * n + i] += lam;
+    }
+    if (!gq_chol(T, n)) return 0;                     /* T = Lc, lower */
+    /* Linv into U (lower), by forward substitution, column by column */
+    for (size_t i = 0; i < (size_t)n * n; i++) U[i] = 0.0;
+    for (int j = 0; j < n; j++) {
+        U[(size_t)j * n + j] = 1.0 / T[(size_t)j * n + j];
+        for (int i = j + 1; i < n; i++) {
+            double s = 0.0;
+            for (int k = j; k < i; k++) s += T[(size_t)i * n + k] * U[(size_t)k * n + j];
+            U[(size_t)i * n + j] = -s / T[(size_t)i * n + i];
+        }
+    }
+    /* Ainv = Linv^T Linv into T */
+    for (int i = 0; i < n; i++)
+        for (int j = i; j < n; j++) {
+            double s = 0.0;
+            for (int k = j; k < n; k++) s += U[(size_t)k * n + i] * U[(size_t)k * n + j];
+            T[(size_t)i * n + j] = s; T[(size_t)j * n + i] = s;
+        }
+    if (!gq_chol(T, n)) return 0;                     /* Ainv = Lu Lu^T */
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++) U[(size_t)i * n + j] = j >= i ? T[(size_t)j * n + i] : 0.0;
+    return 1;
+}
+
+/* GPTQ one [R][C] matrix at w-offset off of dst (fp32 on entry), row scales
+ * from src (the original rows). H == NULL or a failed inverse: plain RTN. */
+static void gq_mat(const st_model *src, st_model *dst, int off, int R, int C,
+                   const double *H, int qmax, double *U, double *T)
+{
+    float *W = dst->w + off;
+    const float *W0 = src->w + off;
+    if (!H || !gq_hinv_upper(H, C, U, T)) {
+        for (int r = 0; r < R; r++)
+            st_quant_group(W0 + (size_t)r * C, W + (size_t)r * C, C, qmax);
+        return;
+    }
+    float *s = (float *)malloc((size_t)R * sizeof(float));
+    if (!s) {
+        for (int r = 0; r < R; r++)
+            st_quant_group(W0 + (size_t)r * C, W + (size_t)r * C, C, qmax);
+        return;
+    }
+    for (int r = 0; r < R; r++) {
+        s[r] = st_quant_scale(W0 + (size_t)r * C, C, qmax);
+        for (int c = 0; c < C; c++) W[(size_t)r * C + c] = W0[(size_t)r * C + c];
+    }
+    for (int j = 0; j < C; j++) {
+        double d = U[(size_t)j * C + j];
+        for (int r = 0; r < R; r++) {
+            float *Wr = W + (size_t)r * C;
+            float w = Wr[j];
+            float q = s[r] == 0.0f ? 0.0f : st_quant_one(w, s[r], qmax);
+            Wr[j] = q;
+#ifndef ST_GPTQ_NOCOMP
+            double err = ((double)w - (double)q) / d;
+            const double *Uj = U + (size_t)j * C;
+            for (int k = j + 1; k < C; k++) Wr[k] = (float)((double)Wr[k] - err * Uj[k]);
+#endif
+        }
+    }
+    free(s);
+}
+
+/* sum over rows of (W0 - Wq)_r^T H (W0 - Wq)_r */
+static double gq_obj_mat(const float *W0, const float *Wq, int R, int C, const double *H, double *dl)
+{
+    double tot = 0.0;
+    for (int r = 0; r < R; r++) {
+        for (int c = 0; c < C; c++) dl[c] = (double)W0[(size_t)r * C + c] - (double)Wq[(size_t)r * C + c];
+        for (int i = 0; i < C; i++) {
+            if (dl[i] == 0.0) continue;
+            const double *Hi = H + (size_t)i * C;
+            double a = 0.0;
+            for (int k = 0; k < C; k++) a += Hi[k] * dl[k];
+            tot += dl[i] * a;
+        }
+    }
+    return tot;
+}
+
+/* mode 0: GPTQ every matrix but embed into dst; mode 1: the objective of q */
+static double gq_walk(int mode, const st_model *src, st_model *dst, const st_model *q,
+                      const st_gq_h *h, int qmax)
+{
+    ST_DIMS(src);
+    int nmax = D > DFF ? D : DFF;
+    size_t dd = (size_t)D * D, ff = (size_t)DFF * DFF;
+    double *U = (double *)malloc((size_t)nmax * nmax * sizeof(double));
+    double *T = (double *)malloc((size_t)nmax * nmax * sizeof(double));
+    if (!U || !T) { free(U); free(T); return -1.0; }
+    double tot = 0.0;
+#define GQ_ONE(off, R, C, H)                                                      \
+    do {                                                                          \
+        if (mode == 0) gq_mat(src, dst, (off), (R), (C), (H), qmax, U, T);        \
+        else if (H) tot += gq_obj_mat(src->w + (off), q->w + (off), (R), (C), (H), U); \
+    } while (0)
+    for (int l = 0; l < L; l++) {
+        const double *ha = h->ha + (size_t)l * dd, *ho = h->ho + (size_t)l * dd;
+        GQ_ONE(src->o_wq + l * D * D, D, D, ha);
+        GQ_ONE(src->o_wk + l * D * D, D, D, ha);
+        GQ_ONE(src->o_wv + l * D * D, D, D, ha);
+        GQ_ONE(src->o_wo + l * D * D, D, D, ho);
+    }
+    for (int x = 0; x < L * E; x++) {
+        const double *hf = h->cnt[x] ? h->hf + (size_t)x * dd : NULL;
+        const double *hh = h->cnt[x] ? h->hh + (size_t)x * ff : NULL;
+        GQ_ONE(src->o_w1 + x * DFF * D, DFF, D, hf);
+        GQ_ONE(src->o_w3 + x * DFF * D, DFF, D, hf);
+        GQ_ONE(src->o_w2 + x * D * DFF, D, DFF, hh);
+    }
+    GQ_ONE(src->o_out, V, D, h->hout);
+#undef GQ_ONE
+    free(U); free(T);
+    return tot;
+}
+
+/* a scratch model holding src's weights (st_forward writes the cache, and src
+ * is const) */
+static int gq_scratch(const st_model *src, st_model *tmp)
+{
+    if (st_init_tier(tmp, 1u, src->tier) != 0) return ST_E_OOM;
+    if (tmp->n_params != src->n_params) { st_free(tmp); return ST_E_ARG; }
+    for (int i = 0; i < src->n_params; i++) tmp->w[i] = src->w[i];
+    if (src->alive) {
+        tmp->alive = (int8_t *)malloc((size_t)src->nexpert);
+        if (!tmp->alive) { st_free(tmp); return ST_E_OOM; }
+        for (int e = 0; e < src->nexpert; e++) tmp->alive[e] = src->alive[e];
+    }
+    return ST_OK;
+}
+
 int st_quant_gptq(const st_model *src, st_model *dst, int bits,
                   const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
 {
-    (void)src; (void)dst; (void)bits; (void)calib; (void)ncalib; (void)seq; (void)bytes_q;
-    return ST_E_ARG;                               /* test first: not yet */
+    if (!calib || seq < 1 || seq > ST_MAXSEQ || ncalib < seq) return ST_E_ARG;
+    /* the RTN copy first: arg checks, alive mask, Adam zeroed, embed on the
+     * grid and the packed size (the grid and the scales are the same) */
+    int rc = st_quant_fake(src, dst, bits, ST_QG_ROW, bytes_q);
+    if (rc != ST_OK) return rc;
+    st_model tmp;
+    rc = gq_scratch(src, &tmp);
+    if (rc != ST_OK) return rc;
+    st_gq_h h = { 0 };
+    rc = gq_collect(&tmp, calib, ncalib, seq, &h);
+    st_free(&tmp);
+    if (rc == ST_OK && gq_walk(0, src, dst, NULL, &h, (1 << (bits - 1)) - 1) < 0.0) rc = ST_E_OOM;
+    gq_free(&h);
+    return rc;
 }
 
 double st_quant_layer_obj(const st_model *src, const st_model *q,
                           const uint8_t *calib, int ncalib, int seq)
 {
-    (void)src; (void)q; (void)calib; (void)ncalib; (void)seq;
-    return -1.0;
+    if (!src || !q || !calib || seq < 1 || seq > ST_MAXSEQ || ncalib < seq ||
+        q->n_params != src->n_params) return -1.0;
+    st_model tmp;
+    if (gq_scratch(src, &tmp) != ST_OK) return -1.0;
+    st_gq_h h = { 0 };
+    int rc = gq_collect(&tmp, calib, ncalib, seq, &h);
+    st_free(&tmp);
+    double r = rc == ST_OK ? gq_walk(1, src, NULL, q, &h, 0) : -1.0;
+    gq_free(&h);
+    return r;
 }
 
 /* ================================================================== */
