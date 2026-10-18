@@ -169,6 +169,7 @@ Each design doc → its cert (CI job / self-test tag / live job). Rung status:
 | android-always-on.md | always-on participation on Android 15/16: specialUse FGS, charging-only default, notification fallback for resume (inbox #7-1) | — (design memo; nothing built yet) | ○ OPEN |
 | mind-gen0-b.md | partition + heal + newcomer: no learning lost, one answer, provenance, losers kept, no resurrection (E1–E5 fixed first) | `run_mind_gen0_b.sh` (manual, not in CI) | ○ OPEN — E1 and E4 red by the pre-registered expectations |
 | swarm-stop.md | rule 9 S2: a stop command signed by a key in the console-filled stop table stops the node; unknown key, changed byte, replay, empty table refused (stage 1, in-proc) | [swarm-stop] (hosted shell: tkconf stop) | ◐ PARTIAL — stage 1 in-proc only; nothing obeys the stop yet, no forwarding, no [live] |
+| knowledge-survival.md | 1-8 small version: kill a fraction of an 8-node region, the facts taught before still answered / held by the survivors, against R1 / R3 baselines (expectations fixed first) | `run_knowledge_survival.sh` (manual, not in CI) | ◐ PARTIAL — harness on master (audit-51); S3/S4/V3 compare R1 as "any", not its mean (weak); not in CI |
 | conversation.md | escape the vocabulary cage (strategy branch) | — (strategy exploration) | N/A exploration |
 
 ### 40-verify/ (right arm)
@@ -232,12 +233,12 @@ above is a piece of its verification. This is the top-of-V ⇄ acceptance rung.
 > same commit. A bare file name that more than one file has (`run.sh`) no longer proves a cert; write
 > the path. `check_vmodel.py --migrate` copies a row into a doc that has no head yet.
 
-Of the **72** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
+Of the **73** hot docs (excluding the L0 CONOPS which the whole right arm verifies):
 
 | rung | count | which |
 |---|---|---|
 | **✓ CLOSED** (design↔cert complete) | **40** | most of L1/L2/L3 + verify + evolution (mind-explain added 2026-10-04) |
-| **◐ PARTIAL** (early slice certed, later slices design-only) | **17** | vendor-patch-inventory, decentralized-lookup, federation, p2p-overlay, scaling-law, command-parity, special-structure-mind, interoception, device-capacity, dynamic-id, ring3-core, distributed_moe_design, windows-pe-port, cpu-budget, mind-conflicts, held-independence, swarm-stop |
+| **◐ PARTIAL** (early slice certed, later slices design-only) | **18** | vendor-patch-inventory, decentralized-lookup, federation, p2p-overlay, scaling-law, command-parity, special-structure-mind, interoception, device-capacity, dynamic-id, ring3-core, distributed_moe_design, windows-pe-port, cpu-budget, mind-conflicts, held-independence, knowledge-survival, swarm-stop |
 | **○ OPEN** (design doc, no cert = broken rung) | **11** | memory-thought, web-os, self-access, self-access-design, gpu-compute, gpu-3-wiring, webd-user-space, living-body-inspector, n1-lan-direct-plan, mind-gen0-b, android-always-on |
 | **N/A** (survey / rationale / CONOPS) | **4** | r3-model-widening (rationale), base-model-survey, moe-distillation-survey, conversation — (survival-network counted separately as L0 CONOPS, outside this table) |
 | **DECLINED** (design kept as historical stratum, not a rung to close) | **1** | survival-recip (mk_pino chose pure altruism 2026-07-04) |

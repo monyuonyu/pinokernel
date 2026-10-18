@@ -182,7 +182,10 @@ INT rx_bounds_run(void (*out)(const char *))
 
     /* kloader: the receiver is shut by default (KLOAD-UNAUTH, 0-14 S3), so a
      * well-formed START from the mesh is turned away; red with
-     * -DKLOAD_NO_RX_GATE */
+     * -DKLOAD_NO_RX_GATE. The owner may have typed `kload open` before
+     * `tkconf rx`: shut it for K0 and put it back at the end (audit-51) */
+    INT kl_was_open = kloader_rx_is_open();
+    kloader_set_rx_open(0);
     {
         UB s[sizeof(KLOAD_PKT)];
         UW before = kloader_drop_closed;
@@ -217,7 +220,7 @@ INT rx_bounds_run(void (*out)(const char *))
         UW d = kloader_drop_bad - before;
         rxb_check("K6", "kload START 12-byte packet", d == 1, d, 1);
     }
-    kloader_set_rx_open(0);
+    kloader_set_rx_open(kl_was_open);
 
     out("[rxb] "); rxb_dec((UW)rxb_pass);
     out(" PASS / "); rxb_dec((UW)rxb_fail); out(" FAIL\r\n");
