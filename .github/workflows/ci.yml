@@ -3441,6 +3441,8 @@ jobs:
         run: bash tests/llm/run_held_indep.sh
       - name: one train/held split (st_held_split; a hand copy in arch/common/llm is RED)
         run: bash tests/llm/check_held_split.sh
+      - name: "[b1-held] S bits per byte on an independent held text (ROADMAP B1; -DB1_LEAK must go RED)"
+        run: bash tests/llm/run_b1_held.sh
 
   llm-kv-equivalence:
     # KV-cache byte-equivalence of the generation path (run_kv.sh): 15 cases over

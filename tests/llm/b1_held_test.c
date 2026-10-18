@@ -126,6 +126,24 @@ int main(int argc, char **argv)
     fh = fw ? fh / fw / LN2 : 0.0;
     printf("[b1-held] tier %d bpb before=%.4f after=%.4f (chance 8.0000) windows=%d skipped=%d; fixture held after=%.4f (%d windows)\n",
            tier, before, after, wa, ka, fh, fw);
+    /* comparators on the same predicted bytes (not gates): byte unigram and
+     * bigram counted from the trained fixture bytes, add-one smoothed */
+    {
+        static double c1[256], c2[256][256];
+        double t1 = 0;
+        for (int i = 0; i < fx_end; i++) { c1[fx[i]] += 1; t1 += 1; }
+        for (int i = 0; i + 1 < fx_end; i++) c2[fx[i]][fx[i + 1]] += 1;
+        double u = 0, b = 0; int np = 0;
+        for (int w = 0; (w + 1) * SEQ <= n; w++)
+            for (int t = 1; t < SEQ; t++) {
+                uint8_t p = held[w * SEQ + t - 1], c = held[w * SEQ + t];
+                u += -log((c1[c] + 1) / (t1 + 256));
+                b += -log((c2[p][c] + 1) / (c1[p] + 256));
+                np++;
+            }
+        printf("[b1-held] comparators on the same bytes: unigram=%.4f bigram=%.4f bpb (from the trained fixture bytes, add-one)\n",
+               u / np / LN2, b / np / LN2);
+    }
     item(wb >= 256 && wa >= 256 && kb == 0 && ka == 0 &&
          isfinite(before) && isfinite(after) && before > 0 && before < 16 && after > 0 && after < 16,
          "B4", "bpb before and after measured over every held window");
