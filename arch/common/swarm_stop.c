@@ -352,17 +352,22 @@ static U4 ss_atou(const UB *w, UW l)
 }
 #endif
 
-/* the first place that obeys: 1 if the shell must refuse `mind <a>` now */
+/* the first place that obeys: 1 if the shell must refuse `mind <a>` now.
+ * Reads the verb as mind_cmd does (r3_incontext.c m_kw): blanks skipped,
+ * then `teach` as a PREFIX, so `mind teachsky blue` - which mind_cmd
+ * teaches as "sky" -> "blue" - is refused too (audit-56, S6). */
 INT swarm_stop_refuses_mind(const UB *a, UW n)
 {
 #if defined(SWARM_STOP_NO_OBEY)
     (void)a; (void)n;
-    return 0;                             /* falsifier: [stop-console] S2 */
+    return 0;                             /* falsifier: [stop-console] S2, S6 */
 #else
-    const UB *w; UW l;
+    static const char kw[] = "teach";
+    UW i;
     if (!swarm_stop_is_stopped()) return 0;
-    l = ss_word(&a, &n, &w);
-    return ss_is(w, l, "teach");
+    while (n && (*a == ' ' || *a == '\t')) { a++; n--; }
+    for (i = 0; kw[i]; i++) if (i >= n || a[i] != (UB)kw[i]) return 0;
+    return 1;
 #endif
 }
 
