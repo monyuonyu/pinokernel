@@ -165,7 +165,8 @@ static void distributed_init(UB nid, UW nip)
      * 全ノードで同一に走る (中央なし — world.h NO-CENTRAL 不変条件) */
     try_task((FP)world_task, WORLD_PRIORITY, WORLD_STACK, "world task");
 
-    /* OTA: kloader receives KLOAD frames + auto-pushes to bare nodes. */
+    /* OTA: kloader task. Its receiver and its auto-push to bare nodes are
+     * shut by default (0-14 S3); the x86 console opens them (`kload`). */
     kloader_task_init();
     try_task((FP)kloader_task, KLOADER_PRIORITY, KLOADER_STACK, "kloader task");
 }

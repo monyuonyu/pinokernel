@@ -1189,7 +1189,7 @@ jobs:
         run: |
           cd boot/linux_x86_64
           timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" | tee rx_x64.log
-          grep -aF '[rxb] 16 PASS / 0 FAIL' rx_x64.log
+          grep -aF '[rxb] 17 PASS / 0 FAIL' rx_x64.log
       # ROADMAP 0-14 S2: the signed stop command, accept rule only (in-proc,
       # arch/common/swarm_stop.c, docs/architecture/30-module/swarm-stop.md).
       - name: signed swarm stop - accept rule (tkconf stop, BLOCKING, 0-14 S2)
@@ -1227,6 +1227,14 @@ jobs:
           make -C boot/linux_x86_64 EXTRA_CFLAGS=-DSWARM_STOP_NO_SIGCHECK >/dev/null
           ( cd boot/linux_x86_64 && timeout 60 sh -c "printf 'tkconf stop\nexit\n' | ./p-kernel" ) | tee stop_x64_nc.log
           grep -aF '[swarm-stop] T3 FAIL' stop_x64_nc.log
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 >/dev/null
+      - name: K7 goes red when a queued beacon is pushed after autopush off (negative control, -DKLOAD_NO_DRAIN_GATE, 0-14 S3)
+        run: |
+          make -C boot/linux_x86_64 clean >/dev/null
+          make -C boot/linux_x86_64 EXTRA_CFLAGS=-DKLOAD_NO_DRAIN_GATE >/dev/null
+          ( cd boot/linux_x86_64 && timeout 60 sh -c "printf 'tkconf rx\nexit\n' | ./p-kernel" ) | tee rx_x64_nc7.log
+          grep -aF '[rxb] K7 FAIL' rx_x64_nc7.log
           make -C boot/linux_x86_64 clean >/dev/null
           make -C boot/linux_x86_64 >/dev/null
 
@@ -1351,7 +1359,7 @@ jobs:
           cd boot/linux
           timeout 120 sh -c "printf 'tkconf rx\nexit\n' | \
             qemu-aarch64-static -L /usr/aarch64-linux-gnu ./p-kernel" | tee rx_a64.log
-          grep -aF '[rxb] 16 PASS / 0 FAIL' rx_a64.log
+          grep -aF '[rxb] 17 PASS / 0 FAIL' rx_a64.log
       - name: signed swarm stop - accept rule on hosted aarch64 (tkconf stop, BLOCKING, 0-14 S2)
         run: |
           cd boot/linux
