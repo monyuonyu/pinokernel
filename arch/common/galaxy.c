@@ -35,6 +35,7 @@
 #include "lm_self.h"     /* LM_SELF_REF / LM_SELF_ENTRY — /self.json       */
 #include "pfs_dag.h"     /* pfs_dag_read — lazy self lineage read          */
 #include "ark_profile.h" /* ark-profile v1: /manifesto, /profile, consent  */
+#include "swarm_stop.h"  /* 0-14 S2 stage 2b: POST /teach obeys the stop   */
 #include "modver.h"      /* module-version registry — GET /modules.json    */
 #include "interocept.h"  /* interoception: me.s_n / me.s_axis (the mood)    */
 #include "gx_sha1.h"     /* §3.7 chat-ws: RFC 6455 handshake (SHA1+base64) */
@@ -1476,6 +1477,16 @@ static INT gx_route(INT slot, GX_REQ *q)
             gx_qs(slot, "{\"ok\":false}");
             return 0;
         }
+#ifndef GALAXY_NO_STOP_GATE
+        /* ROADMAP 0-14 S2 stage 2b (swarm-stop.md): a stopped node takes
+         * no teaching from the web either - the same refusal as the shell's
+         * `mind teach`. Red with -DGALAXY_NO_STOP_GATE ([stop-galaxy] G3). */
+        if (swarm_stop_is_stopped()) {
+            gx_resp_head(slot, "403 Forbidden", "application/json");
+            gx_qs(slot, "{\"refused\":\"stopped\",\"see\":\"stop\"}");
+            return 0;
+        }
+#endif
         /* ark-profile.md §7.3: the 共感 gate. The mind will not take a
          * human's words into permanent memory from someone who has not
          * been told what permanent means. consent != disclosure: an
