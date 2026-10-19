@@ -15,10 +15,13 @@
 #      again is refused (rc -5)
 #   S5 a local `stop resume` does not undo a signed stop (still stopped 1);
 #      the signed resume (epoch 6) does
+#   S6 (audit-56) while stopped, `mind teachsea green` is refused too and
+#      leaves no "sea" fact: mind_cmd matches `teach` as a prefix, so the
+#      refusal must read the word the same way
 # The signed commands come from a test build (-DSWARM_STOP_TEST_SIGN adds
 # `stop sign <op> <epoch> <seed-byte>`); S2..S5 run on the plain build.
 # Falsifier: -DSWARM_STOP_NO_OBEY (the shell does not look at the stop) must
-# turn S2 red.
+# turn S2 and S6 red (both facts are taught).
 # Output: "[stop-console] <check> PASS|FAIL", then ALL PASS (exit 0) or RED.
 # Rebuilds boot/linux* with EXTRA_CFLAGS and cleans it afterwards.
 set -u
@@ -75,7 +78,8 @@ script() {
         echo "stop now"                               # status 2
         echo "stop"                                   # status 3
         echo "mind teach sky blue"
-        echo "stop resume"                            # status 4
+        echo "mind teachsea green"                    # S6
+        echo "stop resume"                         # status 4
         echo "stop"                                   # status 5
         echo "mind teach ink fresh"
         echo "mind provenance"
@@ -107,6 +111,8 @@ check() {  # <log> <prefix>
       [ "$(st "$L" 11)" = "[stop] stopped 1 local 0 signed 1 epoch 5 keys 1" ] && res "${p}S4" PASS || res "${p}S4" FAIL
     [ "$(st "$L" 14)" = "[stop] stopped 1 local 0 signed 1 epoch 5 keys 1" ] && [ "$(rc "$L" 5)" = 0 ] &&
       [ "$(st "$L" 16)" = "[stop] stopped 0 local 0 signed 0 epoch 6 keys 1" ] && res "${p}S5" PASS || res "${p}S5" FAIL
+    [ "$(grep -ac '^\[stop\] refused: mind teach' "$L")" = 2 ] && grep -aq '^\[mind\]   "ink" -> ' "$L" &&
+      ! grep -aqE '^\[mind\]   "sea" -> ' "$L" && res "${p}S6" PASS || res "${p}S6" FAIL
 }
 
 # ---- the plain build -----------------------------------------------------------
@@ -121,7 +127,7 @@ fi
 N="$WORK/nc.log"
 if build "-DSWARM_STOP_NO_OBEY"; then
     script "$WORK/nc.in"; run "$WORK/nc.in" "$N"
-    if grep -aqE '^\[mind\]   "sky" -> ' "$N"; then res nc-no-obey PASS; else res nc-no-obey FAIL; fi
+    if grep -aqE '^\[mind\]   "sky" -> ' "$N" && grep -aqE '^\[mind\]   "sea" -> ' "$N"; then res nc-no-obey PASS; else res nc-no-obey FAIL; fi
 else
     res nc-build FAIL
 fi
