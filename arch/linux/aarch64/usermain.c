@@ -20,6 +20,8 @@ INT fp_preserve_run(void (*out)(const char *));    /* arch/linux/pool_preempt.c 
 INT nosw_relay_run(void (*out)(const char *));     /* arch/linux/pool_preempt.c */
 INT rx_bounds_run(void (*out)(const char *));      /* rx_bounds_test.c (0-9) */
 INT swarm_stop_selftest(void (*out)(const char *)); /* swarm_stop.c (0-14 S2) */
+void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *)); /* S2 stage 2a */
+INT swarm_stop_refuses_mind(const UB *a, UW n);     /* S2 stage 2a */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -1555,12 +1557,20 @@ EXPORT INT usermain(void)
                 /* default / `cradle test`: the in-process [cradle-teach] cert. */
                 (void)cradle_teach_self_test(print);
             }
+        } else if (starts_with(line, n, "stop") && (n == 4 || line[4] == ' ')) {
+            /* ROADMAP 0-14 S2 stage 2a (swarm-stop.md): this node's own stop
+             * and the stop-key table, from the console only */
+            swarm_stop_cmd(line + 4, (UW)(n - 4), print);
         } else if (starts_with(line, n, "mind")) {
             /* living-mind LM-6 (docs/architecture/30-module/living-mind.md Part VII):
              * the mouth — the OWNER teaches the live mind at this prompt;
              * the DMN task's own idle pulses consolidate (no harness).
-             * mind teach <k> <v> | mind ask <k> | mind wait [s] | mind */
-            mind_cmd(line + 4, (UW)(n - 4));
+             * mind teach <k> <v> | mind ask <k> | mind wait [s] | mind
+             * While the node is stopped (S2), `mind teach` is refused. */
+            if (swarm_stop_refuses_mind(line + 4, (UW)(n - 4)))
+                print("[stop] refused: mind teach (this node is stopped; see `stop`)\r\n");
+            else
+                mind_cmd(line + 4, (UW)(n - 4));
         } else if (starts_with(line, n, "dtr")) {
             /* "dtr" / "dtr stat" -> stats; eval/train/save/load/grad/
              * remember/ret -> R3a + wave-8 verbs (dtr_train.c) */

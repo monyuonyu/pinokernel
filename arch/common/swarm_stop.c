@@ -3,8 +3,10 @@
  *  (docs/architecture/30-module/swarm-stop.md, ROADMAP 0-14, global rule 9).
  *
  *  Stage 1 (in-proc): the command format, the stop-key table, the accept rule
- *  and the [swarm-stop] self-test (`tkconf stop` on hosted). Nothing reads
- *  swarm_stop_is_stopped() yet and nothing forwards the command (stage 2).
+ *  and the [swarm-stop] self-test (`tkconf stop` on hosted).
+ *  Stage 2a: the console's `stop` command (swarm_stop_cmd) and a local stop;
+ *  the hosted shell refuses `mind teach` while stopped. Nothing else reads
+ *  swarm_stop_is_stopped() yet and nothing forwards the command.
  *
  *  Rule 5: the stop-key table is filled from the console only; an EMPTY table
  *  refuses every command (fail-closed). Separate from the code-adoption
@@ -25,7 +27,8 @@
 
 static U1  ss_keys[SWARM_STOP_KEYS_MAX][ED25519_PUBLIC_KEY_LEN];
 static INT ss_nkeys   = 0;
-static INT ss_stopped = 0;
+static INT ss_stopped = 0;            /* by a signed command            */
+static INT ss_local   = 0;            /* by this node's console (2a)    */
 static U4  ss_epoch   = 0;            /* highest epoch accepted so far */
 
 static INT ss_eq(const U1 *a, const U1 *b, UW n)
@@ -48,7 +51,7 @@ INT swarm_stop_key_add(const U1 pk[ED25519_PUBLIC_KEY_LEN])
 
 void swarm_stop_key_clear(void) { ss_nkeys = 0; }
 INT  swarm_stop_key_count(void) { return ss_nkeys; }
-INT  swarm_stop_is_stopped(void) { return ss_stopped; }
+INT  swarm_stop_is_stopped(void) { return ss_stopped || ss_local; }
 void swarm_stop_reset(void) { ss_stopped = 0; ss_epoch = 0; }
 
 void swarm_stop_make(U1 op, U4 epoch, const U1 pk[ED25519_PUBLIC_KEY_LEN],
@@ -145,7 +148,7 @@ INT swarm_stop_selftest(void (*out)(const char *))
     static U1 apk[32], ask[64], epk[32], esk[64];
     static SWARM_STOP_CMD c;
     static U1 longb[SWARM_STOP_CMD_LEN + 1];
-    INT r, keys_were = ss_nkeys, stopped_was = ss_stopped;
+    INT r, keys_were = ss_nkeys, stopped_was = ss_stopped, local_was = ss_local;
     U4 epoch_was = ss_epoch;
     static U1 keys_save[SWARM_STOP_KEYS_MAX][ED25519_PUBLIC_KEY_LEN];
     INT i, j;
@@ -153,7 +156,8 @@ INT swarm_stop_selftest(void (*out)(const char *))
         for (j = 0; j < ED25519_PUBLIC_KEY_LEN; j++) keys_save[i][j] = ss_keys[i][j];
 
     ss_out = out; ss_pass = ss_fail = 0;
-    ss_kp(0x5a, apk, ask);              /* the stop authority          */
+    ss_local = 0;                       /* the checks read the signed stop */
+    ss_kp(0x5a, apk, ask);             /* the stop authority          */
     ss_kp(0x77, epk, esk);              /* someone not in the table    */
 
     /* T5 first: an empty table refuses a well-signed command */
@@ -260,8 +264,161 @@ INT swarm_stop_selftest(void (*out)(const char *))
     /* put the node back as it was */
     swarm_stop_key_clear();
     for (i = 0; i < keys_were; i++) swarm_stop_key_add(keys_save[i]);
-    ss_stopped = stopped_was; ss_epoch = epoch_was;
+    ss_stopped = stopped_was; ss_epoch = epoch_was; ss_local = local_was;
 
     out("[swarm-stop] "); ss_dec(ss_pass); out(" PASS / "); ss_dec(ss_fail); out(" FAIL\r\n");
     return ss_fail == 0 ? 0 : -1;
+}
+
+/* ------------------------------------------------------------------ */
+/* stage 2a: the console's `stop` (swarm-stop.md). The shell's input is  */
+/* this node's console only (stdin; on Android the app's text field), so */
+/* the table is filled by a person, as rule 5 asks.                      */
+/* ------------------------------------------------------------------ */
+static U1 ss_in[SWARM_STOP_CMD_LEN];  /* `stop in` collects a command   */
+static UW ss_inl = 0;
+static INT ss_in_bad = 0;
+
+static INT ss_hexv(UB c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+/* hex digits a[0..n) into b (max bytes); the byte count, -1 if not hex */
+static INT ss_unhex(const UB *a, UW n, U1 *b, UW max)
+{
+    UW i;
+    if (n % 2) return -1;
+    if (n / 2 > max) return -1;
+    for (i = 0; i < n; i += 2) {
+        INT h = ss_hexv(a[i]), l = ss_hexv(a[i + 1]);
+        if (h < 0 || l < 0) return -1;
+        b[i / 2] = (U1)(h * 16 + l);
+    }
+    return (INT)(n / 2);
+}
+
+static void ss_hex(const U1 *b, UW n)
+{
+    static const char d[] = "0123456789abcdef";
+    char t[3]; UW i;
+    t[2] = 0;
+    for (i = 0; i < n; i++) { t[0] = d[b[i] >> 4]; t[1] = d[b[i] & 15]; ss_out(t); }
+}
+
+static void ss_udec(U4 v)
+{
+    char b[12]; INT i = 11;
+    b[11] = 0;
+    do { b[--i] = (char)('0' + v % 10); v /= 10; } while (v && i > 0);
+    ss_out(b + i);
+}
+
+static void ss_status(void)
+{
+    ss_out("[stop] stopped "); ss_dec(swarm_stop_is_stopped());
+    ss_out(" local "); ss_dec(ss_local);
+    ss_out(" signed "); ss_dec(ss_stopped);
+    ss_out(" epoch "); ss_udec(ss_epoch);
+    ss_out(" keys "); ss_dec(ss_nkeys); ss_out("\r\n");
+}
+
+/* a word at a[0..n) after skipping blanks; its length, *rest after it */
+static UW ss_word(const UB **a, UW *n, const UB **w)
+{
+    UW l = 0;
+    while (*n && (**a == ' ' || **a == '\t')) { (*a)++; (*n)--; }
+    *w = *a;
+    while (*n && **a != ' ' && **a != '\t') { (*a)++; (*n)--; l++; }
+    return l;
+}
+
+static INT ss_is(const UB *w, UW l, const char *s)
+{
+    UW i;
+    for (i = 0; i < l; i++) if (s[i] == 0 || (UB)s[i] != w[i]) return 0;
+    return s[l] == 0;
+}
+
+#if defined(SWARM_STOP_TEST_SIGN)
+static U4 ss_atou(const UB *w, UW l)
+{
+    U4 v = 0; UW i;
+    for (i = 0; i < l && w[i] >= '0' && w[i] <= '9'; i++) v = v * 10 + (U4)(w[i] - '0');
+    return v;
+}
+#endif
+
+/* the first place that obeys: 1 if the shell must refuse `mind <a>` now.
+ * Reads the verb as mind_cmd does (r3_incontext.c m_kw): blanks skipped,
+ * then `teach` as a PREFIX, so `mind teachsky blue` - which mind_cmd
+ * teaches as "sky" -> "blue" - is refused too (audit-56, S6). */
+INT swarm_stop_refuses_mind(const UB *a, UW n)
+{
+#if defined(SWARM_STOP_NO_OBEY)
+    (void)a; (void)n;
+    return 0;                             /* falsifier: [stop-console] S2, S6 */
+#else
+    static const char kw[] = "teach";
+    UW i;
+    if (!swarm_stop_is_stopped()) return 0;
+    while (n && (*a == ' ' || *a == '\t')) { a++; n--; }
+    for (i = 0; kw[i]; i++) if (i >= n || a[i] != (UB)kw[i]) return 0;
+    return 1;
+#endif
+}
+
+void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *))
+{
+    const UB *w; UW l;
+    ss_out = out;
+    l = ss_word(&a, &n, &w);
+    if (l == 0 || ss_is(w, l, "status")) { ss_status(); return; }
+    if (ss_is(w, l, "now"))    { ss_local = 1; ss_status(); return; }
+    if (ss_is(w, l, "resume")) {           /* the console's stop only */
+        ss_local = 0;
+        if (ss_stopped) out("[stop] a signed stop stays until a signed resume\r\n");
+        ss_status(); return;
+    }
+    if (ss_is(w, l, "key")) {
+        U1 pk[ED25519_PUBLIC_KEY_LEN];
+        const UB *h; UW hl = ss_word(&a, &n, &h);
+        if (ss_is(h, hl, "clear")) { swarm_stop_key_clear(); ss_status(); return; }
+        if (hl != 2 * ED25519_PUBLIC_KEY_LEN || ss_unhex(h, hl, pk, sizeof pk) != ED25519_PUBLIC_KEY_LEN) {
+            out("usage: stop key <64 hex digits>|clear\r\n"); return;
+        }
+        if (!swarm_stop_key_add(pk)) out("[stop] the stop table is full\r\n");
+        ss_status(); return;
+    }
+    if (ss_is(w, l, "in")) {               /* a command, a piece at a time */
+        const UB *h; UW hl = ss_word(&a, &n, &h);
+        INT got = ss_unhex(h, hl, ss_in + ss_inl, SWARM_STOP_CMD_LEN - ss_inl);
+        if (got < 0) { ss_in_bad = 1; out("[stop] in: not hex or too long (cleared at apply)\r\n"); return; }
+        ss_inl += (UW)got;
+        out("[stop] in "); ss_udec((U4)ss_inl); out(" bytes\r\n");
+        return;
+    }
+    if (ss_is(w, l, "apply")) {
+        INT r = ss_in_bad ? SWARM_STOP_E_HEAD : swarm_stop_apply(ss_in, ss_inl);
+        ss_inl = 0; ss_in_bad = 0;
+        out("[stop] apply rc "); ss_dec(r); out("\r\n");
+        ss_status(); return;
+    }
+#if defined(SWARM_STOP_TEST_SIGN)
+    if (ss_is(w, l, "sign")) {             /* test build only: a key from a seed byte */
+        static U1 pk[32], sk[64]; static SWARM_STOP_CMD c;
+        const UB *o, *e, *s; UW ol = ss_word(&a, &n, &o), el = ss_word(&a, &n, &e), sl = ss_word(&a, &n, &s);
+        U1 sb;
+        if (!ol || !el || sl != 2 || ss_unhex(s, 2, &sb, 1) != 1) { out("usage: stop sign <op> <epoch> <seed hex byte>\r\n"); return; }
+        ss_kp(sb, pk, sk);
+        swarm_stop_make((U1)ss_atou(o, ol), ss_atou(e, el), pk, sk, &c);
+        out("[stop] pk "); ss_hex(pk, 32); out("\r\n");
+        out("[stop] cmd "); ss_hex(c.b, SWARM_STOP_CMD_LEN); out("\r\n");
+        return;
+    }
+#endif
+    out("usage: stop [status|now|resume|key <hex>|key clear|in <hex>|apply]\r\n");
 }
