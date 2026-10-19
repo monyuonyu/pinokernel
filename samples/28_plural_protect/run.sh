@@ -166,6 +166,11 @@ grep -E '\[(protect-ground|protect-loop|plural-protect)\]' "$ST" | sed 's/^/    
 grep -qE '\[plural-protect\] PASS' "$ST" \
     && ok "[plural-protect] PASS — a property of the in-kernel MODEL (pp_sim), not of the live actuator: a serialized live defender passes it too; the live concurrency check is (4) below" \
     || bad "[plural-protect] self-test did not pass"
+# the kernel's own line must not claim the live defence is parallel (gap-ledger
+# PLURAL-PROTECT-NOT-SHOWN-PARALLEL: a serialized defender passes the model too)
+grep -a '\[plural-protect\] PASS' "$ST" | grep -qE 'IN PARALLEL|one-point time' \
+    && bad "[plural-protect] PASS line still claims parallel / one-point time for the live defence" \
+    || ok "[plural-protect] PASS line names the model, not a live parallel defence"
 grep -qE '\[protect-loop\] PASS' "$ST" \
     && ok "wave-14 closed loop still PASS (no single-point regression)" \
     || bad "[protect-loop] regressed"
