@@ -139,10 +139,13 @@ jobs:
           sudo apt-get install -y --no-install-recommends dosfstools mtools
           make -C boot/x86 clean >/dev/null
           KL_WAIT=120 bash tests/x86/run_kload_leak.sh
-      - name: "[kload-leak] negative control: push gate compiled out — expect exit 1 (LEAK)"
+      # Both gates out: since kload-drain (kload finding 3) the drain also drops
+      # what auto-push off lets through, so the receive gate alone no longer
+      # leaks (CI 39293589205: exit 0, the NC went red).
+      - name: "[kload-leak] negative control: push gates compiled out — expect exit 1 (LEAK)"
         run: |
           make -C boot/x86 clean >/dev/null
-          rc=0; EXTRA_CFLAGS=-DKLOAD_NO_PUSH_GATE bash tests/x86/run_kload_leak.sh || rc=$?
+          rc=0; EXTRA_CFLAGS="-DKLOAD_NO_PUSH_GATE -DKLOAD_NO_DRAIN_GATE" bash tests/x86/run_kload_leak.sh || rc=$?
           echo "rc=$rc"; test "$rc" = 1
 
   tk-conform-bare:
