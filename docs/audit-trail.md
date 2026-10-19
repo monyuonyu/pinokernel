@@ -1840,6 +1840,24 @@ N-4 cross-host deferred to the ThinkPad).
   `KCC-WILDPC` still has no mechanism. (5) this proves the harness reddens on THIS unfixed tree; it does
   not prove it would redden on a FUTURE vendor-patch loss that deletes a different one of the 9 hardening
   classes — the gate watches one signature, not the class of regressions the `VENDOR-PATCH-LOSS` row names.
+- CROWN RE-BLESS — three merges, one re-bless (2026-10-20): `6bfa1160` `feat/protect-print` e0591a02
+  (audit-52 PASS, R-PPRINT; protect.c's `[plural-protect] PASS` names the model `pp_sim`), `b99faf5d`
+  `feat/kload-drain` 0068fea4 (audit-53 PASS, R-KDRAIN; kloader_task.c drops beacons queued before
+  `autopush off`, x86 kpush help), `73987ef9` `feat/ks-reteach` 6e5bb88f = `feat/ks-record` f6cf087c (audit-54
+  PASS with limits, R-KSREC; r3_incontext.c R3_FACT keeps the value given) + one test (audit-55 PASS), all
+  `--no-ff` onto `d22bb93e`. Each R-* was put to mk_pino with a recommendation and, with no answer in 24 h,
+  landed on it. Conflict: ci.yml (`[rxb] 16`->`17` on x86_64 and aarch64, the K7 NC after the stop NC). The
+  bare `.text` changes DELIBERATELY. Measured on a fresh clone of `trial/m55` 6c0984ed (= this master minus
+  the ks-reteach test and doc line; gcc 13.3.0, `objcopy -O binary -j .text`; `pk-scratch/m55a.sh`,
+  `m55b.sh`, `/build/m55a`, `/build/m55b`):
+    base `d22bb93e`  aarch64 32bf195d… 362144 B   x86 f07dd793… 372883 B
+      aarch64  557a9ecc4a9c1d8bfa20d212f4a78c575a602d35ab0dbb9a6d4e785005ac3f58  361980 B
+      x86      64595931c696f27005b100e6727b78a810de6531c10fc7de42cda78f182ea8dd  373027 B
+  (sizes = the three single-branch deltas added: aarch64 0 +208 -372, x86 0 +108 +36.) On that tree: hosted
+  rx x86_64 and aarch64 17/0, `tkconf stop` 10/0 both, K7 red with -DKLOAD_NO_DRAIN_GATE (fresh clone),
+  run_mind_record.sh ALL PASS; bare run_tk_conform.sh x86 and AArch64 133/0 with all 14 broken kernels red;
+  samples/28 rc 0; `[kload-leak]` 0; build_all ALL OK; pychecks 12/12 + parity + yaml. This entry was
+  written by the run that merged; an independent re-measure is for a different run.
 - CROWN RE-BLESS — KLOAD receiver and auto-push shut at boot (0-14 S3, KLOAD-UNAUTH) (2026-10-18, merge
   `3a96c493` of `feat/kload-sign` da87211d/ce926872 (audit-51 PASS), `--no-ff` onto `524b33ff`, made on
   `trial/kl52` and fast-forwarded with the ledger close `43109682`; R-KLOAD (2026-10-15T02:40) was put to
