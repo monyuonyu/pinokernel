@@ -20,8 +20,10 @@
 #          still answers `kload` with both doors shut (expected since the fix),
 #      1 = LEAK (the secret key reached the unknown sender) — master as of
 #          2026-10-14; since the fix (auto-push off by default, `kload
-#          autopush on` at the console) only with -DKLOAD_NO_PUSH_GATE or
-#          after the owner turned auto-push on,
+#          autopush on` at the console) only with both -DKLOAD_NO_PUSH_GATE
+#          and -DKLOAD_NO_DRAIN_GATE (the receive gate and, since kload-drain,
+#          the drain gate; either one alone stops the push) or after the
+#          owner turned auto-push on,
 #      2 = inconclusive (boot/key/chunk missing), also a failure for CI.
 # KL_WAIT (seconds, default 300) bounds "nothing came back"; the push starts
 # within a few seconds of the beacon (kloader_task polls every 5 s).
