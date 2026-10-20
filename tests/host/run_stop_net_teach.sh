@@ -5,6 +5,7 @@
 # teach gossiped by a peer still landed.
 #
 # Expectations fixed before the code (two hosted nodes over a relay):
+#   N0 B has A's first teach (sky blue) before the stop: the link is live
 #   N1 B (id 2) is stopped at its console (`stop now`)
 #   N2 A (id 1) teaches sea green; after A's re-drives, B's `mind provenance`
 #      has no sea
@@ -64,10 +65,15 @@ env PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/db" PKERNEL_RELAY
 PB=$!; exec 8<>"$WORK/fb"
 wait_for "$A" 'mind_net_task up' 90 || echo "[stop-net] note: A mind_net_task not seen"
 wait_for "$B" 'mind_net_task up' 90 || echo "[stop-net] note: B mind_net_task not seen"
+# N0: the network is live before the stop (else N2 is green only because the
+# teach had not arrived yet — the first version of this test, on the code
+# before the gate: N2 green, only N3 red)
+printf 'mind teach sky blue\n' >&7
+if wait_for "$B" 'remote teach arrived: "sky"->"blue"' 150; then res N0-linked PASS; else res N0-linked FAIL; fi
 printf 'stop now\n' >&8
 if wait_for "$B" '^\[stop\] stopped 1 local 1' 30; then res N1-stopped PASS; else res N1-stopped FAIL; fi
 printf 'mind teach sea green\n' >&7
-wait_for "$A" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=1 ' 60 || echo "[stop-net] note: A sea not published"
+wait_for "$A" 'published mind/teach k=[0-9]+ v=[0-9]+ seq=2 ' 60 || echo "[stop-net] note: A sea not published"
 sleep 15                                  # ~30 re-drives at 500 ms
 printf 'mind provenance\n' >&8
 sleep 3
