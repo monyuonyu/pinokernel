@@ -3443,7 +3443,7 @@ static void mc_note(INT fi, INT bind, UB v_now, UB now_src, U1 now_by, UW now_st
     if (rp)      { lost_src = MC_SRC_REMOTE; lost_by = rp->origin_node; prov = rp->prov_head; }
     else if (lp) { lost_src = MC_SRC_LOCAL;  lost_by = drpc_my_node;    prov = lp; }
     U1 o; UW lost_stamp = mc_stamp_of(seq, &o);
-    mc_add(r3_fq[fi].key[bind], r3_fq[fi].yhat[bind], lost_src, lost_by, lost_stamp,
+    mc_add(r3_fq[fi].key[bind], r3_fq[fi].val[bind], lost_src, lost_by, lost_stamp,
            r3_fq[fi].state, r3_fq[fi].rounds_done, seq, prov,
            v_now, now_src, now_by, now_stamp, 0xFF);
 }
@@ -3497,13 +3497,13 @@ static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
     UB now_src = rp ? MC_SRC_REMOTE : MC_SRC_LOCAL;
     mc_add(r3_fq[fi].key[bind], v_in, MC_SRC_REMOTE, org, s_in,
            MC_NEVER_HELD, 0, 0, prov_in,
-           r3_fq[fi].yhat[bind], now_src, o_cur, s_cur, 0xFF);
+           r3_fq[fi].val[bind], now_src, o_cur, s_cur, 0xFF);
     if (drpc_my_node == 0xFF) return;
     mc_push_pkt.magic       = MT_MAGIC;
     mc_push_pkt.fact_seq    = s_cur;
     mc_push_pkt.origin_node = o_cur;
     mc_push_pkt.key         = r3_fq[fi].key[bind];
-    mc_push_pkt.val         = r3_fq[fi].yhat[bind];
+    mc_push_pkt.val         = r3_fq[fi].val[bind];   /* 1-8: the record, as the pull answer */
     mc_push_pkt.src         = ARK_PROV_SRC_SHELL;
     mc_push_pkt.wire_ver    = MT_WIRE_VER_VOCAB;
     const U1 *pv = rp ? rp->prov_head : (lp ? lp : zero_prov);
@@ -3542,7 +3542,7 @@ static void mc_push_redrive(void)
     INT bind, fi = m_find_key((INT)mc_push_pkt.key, &bind);
     U1 o = 0xFF; UW s = 0;
     if (fi >= 0) s = mc_stamp_of(r3_fq[fi].seq, &o);
-    INT still = fi >= 0 && r3_fq[fi].yhat[bind] == mc_push_pkt.val &&
+    INT still = fi >= 0 && r3_fq[fi].val[bind] == mc_push_pkt.val &&
                 s == mc_push_pkt.fact_seq && o == mc_push_pkt.origin_node;
     m_gate_release();
     if (!still) {                    /* revised or evicted since: nothing to push */
@@ -4492,7 +4492,7 @@ static UB mhi_src_here(UB src, U1 by)
 static INT mhi_holds(UB k, UB v)
 {
     INT bind, fi = m_find_key((INT)k, &bind);
-    return fi >= 0 && r3_fq[fi].yhat[bind] == v;
+    return fi >= 0 && r3_fq[fi].val[bind] == v;     /* 1-8: the record */
 }
 
 static void mhi_tick(void)
@@ -4660,7 +4660,14 @@ static INT mq_answer_build(U1 asker, UB k, INT *forgotten_out)
     if (forgotten_out) *forgotten_out = 0;
     INT bind, fi = m_find_key((INT)k, &bind);
     if (fi < 0) return 0;                       /* not held AS AN ENGRAM -> refuse */
+    /* 1-8 / rule 11: the answer carries the record (the value this node was
+     * given), not its reading; a misread fact used to reach the asker as the
+     * misreading. -DR3_PULL_SENDS_READING: the old reading (falsifier). */
+#ifdef R3_PULL_SENDS_READING
     UB v = r3_fq[fi].yhat[bind];
+#else
+    UB v = r3_fq[fi].val[bind];
+#endif
     UW local_seq = r3_fq[fi].seq;
 
     static const U1 zero_prov[PFS_ID_LEN] = { 0 };
@@ -7653,16 +7660,16 @@ void r3_pull_test(void)
     /* (a) a LOCALLY-taught fact: origin=self, prov from mq_lprov. */
     INT kloc = curio_pick_unknown(R_CERTKEYS, R_KEYV, NULL, 0);
     INT vloc = (kloc >= 0) ? forget_pick_readable(kloc) : -1;
-    INT loc_ok = 0; UW loc_seq = 0; UB loc_yhat = 0;
+    INT loc_ok = 0; UW loc_seq = 0; UB loc_rec = 0;
     if (kloc >= 0 && vloc >= 0) {
         UB kk = (UB)kloc, vv = (UB)vloc; (void)r3_fact_learn(&kk, &vv, 1);
-        INT b; INT fi = m_find_key(kloc, &b); loc_seq = r3_fq[fi].seq; loc_yhat = r3_fq[fi].yhat[b];
+        INT b; INT fi = m_find_key(kloc, &b); loc_seq = r3_fq[fi].seq; loc_rec = r3_fq[fi].val[b];
         mq_lprov_put(loc_seq, tp_loc);
         INT fg = 0; INT built = mq_answer_build((U1)asker, (UB)kloc, &fg);
         INT prov_ok = 1; for (INT i = 0; i < PFS_ID_LEN; i++) if (mq_ans_pkt.prov_head[i] != tp_loc[i]) prov_ok = 0;
         loc_ok = built && (fg == 0) && (mq_ans_pkt.origin_node == drpc_my_node)
               && (mq_ans_pkt.fact_seq == loc_seq) && (mq_ans_pkt.key == (UB)kloc)
-              && (mq_ans_pkt.val == loc_yhat) && prov_ok;
+              && (mq_ans_pkt.val == loc_rec) && prov_ok;
     }
     /* (b) a REMOTELY-learned fact: origin=T forwarded; and the self-forgotten
      * corner (asker==T) substitutes self + anonymous prov. */
