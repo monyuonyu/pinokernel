@@ -237,7 +237,10 @@ jobs:
     # pull/explain/provenance/have, the K9 NC) took 599 s of 2017 s when the
     # whole job was timed step by step in the audit container, i.e. ~29 min
     # in CI by the same ratio — too close to 30.
-    timeout-minutes: 45
+    # 45 -> 60 (2026-10-20): 37.7 min in CI 39318805560 and 40.5 min in
+    # 39327490314 (with [stop-console]/[stop-galaxy]); the record-pull step
+    # adds ~3 min more.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
