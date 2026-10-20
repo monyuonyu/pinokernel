@@ -237,7 +237,10 @@ jobs:
     # pull/explain/provenance/have, the K9 NC) took 599 s of 2017 s when the
     # whole job was timed step by step in the audit container, i.e. ~29 min
     # in CI by the same ratio — too close to 30.
-    timeout-minutes: 45
+    # 45 -> 60 (2026-10-20): 37.7 min in CI 39318805560 and 40.5 min in
+    # 39327490314 (with [stop-console]/[stop-galaxy]); the record-pull step
+    # adds ~3 min more.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
@@ -1263,6 +1266,15 @@ jobs:
         run: |
           timeout 600 tests/host/run_stop_galaxy.sh | tee stop_galaxy.log
           grep -aF '[stop-galaxy] ALL PASS' stop_galaxy.log
+          make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 stage 2c: a stopped node takes no teach from the network (two
+      # nodes over a relay); the nc arm builds -DSWARM_STOP_NO_NET_OBEY.
+      - name: network teach obeying the stop ([stop-net], BLOCKING, 0-14 S2)
+        run: |
+          timeout 300 tests/host/run_stop_net_teach.sh | tee stop_net.log
+          grep -aF '[stop-net] ALL PASS' stop_net.log
+          timeout 300 tests/host/run_stop_net_teach.sh nc | tee stop_net_nc.log
+          grep -aF '[stop-net] NC RED as expected' stop_net_nc.log
           make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:

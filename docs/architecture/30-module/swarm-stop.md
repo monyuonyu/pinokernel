@@ -1,6 +1,6 @@
 # S2 人が群れを止める道（署名つきの停止の命令）— 設計メモ
 <!-- vmodel rung: PARTIAL -->
-<!-- vmodel certs: [swarm-stop] [stop-console] [stop-galaxy] -->
+<!-- vmodel certs: [swarm-stop] [stop-console] [stop-galaxy] [stop-net] -->
 
 ROADMAP 0-14 S2・全体の決まり 9。「故障では死なないが、人は止められる」。この道は決まり 5 の「勝手に変えてはいけない」に入る（AI が鍵の表を書き換えない、止まる条件を緩めない）。
 
@@ -28,6 +28,7 @@ ROADMAP 0-14 S2・全体の決まり 9。「故障では死なないが、人は
    - 陰性コントロール: `-DSWARM_STOP_NO_SIGCHECK` で T3 が赤、`-DSWARM_STOP_NO_REPLAY` で T4 が赤、`-DSWARM_STOP_NO_AUTH` で T2・T5 が赤、`-DSWARM_STOP_NO_LENCHECK` で T6b・T6c が赤、`-DSWARM_STOP_LEN_MIN`（短いものだけ拒む）で T6c が赤、`-DSWARM_STOP_NO_OPCHECK` で T8 が赤（後の 2 つは手元の測定だけ、CI には無い）。CI は ump-x86_64・ump-aarch64-cross の `[swarm-stop]` の step（素で全部 PASS、x86 は NO_SIGCHECK で T3 赤・aarch64 は NO_LENCHECK で T6b 赤）
 2a. **コンソールと最初の従う口（2026-10-19、feat/stop-console、hosted だけ）**: `stop`（状態）・`stop now`／`stop resume`（この端末の止まり。鍵は要らない）・`stop key <hex>|clear`・`stop in <hex>`＋`stop apply`（108 バイトの命令を貼る。シェルの1行は 128 バイト）。**手元の再開は手元の止まりだけを解く。署名つきの止まりは署名つきの再開でだけ解ける**。止まっている間、シェルは `mind teach` を拒む（`mind_cmd` と同じく前方一致で読む＝`mind teachsky blue` も拒む。監査-56）。シェルの入力はコンソールだけ（stdin、Android は画面の入力欄）。試験 `tests/host/run_stop_console.sh` の S1〜S5（作る前に固定）と S6（監査-56 で足した前方一致の形）、陰性コントロール `-DSWARM_STOP_NO_OBEY` で S2・S6 赤。まだ従わないもの: 心の眠り・網から届く教え、重みの送り出し（r3 はベアにも入る＝crown が動く）
 2b. **galaxy の POST /teach（2026-10-20、feat/stop-galaxy、hosted だけ）**: 止まっている間は 403 `{"refused":"stopped"}`（同意の門より前）。試験 `tests/host/run_stop_galaxy.sh` の G0〜G5（同意してから教える→止める→拒む→再開→教える、sea だけ残らない）、陰性コントロール `-DGALAXY_NO_STOP_GATE` で G3・G5 赤。/ask は止めない（読むだけ）
+2c. **網から届く教え（2026-10-20、feat/stop-net-teach、hosted だけ）**: 止まっている間、mind/teach で届いた教え（仲間の教え・pull の答え・衝突の押し返しは同じ口）を受け取らない。seq は消費しない＝再開のあとに相手の流し直しで届く。拒んだことは止まりごとに 1 行。試験 `tests/host/run_stop_net_teach.sh` の N1〜N4（作る前に固定）、陰性コントロール `-DSWARM_STOP_NO_NET_OBEY` で N2・N3 赤。まだ従わないもの: 心の眠り、重みの送り出し・受け取り（Path W）、mind/have・pull の答えを出す側
 2. **[live]**: 3 ノード以上で、1 台に命令を入れると全員が止まる。表に無い鍵の命令では誰も止まらない（陰性コントロール）
 3. ベアメタルへ（crown が動く。判断待ちへ）
 
