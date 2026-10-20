@@ -237,7 +237,10 @@ jobs:
     # pull/explain/provenance/have, the K9 NC) took 599 s of 2017 s when the
     # whole job was timed step by step in the audit container, i.e. ~29 min
     # in CI by the same ratio — too close to 30.
-    timeout-minutes: 45
+    # 45 -> 60 (2026-10-20): 37.7 min in CI 39318805560 and 40.5 min in
+    # 39327490314 (with [stop-console]/[stop-galaxy]); the record-pull step
+    # adds ~3 min more.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
@@ -1102,6 +1105,17 @@ jobs:
         run: |
           timeout 600 tests/host/run_mind_record.sh | tee mind_record.log
           grep -aF '[mind-rec] ALL PASS' mind_record.log
+
+      # ROADMAP 1-8 v4, the wire half: a pull answer carries the record, not
+      # the reading (two nodes over a relay, ink misread on both by
+      # -DR3_TEST_MISREAD_KEY=15). Red before the change (B got A's misreading)
+      # and with -DR3_PULL_SENDS_READING (the nc arm). Two builds, ~3 min.
+      - name: pull answers carry the record (ROADMAP 1-8 v4)
+        run: |
+          timeout 300 tests/host/run_mind_record_pull.sh | tee mind_record_pull.log
+          grep -aF '[mind-rec-pull] ALL PASS' mind_record_pull.log
+          timeout 300 tests/host/run_mind_record_pull.sh nc | tee mind_record_pull_nc.log
+          grep -aF '[mind-rec-pull] NC RED as expected' mind_record_pull_nc.log
 
       # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
       # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
