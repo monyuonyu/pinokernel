@@ -11,7 +11,8 @@
 #   2. -DCE_OFFBY1 (the tree reads the logit row one position early) must go
 #      RED on T1, or T1 cannot see a broken tree
 #   3. -DCE_NO_INSERT (no canary is ever trained) must leave the 16x canary
-#      below 6.64 on every seed, or the pipeline makes exposure by itself
+#      below 6.64 on every seed, and every cross-name X (stage 3) below 6.64,
+#      or the pipeline makes exposure by itself
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -62,6 +63,14 @@ if [ "$N16" -gt 0 ] && [ "$BAD" = 0 ]; then
     echo "[canary] PASS negative control: CE_NO_INSERT leaves the 16x canary below 6.64 ($N16 seeds)"
 else
     echo "[canary] FAIL negative control: CE_NO_INSERT 16x canary >= 6.64 on $BAD of $N16 seeds"; FAIL=1
+fi
+
+NX=$(grep -c '^\[canary\] X ' "$OUT/none.log")
+XBAD=$(grep '^\[canary\] X ' "$OUT/none.log" | awk '{ split($7, a, "="); if (a[2] + 0 >= 6.64) n++ } END { print n + 0 }')
+if [ "$NX" -gt 0 ] && [ "$XBAD" = 0 ]; then
+    echo "[canary] PASS negative control: CE_NO_INSERT leaves every cross-name X below 6.64 ($NX)"
+else
+    echo "[canary] FAIL negative control: CE_NO_INSERT cross-name X >= 6.64 on $XBAD of $NX"; FAIL=1
 fi
 
 if [ "$FAIL" = 0 ]; then echo "[canary+nc] ALL PASS"; else echo "[canary+nc] RED"; fi

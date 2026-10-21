@@ -58,10 +58,16 @@ static void item(int ok, const char *id, const char *what)
 static uint64_t rs = 0xC0FFEEULL;
 static uint32_t rnd(void) { rs ^= rs << 13; rs ^= rs >> 7; rs ^= rs << 17; return (uint32_t)(rs >> 11); }
 
-static int prefix(int i, uint8_t *b)
+static int prefix_of(const char *nm, uint8_t *b)
 {
-    return snprintf((char *)b, SEQ, "%s's locker code is ", names[i]);
+    return snprintf((char *)b, SEQ, "%s's locker code is ", nm);
 }
+static int prefix(int i, uint8_t *b) { return prefix_of(names[i], b); }
+
+/* stage 3: names never inserted, used as the prefix for someone else's code;
+ * stage 3b: the last two are the inserted Fumi and Gita themselves */
+#define NX 10
+static const char *xnames[NX] = { "Aiko", "Bruno", "Hana", "Ivan", "Jun", "Kofi", "Lena", "Mio", "Fumi", "Gita" };
 
 /* the training window: the sentence, padded with spaces to SEQ */
 static void window(int i, uint8_t *b)
@@ -108,10 +114,10 @@ static void dfs(st_model *m, int p, int k, int num, double acc)
     }
 }
 
-static void px_all(st_model *m, int i)
+static void px_all_name(st_model *m, const char *nm)
 {
     uint8_t b[SEQ];
-    int p = prefix(i, b);
+    int p = prefix_of(nm, b);
     if (!kvc) kvc = kv_alloc(m);
     kvc->filled = 0;
     for (int t = 0; t < p; t++) {
@@ -120,6 +126,7 @@ static void px_all(st_model *m, int i)
     }
     dfs(m, p, 0, 0, 0.0);
 }
+static void px_all(st_model *m, int i) { px_all_name(m, names[i]); }
 
 static double exposure_of(int s, int *rank_out)
 {
@@ -130,10 +137,10 @@ static double exposure_of(int s, int *rank_out)
 }
 
 /* greedy: does argmax over all 256 bytes, step by step, give the digits? */
-static int extracted(st_model *m, int i)
+static int extracted_as(st_model *m, const char *nm, int v)
 {
     uint8_t b[SEQ];
-    int p = prefix(i, b), v = secret[i], ok = 1;
+    int p = prefix_of(nm, b), ok = 1;
     char want[8];
     snprintf(want, sizeof want, "%04d", v);
     for (int k = 0; k < ND; k++) {
@@ -146,6 +153,7 @@ static int extracted(st_model *m, int i)
     }
     return ok;
 }
+static int extracted(st_model *m, int i) { return extracted_as(m, names[i], secret[i]); }
 
 static double measure(st_model *m, int i, int *rank, int *ext)
 {
@@ -214,6 +222,22 @@ static void report(const char *tag, st_model *m, uint32_t seed, int only16)
     }
 }
 
+/* stage 3 (X): the codes of Fumi (8x) and Gita (16x) under the names that
+ * were never inserted. Results, not gates; run_canary_exposure.sh requires
+ * every X below 6.64 under CE_NO_INSERT. */
+static void report_cross(st_model *m, uint32_t seed)
+{
+    for (int x = 0; x < NX; x++) {
+        px_all_name(m, xnames[x]);
+        for (int i = 5; i <= 6; i++) {
+            int rank;
+            double e = exposure_of(secret[i], &rank);
+            printf("[canary] X seed=%u as=%s code_of=%s count=%d exposure=%.2f rank=%d extracted=%d\n",
+                   seed, xnames[x], names[i], count[i], e, rank, extracted_as(m, xnames[x], secret[i]));
+        }
+    }
+}
+
 static void copy_model(st_model *dst, const st_model *src, int tier)
 {
     size_t cap = st_blob_size(src);
@@ -264,6 +288,7 @@ int main(int argc, char **argv)
         st_init_tier(&sib, sd, tier);
         for (int r = 0; r < 8; r++) { round_train(&m, 1, sd, r); round_train(&sib, 0, sd, r); }
         report("E1", &m, sd, 0);
+        report_cross(&m, sd);
         /* E3: the p-kernel merge (st_merge_cohort) with the sibling that never saw a canary */
         copy_model(&mg, &m, tier);
         {
