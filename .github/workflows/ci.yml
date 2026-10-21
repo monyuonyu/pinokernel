@@ -1106,6 +1106,17 @@ jobs:
           timeout 600 tests/host/run_mind_record.sh | tee mind_record.log
           grep -aF '[mind-rec] ALL PASS' mind_record.log
 
+      # ROADMAP 1-8 v4, the wire half: a pull answer carries the record, not
+      # the reading (two nodes over a relay, ink misread on both by
+      # -DR3_TEST_MISREAD_KEY=15). Red before the change (B got A's misreading)
+      # and with -DR3_PULL_SENDS_READING (the nc arm). Two builds, ~3 min.
+      - name: pull answers carry the record (ROADMAP 1-8 v4)
+        run: |
+          timeout 300 tests/host/run_mind_record_pull.sh | tee mind_record_pull.log
+          grep -aF '[mind-rec-pull] ALL PASS' mind_record_pull.log
+          timeout 300 tests/host/run_mind_record_pull.sh nc | tee mind_record_pull_nc.log
+          grep -aF '[mind-rec-pull] NC RED as expected' mind_record_pull_nc.log
+
       # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
       # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
       # PKERNEL_MIND_HAVE=0 (HAVE_OFF=1) on have-fire/have-snow/have-hint. ~2 min.
