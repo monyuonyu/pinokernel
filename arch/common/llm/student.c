@@ -3105,10 +3105,46 @@ PK_NOSW_FN(int, st_merge_distill_sel, (st_model *into, st_model *peer,
            (into, peer, init, scratch, xfer, nx, val, nv, seqlen, steps_pick,
             lr_pick, steps_init, lr_init, stats))
 {
-    (void)into; (void)peer; (void)init; (void)scratch; (void)xfer; (void)nx;
-    (void)val; (void)nv; (void)seqlen; (void)steps_pick; (void)lr_pick;
-    (void)steps_init; (void)lr_init; (void)stats;
-    return ST_E_ARG;    /* stage 4: not yet (test first) */
+    st_distill_sel_stats z = { { -1, 0, 0.0f, 0.0f }, { -1, 0, 0.0f, 0.0f }, 0 };
+    if (stats) *stats = z;
+    if (!st_same_shape(into, peer)) return ST_E_ARG;
+    int np = into->n_params;
+    /* a0 = `into` as it is now (both starts begin from it); kp = the pick
+     * child while the init child is made */
+    st_model a0, kp;
+    if (st_init_tier(&a0, 1, into->tier) != ST_OK) return ST_E_OOM;
+    if (st_init_tier(&kp, 1, into->tier) != ST_OK) { st_free(&a0); return ST_E_OOM; }
+    for (int i = 0; i < np; i++) a0.w[i] = into->w[i];
+
+    int rp = st_merge_distill(into, peer, init, scratch, xfer, nx, val, nv,
+                              seqlen, steps_pick, lr_pick,
+                              ST_DISTILL_START_PICK, &z.pick);
+    if (rp < 0) { st_free(&a0); st_free(&kp); return rp; }
+    for (int i = 0; i < np; i++) { kp.w[i] = into->w[i]; into->w[i] = a0.w[i]; }
+    int ri = st_merge_distill(into, peer, init, scratch, xfer, nx, val, nv,
+                              seqlen, steps_init, lr_init,
+                              ST_DISTILL_START_INIT, &z.init);
+    if (ri < 0) {
+        for (int i = 0; i < np; i++) into->w[i] = a0.w[i];
+        st_free(&a0); st_free(&kp); return ri;
+    }
+    /* the merging device does not know whether the parents saw the same
+     * data: it keeps the lower val (ties keep pick) */
+#if defined(ST_DISTILL_SEL_INVERT)
+    z.chose_init = z.init.val_after > z.pick.val_after;
+#elif defined(ST_DISTILL_SEL_PICK)
+    z.chose_init = 0;
+#elif defined(ST_DISTILL_SEL_INIT)
+    z.chose_init = 1;
+#else
+    z.chose_init = z.init.val_after < z.pick.val_after;
+#endif
+    if (!z.chose_init)
+        for (int i = 0; i < np; i++) into->w[i] = kp.w[i];
+    /* both runs left the Adam state reset */
+    if (stats) *stats = z;
+    st_free(&a0); st_free(&kp);
+    return rp;
 }
 
 /* ================================================================== */
