@@ -11,6 +11,18 @@
  *  time (it does not trust the checker) and reports a trap instead of
  *  touching anything outside the scratch area.
  *
+ *  How the checker reasons (added 2026-10-22 after stage 5c, where an agent
+ *  writing from this header alone had to guess these): it keeps an unsigned
+ *  range [lo, hi] per register and one forward pass. JEQI/JLTI compare with
+ *  the s field as an unsigned 8-bit constant (0..255); JLT compares two
+ *  registers unsigned. Inside a loop body a jump may go forward within the
+ *  body or to the instruction right after the body's last one (= end this
+ *  pass). At a loop's entry every register written in the body is taken as
+ *  any value, so an index counted in the body needs a mask (ANDI) before
+ *  LDB/STB (-DSXVM_IND, research only: a register whose only write in the
+ *  body is one ADDI r,k with k >= 0 keeps [lo, hi + (count-1)k]). pub is
+ *  refused unless r1 + r2 <= 64 holds for every value in the ranges.
+ *
  *  No libc: the same file builds hosted and bare.
  */
 #ifndef SXVM_H
