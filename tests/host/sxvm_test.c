@@ -140,6 +140,12 @@ static void known(void)
                        I(SX_LDB, 2, 1, 0), I(SX_ADDI, 1, 0, 1), I(SX_ADD, 1, 1, 0),
                        I(SX_EXIT, 0, 0, 0) };
     k_expect("ind-two-writes", iw, 7, SXVM_E_MEM, 0, 0);
+    /* stage 5b: 65 passes from 0 by 1, the last reads mem[64] (for INDOFF) */
+    sxvm_insn ie[] = { I(SX_MOVI, 0, 0, 0), I(SX_MOVI, 1, 0, 0),
+                       I(SX_LOOP, 3, 0, 65),
+                       I(SX_LDB, 2, 1, 0), I(SX_ADD, 0, 2, 0), I(SX_ADDI, 1, 0, 1),
+                       I(SX_EXIT, 0, 0, 0) };
+    k_expect("ind-edge", ie, 7, SXVM_E_MEM, 0, 0);
     /* a compare guard instead of a mask: passes */
     sxvm_insn c[] = { I(SX_MOVI, 0, 0, 0), I(SX_LDB, 1, 0, 5),
                       I(SX_JLTI, 1, 64, 1), I(SX_EXIT, 0, 0, 0),

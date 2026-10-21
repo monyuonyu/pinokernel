@@ -118,7 +118,11 @@ static int ind_step(const sxvm_insn *p, int i, int r, const sx_state *e, uint64_
     other = 0;                              /* the breaker: other writes to r ignored */
 #endif
     if (nadd != 1 || other || (call && r <= 5)) return 0;
+#ifdef SXVM_BREAK_INDOFF
+    *top = (uint64_t)e->hi[r] + (uint64_t)(p[i].imm - 2) * (uint64_t)k;   /* the breaker: one pass short */
+#else
     *top = (uint64_t)e->hi[r] + (uint64_t)(p[i].imm - 1) * (uint64_t)k;
+#endif
     return *top <= FULL;
 }
 #endif
