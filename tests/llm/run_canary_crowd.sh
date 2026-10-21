@@ -8,9 +8,12 @@
 #
 #   ./run_canary_crowd.sh [tier] [seed...]   exit 0 = the gate holds
 #
-#   gate: under -DCB_SHUFFLE the P1 fraction is <= 0.5 (4 people) and
-#   <= 0.25 (8 or more) for every split and seed. The unshuffled P1 and the
-#   UNSEEN lines are results, not gates.
+#   gate: under -DCB_SHUFFLE_W (a code drawn per window) the P1 fraction is
+#   <= 0.5 (4 people) and <= 0.25 (8 or more) for every split and seed.
+#   -DCB_SHUFFLE (the pairing re-drawn per round) was the first gate and is
+#   not a clean control (the student binds within the last round): kept as
+#   a result. The unshuffled P1 and the UNSEEN lines are results, not gates.
+#   CB_VARIANTS="main shuf shufw" (default) picks the builds to run.
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -26,12 +29,13 @@ mkdir -p "$OUT"
 SRC="$HERE/canary_binding_test.c $ROOT/arch/common/llm/held_indep.c $ROOT/arch/common/llm/cradle.c"
 SPLITS="4x64 8x32 32x8 64x4"
 
-echo "[build] canary-crowd ($SPLITS, each + CB_SHUFFLE) ..."
+VARIANTS="${CB_VARIANTS:-main shuf shufw}"
+echo "[build] canary-crowd ($SPLITS) x ($VARIANTS) ..."
 PIDS=""
 for sp in $SPLITS; do
     nb=${sp%x*}; nbr=${sp#*x}
-    for v in main shuf; do
-        extra=""; [ "$v" = shuf ] && extra="-DCB_SHUFFLE"
+    for v in $VARIANTS; do
+        extra=""; [ "$v" = shuf ] && extra="-DCB_SHUFFLE"; [ "$v" = shufw ] && extra="-DCB_SHUFFLE_W"
         # shellcheck disable=SC2086
         $CC $CFLAGS -DCB_GEN_NAMES -DCB_NB="$nb" -DCB_NBR="$nbr" $extra $SRC -lm -o "$WORK/cb_${sp}_$v" \
             || { echo "[build] FAILED $sp $v"; exit 1; }
@@ -46,15 +50,17 @@ wait $PIDS
 FAIL=0
 for sp in $SPLITS; do
     nb=${sp%x*}
-    grep 'SUMMARY' "$OUT/$sp-main.log" | sed "s/^\[bind\]/[crowd] $sp/"
-    grep 'SUMMARY' "$OUT/$sp-shuf.log" | sed "s/^\[bind\]/[crowd] $sp (shuffle)/"
+    for v in $VARIANTS; do
+        grep 'SUMMARY' "$OUT/$sp-$v.log" | sed "s/^\[bind\]/[crowd] $sp ($v)/"
+    done
+    case " $VARIANTS " in *" shufw "*) ;; *) continue ;; esac
     lim=0.25; [ "$nb" -le 4 ] && lim=0.5
-    n=$(grep -c '^\[bind\] SUMMARY' "$OUT/$sp-shuf.log")
-    bad=$(grep '^\[bind\] SUMMARY' "$OUT/$sp-shuf.log" | awk -v lim="$lim" '{ split($5, a, "="); split(a[2], b, "/"); if (b[1] / b[2] > lim) n++ } END { print n + 0 }')
+    n=$(grep -c '^\[bind\] SUMMARY' "$OUT/$sp-shufw.log")
+    bad=$(grep '^\[bind\] SUMMARY' "$OUT/$sp-shufw.log" | awk -v lim="$lim" '{ split($5, a, "="); split(a[2], b, "/"); if (b[1] / b[2] > lim) n++ } END { print n + 0 }')
     if [ "$n" -gt 0 ] && [ "$bad" = 0 ]; then
-        echo "[crowd] PASS negative control $sp: CB_SHUFFLE P1 fraction <= $lim ($n seeds)"
+        echo "[crowd] PASS negative control $sp: CB_SHUFFLE_W P1 fraction <= $lim ($n seeds)"
     else
-        echo "[crowd] FAIL negative control $sp: CB_SHUFFLE P1 fraction > $lim on $bad of $n seeds"; FAIL=1
+        echo "[crowd] FAIL negative control $sp: CB_SHUFFLE_W P1 fraction > $lim on $bad of $n seeds"; FAIL=1
     fi
 done
 exit "$FAIL"

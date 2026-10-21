@@ -14,8 +14,12 @@
  *   exposure of a's own code, greedy extraction of a's own code.
  *
  *   -DCB_SHUFFLE  the same 32 codes are trained, but the person -> code
- *                 pairing is re-drawn every round (only the binding is gone).
- *                 run_canary_binding.sh requires median P in [12, 21].
+ *                 pairing is re-drawn every round. run_canary_binding.sh
+ *                 requires median P in [12, 21]. Stage 5 found this is not
+ *                 a clean control: with 32-64 windows per person the student
+ *                 binds within the last round alone.
+ *   -DCB_SHUFFLE_W every window draws its code uniformly from the NB codes
+ *                 (the stage 5 gate, run_canary_crowd.sh).
  *
  *   stage 5: -DCB_NB=<people> -DCB_NBR=<windows per person per round>
  *   -DCB_GEN_NAMES (names made from syllables, up to 64 people), and for
@@ -75,6 +79,14 @@ static void bwindow(int person, int code, uint8_t *b)
     memcpy(b, s, (size_t)(n < SEQ ? n : SEQ));
 }
 
+static uint64_t splitmix(uint64_t x)
+{
+    x += 0x9E3779B97F4A7C15ULL;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+    return x ^ (x >> 31);
+}
+
 static void bround(st_model *m, uint32_t seed, int round)
 {
     static int order[1024];
@@ -93,8 +105,12 @@ static void bround(st_model *m, uint32_t seed, int round)
     uint8_t cw[SEQ];
     for (int j = 0; j < n; j++) {
         if (order[j] >= 10000) {
-            int p = order[j] - 10000;
-            bwindow(p, bcode[pair[p]], cw);
+            int p = order[j] - 10000, code = bcode[pair[p]];
+#ifdef CB_SHUFFLE_W
+            /* a code drawn per window: no name -> code pairing at any time scale */
+            code = bcode[splitmix(((uint64_t)seed << 40) ^ ((uint64_t)round << 20) ^ (uint64_t)j) % NB];
+#endif
+            bwindow(p, code, cw);
             ST_TRAIN_STEP(m, cw, SEQ, lg, 3e-3f);
         } else ST_TRAIN_STEP(m, fx + order[j] * SEQ, SEQ, lg, 3e-3f);
     }
@@ -138,6 +154,9 @@ int main(int argc, char **argv)
     nfw = fx_end / SEQ;
 #ifdef CB_SHUFFLE
     printf("[bind] CB_SHUFFLE: the person -> code pairing is re-drawn every round\n");
+#endif
+#ifdef CB_SHUFFLE_W
+    printf("[bind] CB_SHUFFLE_W: every window draws its code uniformly from the %d\n", NB);
 #endif
     printf("[bind] people: %s ... %s\n", bnames[0], bnames[NB - 1]);
     printf("[bind] tier %d, %d people x %d windows per round, fixture windows %d, %d rounds\n", tier, NB, NBR, nfw, 8);
