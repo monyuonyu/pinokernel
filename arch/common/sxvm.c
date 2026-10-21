@@ -12,7 +12,8 @@
  *  Breakers (research only, each must turn the fuzz in tests/host/sxvm_test.c
  *  red): -DSXVM_BREAK_EDGE (the area's end one byte loose), -DSXVM_BREAK_BACKJ
  *  (backward jumps accepted), -DSXVM_BREAK_WIDEN (no widening at a loop
- *  entry), -DSXVM_BREAK_ADDOVF (additions tracked without the overflow test).
+ *  entry), -DSXVM_BREAK_ADDOVF (additions tracked without the overflow test),
+ *  -DSXVM_BREAK_PUBLEN (stage 2: pub checked on its start only, not its length).
  */
 #include "sxvm.h"
 
@@ -37,6 +38,7 @@ static void st_join(sx_state *a, const sx_state *b)
 }
 
 static int writes_reg(uint8_t op) { return op >= SX_MOVI && op <= SX_LDB; }
+#define CLOBBER 0x3Eu                       /* r1..r5 are unwritten after a call */
 
 static int reads_d(uint8_t op)
 {
@@ -142,6 +144,10 @@ long sxvm_check(const sxvm_insn *p, int n)
         if (reads_d(x->op) && !(s.init & (1u << d))) return SXVM_E_UNINIT;
         if (reads_s(x->op) && !(s.init & (1u << sr))) return SXVM_E_UNINIT;
         if (x->op == SX_EXIT && !(s.init & 1u)) return SXVM_E_UNINIT;
+        if (x->op == SX_CALL) {
+            if (x->imm != SXVM_CALL_PUB && x->imm != SXVM_CALL_LOG) return SXVM_E_OP;
+            if (!(s.init & 2u) || (x->imm == SXVM_CALL_PUB && !(s.init & 4u))) return SXVM_E_UNINIT;
+        }
         uint64_t dl = s.lo[d & 7], dh = s.hi[d & 7], sl = s.lo[sr & 7], sh = s.hi[sr & 7];
         int next = i + 1, fall = 1;
 
@@ -198,14 +204,28 @@ long sxvm_check(const sxvm_insn *p, int n)
         }
         case SX_LOOP: {
 #ifndef SXVM_BREAK_WIDEN
-            for (int k = i + 1; k <= i + d; k++)
+            for (int k = i + 1; k <= i + d; k++) {
                 if (writes_reg(p[k].op)) { s.lo[p[k].d] = 0; s.hi[p[k].d] = FULL; }
+                if (p[k].op == SX_CALL) {           /* a later pass may start after a call */
+                    s.lo[0] = 0; s.hi[0] = FULL;
+                    s.init &= (uint8_t)~CLOBBER;
+                }
+            }
             /* a register written only inside stays "unwritten" at the entry:
              * the first pass reads it unwritten, so that is already sound */
 #endif
             break;
         }
         case SX_EXIT: fall = 0; break;
+        case SX_CALL:
+#ifdef SXVM_BREAK_PUBLEN
+            if (x->imm == SXVM_CALL_PUB && s.hi[1] > SXVM_MEM - 1) return SXVM_E_MEM;
+#else
+            if (x->imm == SXVM_CALL_PUB && (uint64_t)s.hi[1] + s.hi[2] > SXVM_MEM) return SXVM_E_MEM;
+#endif
+            s.init &= (uint8_t)~CLOBBER;
+            set_range(&s, 0, 0, FULL);
+            break;
         default: return SXVM_E_OP;
         }
         if (x->op == SX_JA) {
@@ -223,7 +243,7 @@ long sxvm_check(const sxvm_insn *p, int n)
 }
 
 int sxvm_run(const sxvm_insn *p, int n, uint8_t mem[SXVM_MEM], long max_steps,
-             uint32_t *r0, long *steps)
+             const sxvm_env *env, uint32_t *r0, long *steps)
 {
     uint32_t r[SXVM_NREG] = { 0 };
     unsigned init = 0;
@@ -286,6 +306,18 @@ int sxvm_run(const sxvm_insn *p, int n, uint8_t mem[SXVM_MEM], long max_steps,
         case SX_EXIT:
             if (r0) *r0 = r[0];
             goto out;
+        case SX_CALL:
+            if (!(init & 2u)) { trap = SXVM_T_UNINIT; goto out; }
+            if (x->imm == SXVM_CALL_PUB) {
+                if (!(init & 4u)) { trap = SXVM_T_UNINIT; goto out; }
+                if ((uint64_t)r[1] + r[2] > SXVM_MEM) { trap = SXVM_T_MEM; goto out; }
+                r[0] = env && env->pub ? env->pub(env->ctx, mem + r[1], r[2]) : 0;
+            } else if (x->imm == SXVM_CALL_LOG) {
+                if (env && env->log) env->log(env->ctx, r[1]);
+                r[0] = 0;
+            } else { trap = SXVM_T_OP; goto out; }
+            init = (init & ~CLOBBER) | 1u;
+            break;
         default: trap = SXVM_T_OP; goto out;
         }
         if (writes_reg(op)) init |= 1u << d;

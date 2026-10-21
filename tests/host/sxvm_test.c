@@ -11,7 +11,13 @@
  *   K   hand-written programs: the ones that must pass pass with the right
  *       r0, the ones that must be refused are refused with the right code.
  *
+ *   stage 2: SX_CALL (pub/log) in V1 and K; the selfc demo units as
+ *       per-event handlers (K demo-checksum, K gate-v1);
+ *   X   (sxvm_test exh <len>) every suffix of length 1..len over a small
+ *       table after a fixed prelude, each run on 3 memory fillings.
+ *
  *   sxvm_test <count> <seed>   prints SUMMARY, exit 0 = no trap and K holds.
+ *   sxvm_test exh <len>        prints EXH, exit 0 = no trap.
  *   Built with -DSXVM_BREAK_* the same run must report traps (run_sxvm.sh).
  */
 #include <stdio.h>
@@ -32,6 +38,20 @@ static sxvm_insn I(int op, int d, int s, int imm)
     sxvm_insn x = { (uint8_t)op, (uint8_t)d, (uint8_t)s, 0, imm };
     return x;
 }
+
+/* the host side of the helpers: records what was published, and checks the
+ * bound on its own too (the VM's check is what is under test) */
+typedef struct { uint8_t last[SXVM_MEM]; uint32_t len, npub, nlog, logv, over; } host_t;
+static uint32_t h_pub(void *c, const uint8_t *b, uint32_t len)
+{
+    host_t *h = c;
+    if (len > SXVM_MEM) { h->over++; return 0; }
+    memcpy(h->last, b, len); h->len = len; h->npub++;
+    return len;
+}
+static void h_log(void *c, uint32_t v) { host_t *h = c; h->nlog++; h->logv = v; }
+static host_t host;
+static const sxvm_env env = { &host, h_pub, h_log };
 
 /* a random program: most registers written first, then mixed ops */
 static int gen(sxvm_insn *p)
@@ -57,6 +77,7 @@ static int gen(sxvm_insn *p)
         else if (c < 77) p[n++] = I(SX_MOV, d, s, 0);
         else if (c < 81) p[n++] = I(SX_SHRI, d, 0, rr(0, 8));
         else if (c < 84) p[n++] = I(SX_SHLI, d, 0, rr(0, 4));
+        else if (c < 88) p[n++] = I(SX_CALL, 0, 0, rr(1, 2));
         else {
             static const int ops[] = { SX_ADD, SX_SUB, SX_MUL, SX_AND, SX_OR, SX_XOR, SX_DIV };
             p[n++] = I(ops[rr(0, 6)], d, s, 0);
@@ -77,7 +98,7 @@ static void k_expect(const char *name, const sxvm_insn *p, int n, long want_chec
     int ok;
     if (want_check < 0) ok = b == want_check;
     else {
-        int t = sxvm_run(p, n, mem, b, &r0, &steps);
+        int t = sxvm_run(p, n, mem, b, &env, &r0, &steps);
         ok = b >= 0 && t == want_trap && (t != SXVM_T_OK || r0 == want_r0);
     }
     printf("[sxvm] K %-22s check=%ld r0=%u steps=%ld %s\n", name, b, r0, steps, ok ? "ok" : "FAIL");
@@ -115,6 +136,135 @@ static void known(void)
     k_expect("edge+1", g, 3, SXVM_E_MEM, 0, 0);
     sxvm_insn h[] = { I(SX_MOVI, 0, 0, 7) };
     k_expect("falls-off", h, 1, SXVM_E_FALL, 0, 0);
+
+    /* stage 2 */
+    sxvm_insn cl[] = { I(SX_MOVI, 1, 0, 5), I(SX_MOVI, 0, 0, 0),
+                       I(SX_LOOP, 2, 0, 3), I(SX_CALL, 0, 0, SXVM_CALL_LOG), I(SX_MOVI, 0, 0, 0),
+                       I(SX_EXIT, 0, 0, 0) };
+    k_expect("call-clobbers-in-loop", cl, 6, SXVM_E_UNINIT, 0, 0);
+    sxvm_insn pl[] = { I(SX_MOVI, 1, 0, 60), I(SX_MOVI, 2, 0, 5), I(SX_CALL, 0, 0, SXVM_CALL_PUB), I(SX_EXIT, 0, 0, 0) };
+    k_expect("pub-past-end", pl, 4, SXVM_E_MEM, 0, 0);
+    sxvm_insn bc[] = { I(SX_MOVI, 1, 0, 0), I(SX_MOVI, 2, 0, 1), I(SX_CALL, 0, 0, 3), I(SX_EXIT, 0, 0, 0) };
+    k_expect("unknown-helper", bc, 4, SXVM_E_OP, 0, 0);
+}
+
+/* 2c: the selfc demo units, rewritten as per-event handlers */
+static void demo_units(void)
+{
+    static const char msg[] = "I was compiled at runtime inside the kernel";
+    uint32_t want = 0;
+    for (const char *q = msg; *q; q++) want = want * 31u + (uint32_t)(unsigned char)*q;
+    sxvm_insn ck[] = {
+        I(SX_MOVI, 0, 0, 0), I(SX_MOVI, 1, 0, 0), I(SX_MOVI, 3, 0, 0), I(SX_MOVI, 4, 0, 31),
+        I(SX_LOOP, 9, 0, 64),
+        I(SX_JEQI, 3, 1, 8),            /* done: end this pass        */
+        I(SX_ANDI, 1, 0, 63),
+        I(SX_LDB, 2, 1, 0),
+        I(SX_JEQI, 2, 0, 3),            /* the NUL: mark done         */
+        I(SX_MUL, 0, 4, 0),
+        I(SX_ADD, 0, 2, 0),
+        I(SX_JA, 0, 0, 1),
+        I(SX_MOVI, 3, 0, 1),
+        I(SX_ADDI, 1, 0, 1),
+        I(SX_EXIT, 0, 0, 0) };
+    int n = (int)(sizeof ck / sizeof ck[0]);
+    uint8_t mem[SXVM_MEM];
+    memset(mem, 0xA5, sizeof mem);      /* garbage after the NUL must not count */
+    memcpy(mem, msg, sizeof msg);
+    long b = sxvm_check(ck, n), steps = 0;
+    uint32_t r0 = 0;
+    int t = b >= 0 ? sxvm_run(ck, n, mem, b, &env, &r0, &steps) : -1;
+    int ok = b >= 0 && t == SXVM_T_OK && r0 == want;
+    printf("[sxvm] K %-22s check=%ld trap=%d r0=%u want=%u steps=%ld %s\n", "demo-checksum", b, t, r0, want, steps, ok ? "ok" : "FAIL");
+    if (!ok) k_fail++;
+
+    sxvm_insn gv[] = {
+        I(SX_MOVI, 3, 0, 0),
+        I(SX_MOVI, 4, 0, 'A'), I(SX_STB, 3, 4, 0),
+        I(SX_MOVI, 4, 0, ':'), I(SX_STB, 3, 4, 1),
+        I(SX_MOVI, 4, 0, '1'), I(SX_STB, 3, 4, 2),
+        I(SX_MOVI, 1, 0, 0), I(SX_MOVI, 2, 0, 3), I(SX_CALL, 0, 0, SXVM_CALL_PUB),
+        I(SX_EXIT, 0, 0, 0) };
+    n = (int)(sizeof gv / sizeof gv[0]);
+    memset(mem, 0, sizeof mem);
+    memset(&host, 0, sizeof host);
+    b = sxvm_check(gv, n);
+    t = b >= 0 ? sxvm_run(gv, n, mem, b, &env, &r0, &steps) : -1;
+    ok = b >= 0 && t == SXVM_T_OK && host.npub == 1 && host.len == 3 && !memcmp(host.last, "A:1", 3) && r0 == 3;
+    printf("[sxvm] K %-22s check=%ld trap=%d pub=%u len=%u r0=%u %s\n", "gate-v1", b, t, host.npub, host.len, r0, ok ? "ok" : "FAIL");
+    if (!ok) k_fail++;
+}
+
+/* X: every suffix over a small table after a fixed prelude */
+static sxvm_insn tab[64];
+static int ntab;
+static void tab_build(void)
+{
+    static const int mv[] = { 0, 63, 64 }, ai[] = { 1, -4 }, an[] = { 7, 63 };
+    for (int d = 0; d < 3; d++) {
+        for (int k = 0; k < 3; k++) tab[ntab++] = I(SX_MOVI, d, 0, mv[k]);
+        for (int k = 0; k < 2; k++) tab[ntab++] = I(SX_ADDI, d, 0, ai[k]);
+        for (int k = 0; k < 2; k++) tab[ntab++] = I(SX_ANDI, d, 0, an[k]);
+        tab[ntab++] = I(SX_STB, d, 0, 0);
+        tab[ntab++] = I(SX_LDB, 0, d, 0);
+        tab[ntab++] = I(SX_LDB, 0, d, 60);
+    }
+    tab[ntab++] = I(SX_LDB, 0, 0, 64);
+    tab[ntab++] = I(SX_ADD, 0, 1, 0);
+    tab[ntab++] = I(SX_ADD, 1, 2, 0);
+    tab[ntab++] = I(SX_SUB, 1, 0, 0);
+    tab[ntab++] = I(SX_MUL, 1, 1, 0);
+    tab[ntab++] = I(SX_SHLI, 1, 0, 4);
+    tab[ntab++] = I(SX_JLTI, 1, 64, 1);
+    tab[ntab++] = I(SX_JA, 0, 0, 1);
+    tab[ntab++] = I(SX_JA, 0, 0, -1);
+    tab[ntab++] = I(SX_LOOP, 1, 0, 100);
+    tab[ntab++] = I(SX_LOOP, 2, 0, 100);
+    tab[ntab++] = I(SX_CALL, 0, 0, SXVM_CALL_PUB);
+    tab[ntab++] = I(SX_CALL, 0, 0, SXVM_CALL_LOG);
+}
+
+static int exhaustive(int maxlen)
+{
+    sxvm_insn p[16];
+    long total = 0, acc = 0, ntrap = 0, trap[8] = { 0 };
+    int shown = 0;
+    tab_build();
+    for (int len = 1; len <= maxlen; len++) {
+        long combos = 1;
+        for (int k = 0; k < len; k++) combos *= ntab;
+        for (long c = 0; c < combos; c++) {
+            int n = 0;
+            p[n++] = I(SX_MOVI, 0, 0, 0);
+            p[n++] = I(SX_LDB, 1, 0, 0);
+            p[n++] = I(SX_MOVI, 2, 0, (int)0xFFFFFFF0u);
+            long v = c;
+            for (int k = 0; k < len; k++) { p[n++] = tab[v % ntab]; v /= ntab; }
+            p[n++] = I(SX_EXIT, 0, 0, 0);
+            total++;
+            long b = sxvm_check(p, n);
+            if (b < 0) continue;
+            acc++;
+            for (int f = 0; f < 3; f++) {
+                uint8_t mem[SXVM_MEM];
+                for (int i = 0; i < SXVM_MEM; i++) mem[i] = f == 0 ? 0 : f == 1 ? 0xFF : (uint8_t)(i * 37 + 11);
+                uint32_t r0; long steps;
+                int t = sxvm_run(p, n, mem, b, &env, &r0, &steps);
+                if (t != SXVM_T_OK) {
+                    trap[t & 7]++; ntrap++;
+                    if (shown++ < 3) {
+                        printf("[sxvm] EXH-TRAP fill=%d trap=%d bound=%ld steps=%ld:", f, t, b, steps);
+                        for (int i = 3; i < n - 1; i++) printf(" %d/%d/%d/%d", p[i].op, p[i].d, p[i].s, p[i].imm);
+                        printf("\n");
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    printf("[sxvm] EXH table=%d maxlen=%d programs=%ld accepted=%ld traps=%ld mem=%ld steps=%ld pc=%ld op=%ld uninit=%ld host_over=%u\n",
+           ntab, maxlen, total, acc, ntrap, trap[SXVM_T_MEM], trap[SXVM_T_STEPS], trap[SXVM_T_PC], trap[SXVM_T_OP], trap[SXVM_T_UNINIT], host.over);
+    return ntrap == 0 ? 0 : 1;
 }
 
 int main(int argc, char **argv)
@@ -122,25 +272,31 @@ int main(int argc, char **argv)
     long count = argc > 1 ? atol(argv[1]) : 200000;
     uint32_t seed = argc > 2 ? (uint32_t)atoi(argv[2]) : 1;
     static sxvm_insn p[SXVM_MAXINSN];
-    long acc = 0, acc_loop = 0, acc_mem = 0, trap[8] = { 0 }, ntrap = 0, reject[16] = { 0 };
+    long acc = 0, acc_loop = 0, acc_mem = 0, acc_call = 0, trap[8] = { 0 }, ntrap = 0, reject[16] = { 0 };
     int shown = 0;
 
     setvbuf(stdout, NULL, _IOLBF, 0);
+    if (argc > 1 && !strcmp(argv[1], "exh")) return exhaustive(argc > 2 ? atoi(argv[2]) : 3);
     known();
+    demo_units();
     rs = 0x5A5A1234ULL ^ ((uint64_t)seed << 32) ^ seed;
     for (long it = 0; it < count; it++) {
         int n = gen(p);
         long b = sxvm_check(p, n);
         if (b < 0) { reject[-b & 15]++; continue; }
         acc++;
-        int hl = 0, hm = 0;
-        for (int i = 0; i < n; i++) { if (p[i].op == SX_LOOP) hl = 1; if (p[i].op == SX_LDB || p[i].op == SX_STB) hm = 1; }
-        acc_loop += hl; acc_mem += hm;
+        int hl = 0, hm = 0, hc = 0;
+        for (int i = 0; i < n; i++) {
+            if (p[i].op == SX_LOOP) hl = 1;
+            if (p[i].op == SX_LDB || p[i].op == SX_STB) hm = 1;
+            if (p[i].op == SX_CALL) hc = 1;
+        }
+        acc_loop += hl; acc_mem += hm; acc_call += hc;
         uint8_t mem[SXVM_MEM];
         for (int i = 0; i < SXVM_MEM; i++) mem[i] = (uint8_t)rnd();
         uint32_t r0;
         long steps;
-        int t = sxvm_run(p, n, mem, b, &r0, &steps);
+        int t = sxvm_run(p, n, mem, b, &env, &r0, &steps);
         if (t != SXVM_T_OK) {
             trap[t & 7]++; ntrap++;
             if (shown++ < 3) {
@@ -152,8 +308,8 @@ int main(int argc, char **argv)
     }
     printf("[sxvm] rejected seed=%u len=%ld op=%ld jump=%ld uninit=%ld mem=%ld loop=%ld fall=%ld imm=%ld\n", seed,
            reject[1], reject[2], reject[3], reject[4], reject[5], reject[6], reject[7], reject[8]);
-    printf("[sxvm] SUMMARY seed=%u programs=%ld accepted=%ld (%.1f%%) with_loop=%ld with_mem=%ld traps=%ld mem=%ld steps=%ld pc=%ld op=%ld uninit=%ld K_fail=%d\n",
-           seed, count, acc, 100.0 * acc / (count ? count : 1), acc_loop, acc_mem, ntrap,
-           trap[SXVM_T_MEM], trap[SXVM_T_STEPS], trap[SXVM_T_PC], trap[SXVM_T_OP], trap[SXVM_T_UNINIT], k_fail);
+    printf("[sxvm] SUMMARY seed=%u programs=%ld accepted=%ld (%.1f%%) with_loop=%ld with_mem=%ld with_call=%ld traps=%ld mem=%ld steps=%ld pc=%ld op=%ld uninit=%ld K_fail=%d host_over=%u\n",
+           seed, count, acc, 100.0 * acc / (count ? count : 1), acc_loop, acc_mem, acc_call, ntrap,
+           trap[SXVM_T_MEM], trap[SXVM_T_STEPS], trap[SXVM_T_PC], trap[SXVM_T_OP], trap[SXVM_T_UNINIT], k_fail, host.over);
     return (ntrap == 0 && k_fail == 0 && acc * 10 >= count && acc_loop > 0 && acc_mem > 0) ? 0 : 1;
 }

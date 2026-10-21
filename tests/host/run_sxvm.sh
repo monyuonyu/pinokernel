@@ -8,8 +8,10 @@
 #   head: sxvm_test (ASan+UBSan) exits 0 on every seed = no accepted program
 #         traps, >= 10% accepted, the hand-written K cases hold.
 #   breakers (the checker broken, the same programs): EDGE, BACKJ, WIDEN,
-#         ADDOVF must each report traps > 0 on every seed.
-#   SX_ARMS="head EDGE BACKJ WIDEN ADDOVF" (default) picks the builds.
+#         ADDOVF, PUBLEN must each report traps > 0 on every seed.
+#   X (stage 2a): `sxvm_test exh $SX_EXH` (default 3) — head 0 traps, every
+#         breaker traps > 0.
+#   SX_ARMS="head EDGE BACKJ WIDEN ADDOVF PUBLEN" (default) picks the builds.
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -22,7 +24,8 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 OUT="${SX_OUT:-$WORK}"
 mkdir -p "$OUT"
-ARMS="${SX_ARMS:-head EDGE BACKJ WIDEN ADDOVF}"
+ARMS="${SX_ARMS:-head EDGE BACKJ WIDEN ADDOVF PUBLEN}"
+EXH="${SX_EXH:-3}"
 
 FAIL=0
 for a in $ARMS; do
@@ -45,6 +48,19 @@ for a in $ARMS; do
             [ -n "$traps" ] && [ "$traps" -gt 0 ] || { echo "[sxvm] FAIL breaker $a seed $s: not seen (traps=${traps:-?})"; FAIL=1; }
         fi
     done
+    "$WORK/sx_$a" exh "$EXH" > "$OUT/$a-exh$EXH.log" 2>&1
+    rc=$?
+    sum=$(grep '\] EXH ' "$OUT/$a-exh$EXH.log")
+    echo "[sxvm] $a exh rc=$rc ${sum#\[sxvm\] }"
+    if grep -q 'ERROR: AddressSanitizer\|runtime error' "$OUT/$a-exh$EXH.log"; then
+        echo "[sxvm] FAIL $a exh: sanitizer report"; FAIL=1
+    fi
+    traps=$(echo "$sum" | sed -n 's/.* traps=\([0-9]*\).*/\1/p')
+    if [ "$a" = head ]; then
+        [ "$rc" = 0 ] || { echo "[sxvm] FAIL head exh"; FAIL=1; }
+    else
+        [ -n "$traps" ] && [ "$traps" -gt 0 ] || { echo "[sxvm] FAIL breaker $a exh: not seen"; FAIL=1; }
+    fi
 done
 [ "$FAIL" = 0 ] && echo "[sxvm] ALL PASS (head clean, every breaker seen)"
 exit "$FAIL"

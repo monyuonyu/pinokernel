@@ -45,6 +45,7 @@ enum {
     SX_JLT,        /* if d <  s:         pc += 1 + imm     */
     SX_LOOP,       /* run the next d instructions imm times */
     SX_EXIT,       /* return r0                            */
+    SX_CALL,       /* r0 = helper imm (r1..); r1-r5 unwritten after */
     SX_NOP_LAST
 };
 
@@ -52,6 +53,15 @@ typedef struct {
     uint8_t op, d, s, pad;
     int32_t imm;
 } sxvm_insn;
+
+/* the only ways out (stage 2): helpers chosen by number, like eBPF's */
+#define SXVM_CALL_PUB  1      /* pub(mem[r1 .. r1+r2)) -> r0       */
+#define SXVM_CALL_LOG  2      /* log(r1) -> r0 = 0                  */
+typedef struct {
+    void *ctx;
+    uint32_t (*pub)(void *ctx, const uint8_t *b, uint32_t len);
+    void (*log)(void *ctx, uint32_t v);
+} sxvm_env;
 
 /* sxvm_check results (>= 0 is the step bound) */
 #define SXVM_E_LEN     (-1)   /* empty or longer than SXVM_MAXINSN  */
@@ -74,6 +84,6 @@ long sxvm_check(const sxvm_insn *p, int n);
 #define SXVM_T_UNINIT  5      /* read a register never written      */
 
 int sxvm_run(const sxvm_insn *p, int n, uint8_t mem[SXVM_MEM], long max_steps,
-             uint32_t *r0, long *steps);
+             const sxvm_env *env, uint32_t *r0, long *steps);
 
 #endif
