@@ -1,13 +1,18 @@
 #!/bin/bash
 # ---------------------------------------------------------------------------
-# run_st_gptq.sh — [st-gptq] (R-1 stage 2, GPTQ on the student;
-#   docs/architecture/30-module/research/brain-quant-gptq.md §3).
+# run_st_gptq.sh — [st-gptq] (R-1 stages 2 and 3, GPTQ on the student;
+#   docs/architecture/30-module/research/brain-quant-gptq.md §3,
+#   brain-quant-gptq-seq.md §2).
 #
-#   plain                  -> exit 0 on every seed in SEEDS (G1..G4)
+#   plain                  -> exit 0 on every seed in SEEDS (G1..G4); seeds
+#                             4..8 were first run by this cert (stage 3)
 #   -DST_GPTQ_NOCOMP       -> G1 or G2 FAIL (rounds column by column, no
 #                             error feedback = RTN on the same grid)
 #   -DST_GPTQ_CALIB_HELD   -> G4 FAIL (calibrated on the B1 held text)
 #   -DST_QUANT_BADSCALE    -> G4 FAIL (s/4: values off the absmax grid)
+#   -DST_GPTQ_WRONG_H      -> G1 FAIL (wo calibrated with a_in's H)
+#   -DST_GPTQ_NOSEQ / -DST_GPTQ_BLOCKSEQ -> G3 ratio printed, no verdict
+#                             (stage 2 form / per block as in the paper)
 # A negative control that stays green fails this script. Controls run on the
 # first seed only.
 #
@@ -21,13 +26,13 @@ CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off -Werror=vla"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 SRC="$HERE/student_gptq_test.c $ROOT/arch/common/llm/held_indep.c $ROOT/arch/common/llm/student.c"
-SEEDS="${ST_GPTQ_SEEDS:-1 2 3}"
+SEEDS="${ST_GPTQ_SEEDS:-1 2 3 4 5 6 7 8}"
 FAIL=0
 
-for v in plain NOCOMP CALIB_HELD BADSCALE; do
+for v in plain NOCOMP CALIB_HELD BADSCALE WRONG_H NOSEQ BLOCKSEQ; do
     def=""
     case "$v" in
-        NOCOMP|CALIB_HELD) def="-DST_GPTQ_$v" ;;
+        NOCOMP|CALIB_HELD|WRONG_H|NOSEQ|BLOCKSEQ) def="-DST_GPTQ_$v" ;;
         BADSCALE)          def="-DST_QUANT_BADSCALE" ;;
     esac
     # shellcheck disable=SC2086
@@ -53,6 +58,14 @@ nc() {  # <variant> <ERE of the gate(s) that must go red>
 nc NOCOMP 'G1|G2'
 nc CALIB_HELD 'G4'
 nc BADSCALE 'G4'
+nc WRONG_H 'G1'
+for v in NOSEQ BLOCKSEQ; do  # values only: the G3 ratio of the other forms
+    for s in $SEEDS; do
+        r="$("$WORK/g_$v" "$HERE/b1_held.txt" "$s" | grep -ao 'G3 ratio [0-9.-]*')"
+        r0="$(grep -ao 'G3 ratio [0-9.-]*' "$WORK/plain_$s.log")"
+        echo "[st-gptq] value $v seed $s: $r (seq: $r0)"
+    done
+done
 
 if [ "$FAIL" = 0 ]; then echo "[st-gptq] CERT ALL PASS"; exit 0; fi
 echo "[st-gptq] CERT RED"; exit 1

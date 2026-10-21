@@ -2705,6 +2705,65 @@ double st_quant_layer_obj(const st_model *src, const st_model *q,
     return r;
 }
 
+/* sum over rows of ((W0 - Wq) x)_r^2 for one input vector x */
+static double gq_direct_one(const float *W0, const float *Wq, int R, int C, const float *x)
+{
+    double tot = 0.0;
+    for (int r = 0; r < R; r++) {
+        double a = 0.0;
+        for (int k = 0; k < C; k++)
+            a += ((double)W0[(size_t)r * C + k] - (double)Wq[(size_t)r * C + k]) * (double)x[k];
+        tot += a * a;
+    }
+    return tot;
+}
+
+int st_quant_class_obj(const st_model *src, const st_model *q,
+                       const uint8_t *calib, int ncalib, int seq, double out[ST_QC_N])
+{
+    if (!src || !q || !calib || !out || seq < 1 || seq > ST_MAXSEQ || ncalib < seq ||
+        q->n_params != src->n_params) return ST_E_ARG;
+    for (int c = 0; c < ST_QC_N; c++) out[c] = 0.0;
+    st_model tmp;
+    int rc = gq_scratch(src, &tmp);
+    if (rc != ST_OK) return rc;
+    ST_DIMS(src);
+    float *logits = (float *)malloc((size_t)seq * V * sizeof(float));
+    if (!logits) { st_free(&tmp); return ST_E_OOM; }
+    const float *W0 = src->w, *Wq = q->w;
+    for (int o = 0; o + seq <= ncalib && rc == ST_OK; o += seq) {
+        rc = st_forward(&tmp, calib + o, seq, logits);
+        if (rc != ST_OK) break;
+        const st_cache *c = (const st_cache *)tmp.cache;
+        int n = c->n;
+        for (int l = 0; l < L; l++)
+            for (int t = 0; t < n; t++) {
+                size_t lt = (size_t)l * n + t;
+                const float *a = c->a_in + lt * D, *ao = c->attn_o + lt * D;
+                int ow = l * D * D;
+                out[ST_QC_WQ] += gq_direct_one(W0 + src->o_wq + ow, Wq + src->o_wq + ow, D, D, a);
+                out[ST_QC_WK] += gq_direct_one(W0 + src->o_wk + ow, Wq + src->o_wk + ow, D, D, a);
+                out[ST_QC_WV] += gq_direct_one(W0 + src->o_wv + ow, Wq + src->o_wv + ow, D, D, a);
+                out[ST_QC_WO] += gq_direct_one(W0 + src->o_wo + ow, Wq + src->o_wo + ow, D, D, ao);
+                int nk = c->topk_n[lt];
+                for (int j = 0; j < nk; j++) {
+                    int e = c->topk_e[lt * E + j];
+                    if (e < 0 || e >= E) continue;
+                    int x = l * E + e;
+                    const float *fi = c->f_in + lt * D, *eh = c->e_h + (lt * E + j) * DFF;
+                    out[ST_QC_W1] += gq_direct_one(W0 + src->o_w1 + x * DFF * D, Wq + src->o_w1 + x * DFF * D, DFF, D, fi);
+                    out[ST_QC_W3] += gq_direct_one(W0 + src->o_w3 + x * DFF * D, Wq + src->o_w3 + x * DFF * D, DFF, D, fi);
+                    out[ST_QC_W2] += gq_direct_one(W0 + src->o_w2 + x * D * DFF, Wq + src->o_w2 + x * D * DFF, D, DFF, eh);
+                }
+            }
+        for (int t = 0; t < n; t++)
+            out[ST_QC_OUT] += gq_direct_one(W0 + src->o_out, Wq + src->o_out, V, D, c->o_in + (size_t)t * D);
+    }
+    free(logits);
+    st_free(&tmp);
+    return rc;
+}
+
 /* ================================================================== */
 /* one-bit delta, stage 1 (st_delta_sign — see student.h)              */
 /* ================================================================== */

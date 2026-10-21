@@ -413,6 +413,24 @@ int    st_quant_gptq(const st_model *src, st_model *dst, int bits,
 double st_quant_layer_obj(const st_model *src, const st_model *q,
                           const uint8_t *calib, int ncalib, int seq);
 
+/* st_quant_class_obj (stage 3, research/brain-quant-gptq-seq.md §2): the same
+ * objective per matrix class, but computed straight from the input vectors of
+ * src's fp32 forward of calib (sum_t ||(W - Wq) x_t||^2, no H table; separate
+ * code from what st_quant_gptq calibrates with, so a wrong H shows). out[] in
+ * the ST_QC_* order. ST_OK / ST_E_*.                                         */
+#define ST_QC_WQ  0
+#define ST_QC_WK  1
+#define ST_QC_WV  2
+#define ST_QC_WO  3
+#define ST_QC_W1  4
+#define ST_QC_W3  5
+#define ST_QC_W2  6
+#define ST_QC_OUT 7
+#define ST_QC_N   8
+int    st_quant_class_obj(const st_model *src, const st_model *q,
+                          const uint8_t *calib, int ncalib, int seq,
+                          double out[ST_QC_N]);
+
 /* ---- one-bit delta, stage 1 (research/delta-quant.md, ROADMAP 1-6) ----
  * st_delta_sign: rebuild `ft` from `base` + a 1-bit delta (BitDelta,
  * arXiv 2402.10193 eq. 1, alpha at its L2-optimal start, no alpha training):
