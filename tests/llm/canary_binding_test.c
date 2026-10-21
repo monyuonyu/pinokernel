@@ -20,6 +20,8 @@
  *                 binds within the last round alone.
  *   -DCB_SHUFFLE_W every window draws its code uniformly from the NB codes
  *                 (the stage 5 gate, run_canary_crowd.sh).
+ *   -DCB_MEASURE_NONAME the training is unchanged, the measurement uses the
+ *                 first person's prefix for everyone: P1 must be exactly 1/NB.
  *
  *   stage 5: -DCB_NB=<people> -DCB_NBR=<windows per person per round>
  *   -DCB_GEN_NAMES (names made from syllables, up to 64 people), and for
@@ -169,12 +171,16 @@ int main(int argc, char **argv)
         int P[NB], next = 0;
         double ex[NB];
         for (int a = 0; a < NB; a++) {
-            px_all_name(&m, bnames[a]);
+            const char *mn = bnames[a];
+#ifdef CB_MEASURE_NONAME
+            mn = bnames[0];             /* the measuring breaker: the name is not read */
+#endif
+            px_all_name(&m, mn);
             int above = 0, rank;
             for (int k = 0; k < NB; k++) if (k != a && px[bcode[k]] < px[bcode[a]]) above++;
             P[a] = above + 1;
             ex[a] = exposure_of(bcode[a], &rank);
-            int x = extracted_as(&m, bnames[a], bcode[a]);
+            int x = extracted_as(&m, mn, bcode[a]);
             next += x;
             printf("[bind] seed=%u name=%s code=%04d P=%d exposure=%.2f rank=%d extracted=%d\n",
                    sd, bnames[a], bcode[a], P[a], ex[a], rank, x);
