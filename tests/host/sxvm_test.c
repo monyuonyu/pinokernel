@@ -54,9 +54,15 @@ static host_t host;
 static const sxvm_env env = { &host, h_pub, h_log };
 
 /* a random program: most registers written first, then mixed ops */
+static int gen_mode = 1;    /* 2 (stage 4b): registers read from the area first */
 static int gen(sxvm_insn *p)
 {
     int n = 0, len = rr(6, 40);
+    if (gen_mode == 2) {
+        p[n++] = I(SX_MOVI, 0, 0, 0);
+        for (int r = 1; r < SXVM_NREG; r++)
+            p[n++] = rr(0, 9) < 3 ? I(SX_MOVI, r, 0, rr(0, 70)) : I(SX_LDB, r, 0, rr(0, 63));
+    } else
     for (int r = 0; r < SXVM_NREG; r++)
         if (rr(0, 9) < 9) {
             int big = rr(0, 15) == 0;
@@ -269,7 +275,8 @@ static int exhaustive(int maxlen)
 
 /* stage 4 (sxvm_z3.py): the same programs as main(), the fillings from a
  * separate stream, so every build (head or breaker) dumps the same list.
- *   dump <count> <seed> <every>: "A it bound trap n op/d/s/imm..." for each
+ *   dump <count> <seed> <every> [gen]: gen 2 = stage 4b's generator.
+ *   "A it bound trap n op/d/s/imm..." for each
  *   accepted program (trap: one random filling), "R it code n ..." for every
  *   <every>-th program refused for a value reason (unwritten, memory, falls off).
  *   replay: stdin lines "n insn*4.. 64 bytes k pubvals.." -> "trap steps check"
@@ -342,6 +349,7 @@ int main(int argc, char **argv)
     int shown = 0;
 
     setvbuf(stdout, NULL, _IOLBF, 0);
+    if (argc > 5) gen_mode = atoi(argv[5]);
     if (argc > 4 && !strcmp(argv[1], "dump")) return dump(atol(argv[2]), (uint32_t)atoi(argv[3]), atol(argv[4]));
     if (argc > 1 && !strcmp(argv[1], "replay")) return replay();
     if (argc > 1 && !strcmp(argv[1], "exh")) return exhaustive(argc > 2 ? atoi(argv[2]) : 3);

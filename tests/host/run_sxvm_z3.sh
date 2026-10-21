@@ -6,6 +6,7 @@
 #
 #   SX_PY=<python with z3> ./run_sxvm_z3.sh <outdir> [seed...]
 #   prints the Z1-Z5 and ZB lines (sxvm_z3_sum.py), exit 0 = all as fixed.
+#   SX_GEN=2: stage 4b's input-driven generator (default 1 = stage 1's).
 #   SX_FIRST (2000) programs per seed for the head; every breaker's extra
 #   accepted programs in full (BACKJ: the first SX_BACKJ_FIRST, 1000).
 # ---------------------------------------------------------------------------
@@ -31,7 +32,7 @@ z3run() {   # <arm> <dump> <out> <args...> ; then replay with that arm's build
     "$OUT/bin/sx_$arm" replay < "$o.replay" > "$o.rep" || { echo "[sxvm-z3] replay FAILED $o"; exit 1; }
 }
 for s in $SEEDS; do
-    for a in $ARMS; do "$OUT/bin/sx_$a" dump 200000 "$s" 10 > "$OUT/d-$a-s$s.txt"; done
+    for a in $ARMS; do "$OUT/bin/sx_$a" dump 200000 "$s" 10 "${SX_GEN:-1}" > "$OUT/d-$a-s$s.txt"; done
     z3run head "$OUT/d-head-s$s.txt" "$OUT/z-headA-s$s" --first "$FIRST"
     z3run head "$OUT/d-head-s$s.txt" "$OUT/z-headR-s$s" --kind R --first "$FIRST"
     for a in EDGE BACKJ WIDEN ADDOVF PUBLEN CLOBBER; do
