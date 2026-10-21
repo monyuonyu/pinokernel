@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include "../../arch/common/llm/student.h"
+#include "../../arch/common/llm/student.c"   /* the static kv_step: see px_all */
 #include "../../arch/common/llm/held_indep.h"
 #include "../../arch/common/llm/teacher_fixture.h"
 
@@ -72,43 +72,53 @@ static void window(int i, uint8_t *b)
     memcpy(b, s, (size_t)n);
 }
 
-/* log2 Pr over the ten digits for the byte after b[0..n) */
-static void digit_lp(st_model *m, const uint8_t *b, int n, double *lp)
+/* log2 Pr over the ten digits from one logit row */
+static void lp_of_row(const float *r, double *lp)
 {
-    st_forward(m, b, n, lg);
-#ifdef CE_OFFBY1
-    int row = n >= 2 ? n - 2 : 0;
-#else
-    int row = n - 1;
-#endif
-    const float *r = lg + (size_t)row * ST_VOCAB;
     double mx = r[0], z = 0.0;
     for (int v = 1; v < ST_VOCAB; v++) if (r[v] > mx) mx = r[v];
     for (int v = 0; v < ST_VOCAB; v++) z += exp((double)r[v] - mx);
     for (int d = 0; d < 10; d++) lp[d] = ((double)r['0' + d] - mx - log(z)) / LN2;
 }
 
-/* Px (bits) of all 10^5 digit strings after the prefix of canary i */
-static double px[NR], lvl[NR / 10 > 1 ? NR / 10 : 1];
+/* Px (bits) of all 10^ND digit strings after the prefix of canary i.
+ * Depth-first over the digit tree with the KV cache (kv_step, the
+ * st_generate path): position p+k is overwritten by each sibling, and a step
+ * only reads positions <= its own, which the current path has just written.
+ * 1,110 one-position steps instead of 1,111 full forwards. T1 checks every
+ * value against st_span_ce (the st_forward path). */
+static double px[NR];
+static st_kvcache *kvc;
+static float rows[ND + 1][ST_VOCAB], rowm1[ST_VOCAB];
+
+static void dfs(st_model *m, int p, int k, int num, double acc)
+{
+    const float *r = rows[k];
+#ifdef CE_OFFBY1
+    r = k > 0 ? rows[k - 1] : rowm1;    /* the row one position early */
+#endif
+    double lp[10];
+    lp_of_row(r, lp);
+    for (int d = 0; d < 10; d++) {
+        double a = acc - lp[d];
+        if (k == ND - 1) { px[num * 10 + d] = a; continue; }
+        kvc->filled = p + k;
+        kv_step(m, kvc, (uint8_t)('0' + d), p + k, rows[k + 1]);
+        dfs(m, p, k + 1, num * 10 + d, a);
+    }
+}
+
 static void px_all(st_model *m, int i)
 {
     uint8_t b[SEQ];
     int p = prefix(i, b);
-    int w = 1;                          /* nodes at this depth */
-    lvl[0] = 0.0;
-    for (int k = 0; k < ND; k++) {
-        double *dst = (k == ND - 1) ? px : lvl;
-        static double nxt[NR];
-        for (int j = 0; j < w; j++) {
-            int v = j;
-            for (int q = k - 1; q >= 0; q--) { b[p + q] = (uint8_t)('0' + v % 10); v /= 10; }
-            double lp[10];
-            digit_lp(m, b, p + k, lp);
-            for (int d = 0; d < 10; d++) nxt[j * 10 + d] = lvl[j] - lp[d];
-        }
-        w *= 10;
-        memcpy(dst, nxt, (size_t)w * sizeof(double));
+    if (!kvc) kvc = kv_alloc(m);
+    kvc->filled = 0;
+    for (int t = 0; t < p; t++) {
+        kv_step(m, kvc, b[t], t, rows[0]);
+        if (t == p - 2) memcpy(rowm1, rows[0], sizeof rowm1);
     }
+    dfs(m, p, 0, 0, 0.0);
 }
 
 static double exposure_of(int s, int *rank_out)
@@ -268,7 +278,12 @@ int main(int argc, char **argv)
         report("E3", &mg, sd, 1);
         st_free(&mg);
         /* E2: keep training m on the fixture only */
-        for (int r = 8; r < 16; r++) round_train(&m, 0, sd, r);
+        for (int r = 8; r < 16; r++) {
+            round_train(&m, 0, sd, r);
+            if (r == 8) report("E2+1", &m, sd, 1);
+            if (r == 9) report("E2+2", &m, sd, 1);
+            if (r == 11) report("E2+4", &m, sd, 1);
+        }
         report("E2+8", &m, sd, 1);
         for (int r = 16; r < 40; r++) round_train(&m, 0, sd, r);
         report("E2+32", &m, sd, 1);

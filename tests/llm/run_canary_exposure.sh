@@ -25,7 +25,7 @@ trap 'rm -rf "$WORK"' EXIT
 OUT="${CE_OUT:-$WORK}"
 mkdir -p "$OUT"
 FAIL=0
-SRC="$HERE/canary_exposure_test.c $ROOT/arch/common/llm/held_indep.c $ROOT/arch/common/llm/cradle.c $ROOT/arch/common/llm/student.c"
+SRC="$HERE/canary_exposure_test.c $ROOT/arch/common/llm/held_indep.c $ROOT/arch/common/llm/cradle.c"   # the test includes student.c (kv_step)
 
 echo "[build] canary-exposure (+ CE_OFFBY1, CE_NO_INSERT) ..."
 # shellcheck disable=SC2086
