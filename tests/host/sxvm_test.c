@@ -267,6 +267,72 @@ static int exhaustive(int maxlen)
     return ntrap == 0 ? 0 : 1;
 }
 
+/* stage 4 (sxvm_z3.py): the same programs as main(), the fillings from a
+ * separate stream, so every build (head or breaker) dumps the same list.
+ *   dump <count> <seed> <every>: "A it bound trap n op/d/s/imm..." for each
+ *   accepted program (trap: one random filling), "R it code n ..." for every
+ *   <every>-th program refused for a value reason (unwritten, memory, falls off).
+ *   replay: stdin lines "n insn*4.. 64 bytes k pubvals.." -> "trap steps check"
+ *   (max steps = the check's bound, or 1000000 when refused). */
+static uint32_t rp_v[64]; static int rp_n, rp_i; static unsigned rp_over;
+static uint32_t rp_pub(void *c, const uint8_t *b, uint32_t len)
+{
+    (void)c; (void)b;
+    if (len > SXVM_MEM) rp_over++;
+    return rp_i < rp_n ? rp_v[rp_i++] : 0;
+}
+static void rp_log(void *c, uint32_t v) { (void)c; (void)v; }
+
+static int dump(long count, uint32_t seed, long every)
+{
+    static sxvm_insn p[SXVM_MAXINSN];
+    uint64_t fs = 0x9E3779B97F4A7C15ULL ^ seed;
+    rs = 0x5A5A1234ULL ^ ((uint64_t)seed << 32) ^ seed;
+    for (long it = 0; it < count; it++) {
+        int n = gen(p);
+        uint8_t mem[SXVM_MEM];
+        for (int i = 0; i < SXVM_MEM; i++) { fs ^= fs << 13; fs ^= fs >> 7; fs ^= fs << 17; mem[i] = (uint8_t)(fs >> 23); }
+        long b = sxvm_check(p, n);
+        if (b >= 0) {
+            uint32_t r0; long steps;
+            memset(&host, 0, sizeof host);
+            int t = sxvm_run(p, n, mem, b, &env, &r0, &steps);
+            printf("A %ld %ld %d %d", it, b, t, n);
+        } else if ((b == SXVM_E_UNINIT || b == SXVM_E_MEM || b == SXVM_E_FALL) && it % every == 0) {
+            printf("R %ld %ld %d", it, b, n);
+        } else continue;
+        for (int i = 0; i < n; i++) printf(" %d/%d/%d/%d", p[i].op, p[i].d, p[i].s, p[i].imm);
+        printf("\n");
+    }
+    return 0;
+}
+
+static int replay(void)
+{
+    static sxvm_insn p[SXVM_MAXINSN];
+    const sxvm_env renv = { 0, rp_pub, rp_log };
+    int n;
+    while (scanf("%d", &n) == 1) {
+        if (n < 1 || n > SXVM_MAXINSN) return 2;
+        for (int i = 0; i < n; i++) {
+            int op, d, s, imm;
+            if (scanf("%d %d %d %d", &op, &d, &s, &imm) != 4) return 2;
+            p[i] = I(op, d, s, imm);
+        }
+        uint8_t mem[SXVM_MEM];
+        for (int i = 0; i < SXVM_MEM; i++) { int v; if (scanf("%d", &v) != 1) return 2; mem[i] = (uint8_t)v; }
+        if (scanf("%d", &rp_n) != 1 || rp_n < 0 || rp_n > 64) return 2;
+        for (int i = 0; i < rp_n; i++) if (scanf("%u", &rp_v[i]) != 1) return 2;
+        rp_i = 0;
+        long b = sxvm_check(p, n), steps = 0;
+        uint32_t r0 = 0;
+        int t = sxvm_run(p, n, mem, b >= 0 ? b : 1000000, &renv, &r0, &steps);
+        printf("%d %ld %ld\n", t, steps, b);
+    }
+    printf("over %u\n", rp_over);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     long count = argc > 1 ? atol(argv[1]) : 200000;
@@ -276,6 +342,8 @@ int main(int argc, char **argv)
     int shown = 0;
 
     setvbuf(stdout, NULL, _IOLBF, 0);
+    if (argc > 4 && !strcmp(argv[1], "dump")) return dump(atol(argv[2]), (uint32_t)atoi(argv[3]), atol(argv[4]));
+    if (argc > 1 && !strcmp(argv[1], "replay")) return replay();
     if (argc > 1 && !strcmp(argv[1], "exh")) return exhaustive(argc > 2 ? atoi(argv[2]) : 3);
     known();
     demo_units();
