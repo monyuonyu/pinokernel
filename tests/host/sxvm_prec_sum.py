@@ -3,6 +3,7 @@
 lines of stage 4c (safe-exec.md) from run_sxvm_prec.sh's files.
 exit 0 = every gate as fixed (P3 is summed over the seeds given here; the
 memo sums it over both generators by hand)."""
+import os
 import sys
 from collections import Counter
 
@@ -68,6 +69,7 @@ def main():
             bad += 1
 
     p3_all, p3_acc, p3_exitl, p3_exitl_acc = 0, 0, 0, 0
+    p3_missing = []
     for s in seeds:
         dp = dump("%s/d-PREC-s%s.txt" % (d, s))
         fz_all = sum(1 for v in dp.values() if v[0] == "A" and v[1] != 0)
@@ -86,8 +88,13 @@ def main():
         ex = [x for x in open("%s/extra-PREC-s%s.txt" % (d, s)).read().strip().split(",") if x]
         gate("P2 s" + s, len(ex) > 0, "extra=%d" % len(ex))
         # P3: the stage 4 head refusals Z3 called safe
-        rows, _ = load("%s/z-headR-s%s" % (s4, s))
-        hp = refused("%s/d-head-s%s.txt" % (s4, s))
+        if not os.path.exists("%s/z-headR-s%s.rep" % (s4, s)):
+            print("[sxvm-prec] P3 s%s        (stage 4 z-headR not there yet: not counted)" % s)
+            rows, hp = [], {}
+            p3_missing.append(s)
+        else:
+            rows, _ = load("%s/z-headR-s%s" % (s4, s))
+            hp = refused("%s/d-head-s%s.txt" % (s4, s))
         for r in rows:
             if r[4] != "safe":
                 continue
@@ -106,6 +113,9 @@ def main():
     print("[sxvm-prec] P3 refused-but-safe(stage4)=%d now accepted=%d (%.0f%%; fixed: >= 40%% over both gens, by hand)" %
           (p3_all, p3_acc, 100.0 * p3_acc / max(1, p3_all)))
     gate("P3 exitL", p3_exitl_acc == 0, "exitL-only=%d accepted=%d (must be 0)" % (p3_exitl, p3_exitl_acc))
+    if p3_missing:
+        print("[sxvm-prec] P3 incomplete: stage 4 missing for seeds %s" % " ".join(p3_missing))
+        bad += 1
     print("[sxvm-prec] %s" % ("ALL PASS" if bad == 0 else "FAIL %d" % bad))
     return 0 if bad == 0 else 1
 
