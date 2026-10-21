@@ -8,7 +8,8 @@
 #   drop6  no code windows at all                   -DCB_DROPAT=6
 #   other6 8 other names, the new codes             -DCB_OTHERAT=6
 #   rw7    the same names, new codes, 1 round only  -DCB_REWRITE=7
-#   brk    rw6 with the never-trained set replaced by trained codes
+#   brk    rw6 with the never-trained set, under each name, replaced by
+#          that person's new code (a trained code bound to that name)
 #          (-DCB_BREAK_NEVER): the gate must go red here
 #
 #   ./run_canary_rewrite.sh [tier] [seed...]   exit 0 = the gate holds

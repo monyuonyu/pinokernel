@@ -186,8 +186,11 @@ int main(int argc, char **argv)
         if (j < NB) bcode2[j] = v; else bcode3[j - NB] = v;
     }
 #ifdef CB_BREAK_NEVER
-    for (int k = 0; k < 8 && k < NB; k++) bcode3[k] = bcode2[k];   /* the gate's breaker */
-    printf("[bind] CB_BREAK_NEVER: the never-trained set is the first 8 new codes\n");
+    /* the gate's breaker (audit-63): the first form put the 8 new codes in the
+     * never set, but under each name only that person's own new code is high,
+     * so the median over the 64 stayed low.  Now under each name the never set
+     * is that person's own new code (a code trained under that name). */
+    printf("[bind] CB_BREAK_NEVER: under each name the never-trained set is that person's new code\n");
 #endif
 #ifdef CB_REWRITE
     printf("[bind] CB_REWRITE: rounds >= %d train the new codes\n", CB_REWRITE);
@@ -226,7 +229,11 @@ int main(int argc, char **argv)
                 px_all_name(&m, bnames[a]);
                 en[a] = exposure_of(bcode2[a], &rn);
                 eo[a] = exposure_of(bcode[a], &ro);
+#ifdef CB_BREAK_NEVER
+                for (int k = 0; k < 8; k++) ev[nv++] = exposure_of(bcode2[a], NULL);
+#else
                 for (int k = 0; k < 8; k++) ev[nv++] = exposure_of(bcode3[k], NULL);
+#endif
                 printf("[bind] RW seed=%u name=%s new=%04d exposure=%.2f rank=%d old=%04d exposure=%.2f rank=%d\n",
                        sd, bnames[a], bcode2[a], en[a], rn, bcode[a], eo[a], ro);
             }
