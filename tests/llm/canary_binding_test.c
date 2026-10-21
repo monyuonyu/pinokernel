@@ -72,6 +72,9 @@ static const char *bnames[NB] = {
     "Max", "Nell", "Oto", "Ravi", "Sami", "Tess", "Ugo", "Vera" };
 #endif
 static int bcode[NB];
+#ifdef CB_REWRITE
+static int bcode2[NB], bcode3[8];       /* stage 6: the new codes, codes never trained */
+#endif
 
 static void bwindow(int person, int code, uint8_t *b)
 {
@@ -108,6 +111,9 @@ static void bround(st_model *m, uint32_t seed, int round)
     for (int j = 0; j < n; j++) {
         if (order[j] >= 10000) {
             int p = order[j] - 10000, code = bcode[pair[p]];
+#ifdef CB_REWRITE
+            if (round >= CB_REWRITE) code = bcode2[pair[p]];   /* the record is rewritten */
+#endif
 #ifdef CB_SHUFFLE_W
             /* a code drawn per window: no name -> code pairing at any time scale */
             code = bcode[splitmix(((uint64_t)seed << 40) ^ ((uint64_t)round << 20) ^ (uint64_t)j) % NB];
@@ -151,6 +157,19 @@ int main(int argc, char **argv)
         int dup;
         do { bcode[j] = (int)(rnd() % NR); dup = 0; for (int k = 0; k < j; k++) if (bcode[k] == bcode[j]) dup = 1; } while (dup);
     }
+#ifdef CB_REWRITE
+    for (int j = 0; j < NB + 8; j++) {
+        int v, dup;
+        do {
+            v = (int)(rnd() % NR); dup = 0;
+            for (int k = 0; k < NB; k++) if (bcode[k] == v) dup = 1;
+            for (int k = 0; k < j && k < NB; k++) if (bcode2[k] == v) dup = 1;
+            for (int k = NB; k < j; k++) if (bcode3[k - NB] == v) dup = 1;
+        } while (dup);
+        if (j < NB) bcode2[j] = v; else bcode3[j - NB] = v;
+    }
+    printf("[bind] CB_REWRITE: rounds >= %d train the new codes\n", CB_REWRITE);
+#endif
     fx = (const uint8_t *)TEACHER_FIXTURE;
     fx_end = st_held_split((int)sizeof(TEACHER_FIXTURE) - 1, SEQ).train_end;
     nfw = fx_end / SEQ;
@@ -168,6 +187,24 @@ int main(int argc, char **argv)
         st_model m;
         st_init_tier(&m, sd, tier);
         for (int r = 0; r < 8; r++) bround(&m, sd, r);
+#ifdef CB_REWRITE
+        {
+            double en[NB], eo[NB], ev[NB * 8];
+            int nv = 0;
+            for (int a = 0; a < NB; a++) {
+                int rn, ro;
+                px_all_name(&m, bnames[a]);
+                en[a] = exposure_of(bcode2[a], &rn);
+                eo[a] = exposure_of(bcode[a], &ro);
+                for (int k = 0; k < 8; k++) ev[nv++] = exposure_of(bcode3[k], NULL);
+                printf("[bind] RW seed=%u name=%s new=%04d exposure=%.2f rank=%d old=%04d exposure=%.2f rank=%d\n",
+                       sd, bnames[a], bcode2[a], en[a], rn, bcode[a], eo[a], ro);
+            }
+            qsort(en, NB, sizeof en[0], cmp_dbl); qsort(eo, NB, sizeof eo[0], cmp_dbl); qsort(ev, (size_t)nv, sizeof ev[0], cmp_dbl);
+            printf("[bind] RW-SUMMARY seed=%u median new=%.2f old=%.2f never=%.2f\n", sd,
+                   (en[NB / 2 - 1] + en[NB / 2]) / 2.0, (eo[NB / 2 - 1] + eo[NB / 2]) / 2.0, (ev[nv / 2 - 1] + ev[nv / 2]) / 2.0);
+        }
+#endif
         int P[NB], next = 0;
         double ex[NB];
         for (int a = 0; a < NB; a++) {
