@@ -43,14 +43,20 @@
 #endif
 #define NB  CB_NB
 #define NBR CB_NBR
+#if defined(CB_REWRITE) || defined(CB_DROPAT) || defined(CB_OTHERAT)
+#define CB_RW 1                             /* stages 6-7: the old codes after round k */
+#endif
+#if defined(CB_OTHERAT) && !defined(CB_GEN_NAMES)
+#error "CB_OTHERAT needs CB_GEN_NAMES (the other people's names are generated)"
+#endif
 #ifdef CB_GEN_NAMES
 static const char *bnames[NB];
-static char bname_buf[NB][8];
+static char bname_buf[2 * NB][8];           /* [NB, 2NB): stage 7's other people */
 static void gen_names(void)
 {
     static const char CONS[] = "bdgkmnprstvz", VOW[] = "aeiou";
     rs = 0x4E414D45ULL;
-    for (int j = 0; j < NB; j++) {
+    for (int j = 0; j < 2 * NB; j++) {      /* the first NB are the same as before */
         int dup;
         do {
             char *b = bname_buf[j];
@@ -60,7 +66,7 @@ static void gen_names(void)
             for (int k = 0; k < j; k++) if (!strcmp(bname_buf[k], b)) dup = 1;
             for (int k = 0; k < NX; k++) if (!strcmp(xnames[k], b)) dup = 1;
         } while (dup);
-        bnames[j] = bname_buf[j];
+        if (j < NB) bnames[j] = bname_buf[j];
     }
 }
 #else
@@ -72,17 +78,18 @@ static const char *bnames[NB] = {
     "Max", "Nell", "Oto", "Ravi", "Sami", "Tess", "Ugo", "Vera" };
 #endif
 static int bcode[NB];
-#ifdef CB_REWRITE
+#ifdef CB_RW
 static int bcode2[NB], bcode3[8];       /* stage 6: the new codes, codes never trained */
 #endif
 
-static void bwindow(int person, int code, uint8_t *b)
+static void bwindow_as(const char *nm, int code, uint8_t *b)
 {
     char s[64];
-    int n = snprintf(s, sizeof s, "%s's locker code is %04d.\n", bnames[person], code);
+    int n = snprintf(s, sizeof s, "%s's locker code is %04d.\n", nm, code);
     memset(b, ' ', SEQ);
     memcpy(b, s, (size_t)(n < SEQ ? n : SEQ));
 }
+static void bwindow(int person, int code, uint8_t *b) { bwindow_as(bnames[person], code, b); }
 
 static uint64_t splitmix(uint64_t x)
 {
@@ -113,6 +120,16 @@ static void bround(st_model *m, uint32_t seed, int round)
             int p = order[j] - 10000, code = bcode[pair[p]];
 #ifdef CB_REWRITE
             if (round >= CB_REWRITE) code = bcode2[pair[p]];   /* the record is rewritten */
+#endif
+#ifdef CB_DROPAT
+            if (round >= CB_DROPAT) continue;                  /* stage 7: no code windows at all */
+#endif
+#ifdef CB_OTHERAT
+            if (round >= CB_OTHERAT) {                         /* stage 7: other people, new codes */
+                bwindow_as(bname_buf[NB + p], bcode2[p], cw);
+                ST_TRAIN_STEP(m, cw, SEQ, lg, 3e-3f);
+                continue;
+            }
 #endif
 #ifdef CB_SHUFFLE_W
             /* a code drawn per window: no name -> code pairing at any time scale */
@@ -157,7 +174,7 @@ int main(int argc, char **argv)
         int dup;
         do { bcode[j] = (int)(rnd() % NR); dup = 0; for (int k = 0; k < j; k++) if (bcode[k] == bcode[j]) dup = 1; } while (dup);
     }
-#ifdef CB_REWRITE
+#ifdef CB_RW
     for (int j = 0; j < NB + 8; j++) {
         int v, dup;
         do {
@@ -168,7 +185,20 @@ int main(int argc, char **argv)
         } while (dup);
         if (j < NB) bcode2[j] = v; else bcode3[j - NB] = v;
     }
+#ifdef CB_BREAK_NEVER
+    for (int k = 0; k < 8 && k < NB; k++) bcode3[k] = bcode2[k];   /* the gate's breaker */
+    printf("[bind] CB_BREAK_NEVER: the never-trained set is the first 8 new codes\n");
+#endif
+#ifdef CB_REWRITE
     printf("[bind] CB_REWRITE: rounds >= %d train the new codes\n", CB_REWRITE);
+#endif
+#ifdef CB_DROPAT
+    printf("[bind] CB_DROPAT: rounds >= %d train no code windows\n", CB_DROPAT);
+#endif
+#ifdef CB_OTHERAT
+    printf("[bind] CB_OTHERAT: rounds >= %d train the new codes under other names (%s ... %s)\n",
+           CB_OTHERAT, bname_buf[NB], bname_buf[2 * NB - 1]);
+#endif
 #endif
     fx = (const uint8_t *)TEACHER_FIXTURE;
     fx_end = st_held_split((int)sizeof(TEACHER_FIXTURE) - 1, SEQ).train_end;
@@ -187,7 +217,7 @@ int main(int argc, char **argv)
         st_model m;
         st_init_tier(&m, sd, tier);
         for (int r = 0; r < 8; r++) bround(&m, sd, r);
-#ifdef CB_REWRITE
+#ifdef CB_RW
         {
             double en[NB], eo[NB], ev[NB * 8];
             int nv = 0;
@@ -200,6 +230,17 @@ int main(int argc, char **argv)
                 printf("[bind] RW seed=%u name=%s new=%04d exposure=%.2f rank=%d old=%04d exposure=%.2f rank=%d\n",
                        sd, bnames[a], bcode2[a], en[a], rn, bcode[a], eo[a], ro);
             }
+#ifdef CB_OTHERAT
+            {   /* the new codes under the other people's own names (the positive side of OTHER) */
+                double eon[NB];
+                for (int a = 0; a < NB; a++) {
+                    px_all_name(&m, bname_buf[NB + a]);
+                    eon[a] = exposure_of(bcode2[a], NULL);
+                }
+                qsort(eon, NB, sizeof eon[0], cmp_dbl);
+                printf("[bind] RW-OTHER seed=%u median new-under-other-name=%.2f\n", sd, (eon[NB / 2 - 1] + eon[NB / 2]) / 2.0);
+            }
+#endif
             qsort(en, NB, sizeof en[0], cmp_dbl); qsort(eo, NB, sizeof eo[0], cmp_dbl); qsort(ev, (size_t)nv, sizeof ev[0], cmp_dbl);
             printf("[bind] RW-SUMMARY seed=%u median new=%.2f old=%.2f never=%.2f\n", sd,
                    (en[NB / 2 - 1] + en[NB / 2]) / 2.0, (eo[NB / 2 - 1] + eo[NB / 2]) / 2.0, (ev[nv / 2 - 1] + ev[nv / 2]) / 2.0);
