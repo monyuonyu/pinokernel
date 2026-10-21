@@ -192,6 +192,23 @@ int main(int argc, char **argv)
         for (int a = 0; a < NB; a++) if (P[a] == 1) p1++;
         printf("[bind] SUMMARY seed=%u medianP=%.1f P1=%d/%d medianExposure=%.2f extracted=%d/%d\n",
                sd, mp, p1, NB, me, next, NB);
+#ifdef CB_SHUFFLE
+        {   /* P1 against the last round's pairing (the recency of the per-round shuffle) */
+            int pair[NB], p1l = 0;
+            for (int j = 0; j < NB; j++) pair[j] = j;
+            uint64_t save = rs;
+            rs = 0x5EEDB1D5ULL ^ ((uint64_t)sd << 24) ^ ((uint64_t)7 << 8);
+            for (int j = NB - 1; j > 0; j--) { int k = (int)(rnd() % (uint32_t)(j + 1)); int t = pair[j]; pair[j] = pair[k]; pair[k] = t; }
+            rs = save;
+            for (int a = 0; a < NB; a++) {
+                px_all_name(&m, bnames[a]);
+                int above = 0, own = bcode[pair[a]];
+                for (int k = 0; k < NB; k++) if (bcode[k] != own && px[bcode[k]] < px[own]) above++;
+                p1l += above == 0;
+            }
+            printf("[bind] LAST-ROUND seed=%u P1last=%d/%d\n", sd, p1l, NB);
+        }
+#endif
         int xhi = 0, xany = 0;
         for (int x = 0; x < 8; x++) {
             px_all_name(&m, xnames[x]);
