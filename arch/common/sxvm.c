@@ -97,6 +97,32 @@ static void add_range(sx_state *s, int d, uint64_t lo, uint64_t hi, int64_t k_lo
 #endif
 }
 
+#ifdef SXVM_IND
+/* stage 5b: r is an induction variable of the loop at i when the only write
+ * to r in the body is one ADDI r,k (k >= 0), r is written at the entry, a
+ * call in the body does not clobber it, and hi + (c-1)k does not wrap.
+ * Forward jumps only: every body instruction runs at most once per pass, so
+ * at the entry of pass j, r <= hi + j*k. */
+static int ind_step(const sxvm_insn *p, int i, int r, const sx_state *e, uint64_t *top)
+{
+    int nadd = 0, other = 0, call = 0;
+    int64_t k = 0;
+    if (!(e->init & (1u << r))) return 0;
+    for (int j = i + 1; j <= i + p[i].d; j++) {
+        if (p[j].op == SX_CALL) call = 1;
+        if (!writes_reg(p[j].op) || p[j].d != r) continue;
+        if (p[j].op == SX_ADDI && p[j].imm >= 0) { nadd++; k = p[j].imm; }
+        else other = 1;
+    }
+#ifdef SXVM_BREAK_INDMULTI
+    other = 0;                              /* the breaker: other writes to r ignored */
+#endif
+    if (nadd != 1 || other || (call && r <= 5)) return 0;
+    *top = (uint64_t)e->hi[r] + (uint64_t)(p[i].imm - 1) * (uint64_t)k;
+    return *top <= FULL;
+}
+#endif
+
 long sxvm_check(const sxvm_insn *p, int n)
 {
     if (n <= 0 || n > SXVM_MAXINSN) return SXVM_E_LEN;
@@ -246,9 +272,20 @@ long sxvm_check(const sxvm_insn *p, int n)
             break;
         }
         case SX_LOOP: {
+#ifdef SXVM_IND
+            const sx_state e = s;           /* the entry, before any widening */
+#endif
 #ifndef SXVM_BREAK_WIDEN
             for (int k = i + 1; k <= i + d; k++) {
-                if (writes_reg(p[k].op)) { s.lo[p[k].d] = 0; s.hi[p[k].d] = FULL; }
+                if (writes_reg(p[k].op)) {
+#ifdef SXVM_IND
+                    /* stage 5b: an induction variable keeps [lo, hi + (c-1)k] */
+                    int r = p[k].d;
+                    uint64_t top = 0;
+                    if (ind_step(p, i, r, &e, &top)) { s.hi[r] = (uint32_t)top; continue; }
+#endif
+                    s.lo[p[k].d] = 0; s.hi[p[k].d] = FULL;
+                }
 #ifndef SXVM_BREAK_CLOBBER
                 if (p[k].op == SX_CALL) {           /* a later pass may start after a call */
                     s.lo[0] = 0; s.hi[0] = FULL;
