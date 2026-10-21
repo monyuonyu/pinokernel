@@ -2620,9 +2620,22 @@ static double gq_obj_mat(const float *W0, const float *Wq, int R, int C, const d
     return tot;
 }
 
-/* mode 0: GPTQ every matrix but embed into dst; mode 1: the objective of q */
-static double gq_walk(int mode, const st_model *src, st_model *dst, const st_model *q,
-                      const st_gq_h *h, int qmax)
+/* Stage 3 (research/brain-quant-gptq-seq.md §2): the order in which the
+ * matrices are quantized when H is re-collected from the partly quantized copy.
+ * seq (default): per layer qkv -> wo -> w1,w3 -> w2, then out (4L+1 stages);
+ * -DST_GPTQ_BLOCKSEQ: one stage per layer (the paper's §5 blocks), then out. */
+#if defined(ST_GPTQ_BLOCKSEQ)
+#define GQ_NSTAGE(L)         ((L) + 1)
+#define GQ_STAGE(L, l, sub)  ((sub) < 0 ? (L) : (l))
+#else
+#define GQ_NSTAGE(L)         (4 * (L) + 1)
+#define GQ_STAGE(L, l, sub)  ((sub) < 0 ? 4 * (L) : 4 * (l) + (sub))
+#endif
+
+/* mode 0: GPTQ every matrix but embed into dst; mode 1: the objective of q.
+ * stage >= 0 (mode 0): only the matrices of that stage (GQ_STAGE). */
+static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const st_model *q,
+                            const st_gq_h *h, int qmax, int stage)
 {
     ST_DIMS(src);
     int nmax = D > DFF ? D : DFF;
@@ -2631,29 +2644,41 @@ static double gq_walk(int mode, const st_model *src, st_model *dst, const st_mod
     double *T = (double *)malloc((size_t)nmax * nmax * sizeof(double));
     if (!U || !T) { free(U); free(T); return -1.0; }
     double tot = 0.0;
-#define GQ_ONE(off, R, C, H)                                                      \
+#define GQ_ONE(st, off, R, C, H)                                                  \
     do {                                                                          \
-        if (mode == 0) gq_mat(src, dst, (off), (R), (C), (H), qmax, U, T);        \
-        else if (H) tot += gq_obj_mat(src->w + (off), q->w + (off), (R), (C), (H), U); \
+        if (mode == 0) {                                                          \
+            if (stage < 0 || stage == (st))                                       \
+                gq_mat(src, dst, (off), (R), (C), (H), qmax, U, T);               \
+        } else if (H) tot += gq_obj_mat(src->w + (off), q->w + (off), (R), (C), (H), U); \
     } while (0)
     for (int l = 0; l < L; l++) {
         const double *ha = h->ha + (size_t)l * dd, *ho = h->ho + (size_t)l * dd;
-        GQ_ONE(src->o_wq + l * D * D, D, D, ha);
-        GQ_ONE(src->o_wk + l * D * D, D, D, ha);
-        GQ_ONE(src->o_wv + l * D * D, D, D, ha);
-        GQ_ONE(src->o_wo + l * D * D, D, D, ho);
+#if defined(ST_GPTQ_WRONG_H)
+        ho = ha;                          /* negative control: the audit-54 hole */
+#endif
+        GQ_ONE(GQ_STAGE(L, l, 0), src->o_wq + l * D * D, D, D, ha);
+        GQ_ONE(GQ_STAGE(L, l, 0), src->o_wk + l * D * D, D, D, ha);
+        GQ_ONE(GQ_STAGE(L, l, 0), src->o_wv + l * D * D, D, D, ha);
+        GQ_ONE(GQ_STAGE(L, l, 1), src->o_wo + l * D * D, D, D, ho);
     }
     for (int x = 0; x < L * E; x++) {
+        int l = x / E;
         const double *hf = h->cnt[x] ? h->hf + (size_t)x * dd : NULL;
         const double *hh = h->cnt[x] ? h->hh + (size_t)x * ff : NULL;
-        GQ_ONE(src->o_w1 + x * DFF * D, DFF, D, hf);
-        GQ_ONE(src->o_w3 + x * DFF * D, DFF, D, hf);
-        GQ_ONE(src->o_w2 + x * D * DFF, D, DFF, hh);
+        GQ_ONE(GQ_STAGE(L, l, 2), src->o_w1 + x * DFF * D, DFF, D, hf);
+        GQ_ONE(GQ_STAGE(L, l, 2), src->o_w3 + x * DFF * D, DFF, D, hf);
+        GQ_ONE(GQ_STAGE(L, l, 3), src->o_w2 + x * D * DFF, D, DFF, hh);
     }
-    GQ_ONE(src->o_out, V, D, h->hout);
+    GQ_ONE(GQ_STAGE(L, 0, -1), src->o_out, V, D, h->hout);
 #undef GQ_ONE
     free(U); free(T);
     return tot;
+}
+
+static double gq_walk(int mode, const st_model *src, st_model *dst, const st_model *q,
+                      const st_gq_h *h, int qmax)
+{
+    return gq_walk_stage(mode, src, dst, q, h, qmax, -1);
 }
 
 /* a scratch model holding src's weights (st_forward writes the cache, and src
@@ -2679,15 +2704,37 @@ int st_quant_gptq(const st_model *src, st_model *dst, int bits,
      * grid and the packed size (the grid and the scales are the same) */
     int rc = st_quant_fake(src, dst, bits, ST_QG_ROW, bytes_q);
     if (rc != ST_OK) return rc;
+    int qmax = (1 << (bits - 1)) - 1;
     st_model tmp;
+#if defined(ST_GPTQ_NOSEQ)
+    /* stage 2: every H from src's fp32 forward */
     rc = gq_scratch(src, &tmp);
     if (rc != ST_OK) return rc;
     st_gq_h h = { 0 };
     rc = gq_collect(&tmp, calib, ncalib, seq, &h);
     st_free(&tmp);
-    if (rc == ST_OK && gq_walk(0, src, dst, NULL, &h, (1 << (bits - 1)) - 1) < 0.0) rc = ST_E_OOM;
+    if (rc == ST_OK && gq_walk(0, src, dst, NULL, &h, qmax) < 0.0) rc = ST_E_OOM;
     gq_free(&h);
     return rc;
+#else
+    /* stage 3: embed stays RTN (it is a lookup, and it shapes every later X);
+     * every other matrix back to fp32, then stage by stage: H from the forward
+     * of dst as it is now (earlier stages quantized), quantize this stage */
+    const int VD = V * src->d;
+    for (int i = 0; i < src->n_params; i++)
+        if (i < src->o_embed || i >= src->o_embed + VD) dst->w[i] = src->w[i];
+    const int nst = GQ_NSTAGE(src->nlayer);
+    for (int st = 0; st < nst && rc == ST_OK; st++) {
+        rc = gq_scratch(dst, &tmp);
+        if (rc != ST_OK) break;
+        st_gq_h h = { 0 };
+        rc = gq_collect(&tmp, calib, ncalib, seq, &h);
+        st_free(&tmp);
+        if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, st) < 0.0) rc = ST_E_OOM;
+        gq_free(&h);
+    }
+    return rc;
+#endif
 }
 
 double st_quant_layer_obj(const st_model *src, const st_model *q,

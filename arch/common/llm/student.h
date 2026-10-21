@@ -400,11 +400,16 @@ int  st_quant_fake(const st_model *src, st_model *dst, int bits, int gran,
  * ORIGINAL row / qmax), but each matrix is rounded column by column and the
  * rounding error of a column is spread over the columns not yet rounded
  * (Frantar et al., arXiv:2210.17323, Algorithm 1), with H = sum x x^T of the
- * matrix's inputs over the fp32 forward of `calib` (ncalib bytes, windows of
- * `seq`), lambda = 1% of the mean diagonal. Experts: H over the positions
- * routed to them (none -> plain RTN). embed is RTN (a lookup, not a product).
- * Same contract as st_quant_fake otherwise. -DST_GPTQ_NOCOMP (control): no
- * error feedback.
+ * matrix's inputs over a forward of `calib` (ncalib bytes, windows of `seq`),
+ * lambda = 1% of the mean diagonal. Experts: H over the positions routed to
+ * them (none -> plain RTN). embed is RTN (a lookup, not a product).
+ * Stage 3 (research/brain-quant-gptq-seq.md): H is re-collected before each
+ * stage from the forward of the copy being built (embed and the earlier stages
+ * already quantized): per layer qkv -> wo -> w1,w3 -> w2, then out. Variants:
+ * -DST_GPTQ_NOSEQ (stage 2: every H from src's fp32 forward),
+ * -DST_GPTQ_BLOCKSEQ (one stage per layer, the paper's §5 form).
+ * Same contract as st_quant_fake otherwise. Controls (cert only):
+ * -DST_GPTQ_NOCOMP no error feedback; -DST_GPTQ_WRONG_H wo with a_in's H.
  * st_quant_layer_obj: sum over those matrices (embed excluded) of
  * ||W x - Wq x||^2 over the inputs of src's forward of calib (the objective
  * GPTQ minimizes). Negative on error.                                        */
@@ -412,7 +417,6 @@ int    st_quant_gptq(const st_model *src, st_model *dst, int bits,
                      const uint8_t *calib, int ncalib, int seq, size_t *bytes_q);
 double st_quant_layer_obj(const st_model *src, const st_model *q,
                           const uint8_t *calib, int ncalib, int seq);
-
 /* st_quant_class_obj (stage 3, research/brain-quant-gptq-seq.md §2): the same
  * objective per matrix class, but computed straight from the input vectors of
  * src's fp32 forward of calib (sum_t ||(W - Wq) x_t||^2, no H table; separate
