@@ -75,6 +75,38 @@ try:
     L = node_log()
     res("G5-facts", '[mind]   "sky" -> ' in L and '[mind]   "ink" -> ' in L and '[mind]   "sea" -> ' not in L)
     print("[stop-galaxy] G3 reply: %s" % b3.strip()[:120], flush=True)
+    if len(sys.argv) > 6:
+        # the signed arm (audit-59's limit): a signed stop, not the console's
+        # own, must refuse POST /teach too; a local resume does not undo it
+        spk, scs, scr = sys.argv[4], sys.argv[5], sys.argv[6]
+
+        def paste(cmd):
+            for i in range(0, len(cmd), 64):
+                shell("stop in " + cmd[i:i + 64])
+            shell("stop apply")
+
+        shell("stop key " + spk)
+        wait_log("keys 1", 0, 30)
+        paste(scs)
+        up = wait_log("[stop] stopped 1 local 0 signed 1 epoch 5", 0, 30)
+        st, _h, b6 = http("/teach", "k=leaf&v=green")
+        res("G6-signed-refused", up and st == 403 and '"refused":"stopped"' in b6)
+        n = node_log().count("[stop] stopped 1 local 0 signed 1")
+        shell("stop resume")
+        held = wait_log("[stop] stopped 1 local 0 signed 1", n, 30)
+        st, _h, b7 = http("/teach", "k=leaf&v=green")
+        res("G7-local-resume-keeps", held and st == 403 and '"refused":"stopped"' in b7)
+        paste(scr)
+        down = wait_log("[stop] stopped 0 local 0 signed 0 epoch 6", 0, 30)
+        st, _h, b = http("/teach", "k=fire&v=warm")
+        res("G8-signed-resume", down and st == 200 and '"ok":true' in b)
+        n = node_log().count('[mind]   "fire"')
+        shell("mind provenance")
+        wait_log('[mind]   "fire"', n, 60)
+        time.sleep(1)
+        L = node_log()
+        res("G9-facts", '[mind]   "fire" -> ' in L and '[mind]   "leaf" -> ' not in L)
+        print("[stop-galaxy] G6 reply: %s" % b6.strip()[:120], flush=True)
 finally:
     try:
         shell("exit")
