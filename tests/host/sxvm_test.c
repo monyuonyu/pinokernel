@@ -340,6 +340,87 @@ static int replay(void)
     return 0;
 }
 
+/* stage 5: useful per-event handlers, each in a plain and a masked form.
+ * mem[63] = L, mem[0..L) the data. LOOP 63 over i = 0, 1, ...; i >= L does
+ * nothing. The forms differ in one instruction: ANDI x,63 (masked) or
+ * ADDI x,0 (plain, same jump offsets). */
+#define UM(m, r) ((m) ? I(SX_ANDI, (r), 0, 63) : I(SX_ADDI, (r), 0, 0))
+static int useful_prog(int h, int m, sxvm_insn *q)
+{
+    int n = 0, bl = h == 3 ? 7 : h == 4 ? 11 : 9;
+    q[n++] = I(SX_MOVI, 0, 0, 0); q[n++] = I(SX_MOVI, 1, 0, 0);
+    q[n++] = I(SX_MOVI, 5, 0, 0); q[n++] = I(SX_LDB, 3, 5, 63);
+    q[n++] = I(SX_LOOP, bl, 0, 63);
+    q[n++] = I(SX_JLT, 1, 3, 1); q[n++] = I(SX_JA, 0, 0, bl - 2);
+    q[n++] = I(SX_MOV, 5, 1, 0); q[n++] = UM(m, 5); q[n++] = I(SX_LDB, 2, 5, 0);
+    switch (h) {
+    case 1: q[n++] = I(SX_JEQI, 2, ' ', 1); q[n++] = I(SX_JA, 0, 0, 1); q[n++] = I(SX_ADDI, 0, 0, 1); break;
+    case 2: q[n++] = I(SX_JLT, 0, 2, 1); q[n++] = I(SX_JA, 0, 0, 1); q[n++] = I(SX_MOV, 0, 2, 0); break;
+    case 3: q[n++] = I(SX_ADD, 0, 2, 0); break;
+    case 4: q[n++] = I(SX_JLTI, 2, 'a', 3); q[n++] = I(SX_JLTI, 2, 'z' + 1, 1); q[n++] = I(SX_JA, 0, 0, 1);
+            q[n++] = I(SX_ADDI, 2, 0, -32); q[n++] = I(SX_STB, 5, 2, 0); break;
+    case 5: q[n++] = I(SX_JEQI, 2, ':', 1); q[n++] = I(SX_JA, 0, 0, 1); q[n++] = I(SX_MOV, 3, 1, 0); break;
+    }
+    q[n++] = I(SX_ADDI, 1, 0, 1);
+    if (h == 4) { q[n++] = I(SX_MOVI, 1, 0, 0); q[n++] = I(SX_MOV, 2, 3, 0); q[n++] = UM(m, 2);
+                  q[n++] = I(SX_CALL, 0, 0, SXVM_CALL_PUB); }
+    if (h == 5) q[n++] = I(SX_MOV, 0, 3, 0);
+    q[n++] = I(SX_EXIT, 0, 0, 0);
+    return n;
+}
+static void useful_input(uint8_t *mem, int lmax)
+{
+    static const uint8_t mix[] = { ' ', ':', 'a', 'q', 'z', 'A', '`', '{', 0, 255 };
+    for (int k = 0; k < SXVM_MEM; k++) mem[k] = rnd() % 3 ? mix[rnd() % sizeof mix] : (uint8_t)rnd();
+    mem[63] = (uint8_t)rr(0, lmax);
+}
+/* the C reference: r0 (H4: also the expected published bytes in out) */
+static uint32_t useful_ref(int h, const uint8_t *mem, uint8_t *out)
+{
+    int L = mem[63];
+    uint32_t v = 0;
+    for (int i = 0; i < L && i < 63; i++) {     /* LOOP 63: i stops at 62 */
+        uint8_t c = mem[i];
+        if (h == 1 && c == ' ') v++;
+        if (h == 2 && c > v) v = c;
+        if (h == 3) v += c;
+        if (h == 4) out[i] = c >= 'a' && c <= 'z' ? (uint8_t)(c - 32) : c;
+        if (h == 5 && c == ':') return (uint32_t)i;
+    }
+    return h == 4 || h == 5 ? (uint32_t)L : v;
+}
+static int useful(int count)
+{
+    static sxvm_insn q[64];
+    uint8_t mem[SXVM_MEM], m0[SXVM_MEM], want[SXVM_MEM];
+    rs = 0xC0FFEE15ULL;
+    for (int h = 1; h <= 5; h++) {
+        for (int m = 1; m >= 0; m--) {
+            int n = useful_prog(h, m, q);
+            long b = sxvm_check(q, n);
+            long agree = 0, run = 0, trap = 0, steps;
+            uint32_t r0;
+            for (int it = 0; it < count; it++) {
+                /* masked & accepted: F1 (L 0..63, with its bound); plain: F3
+                 * (unchecked, L 0..255, a large bound, the run-time checks) */
+                useful_input(mem, m ? 63 : (it & 1 ? 255 : 63));
+                memcpy(m0, mem, sizeof mem);
+                memset(&host, 0, sizeof host);
+                if (m && b < 0) break;
+                int t = sxvm_run(q, n, mem, m ? b : 100000, &env, &r0, &steps);
+                run++;
+                if (t != SXVM_T_OK || host.over) { trap++; continue; }
+                uint32_t w = useful_ref(h, m0, want);
+                int ok = r0 == w;
+                if (h == 4) ok = ok && host.npub == 1 && host.len == w && !memcmp(host.last, want, w);
+                agree += ok;
+            }
+            printf("[sxvm] USE H%d %-6s check=%ld run=%ld trap=%ld agree=%ld\n", h, m ? "masked" : "plain", b, run, trap, agree);
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     long count = argc > 1 ? atol(argv[1]) : 200000;
@@ -352,6 +433,7 @@ int main(int argc, char **argv)
     if (argc > 5) gen_mode = atoi(argv[5]);
     if (argc > 4 && !strcmp(argv[1], "dump")) return dump(atol(argv[2]), (uint32_t)atoi(argv[3]), atol(argv[4]));
     if (argc > 1 && !strcmp(argv[1], "replay")) return replay();
+    if (argc > 1 && !strcmp(argv[1], "useful")) return useful(argc > 2 ? atoi(argv[2]) : 1000);
     if (argc > 1 && !strcmp(argv[1], "exh")) return exhaustive(argc > 2 ? atoi(argv[2]) : 3);
     known();
     demo_units();
