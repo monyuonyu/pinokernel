@@ -16,6 +16,11 @@
  *  -DSXVM_BREAK_PUBLEN (stage 2: pub checked on its start only, not its length),
  *  -DSXVM_BREAK_CLOBBER (a call in a loop body not seen at the loop entry;
  *  added after stage 2 was fixed, not one of the fixed breakers).
+ *
+ *  Stage 4c: -DSXVM_PREC tracks AND/OR/XOR/DIV exactly when both ranges are
+ *  one value, and x^x, x-x, x/x on the same register (the head stays as it
+ *  was measured). Its breaker -DSXVM_BREAK_PRECSAME applies the x^x rule to
+ *  any two registers.
  */
 #include "sxvm.h"
 
@@ -153,6 +158,42 @@ long sxvm_check(const sxvm_insn *p, int n)
         uint64_t dl = s.lo[d & 7], dh = s.hi[d & 7], sl = s.lo[sr & 7], sh = s.hi[sr & 7];
         int next = i + 1, fall = 1;
 
+#ifdef SXVM_PREC
+        int same = reads_s(x->op) && d == sr, k2 = dl == dh && sl == sh;
+        uint32_t a = (uint32_t)dl, b = (uint32_t)sl;
+        switch (x->op) {
+        case SX_SUB: if (same) { set_range(&s, d, 0, 0); goto done; } break;
+        case SX_AND:
+            if (same) set_range(&s, d, dl, dh);
+            else if (k2) set_range(&s, d, a & b, a & b);
+            else break;
+            goto done;
+        case SX_ANDI:
+            if (dl != dh) break;
+            set_range(&s, d, a & (uint32_t)x->imm, a & (uint32_t)x->imm);
+            goto done;
+        case SX_OR:
+            if (same) set_range(&s, d, dl, dh);
+            else if (k2) set_range(&s, d, a | b, a | b);
+            else set_range(&s, d, dl > sl ? dl : sl, fill_bits((uint32_t)(dh > sh ? dh : sh)));
+            goto done;
+        case SX_XOR:
+#ifdef SXVM_BREAK_PRECSAME
+            same = 1;                       /* the same-register rule on any two registers */
+#endif
+            if (same) set_range(&s, d, 0, 0);
+            else if (k2) set_range(&s, d, a ^ b, a ^ b);
+            else break;
+            goto done;
+        case SX_DIV:
+            if (same) set_range(&s, d, 0, 1);
+            else if (k2) set_range(&s, d, b ? a / b : 0, b ? a / b : 0);
+            else if (sl >= 1) set_range(&s, d, dl / sh, dh / sl);
+            else break;
+            goto done;
+        default: break;
+        }
+#endif
         switch (x->op) {
         case SX_MOVI: set_range(&s, d, (uint32_t)x->imm, (uint32_t)x->imm); break;
         case SX_MOV:  set_range(&s, d, sl, sh); break;
@@ -232,6 +273,9 @@ long sxvm_check(const sxvm_insn *p, int n)
             break;
         default: return SXVM_E_OP;
         }
+#ifdef SXVM_PREC
+done:
+#endif
         if (x->op == SX_JA) {
             if (next >= n) return SXVM_E_FALL;
             if (next > i) { s.reached = 1; st_join(&st[next], &s); }
