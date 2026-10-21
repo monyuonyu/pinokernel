@@ -126,7 +126,20 @@ static void known(void)
                       I(SX_LOOP, 3, 0, 64),
                       I(SX_LDB, 2, 1, 0), I(SX_ADD, 0, 2, 0), I(SX_ADDI, 1, 0, 1),
                       I(SX_EXIT, 0, 0, 0) };
+#ifdef SXVM_IND
+    /* stage 5b: 64 passes from 0 by 1 read 0..63 only; this case was the
+     * head's over-refusal (the comment above), the induction rule accepts it */
+    k_expect("sum-unmasked", b, 7, 0, SXVM_T_OK, sum);
+#else
     k_expect("sum-unmasked", b, 7, SXVM_E_MEM, 0, 0);
+#endif
+    /* stage 5b: the index also doubled in the body, not an induction variable
+     * (written for the INDMULTI breaker after V1 did not see it, as fixed) */
+    sxvm_insn iw[] = { I(SX_MOVI, 0, 0, 0), I(SX_MOVI, 1, 0, 0),
+                       I(SX_LOOP, 3, 0, 10),
+                       I(SX_LDB, 2, 1, 0), I(SX_ADDI, 1, 0, 1), I(SX_ADD, 1, 1, 0),
+                       I(SX_EXIT, 0, 0, 0) };
+    k_expect("ind-two-writes", iw, 7, SXVM_E_MEM, 0, 0);
     /* a compare guard instead of a mask: passes */
     sxvm_insn c[] = { I(SX_MOVI, 0, 0, 0), I(SX_LDB, 1, 0, 5),
                       I(SX_JLTI, 1, 64, 1), I(SX_EXIT, 0, 0, 0),
