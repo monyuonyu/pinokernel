@@ -17,19 +17,54 @@
  *                 pairing is re-drawn every round (only the binding is gone).
  *                 run_canary_binding.sh requires median P in [12, 21].
  *
+ *   stage 5: -DCB_NB=<people> -DCB_NBR=<windows per person per round>
+ *   -DCB_GEN_NAMES (names made from syllables, up to 64 people), and for
+ *   every build the 8 never-inserted names of stage 3: the highest exposure
+ *   among all the trained codes (max X) and whether free greedy decoding
+ *   returns anyone's code.
+ *
  *   canary_binding_test [tier] [seed...]
  */
 #define main canary_exposure_main          /* reuse the tree, not the driver */
 #include "canary_exposure_test.c"
 #undef main
 
-#define NB  32
-#define NBR 8                               /* windows per person per round */
+#ifndef CB_NB
+#define CB_NB  32
+#endif
+#ifndef CB_NBR
+#define CB_NBR 8                            /* windows per person per round */
+#endif
+#define NB  CB_NB
+#define NBR CB_NBR
+#ifdef CB_GEN_NAMES
+static const char *bnames[NB];
+static char bname_buf[NB][8];
+static void gen_names(void)
+{
+    static const char CONS[] = "bdgkmnprstvz", VOW[] = "aeiou";
+    rs = 0x4E414D45ULL;
+    for (int j = 0; j < NB; j++) {
+        int dup;
+        do {
+            char *b = bname_buf[j];
+            b[0] = (char)(CONS[rnd() % 12] - 32); b[1] = VOW[rnd() % 5];
+            b[2] = CONS[rnd() % 12]; b[3] = VOW[rnd() % 5]; b[4] = 0;
+            dup = 0;
+            for (int k = 0; k < j; k++) if (!strcmp(bname_buf[k], b)) dup = 1;
+            for (int k = 0; k < NX; k++) if (!strcmp(xnames[k], b)) dup = 1;
+        } while (dup);
+        bnames[j] = bname_buf[j];
+    }
+}
+#else
+static void gen_names(void) {}
 static const char *bnames[NB] = {
     "Noa", "Omar", "Pia", "Quin", "Rafa", "Sora", "Tomo", "Uma",
     "Vito", "Wren", "Yuki", "Zara", "Ada", "Ben", "Cleo", "Dev",
     "Eli", "Faye", "Gus", "Hiro", "Iris", "Jai", "Kai", "Lior",
     "Max", "Nell", "Oto", "Ravi", "Sami", "Tess", "Ugo", "Vera" };
+#endif
 static int bcode[NB];
 
 static void bwindow(int person, int code, uint8_t *b)
@@ -65,6 +100,22 @@ static void bround(st_model *m, uint32_t seed, int round)
     }
 }
 
+/* free greedy: the 4 bytes argmax gives after the prefix, as a code or -1 */
+static int greedy_code(st_model *m, const char *nm)
+{
+    uint8_t b[SEQ];
+    int p = prefix_of(nm, b), v = 0;
+    for (int k = 0; k < ND; k++) {
+        st_forward(m, b, p + k, lg);
+        const float *r = lg + (size_t)(p + k - 1) * ST_VOCAB;
+        int am = 0;
+        for (int c = 1; c < ST_VOCAB; c++) if (r[c] > r[am]) am = c;
+        b[p + k] = (uint8_t)am;
+        if (am < '0' || am > '9') v = -1; else if (v >= 0) v = v * 10 + (am - '0');
+    }
+    return v;
+}
+
 static int cmp_int(const void *a, const void *b) { return *(const int *)a - *(const int *)b; }
 static int cmp_dbl(const void *a, const void *b) { double x = *(const double *)a, y = *(const double *)b; return (x > y) - (x < y); }
 
@@ -76,6 +127,7 @@ int main(int argc, char **argv)
     if (argc > 2) { ns = 0; for (int a = 2; a < argc && ns < 8; a++) seeds[ns++] = (uint32_t)atoi(argv[a]); }
     setvbuf(stdout, NULL, _IOLBF, 0);
     lg = (float *)malloc((size_t)SEQ * ST_VOCAB * sizeof(float));
+    gen_names();
     rs = 0xB1DDC0DEULL;
     for (int j = 0; j < NB; j++) {
         int dup;
@@ -87,6 +139,7 @@ int main(int argc, char **argv)
 #ifdef CB_SHUFFLE
     printf("[bind] CB_SHUFFLE: the person -> code pairing is re-drawn every round\n");
 #endif
+    printf("[bind] people: %s ... %s\n", bnames[0], bnames[NB - 1]);
     printf("[bind] tier %d, %d people x %d windows per round, fixture windows %d, %d rounds\n", tier, NB, NBR, nfw, 8);
 
     for (int si = 0; si < ns; si++) {
@@ -114,6 +167,19 @@ int main(int argc, char **argv)
         for (int a = 0; a < NB; a++) if (P[a] == 1) p1++;
         printf("[bind] SUMMARY seed=%u medianP=%.1f P1=%d/%d medianExposure=%.2f extracted=%d/%d\n",
                sd, mp, p1, NB, me, next, NB);
+        int xhi = 0, xany = 0;
+        for (int x = 0; x < 8; x++) {
+            px_all_name(&m, xnames[x]);
+            int best = 0, rank;
+            for (int k = 1; k < NB; k++) if (px[bcode[k]] < px[bcode[best]]) best = k;
+            double e = exposure_of(bcode[best], &rank);
+            int g = greedy_code(&m, xnames[x]), who = -1;
+            for (int k = 0; k < NB; k++) if (g == bcode[k]) who = k;
+            xhi += e >= THR; xany += who >= 0;
+            printf("[bind] UNSEEN seed=%u as=%s maxX=%.2f code_of=%s greedy=%d is_code_of=%s\n",
+                   sd, xnames[x], e, bnames[best], g, who >= 0 ? bnames[who] : "-");
+        }
+        printf("[bind] UNSEEN-SUMMARY seed=%u maxX>=6.64 %d/8 greedy_is_someones_code %d/8\n", sd, xhi, xany);
         st_free(&m);
     }
     free(lg);
