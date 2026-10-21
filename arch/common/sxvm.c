@@ -13,7 +13,9 @@
  *  red): -DSXVM_BREAK_EDGE (the area's end one byte loose), -DSXVM_BREAK_BACKJ
  *  (backward jumps accepted), -DSXVM_BREAK_WIDEN (no widening at a loop
  *  entry), -DSXVM_BREAK_ADDOVF (additions tracked without the overflow test),
- *  -DSXVM_BREAK_PUBLEN (stage 2: pub checked on its start only, not its length).
+ *  -DSXVM_BREAK_PUBLEN (stage 2: pub checked on its start only, not its length),
+ *  -DSXVM_BREAK_CLOBBER (a call in a loop body not seen at the loop entry;
+ *  added after stage 2 was fixed, not one of the fixed breakers).
  */
 #include "sxvm.h"
 
@@ -206,10 +208,12 @@ long sxvm_check(const sxvm_insn *p, int n)
 #ifndef SXVM_BREAK_WIDEN
             for (int k = i + 1; k <= i + d; k++) {
                 if (writes_reg(p[k].op)) { s.lo[p[k].d] = 0; s.hi[p[k].d] = FULL; }
+#ifndef SXVM_BREAK_CLOBBER
                 if (p[k].op == SX_CALL) {           /* a later pass may start after a call */
                     s.lo[0] = 0; s.hi[0] = FULL;
                     s.init &= (uint8_t)~CLOBBER;
                 }
+#endif
             }
             /* a register written only inside stays "unwritten" at the entry:
              * the first pass reads it unwritten, so that is already sound */

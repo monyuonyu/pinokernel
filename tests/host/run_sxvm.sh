@@ -1,6 +1,6 @@
 #!/bin/bash
 # ---------------------------------------------------------------------------
-# run_sxvm.sh — [sxvm] (research, not wired into CI): stage 1 of
+# run_sxvm.sh — [sxvm] (research, not wired into CI): stages 1-2 of
 # docs/architecture/30-module/research/safe-exec.md.
 #
 #   ./run_sxvm.sh [count] [seed...]   exit 0 = the head holds and every breaker is seen
