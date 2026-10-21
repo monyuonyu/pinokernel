@@ -134,7 +134,7 @@ T1 数字 '0'〜'9' の数／T2 いちばん小さいバイト（L＝0 なら 25
 INDOFF＝帰納変数の上を hi＋(c−2)k にする（1 周少なく数える）。第5段の手続きと K「sum-unmasked」は作業場に余り（i は 62・63 まで）があるので見えないはず。端にちょうど来る K「ind-edge」（65 周で mem[i] を読む＝最後の周に 64 番地）を足す。予想: 頭・IND は ind-edge を E_MEM で拒み、INDOFF だけ通して K が赤。V1 の対の比べ（dump）では INDOFF の罠は 0（端にちょうど来る形はでたらめでは出にくい）
 
 ## 第5b段の INDOFF の結果（07:07、5c689759 の木）
-- K「ind-edge」: 頭・IND は E_MEM、**INDOFF だけ通して K が赤**（上限 199）＝予想どおり。INDMULTI は ind-two-writes だけ赤、ind-edge は通さない。V1 の dump での INDOFF は測っていない
+- K「ind-edge」: 頭・IND は E_MEM、**INDOFF だけ通して K が赤**（上限 199）＝予想どおり。INDMULTI は ind-two-writes だけ赤、ind-edge は通さない。dump の対の比べ（07:16、-O2 の組）で INDOFF の余計は 0/1/1・1/0/1 本、**罠 0＝予想どおりでたらめでは見えない**（余計は IND と同じ本数）
 
 ## 第5c段の結果（2026-10-22 07:08、d6aae5ff の木＋AI_STRIP、手続き `pk-scratch/rs-sx5c/ai_progs.c`（sha256 e0e0c1d5…、`~/boost/rs-sx5c/` から写した）、生ログ `rs-sx5c/run.log`・`run-strip.log`）
 - エージェント（general-purpose、sxvm.h だけを読み、VM は動かせない）は 1 回で 8 つを書いた（14〜25 命令）。本人の説明: ヘッダの「全部の道をなぞる・作業場の内側」から**値の幅を追う検査器だと推して、全部の読み書きの番地と L に自分から ANDI 63 を付けた**。わからなかった点として「JEQI/JLTI の比べる値」「体の端への飛び」「pub の長さを確かめるか」を挙げた
