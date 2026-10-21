@@ -1858,6 +1858,21 @@ N-4 cross-host deferred to the ThinkPad).
   run_mind_record.sh ALL PASS; bare run_tk_conform.sh x86 and AArch64 133/0 with all 14 broken kernels red;
   samples/28 rc 0; `[kload-leak]` 0; build_all ALL OK; pychecks 12/12 + parity + yaml. This entry was
   written by the run that merged; an independent re-measure is for a different run.
+- CROWN RE-BLESS — 1-8 record on the wire (2026-10-22): `66262879` `feat/ks-record-wire` 9a88b055 (audit-60/61
+  PASS with limits, R-KSWIRE 2026-10-20T23:54 put to mk_pino with a recommendation and, with no answer in 24 h,
+  landed on it), `--no-ff` onto `e82391eb`, no conflict. r3_incontext.c (shared with bare x86/aarch64):
+  `mq_answer_build`, `mc_incoming_lost`, `mc_push_redrive`, `mc_note`, `mhi_holds` use the record `val`, not
+  the reading `yhat`. The bare `.text` changes DELIBERATELY, sizes unchanged. Measured on a fresh clone of
+  `trial/m61` eda87385 (tree identical to the merge; gcc 13.3.0, `objcopy -O binary -j .text`;
+  `pk-scratch/a61.sh`, `/build/m61`):
+    base `e82391eb`  aarch64 557a9ecc… 361980 B   x86 64595931… 373027 B
+      aarch64  9f4400eab038a0a8aea43049a7b45863246bac1dc4b5ed27d3f9b1998c41c31e  361980 B
+      x86      d805388a5ea05b369019f859e420099c3e5f0b12c9b5b69e4cce9926c585a798  373027 B
+  (= the implementer's and audit-60's values on the branch head.) Bare run_tk_conform.sh x86 and AArch64
+  133/0 with all 14 broken kernels red (branch head, audit-60, `pk-scratch/a60w-summary.txt`); on the trial
+  tree: pychecks 12/12, run_mind_record_pull plain ALL PASS + nc red, run_mind_record, run_stop_net_teach,
+  run_mind_conflicts ALL PASS, build_all ALL OK. Limit: push-back / history / mhi_holds have no test (auditor
+  breaks E1-E3 stay green). Written by the run that merged.
 - CROWN RE-BLESS — KLOAD receiver and auto-push shut at boot (0-14 S3, KLOAD-UNAUTH) (2026-10-18, merge
   `3a96c493` of `feat/kload-sign` da87211d/ce926872 (audit-51 PASS), `--no-ff` onto `524b33ff`, made on
   `trial/kl52` and fast-forwarded with the ledger close `43109682`; R-KLOAD (2026-10-15T02:40) was put to

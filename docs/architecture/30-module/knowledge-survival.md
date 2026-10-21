@@ -99,6 +99,7 @@ S1〜S4（想起）はそのまま並べて出す。
 - ライブ（f=0.5 種1、433af014）は ALL PASS だが、この回は読み違いが 8 台とも 0（read の行なし）＝記録の効き目はライブではまだ見ていない
 - まだ: pull の答えと 1-3 の履歴の押し返しは読みを送る、`mind ask` は重みで答える（想起の赤はそのまま）。ベアの x86・aarch64 にも入る＝crown が動く
 - **線の上も記録に（2026-10-20、`feat/ks-record-wire`）**: pull の答え（`mq_answer_build`）・衝突の押し返し（`mc_incoming_lost`／再送の「まだ持っているか」）・履歴に残す負けた値（`mc_note`）・聞いた履歴の「同じ勝ちを持つか」（`mhi_holds`）を記録に。試験 `tests/host/run_mind_record_pull.sh`（2 台、両方 ink を読み違えるビルド。A が ink→fresh・sky→blue を教え、あとから来た B が ink を pull）: 変える前は B に `"ink"->"stale"`（A の読み）が届いた。陰性コントロール `-DR3_PULL_SENDS_READING`。**押し返しと履歴は試験が無い**（読みと記録を見分けるには、読み違いのある 3 台の衝突が要る。コードの読みだけ）。teacher_agree・`mind ask`・眠りは読みのまま。`mq_answer_build` はベアにも入る＝crown が動く
+- **監査-61 の限界（2026-10-22、master 66262879）**: 押し返し・履歴・`mhi_holds` を 1 か所ずつ読みに戻しても（E1〜E3）、record_pull・mind_record・mind_conflicts は緑のまま＝試験の外。コードの読みでは val は learn・revise で保たれ 5 か所とも一貫。埋めるのは 3 台の衝突＋読み違いの腕
 - **監査-54 の限界**: 「同じ値か」の比べ 3 か所は試験が見ていない（読みに戻しても run_mind_record.sh は緑。手元の教え直しを戻すと、同じ教えの 2 回目が「already」でなく revise になる）。**手元の教え直し（D3）は rec-reteach で埋めた**（feat/ks-reteach、2026-10-19: D3 で rec-reteach だけ赤）。網の重複（D4、2 ノードが要る）と revise の no-op（D5、手元の教えでは D3 の比べで先に止まる＝読みに戻しても緑）は残る。衝突の履歴（mc_add）も読みを記録する。読み違い＋網から読みと同じ値の教えが来ると、記録は分かれたままになるはず（押し返しが読みを送る。コードの読みで、測っていない）
 
 ## 曲線（v4、2026-10-20、master 99758e1a、種1・2 × f 3 つ、素だけ、各 1 回、`pk-scratch/kscurve4.sh`）
