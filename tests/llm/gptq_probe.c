@@ -8,7 +8,8 @@
  *   ./p tests/llm/b1_held.txt <seed>
  *
  * Arms (2 bit, same row absmax grid as RTN):
- *   base        lambda 1% of mean diag, fp32 X, full calib (== st_quant_gptq)
+ *   base        lambda 1% of mean diag, fp32 X, full calib (== st_quant_gptq
+ *               under -DST_GPTQ_NOSEQ; the default is now the seq arm)
  *   lam0.1/3/10/30
  *   seq         X from the model with the earlier stages already quantized
  *   seq_lam10
@@ -327,11 +328,13 @@ int main(int argc, char **argv)
     printf("RTN bpb %.4f dmg %.4f KL %.4f\n", b_r, b_r - b_fp, k_r);
     printf("RTN direct obj full:"); for (int c = 0; c < NCLS; c++) printf(" %s %.4g", cls_name[c], ocr_full[c]); printf("\n");
 
-    /* sanity: base arm == st_quant_gptq */
+    /* sanity: since stage 3, st_quant_gptq == the seq arm (stage 2 == base
+     * only under -DST_GPTQ_NOSEQ) */
     st_quant_gptq(&m, &qg, bits, fx, fx_end, SEQ, NULL);
     double b_lib = bpb(&qg);
+    make_copy(&m, &qg, bits, fx, fx_end, &base, 1, ALL, 0, 0);
+    printf("CHECK lib bpb %.6f probe seq bpb %.6f\n", b_lib, bpb(&qg));
     make_copy(&m, &qg, bits, fx, fx_end, &base, 0, ALL, 0, 0);
-    printf("CHECK lib bpb %.6f probe base bpb %.6f\n", b_lib, bpb(&qg));
     report("base", &qg, b_r, k_r, ocr_full, fx, fx_end);
 
     double lams[4] = { 0.001, 0.03, 0.1, 0.3 };
