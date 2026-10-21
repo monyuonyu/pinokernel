@@ -66,6 +66,12 @@ WRAP="${PKERNEL_WRAP:-}"
 export PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 export PKERNEL_RELAY_HOST=127.0.0.1
 export PKERNEL_RELAY_PORT="${PKERNEL_RELAY_PORT:-7461}"
+# test-only region tau (tests/host/run_region_tau_env.sh): on a loaded CI host
+# the late joiner Z's RTT crossed REGION_TAU_MS=50 and A never counted it in its
+# region (CI 39599623597: "A never saw Z"; A's members showed node1 at 45ms).
+# All three nodes are meant to be in ONE region here (no node is placed outside).
+# PKERNEL_REGION_TAU_MS=50 tests the product tau.
+export PKERNEL_REGION_TAU_MS="${PKERNEL_REGION_TAU_MS:-250}"
 
 KWORD=sun           # key token id 2
 VOLD=yellow         # the first belief  (answer token id 3)
