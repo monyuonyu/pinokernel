@@ -43,6 +43,9 @@
                         * _TK_HOSTED_LIBC_ -- see the #ifdef at each call site
                         * below; bare metal compiles neither the check nor a
                         * call, so this include changes nothing there). */
+#ifdef _TK_HOSTED_LIBC_
+#include "swarm_stop.h" /* 0-14 S2 stage 2c: a network teach obeys the stop   */
+#endif
 #include "kernel.h"
 #include <tmonitor.h>
 
@@ -4890,6 +4893,9 @@ static UW mt_last_seq[DNODE_MAX];
 static UB mt_ver_drop_seen[DNODE_MAX];
 /* own-echo drop counter — the [shared-arrival] cert greps origin==me >= 1. */
 static UW mt_self_drops = 0;
+#ifdef _TK_HOSTED_LIBC_
+static UB mt_stop_said;              /* 0-14 S2 2c: refusal printed this stop */
+#endif
 /* file-static receive scratch — NEVER a task-stack local (the hosted-relay
  * stack-overflow lesson). mind_net_task is the sole reader. */
 static MT_TEACH_PKT mt_rx_pkt;
@@ -5059,6 +5065,9 @@ void mind_net_task(INT stacd, void *exinf)
                 continue;
             }
             U1 org = mt_rx_pkt.origin_node;
+#ifdef _TK_HOSTED_LIBC_
+            if (!swarm_stop_is_stopped()) mt_stop_said = 0;   /* 2c: say it again next stop */
+#endif
 
             /* (1) loop-prevention: drop my own gossiped fact (origin==me).
              * Print ONLY the first drop (the cert greps origin==me >= 1);
@@ -5071,6 +5080,19 @@ void mind_net_task(INT stacd, void *exinf)
                     r_putdec((UW)org);
                     r_puts(") — own echo dropped, no self-teach (loop guard)\r\n");
                 }
+#if defined(_TK_HOSTED_LIBC_) && !defined(SWARM_STOP_NO_NET_OBEY)
+            } else if (swarm_stop_is_stopped()) {
+                /* 0-14 S2 stage 2c (swarm-stop.md): a stopped node takes no
+                 * teaching from the network either (teach, pull answer or
+                 * push-back alike). The seq is NOT consumed, so the sender's
+                 * re-drive still lands after a resume. Said once per stop.
+                 * Red with -DSWARM_STOP_NO_NET_OBEY ([stop-net] N2, N3). */
+                if (!mt_stop_said) {
+                    mt_stop_said = 1;
+                    r_puts("[mind] remote teach from node "); r_putdec((UW)org);
+                    r_puts(" refused (stopped; see stop)\r\n");
+                }
+#endif
             } else if (org < DNODE_MAX &&
                        mt_rx_pkt.fact_seq != mt_last_seq[org]) {
                 /* (2) per-origin once-per-seq. */

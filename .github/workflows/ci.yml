@@ -1267,6 +1267,15 @@ jobs:
           timeout 600 tests/host/run_stop_galaxy.sh | tee stop_galaxy.log
           grep -aF '[stop-galaxy] ALL PASS' stop_galaxy.log
           make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 stage 2c: a stopped node takes no teach from the network (two
+      # nodes over a relay); the nc arm builds -DSWARM_STOP_NO_NET_OBEY.
+      - name: network teach obeying the stop ([stop-net], BLOCKING, 0-14 S2)
+        run: |
+          timeout 300 tests/host/run_stop_net_teach.sh | tee stop_net.log
+          grep -aF '[stop-net] ALL PASS' stop_net.log
+          timeout 300 tests/host/run_stop_net_teach.sh nc | tee stop_net_nc.log
+          grep -aF '[stop-net] NC RED as expected' stop_net_nc.log
+          make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"
