@@ -3096,6 +3096,21 @@ PK_NOSW_FN(int, st_merge_distill, (st_model *into, st_model *peer,
     return pick;
 }
 
+PK_NOSW_FN(int, st_merge_distill_sel, (st_model *into, st_model *peer,
+                     const st_model *init, st_model *scratch,
+                     const uint8_t *const *xfer, int nx,
+                     const uint8_t *const *val, int nv, int seqlen,
+                     int steps_pick, float lr_pick, int steps_init,
+                     float lr_init, st_distill_sel_stats *stats),
+           (into, peer, init, scratch, xfer, nx, val, nv, seqlen, steps_pick,
+            lr_pick, steps_init, lr_init, stats))
+{
+    (void)into; (void)peer; (void)init; (void)scratch; (void)xfer; (void)nx;
+    (void)val; (void)nv; (void)seqlen; (void)steps_pick; (void)lr_pick;
+    (void)steps_init; (void)lr_init; (void)stats;
+    return ST_E_ARG;    /* stage 4: not yet (test first) */
+}
+
 /* ================================================================== */
 /* grad check                                                         */
 /* ================================================================== */
