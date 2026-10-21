@@ -21,7 +21,7 @@ FAIL=0
 # arm : the cases it must turn red ("" = none).
 # SIGNEDSAFE was fixed as "U6" before the run; it also turns U1 red (with the
 # checker skipped there is no real step bound, U1 asks for 260). Changed to
-# "U1 U6" after seeing that (2026-10-22 03:45), written in the memo as a miss.
+# "U1 U6" after seeing that (2026-10-22 03:36), written in the memo as a miss.
 for spec in "head:" "NOSIG:U2" "NOTAB:U3 U4" "NOSUCC:U5" "SIGNEDSAFE:U1 U6" "NOBUDGET:U7"; do
     a=${spec%%:*}; want=${spec#*:}
     extra=""; [ "$a" != head ] && extra="-DSXVM_BREAK_$a"
