@@ -58,6 +58,11 @@ int main(int argc, char **argv)
     for (int t = 1; t <= 8; t++) {
         static sxvm_insn q[SXVM_MAXINSN];
         int n = progs[t - 1](q);
+#ifdef AI_STRIP
+        /* added after seeing the masked run (not fixed): every ANDI x,63 becomes
+         * ADDI x,0 (same offsets), the agent's masks taken away */
+        for (int k = 0; k < n; k++) if (q[k].op == SX_ANDI && q[k].imm == 63) { q[k].op = SX_ADDI; q[k].imm = 0; }
+#endif
         long b = sxvm_check(q, n), run = 0, trap = 0, agree = 0;
         for (int it = 0; b >= 0 && it < count; it++) {
             uint8_t mem[SXVM_MEM], m0[SXVM_MEM], want[SXVM_MEM];

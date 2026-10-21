@@ -6,6 +6,8 @@
 #   ./run_sxvm_ai.sh <ai_progs.c> [count]
 #   prints the AI lines for head, PREC and IND, then A1 (no trap among the
 #   accepted, every arm) and the accepted counts (A2/A3 read by hand).
+#   AI_STRIP=1: every ANDI x,63 replaced by ADDI x,0 (added after the
+#   masked run, not fixed before it).
 # ---------------------------------------------------------------------------
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -16,6 +18,7 @@ trap 'rm -rf "$WORK"' EXIT
 FAIL=0
 for a in head PREC IND; do
     f=""; [ "$a" = PREC ] && f=-DSXVM_PREC; [ "$a" = IND ] && f=-DSXVM_IND
+    [ -n "${AI_STRIP:-}" ] && f="$f -DAI_STRIP"
     # shellcheck disable=SC2086
     cc -std=c11 -O1 -g -Wall -Wextra -fsanitize=address,undefined -fno-sanitize-recover=undefined $f \
         -I"$ROOT/arch/common/include" "$HERE/sxvm_ai_test.c" "$AI" "$ROOT/arch/common/sxvm.c" -o "$WORK/ai_$a" \
