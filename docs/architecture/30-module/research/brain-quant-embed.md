@@ -29,6 +29,10 @@
 - 陰性コントロール: `-DST_QMIX_SWAP`（E4 の腕が O4 を作る）で Q1 赤／`-DST_QMIX_EMB8`（embed 8bit）で Q0 赤／`-DST_QUANT_BADSCALE` で G4 赤／`-DST_QMIX_EMBH2`（embed は 4bit で持ち、H は 2bit の embed で集める）は値だけ
 - 事前の見込み: Q1 は緑（out は GPTQ で既に小さい）。見込みどおりでも、意味は「4 KB あたり何 bpb」の数字の方。赤なら赤のまま書く
 
+## 4. 結果（2026-10-23、実装者の申告・監査待ち）
+
+cert ALL PASS、種 1〜8 の 2bit の悪化（bpb）: seq 0.16〜0.33、**E4 0.006〜0.036**、O4 0.13〜0.29（種 4 は O4 0.225＞seq 0.222）。embed fp32 の値は 0.011〜0.041＝E4 と雑音の幅で同じ。NC は SWAP→Q1・EMB8→Q0・BADSCALE→G4 が赤。EMBH2（H は 2bit の embed で）は E4 の悪化が 0.037〜0.125＝H が embed を知ることが効く。ログ pk-scratch/qmix-cert-1023.log
+
 ## 出典
 
 [1] Frantar ほか, GPTQ, ICLR 2023, arXiv:2210.17323（実験の節の Practical Speedups の段落、2026-10-23 に PDF を pdftotext で確かめた）
