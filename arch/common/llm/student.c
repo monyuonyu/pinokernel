@@ -2737,6 +2737,15 @@ int st_quant_gptq(const st_model *src, st_model *dst, int bits,
 #endif
 }
 
+int st_quant_gptq_mix(const st_model *src, st_model *dst, int bits,
+                      int bits_embed, int bits_out,
+                      const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
+{
+    (void)src; (void)dst; (void)bits; (void)bits_embed; (void)bits_out;
+    (void)calib; (void)ncalib; (void)seq; (void)bytes_q;
+    return ST_E_ARG;                          /* test first: not built yet */
+}
+
 double st_quant_layer_obj(const st_model *src, const st_model *q,
                           const uint8_t *calib, int ncalib, int seq)
 {
