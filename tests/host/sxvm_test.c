@@ -146,6 +146,22 @@ static void known(void)
                        I(SX_LDB, 2, 1, 0), I(SX_ADD, 0, 2, 0), I(SX_ADDI, 1, 0, 1),
                        I(SX_EXIT, 0, 0, 0) };
     k_expect("ind-edge", ie, 7, SXVM_E_MEM, 0, 0);
+    /* stage 5e: from 63 down by 1, 64 passes read 63..0 (refused before 5e) */
+    sxvm_insn nc[] = { I(SX_MOVI, 0, 0, 0), I(SX_MOVI, 1, 0, 63),
+                       I(SX_LOOP, 3, 0, 64),
+                       I(SX_LDB, 2, 1, 0), I(SX_ADD, 0, 2, 0), I(SX_ADDI, 1, 0, -1),
+                       I(SX_EXIT, 0, 0, 0) };
+#ifdef SXVM_INDNEG
+    k_expect("neg-count", nc, 7, 0, SXVM_T_OK, sum);
+#else
+    k_expect("neg-count", nc, 7, SXVM_E_MEM, 0, 0);
+#endif
+    /* stage 5e: 65 passes, the last wraps to 2^32-1 (for INDNEGOFF, INDNEGNOB) */
+    sxvm_insn ne[] = { I(SX_MOVI, 0, 0, 0), I(SX_MOVI, 1, 0, 63),
+                       I(SX_LOOP, 3, 0, 65),
+                       I(SX_LDB, 2, 1, 0), I(SX_ADD, 0, 2, 0), I(SX_ADDI, 1, 0, -1),
+                       I(SX_EXIT, 0, 0, 0) };
+    k_expect("neg-edge", ne, 7, SXVM_E_MEM, 0, 0);
     /* a compare guard instead of a mask: passes */
     sxvm_insn c[] = { I(SX_MOVI, 0, 0, 0), I(SX_LDB, 1, 0, 5),
                       I(SX_JLTI, 1, 64, 1), I(SX_EXIT, 0, 0, 0),

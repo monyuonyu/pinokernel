@@ -21,8 +21,16 @@
  *  one value, and x^x, x-x, x/x on the same register (the head stays as it
  *  was measured). Its breaker -DSXVM_BREAK_PRECSAME applies the x^x rule to
  *  any two registers.
+ *
+ *  Stage 5b: -DSXVM_IND (ind_step). Stage 5e: -DSXVM_INDNEG adds the
+ *  decreasing index (ind_neg); its breakers -DSXVM_BREAK_INDNEGOFF (rule A
+ *  one pass short) and -DSXVM_BREAK_INDNEGNOB (rule B without its check).
  */
 #include "sxvm.h"
+
+#if defined(SXVM_INDNEG) && !defined(SXVM_IND)
+#define SXVM_IND                            /* stage 5e sits on stage 5b */
+#endif
 
 #define FULL 0xFFFFFFFFu
 
@@ -127,7 +135,57 @@ static int ind_step(const sxvm_insn *p, int i, int r, const sx_state *e, uint64_
 }
 #endif
 
+#ifdef SXVM_INDNEG
+/* stage 5e: the same shape with one ADDI r,k, k < 0. Rule A (the mirror of
+ * ind_step): lo + (c-1)k >= 0 gives [lo + (c-1)k, hi], no pass wraps. Rule B
+ * otherwise: assume [0, hi] at the entry and require lo[r] >= |k| where the
+ * body's ADDI is analysed (negb); then every pass maps [0, hi] into [0, hi].
+ * When that fails, sxvm_check runs again with B off for this loop and r. */
+#define SX_RETRY (-99)
+static uint8_t negb[SXVM_MAXINSN], nob[SXVM_MAXINSN];
+static int retry_loop, retry_reg;
+static int ind_neg(const sxvm_insn *p, int i, int r, const sx_state *e, uint32_t *lo)
+{
+    int nadd = 0, other = 0, call = 0;
+    int64_t k = 0;
+    if (!(e->init & (1u << r))) return 0;
+    for (int j = i + 1; j <= i + p[i].d; j++) {
+        if (p[j].op == SX_CALL) call = 1;
+        if (!writes_reg(p[j].op) || p[j].d != r) continue;
+        if (p[j].op == SX_ADDI && p[j].imm < 0) { nadd++; k = p[j].imm; }
+        else other = 1;
+    }
+    if (nadd != 1 || other || (call && r <= 5)) return 0;
+#ifdef SXVM_BREAK_INDNEGOFF
+    int64_t a = (int64_t)e->lo[r] + (int64_t)(p[i].imm - 2) * k;   /* the breaker: one pass short */
+#else
+    int64_t a = (int64_t)e->lo[r] + (int64_t)(p[i].imm - 1) * k;
+#endif
+    if (a >= 0) { *lo = (uint32_t)a; return 1; }
+    if (nob[i] & (1u << r)) return 0;
+    negb[i] |= (uint8_t)(1u << r);
+    *lo = 0;
+    return 2;
+}
+#endif
+
+#ifdef SXVM_INDNEG
+static long check_once(const sxvm_insn *p, int n);
 long sxvm_check(const sxvm_insn *p, int n)
+{
+    long rc;
+    for (int i = 0; i < SXVM_MAXINSN; i++) nob[i] = 0;
+    for (;;) {                              /* each retry turns one (loop, r) off: at most 256 x 8 */
+        for (int i = 0; i < SXVM_MAXINSN; i++) negb[i] = 0;
+        rc = check_once(p, n);
+        if (rc != SX_RETRY) return rc;
+        nob[retry_loop] |= (uint8_t)(1u << retry_reg);
+    }
+}
+static long check_once(const sxvm_insn *p, int n)
+#else
+long sxvm_check(const sxvm_insn *p, int n)
+#endif
 {
     if (n <= 0 || n > SXVM_MAXINSN) return SXVM_E_LEN;
     int lb0 = -1, lb1 = -1;                 /* the loop body being scanned, if any */
@@ -187,6 +245,14 @@ long sxvm_check(const sxvm_insn *p, int n)
         }
         uint64_t dl = s.lo[d & 7], dh = s.hi[d & 7], sl = s.lo[sr & 7], sh = s.hi[sr & 7];
         int next = i + 1, fall = 1;
+#if defined(SXVM_INDNEG) && !defined(SXVM_BREAK_INDNEGNOB)
+        /* stage 5e rule B: the decrement may not wrap on the assumed entry */
+        if (x->op == SX_ADDI && x->imm < 0 && body_of[i] >= 0 && (negb[body_of[i]] & (1u << d))
+            && dl < (uint64_t)(-(int64_t)x->imm)) {
+            retry_loop = body_of[i]; retry_reg = d;
+            return SX_RETRY;
+        }
+#endif
 
 #ifdef SXVM_PREC
         int same = reads_s(x->op) && d == sr, k2 = dl == dh && sl == sh;
@@ -287,6 +353,10 @@ long sxvm_check(const sxvm_insn *p, int n)
                     int r = p[k].d;
                     uint64_t top = 0;
                     if (ind_step(p, i, r, &e, &top)) { s.hi[r] = (uint32_t)top; continue; }
+#endif
+#ifdef SXVM_INDNEG
+                    uint32_t nlo = 0;
+                    if (ind_neg(p, i, r, &e, &nlo)) { s.lo[r] = nlo; s.hi[r] = e.hi[r]; continue; }
 #endif
                     s.lo[p[k].d] = 0; s.hi[p[k].d] = FULL;
                 }
