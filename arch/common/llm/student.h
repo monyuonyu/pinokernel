@@ -529,6 +529,24 @@ int   st_merge_distill(st_model *into, st_model *peer, const st_model *init,
                        const uint8_t *const *val, int nv, int seqlen,
                        int steps, float lr, int start,
                        st_distill_stats *stats);
+/* st_merge_distill_sel (stage 4, research/brain-merge-select.md): run
+ * st_merge_distill from both starts (pick with steps_pick/lr_pick, init with
+ * steps_init/lr_init, each on a copy of `into` as it is now) and return the
+ * child with the lower `val` loss (ties keep pick). The merging device does
+ * not know whether the parents saw the same data, so it does not branch on
+ * that. Returns the guarded pick or negative ST_E_*. Hosted-only.
+ * Cert-only negative controls: -DST_DISTILL_SEL_INVERT (keep the higher val),
+ * -DST_DISTILL_SEL_PICK / -DST_DISTILL_SEL_INIT (always that start).       */
+typedef struct {
+    st_distill_stats pick, init;
+    int chose_init;     /* 1 = the returned child came from start=init     */
+} st_distill_sel_stats;
+int   st_merge_distill_sel(st_model *into, st_model *peer, const st_model *init,
+                           st_model *scratch, const uint8_t *const *xfer, int nx,
+                           const uint8_t *const *val, int nv, int seqlen,
+                           int steps_pick, float lr_pick,
+                           int steps_init, float lr_init,
+                           st_distill_sel_stats *stats);
 
 /* ---- firing-width observability (SS-1) ----
  * Read-only: the number of experts the LAST st_forward fired on its FINAL

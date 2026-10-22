@@ -33,6 +33,16 @@
  *                   training from I with the same steps and LR (S1 TEST,
  *                   S2 both halves); printed, not gated, on T-gen
  *
+ *  Stage 4 (brain-merge-select.md §3, fixed before code): start=sel runs
+ *  both starts with their stage-3/3b steps and LR and keeps the lower VAL
+ *  (st_merge_distill_sel). T-real only; the same gates plus
+ *    [d5c-sel-val]  the child is the start with the lower VAL loss, and is
+ *                   byte-identical to that single-start child (TEST of both
+ *                   printed; a VAL/TEST disagreement is recorded, not red)
+ *  Env: D5C_SEED (the ancestor's seed, default 0xC0FFEE), D5C_ONLY_SEL=1
+ *  (only the sel arm). run_st_distill_sel.sh runs seeds 0xC0FFEE 2 3 and
+ *  the NCs -DST_DISTILL_SEL_INVERT / _SEL_PICK / _SEL_INIT.
+ *
  *  Negative controls (run_st_distill.sh judges the target line
  *  "[d5c-s2-both] ... start=init", not the exit code):
  *    -DST_DISTILL_ONE_TEACHER  the teacher is `into` alone
@@ -62,6 +72,7 @@ static int g_pass = 0, g_fail = 0;
 #define D_LR    1e-3f     /* Adam, FedDF §4.1 */
 #define B_LR    LR        /* stage 3b: the parents' LR; steps ROUNDS * TW */
 #define NGEN_MAX 128
+#define START_SEL 2       /* test-local: st_merge_distill_sel */
 
 static const uint8_t CORPUS[] =
     "the cat sat on the mat. the dog ran in the sun. she said the sea is blue "
@@ -74,6 +85,8 @@ static const uint8_t CORPUS[] =
     "she ran in the sun to the sea and saw a red bird on the old oak tree. the "
     "cat said the dog is old and the man is at the sea. the sun set on the tree.";
 
+static uint64_t g_seed = 0xC0FFEE;
+static st_distill_sel_stats g_ss;
 static int NW, TW, VW, SW, NA, NB;
 static const uint8_t *ALLW[64], *VALW[64], *TESTW[64], *TRA[64], *TRB[64];
 static float *g_logits;
@@ -142,6 +155,13 @@ static int merge(st_model *child, st_model *a, st_model *b, const st_model *I,
                  st_distill_stats *st)
 {
     clone(child, a);
+    if (start == START_SEL) {
+        memset(&g_ss, 0, sizeof g_ss);
+        int r = st_merge_distill_sel(child, b, I, S, x, nx, VALW, VW, SEQLEN,
+                                     D_STEPS, D_LR, ROUNDS * TW, B_LR, &g_ss);
+        *st = g_ss.chose_init ? g_ss.init : g_ss.pick;
+        return r;
+    }
     if (start == ST_DISTILL_START_INIT)
         return st_merge_distill(child, b, I, S, x, nx, VALW, VW, SEQLEN,
                                 ROUNDS * TW, B_LR, start, st);
@@ -164,15 +184,41 @@ static const char *G(const char *gate, const char *sn)
     return g_msg;
 }
 
+/* stage 4: the sel child against both single-start children */
+static void sel_check(const char *sc, st_model *C, st_model *A, st_model *B,
+                      const st_model *I, st_model *S, const uint8_t *const *x,
+                      int nx, const uint8_t *const *tw, int tn, int rc)
+{
+    st_distill_sel_stats ss = g_ss;
+    st_model Cp, Ci; st_distill_stats sp, si;
+    int rp = merge(&Cp, A, B, I, S, x, nx, ST_DISTILL_START_PICK, &sp);
+    int ri = merge(&Ci, A, B, I, S, x, nx, ST_DISTILL_START_INIT, &si);
+    float tp = loss_on(&Cp, tw, tn), ti = loss_on(&Ci, tw, tn);
+    int want = ss.init.val_after < ss.pick.val_after;
+    const st_model *W = want ? &Ci : &Cp;
+    int same = rc >= 0 && rp >= 0 && ri >= 0 &&
+               memcmp(C->w, W->w, (size_t)C->n_params * sizeof(float)) == 0;
+    int test_agrees = (ti < tp) == want;
+    printf("  [sel %s] VAL pick=%.4f init=%.4f -> chose %s | TEST pick=%.4f init=%.4f -> %s\n",
+           sc, (double)ss.pick.val_after, (double)ss.init.val_after,
+           ss.chose_init ? "init" : "pick", (double)tp, (double)ti,
+           test_agrees ? "TEST agrees" : "TEST DISAGREES (recorded, not red)");
+    snprintf(g_msg, sizeof g_msg,
+             "[d5c-sel-val] %s: child = the lower-VAL start, byte-identical start=sel", sc);
+    CHECK(rc >= 0 && ss.chose_init == want && same, g_msg);
+    st_free(&Cp); st_free(&Ci);
+}
+
 static void run_arm(const char *arm, int gen, int start)
 {
-    const char *sn = start == ST_DISTILL_START_INIT ? "init" : "pick";
+    const char *sn = start == START_SEL ? "sel" :
+                     start == ST_DISTILL_START_INIT ? "init" : "pick";
     printf("=== arm %s start=%s ===\n", arm, sn);
     st_model I, A, B, S, C, C2, P;
     st_distill_stats st, st2;
     const uint8_t *const *x; int nx;
 
-    st_init_tier(&I, 0xC0FFEE, ST_TIER_S);
+    st_init_tier(&I, g_seed, ST_TIER_S);
     st_init_tier(&S, 1, ST_TIER_S);
     /* plain reference (stage 3b): hard labels from I, same steps and LR */
     clone(&P, &I);
@@ -190,6 +236,8 @@ static void run_arm(const char *arm, int gen, int start)
     int rc  = merge(&C,  &A, &B, &I, &S, x, nx, start, &st);
     int rc2 = merge(&C2, &A, &B, &I, &S, x, nx, start, &st2);
     report(arm, "S1", rc, &st);
+    if (start == START_SEL)
+        sel_check("S1", &C, &A, &B, &I, &S, x, nx, TESTW, SW, rc);
     float lA = loss_on(&A, TESTW, SW), lB = loss_on(&B, TESTW, SW);
     float lC = loss_on(&C, TESTW, SW), lP = loss_on(&P, TESTW, SW);
     float better = lA < lB ? lA : lB, worse = lA > lB ? lA : lB;
@@ -222,6 +270,8 @@ static void run_arm(const char *arm, int gen, int start)
 #endif
     rc = merge(&C, &A, &B, &I, &S, x, nx, start, &st);
     report(arm, "S2", rc, &st);
+    if (start == START_SEL)
+        sel_check("S2", &C, &A, &B, &I, &S, x, nx, TESTW, SW, rc);
     float aA = loss_on(&A, ALLW, TW), aB = loss_on(&B, ALLW, TW), aC = loss_on(&C, ALLW, TW);
     float aP = loss_on(&P, ALLW, TW);
     float hA[2], hB[2], hC[2];
@@ -338,7 +388,19 @@ static void soft_grad(void)
 
 int main(void)
 {
-    printf("=== [d5c] merge by distillation (stage 3) cert ===\n");
+    printf("=== [d5c] merge by distillation (stage 3/4) cert ===\n");
+    const char *es = getenv("D5C_SEED");
+    if (es && *es) g_seed = strtoull(es, NULL, 0);
+    const char *eo = getenv("D5C_ONLY_SEL");
+    int only_sel = eo && *eo == '1';
+    printf("  seed 0x%llX%s\n", (unsigned long long)g_seed, only_sel ? " (only start=sel)" : "");
+#if defined(ST_DISTILL_SEL_INVERT)
+    printf("(NEGATIVE CONTROL build: -DST_DISTILL_SEL_INVERT — expect RED on s1-gain or s2-both start=sel)\n");
+#elif defined(ST_DISTILL_SEL_PICK)
+    printf("(NEGATIVE CONTROL build: -DST_DISTILL_SEL_PICK — expect RED on s1-gain start=sel)\n");
+#elif defined(ST_DISTILL_SEL_INIT)
+    printf("(NEGATIVE CONTROL build: -DST_DISTILL_SEL_INIT — expect RED on s2-both start=sel)\n");
+#endif
 #ifdef ST_DISTILL_ONE_TEACHER
     printf("(NEGATIVE CONTROL build: -DST_DISTILL_ONE_TEACHER — expect RED on s2-both start=init)\n");
 #endif
@@ -356,11 +418,14 @@ int main(void)
     printf("  windows: train=%d (A %d / B %d) val=%d test=%d\n", TW, NA, NB, VW, SW);
     g_logits = (float *)malloc((size_t)SEQLEN * ST_VOCAB * sizeof(float));
 
-    soft_grad();
-    run_arm("T-real", 0, ST_DISTILL_START_PICK);
-    run_arm("T-gen", 1, ST_DISTILL_START_PICK);
-    run_arm("T-real", 0, ST_DISTILL_START_INIT);
-    run_arm("T-gen", 1, ST_DISTILL_START_INIT);
+    if (!only_sel) {
+        soft_grad();
+        run_arm("T-real", 0, ST_DISTILL_START_PICK);
+        run_arm("T-gen", 1, ST_DISTILL_START_PICK);
+        run_arm("T-real", 0, ST_DISTILL_START_INIT);
+        run_arm("T-gen", 1, ST_DISTILL_START_INIT);
+    }
+    run_arm("T-real", 0, START_SEL);
 
     printf("\n[d5c] %d PASS / %d FAIL\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
