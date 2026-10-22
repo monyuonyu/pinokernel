@@ -26,7 +26,7 @@
 
 ## 5. 結果（監査-64、数字は brain-merge-select-log.md）
 
-**事前の線では赤**: 種 0xC0FFEE は 10/0、種 2・3 は s1-gain・s2-both が赤。sel-val は 6 場面とも緑で TEST と一致＝選ぶのは効くが、新しい種ではどちらの出発点も親を 0.03 上回れない（種2 は親 B が学べていない）
+**事前の線では赤**: 種 0xC0FFEE は緑、2・3 は s1-gain・s2-both 赤。sel-val は 6 場面とも緑・TEST と一致＝選ぶのは効くが、新しい種でどちらの出発点も親を 0.03 上回れない（種2 は親 B が学べていない）
 
 ## 出典
 [1] Ilharco ほか, Editing Models with Task Arithmetic, ICLR 2023, arXiv:2212.04089
