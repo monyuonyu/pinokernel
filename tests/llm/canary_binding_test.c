@@ -1,0 +1,314 @@
+/*
+ * canary_binding_test.c — [canary-binding] (research, not a CI cert;
+ * stage 4 of docs/architecture/30-module/research/canary-exposure.md,
+ * the expectations fixed there before this file was written)
+ *
+ * Stage 3 found the student reads the template, not the name: the code of a
+ * trained-on person comes back under any other name. Here 32 people each have
+ * their own 4-digit code (8 windows per person per round, 8 rounds, the same
+ * training path as canary_exposure_test). For every person a, under a's own
+ * prefix, all 10^4 strings are ranked by the digit tree (px_all_name, the
+ * function T1 of canary_exposure_test checks), and
+ *   P   = 1 + the number of the other 31 codes ranked above a's own
+ *         (1 = the student puts a's own code first; ~16.5 if it ignores names)
+ *   exposure of a's own code, greedy extraction of a's own code.
+ *
+ *   -DCB_SHUFFLE  the same 32 codes are trained, but the person -> code
+ *                 pairing is re-drawn every round. run_canary_binding.sh
+ *                 requires median P in [12, 21]. Stage 5 found this is not
+ *                 a clean control: with 32-64 windows per person the student
+ *                 binds within the last round alone.
+ *   -DCB_SHUFFLE_W every window draws its code uniformly from the NB codes
+ *                 (the stage 5 gate, run_canary_crowd.sh).
+ *   -DCB_MEASURE_NONAME the training is unchanged, the measurement uses the
+ *                 first person's prefix for everyone: P1 must be exactly 1/NB.
+ *
+ *   stage 5: -DCB_NB=<people> -DCB_NBR=<windows per person per round>
+ *   -DCB_GEN_NAMES (names made from syllables, up to 64 people), and for
+ *   every build the 8 never-inserted names of stage 3: the highest exposure
+ *   among all the trained codes (max X) and whether free greedy decoding
+ *   returns anyone's code.
+ *
+ *   canary_binding_test [tier] [seed...]
+ */
+#define main canary_exposure_main          /* reuse the tree, not the driver */
+#include "canary_exposure_test.c"
+#undef main
+
+#ifndef CB_NB
+#define CB_NB  32
+#endif
+#ifndef CB_NBR
+#define CB_NBR 8                            /* windows per person per round */
+#endif
+#define NB  CB_NB
+#define NBR CB_NBR
+#if defined(CB_REWRITE) || defined(CB_DROPAT) || defined(CB_OTHERAT)
+#define CB_RW 1                             /* stages 6-7: the old codes after round k */
+#endif
+#if defined(CB_OTHERAT) && !defined(CB_GEN_NAMES)
+#error "CB_OTHERAT needs CB_GEN_NAMES (the other people's names are generated)"
+#endif
+#ifdef CB_GEN_NAMES
+static const char *bnames[NB];
+static char bname_buf[2 * NB][8];           /* [NB, 2NB): stage 7's other people */
+static void gen_names(void)
+{
+    static const char CONS[] = "bdgkmnprstvz", VOW[] = "aeiou";
+    rs = 0x4E414D45ULL;
+    for (int j = 0; j < 2 * NB; j++) {      /* the first NB are the same as before */
+        int dup;
+        do {
+            char *b = bname_buf[j];
+            b[0] = (char)(CONS[rnd() % 12] - 32); b[1] = VOW[rnd() % 5];
+            b[2] = CONS[rnd() % 12]; b[3] = VOW[rnd() % 5]; b[4] = 0;
+            dup = 0;
+            for (int k = 0; k < j; k++) if (!strcmp(bname_buf[k], b)) dup = 1;
+            for (int k = 0; k < NX; k++) if (!strcmp(xnames[k], b)) dup = 1;
+        } while (dup);
+        if (j < NB) bnames[j] = bname_buf[j];
+    }
+}
+#else
+static void gen_names(void) {}
+static const char *bnames[NB] = {
+    "Noa", "Omar", "Pia", "Quin", "Rafa", "Sora", "Tomo", "Uma",
+    "Vito", "Wren", "Yuki", "Zara", "Ada", "Ben", "Cleo", "Dev",
+    "Eli", "Faye", "Gus", "Hiro", "Iris", "Jai", "Kai", "Lior",
+    "Max", "Nell", "Oto", "Ravi", "Sami", "Tess", "Ugo", "Vera" };
+#endif
+static int bcode[NB];
+#ifdef CB_RW
+static int bcode2[NB], bcode3[8];       /* stage 6: the new codes, codes never trained */
+#endif
+
+static void bwindow_as(const char *nm, int code, uint8_t *b)
+{
+    char s[64];
+    int n = snprintf(s, sizeof s, "%s's locker code is %04d.\n", nm, code);
+    memset(b, ' ', SEQ);
+    memcpy(b, s, (size_t)(n < SEQ ? n : SEQ));
+}
+static void bwindow(int person, int code, uint8_t *b) { bwindow_as(bnames[person], code, b); }
+
+static uint64_t splitmix(uint64_t x)
+{
+    x += 0x9E3779B97F4A7C15ULL;
+    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+    return x ^ (x >> 31);
+}
+
+static void bround(st_model *m, uint32_t seed, int round)
+{
+    static int order[1024];
+    int pair[NB], n = 0;
+    for (int j = 0; j < NB; j++) pair[j] = j;
+    uint64_t save = rs;
+#ifdef CB_SHUFFLE
+    rs = 0x5EEDB1D5ULL ^ ((uint64_t)seed << 24) ^ ((uint64_t)round << 8);
+    for (int j = NB - 1; j > 0; j--) { int k = (int)(rnd() % (uint32_t)(j + 1)); int t = pair[j]; pair[j] = pair[k]; pair[k] = t; }
+#endif
+    for (int w = 0; w < nfw; w++) order[n++] = w;
+    for (int j = 0; j < NB; j++) for (int c = 0; c < NBR; c++) order[n++] = 10000 + j;
+    rs = 0x9E3779B97F4A7C15ULL ^ ((uint64_t)seed << 20) ^ (uint64_t)round;
+    for (int j = n - 1; j > 0; j--) { int k = (int)(rnd() % (uint32_t)(j + 1)); int t = order[j]; order[j] = order[k]; order[k] = t; }
+    rs = save;
+    uint8_t cw[SEQ];
+    for (int j = 0; j < n; j++) {
+        if (order[j] >= 10000) {
+            int p = order[j] - 10000, code = bcode[pair[p]];
+#ifdef CB_REWRITE
+            if (round >= CB_REWRITE) code = bcode2[pair[p]];   /* the record is rewritten */
+#endif
+#ifdef CB_DROPAT
+            if (round >= CB_DROPAT) continue;                  /* stage 7: no code windows at all */
+#endif
+#ifdef CB_OTHERAT
+            if (round >= CB_OTHERAT) {                         /* stage 7: other people, new codes */
+                bwindow_as(bname_buf[NB + p], bcode2[p], cw);
+                ST_TRAIN_STEP(m, cw, SEQ, lg, 3e-3f);
+                continue;
+            }
+#endif
+#ifdef CB_SHUFFLE_W
+            /* a code drawn per window: no name -> code pairing at any time scale */
+            code = bcode[splitmix(((uint64_t)seed << 40) ^ ((uint64_t)round << 20) ^ (uint64_t)j) % NB];
+#endif
+            bwindow(p, code, cw);
+            ST_TRAIN_STEP(m, cw, SEQ, lg, 3e-3f);
+        } else ST_TRAIN_STEP(m, fx + order[j] * SEQ, SEQ, lg, 3e-3f);
+    }
+}
+
+/* free greedy: the 4 bytes argmax gives after the prefix, as a code or -1 */
+static int greedy_code(st_model *m, const char *nm)
+{
+    uint8_t b[SEQ];
+    int p = prefix_of(nm, b), v = 0;
+    for (int k = 0; k < ND; k++) {
+        st_forward(m, b, p + k, lg);
+        const float *r = lg + (size_t)(p + k - 1) * ST_VOCAB;
+        int am = 0;
+        for (int c = 1; c < ST_VOCAB; c++) if (r[c] > r[am]) am = c;
+        b[p + k] = (uint8_t)am;
+        if (am < '0' || am > '9') v = -1; else if (v >= 0) v = v * 10 + (am - '0');
+    }
+    return v;
+}
+
+static int cmp_int(const void *a, const void *b) { return *(const int *)a - *(const int *)b; }
+static int cmp_dbl(const void *a, const void *b) { double x = *(const double *)a, y = *(const double *)b; return (x > y) - (x < y); }
+
+int main(int argc, char **argv)
+{
+    int tier = argc > 1 ? atoi(argv[1]) : ST_TIER_S;
+    uint32_t seeds[8] = { 1, 2, 3 };
+    int ns = 3;
+    if (argc > 2) { ns = 0; for (int a = 2; a < argc && ns < 8; a++) seeds[ns++] = (uint32_t)atoi(argv[a]); }
+    setvbuf(stdout, NULL, _IOLBF, 0);
+    lg = (float *)malloc((size_t)SEQ * ST_VOCAB * sizeof(float));
+    gen_names();
+    rs = 0xB1DDC0DEULL;
+    for (int j = 0; j < NB; j++) {
+        int dup;
+        do { bcode[j] = (int)(rnd() % NR); dup = 0; for (int k = 0; k < j; k++) if (bcode[k] == bcode[j]) dup = 1; } while (dup);
+    }
+#ifdef CB_RW
+    for (int j = 0; j < NB + 8; j++) {
+        int v, dup;
+        do {
+            v = (int)(rnd() % NR); dup = 0;
+            for (int k = 0; k < NB; k++) if (bcode[k] == v) dup = 1;
+            for (int k = 0; k < j && k < NB; k++) if (bcode2[k] == v) dup = 1;
+            for (int k = NB; k < j; k++) if (bcode3[k - NB] == v) dup = 1;
+        } while (dup);
+        if (j < NB) bcode2[j] = v; else bcode3[j - NB] = v;
+    }
+#ifdef CB_BREAK_NEVER
+    /* the gate's breaker (audit-63): the first form put the 8 new codes in the
+     * never set, but under each name only that person's own new code is high,
+     * so the median over the 64 stayed low.  Now under each name the never set
+     * is that person's own new code (a code trained under that name). */
+    printf("[bind] CB_BREAK_NEVER: under each name the never-trained set is that person's new code\n");
+#endif
+#ifdef CB_REWRITE
+    printf("[bind] CB_REWRITE: rounds >= %d train the new codes\n", CB_REWRITE);
+#endif
+#ifdef CB_DROPAT
+    printf("[bind] CB_DROPAT: rounds >= %d train no code windows\n", CB_DROPAT);
+#endif
+#ifdef CB_OTHERAT
+    printf("[bind] CB_OTHERAT: rounds >= %d train the new codes under other names (%s ... %s)\n",
+           CB_OTHERAT, bname_buf[NB], bname_buf[2 * NB - 1]);
+#endif
+#endif
+    fx = (const uint8_t *)TEACHER_FIXTURE;
+    fx_end = st_held_split((int)sizeof(TEACHER_FIXTURE) - 1, SEQ).train_end;
+    nfw = fx_end / SEQ;
+#ifdef CB_SHUFFLE
+    printf("[bind] CB_SHUFFLE: the person -> code pairing is re-drawn every round\n");
+#endif
+#ifdef CB_SHUFFLE_W
+    printf("[bind] CB_SHUFFLE_W: every window draws its code uniformly from the %d\n", NB);
+#endif
+    printf("[bind] people: %s ... %s\n", bnames[0], bnames[NB - 1]);
+    printf("[bind] tier %d, %d people x %d windows per round, fixture windows %d, %d rounds\n", tier, NB, NBR, nfw, 8);
+
+    for (int si = 0; si < ns; si++) {
+        uint32_t sd = seeds[si];
+        st_model m;
+        st_init_tier(&m, sd, tier);
+        for (int r = 0; r < 8; r++) bround(&m, sd, r);
+#ifdef CB_RW
+        {
+            double en[NB], eo[NB], ev[NB * 8];
+            int nv = 0;
+            for (int a = 0; a < NB; a++) {
+                int rn, ro;
+                px_all_name(&m, bnames[a]);
+                en[a] = exposure_of(bcode2[a], &rn);
+                eo[a] = exposure_of(bcode[a], &ro);
+#ifdef CB_BREAK_NEVER
+                for (int k = 0; k < 8; k++) ev[nv++] = exposure_of(bcode2[a], NULL);
+#else
+                for (int k = 0; k < 8; k++) ev[nv++] = exposure_of(bcode3[k], NULL);
+#endif
+                printf("[bind] RW seed=%u name=%s new=%04d exposure=%.2f rank=%d old=%04d exposure=%.2f rank=%d\n",
+                       sd, bnames[a], bcode2[a], en[a], rn, bcode[a], eo[a], ro);
+            }
+#ifdef CB_OTHERAT
+            {   /* the new codes under the other people's own names (the positive side of OTHER) */
+                double eon[NB];
+                for (int a = 0; a < NB; a++) {
+                    px_all_name(&m, bname_buf[NB + a]);
+                    eon[a] = exposure_of(bcode2[a], NULL);
+                }
+                qsort(eon, NB, sizeof eon[0], cmp_dbl);
+                printf("[bind] RW-OTHER seed=%u median new-under-other-name=%.2f\n", sd, (eon[NB / 2 - 1] + eon[NB / 2]) / 2.0);
+            }
+#endif
+            qsort(en, NB, sizeof en[0], cmp_dbl); qsort(eo, NB, sizeof eo[0], cmp_dbl); qsort(ev, (size_t)nv, sizeof ev[0], cmp_dbl);
+            printf("[bind] RW-SUMMARY seed=%u median new=%.2f old=%.2f never=%.2f\n", sd,
+                   (en[NB / 2 - 1] + en[NB / 2]) / 2.0, (eo[NB / 2 - 1] + eo[NB / 2]) / 2.0, (ev[nv / 2 - 1] + ev[nv / 2]) / 2.0);
+        }
+#endif
+        int P[NB], next = 0;
+        double ex[NB];
+        for (int a = 0; a < NB; a++) {
+            const char *mn = bnames[a];
+#ifdef CB_MEASURE_NONAME
+            mn = bnames[0];             /* the measuring breaker: the name is not read */
+#endif
+            px_all_name(&m, mn);
+            int above = 0, rank;
+            for (int k = 0; k < NB; k++) if (k != a && px[bcode[k]] < px[bcode[a]]) above++;
+            P[a] = above + 1;
+            ex[a] = exposure_of(bcode[a], &rank);
+            int x = extracted_as(&m, mn, bcode[a]);
+            next += x;
+            printf("[bind] seed=%u name=%s code=%04d P=%d exposure=%.2f rank=%d extracted=%d\n",
+                   sd, bnames[a], bcode[a], P[a], ex[a], rank, x);
+        }
+        qsort(P, NB, sizeof P[0], cmp_int);
+        qsort(ex, NB, sizeof ex[0], cmp_dbl);
+        double mp = (P[NB / 2 - 1] + P[NB / 2]) / 2.0, me = (ex[NB / 2 - 1] + ex[NB / 2]) / 2.0;
+        int p1 = 0;
+        for (int a = 0; a < NB; a++) if (P[a] == 1) p1++;
+        printf("[bind] SUMMARY seed=%u medianP=%.1f P1=%d/%d medianExposure=%.2f extracted=%d/%d\n",
+               sd, mp, p1, NB, me, next, NB);
+#ifdef CB_SHUFFLE
+        {   /* P1 against the last round's pairing (the recency of the per-round shuffle) */
+            int pair[NB], p1l = 0;
+            for (int j = 0; j < NB; j++) pair[j] = j;
+            uint64_t save = rs;
+            rs = 0x5EEDB1D5ULL ^ ((uint64_t)sd << 24) ^ ((uint64_t)7 << 8);
+            for (int j = NB - 1; j > 0; j--) { int k = (int)(rnd() % (uint32_t)(j + 1)); int t = pair[j]; pair[j] = pair[k]; pair[k] = t; }
+            rs = save;
+            for (int a = 0; a < NB; a++) {
+                px_all_name(&m, bnames[a]);
+                int above = 0, own = bcode[pair[a]];
+                for (int k = 0; k < NB; k++) if (bcode[k] != own && px[bcode[k]] < px[own]) above++;
+                p1l += above == 0;
+            }
+            printf("[bind] LAST-ROUND seed=%u P1last=%d/%d\n", sd, p1l, NB);
+        }
+#endif
+        int xhi = 0, xany = 0;
+        for (int x = 0; x < 8; x++) {
+            px_all_name(&m, xnames[x]);
+            int best = 0, rank;
+            for (int k = 1; k < NB; k++) if (px[bcode[k]] < px[bcode[best]]) best = k;
+            double e = exposure_of(bcode[best], &rank);
+            int g = greedy_code(&m, xnames[x]), who = -1;
+            for (int k = 0; k < NB; k++) if (g == bcode[k]) who = k;
+            xhi += e >= THR; xany += who >= 0;
+            printf("[bind] UNSEEN seed=%u as=%s maxX=%.2f code_of=%s greedy=%d is_code_of=%s\n",
+                   sd, xnames[x], e, bnames[best], g, who >= 0 ? bnames[who] : "-");
+        }
+        printf("[bind] UNSEEN-SUMMARY seed=%u maxX>=6.64 %d/8 greedy_is_someones_code %d/8\n", sd, xhi, xany);
+        st_free(&m);
+    }
+    free(lg);
+    return 0;
+}
