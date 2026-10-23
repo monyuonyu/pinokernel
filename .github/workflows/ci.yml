@@ -3318,6 +3318,59 @@ jobs:
       - name: run_dynamic_id.sh (relay leases unique, reclaimable node ids)
         run: timeout 300 bash samples/19_dynamic_id/run_dynamic_id.sh
 
+  distributed-samples-localhost-3:
+    # 2026-10-24, third batch of the never-wired samples (BACKLOG D5-e). A
+    # re-survey ran each of the 21 still-unwired samples/11_distributed scripts
+    # once on master 4a53a9f8 (pkernel_audit_ss, nice 19, CI running beside):
+    # these 7 carry their own PASS/FAIL assertions and passed 3/3:
+    #   run_resolve_crash.sh  -- unresolvable relay/seed host degrades, no SIGSEGV
+    #   run_mesh_discovery.sh -- [mesh-discovery] a region peer is found without
+    #                            the star (NET-DISCOVERY-STAR)
+    #   run_relay_tcp_live.sh -- [tcp-live] the 2-node scenario over the TCP relay
+    #                            matches the UDP relay
+    #   run_relay_failover.sh -- relay#1 dies and comes back, all nodes converge
+    #   run_coord_crash.sh    -- [coord-crash] the region re-derives its
+    #                            coordinator after node0 dies, honest degraded
+    #   run_supernode_fwd.sh  -- [snf-live] forwarding by the elected supernode,
+    #                            fail-closed DIRECT when it is killed
+    #   run_4node_regions.sh  -- [fed-2cluster][live] region scoping, with its
+    #                            own falsifier arms (flat / resp=GLOBAL)
+    # Not wired (same survey): 6 demos with no assertion, Nnode_scale (5
+    # assertions FAIL), selfc_propagate and selfc_isolation (FAIL), ss6_live_
+    # fallback (OPEN, placement-dependent), survival_bench and swarm_demo (300 s
+    # timeout), autofallback_live and autopromote_live (SKIP without netns).
+    # Separate job so the batches fail independently.
+    name: "多プロセス localhost cert 3 (resolve-crash / mesh 発見 / TCP 中継 / 中継の交代 / 調整役の死 / スーパーノード転送 / 2 領域)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc make python3
+      - name: Build kernel (native x86_64) + relay
+        run: |
+          make -C boot/linux_x86_64
+          make -C relay
+      - name: run_resolve_crash.sh (unresolvable host degrades, no crash)
+        run: timeout 300 bash samples/11_distributed/run_resolve_crash.sh
+      - name: run_mesh_discovery.sh (region peer found without the star)
+        run: timeout 300 bash samples/11_distributed/run_mesh_discovery.sh
+      - name: run_relay_tcp_live.sh (TCP relay == UDP relay)
+        run: timeout 300 bash samples/11_distributed/run_relay_tcp_live.sh
+      - name: run_relay_failover.sh (relay death and revival survived)
+        run: timeout 300 bash samples/11_distributed/run_relay_failover.sh
+      - name: run_coord_crash.sh (coordinator re-derived after its death)
+        run: timeout 300 bash samples/11_distributed/run_coord_crash.sh
+      - name: run_supernode_fwd.sh (supernode forwarding, fail-closed)
+        run: timeout 300 bash samples/11_distributed/run_supernode_fwd.sh
+      # the script exits 0 even when its own verdict is FAIL: grep the verdict
+      - name: run_4node_regions.sh ([fed-2cluster][live] region scoping)
+        run: |
+          timeout 300 bash samples/11_distributed/run_4node_regions.sh | tee regions.log
+          grep -aq '\[fed-2cluster\]\[live\] PASS' regions.log
+
   distributed-samples-localhost:
     # 2026-09-24: none of the 26 samples/11_distributed/run_*.sh scripts (nor
     # samples/19_dynamic_id/run_dynamic_id.sh) was referenced anywhere in CI.
