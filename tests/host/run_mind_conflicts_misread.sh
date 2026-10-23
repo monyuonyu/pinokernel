@@ -22,7 +22,8 @@
 # Checks:
 #   mr-precond       : A misread sky (teacher_agree 0), else nothing is tested
 #   mr-C-refused     : C keeps blue as "refused on arrival", superseded by green
-#   mr-A-took-green  : A "remote REVISE ... "blue"->"green""     (push = record)
+#   mr-A-took-green  : A "remote REVISE ... "blue"->"green" from node 1 seq=2"
+#                      (B's stamp, via C)                         (push = record)
 #   mr-A-recorded    : A's own history record (with its seq, not one heard
 #                      from C): "blue" taught here superseded by green
 #                                                                 (lost = record)
@@ -128,7 +129,10 @@ printf 'mind conflicts\n' >&5; printf 'mind conflicts\n' >&9; printf 'mind confl
 sleep 3
 chk mr-precond      "$QAL" '^\[mind\]   teacher_agree 0 '
 chk mr-C-refused    "$QCL" '^\[mind\] conflict recorded: key 0 "sky": "blue" \(from node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" from node 1, stamp 2'
-chk mr-A-took-green "$QAL" 'remote REVISE key 0 "sky": "blue"->"green"'
+# B's green (node 1, seq 2) as C pushed it back: D teaches green too (node 3,
+# stamp 3) and A would revise to that later even with the push-back broken
+# (audit-68: push echoing the loser v_in left a bare "blue"->"green" green)
+chk mr-A-took-green "$QAL" 'remote REVISE key 0 "sky": "blue"->"green" from node 1 seq=2 '
 # A's OWN record (it has a seq; C's refused record heard as mind/hist reads
 # "taught here (node 0), stamp 1, refused on arrival" on A and must not count:
 # with R3_NOTE_KEEPS_READING A's own line says "green" and only that one did)
