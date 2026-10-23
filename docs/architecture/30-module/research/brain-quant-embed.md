@@ -29,9 +29,9 @@
 - 陰性コントロール: `-DST_QMIX_SWAP`（E4 の腕が O4 を作る）で Q1 赤／`-DST_QMIX_EMB8`（embed 8bit）で Q0 赤／`-DST_QUANT_BADSCALE` で G4 赤／`-DST_QMIX_EMBH2`（embed は 4bit で持ち、H は 2bit の embed で集める）は値だけ
 - 事前の見込み: Q1 は緑（out は GPTQ で既に小さい）。見込みどおりでも、意味は「4 KB あたり何 bpb」の数字の方。赤なら赤のまま書く
 
-## 4. 結果（2026-10-23、実装者の申告・監査待ち）
+## 4. 結果（2026-10-23、監査-66 限界つき PASS）
 
-cert ALL PASS、種 1〜8 の 2bit の悪化（bpb）: seq 0.16〜0.33、**E4 0.006〜0.036**、O4 0.13〜0.29（種 4 は O4 0.225＞seq 0.222）。embed fp32 の値は 0.011〜0.041＝E4 と雑音の幅で同じ。NC は SWAP→Q1・EMB8→Q0・BADSCALE→G4 が赤。EMBH2（H は 2bit の embed で）は E4 の悪化が 0.037〜0.125＝H が embed を知ることが効く。ログ pk-scratch/qmix-cert-1023.log
+cert ALL PASS、種 1〜8 の 2bit の悪化（bpb）: seq 0.16〜0.33、**E4 0.006〜0.036**、O4 0.13〜0.29（種 4 は O4 0.225＞seq 0.222）。embed fp32 は 0.011〜0.041（E4 より悪い種が 5/8、説明なし）。NC は狙いどおり赤。EMBH2 の E4 は 0.037〜0.125（種 4 は差なし）。監査で全桁再現、壊し方 OUTIGN（out が 2bit のまま）は G1・G4、EMBNOP（embed を作り直さない）は Q1・Q2 で赤・**G4 は緑**＝Q0 は式で数えるだけ。ログ pk-scratch/qmix-cert-1023.log・a66-out/
 
 ## 出典
 
