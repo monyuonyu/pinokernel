@@ -3446,7 +3446,12 @@ static void mc_note(INT fi, INT bind, UB v_now, UB now_src, U1 now_by, UW now_st
     if (rp)      { lost_src = MC_SRC_REMOTE; lost_by = rp->origin_node; prov = rp->prov_head; }
     else if (lp) { lost_src = MC_SRC_LOCAL;  lost_by = drpc_my_node;    prov = lp; }
     U1 o; UW lost_stamp = mc_stamp_of(seq, &o);
-    mc_add(r3_fq[fi].key[bind], r3_fq[fi].val[bind], lost_src, lost_by, lost_stamp,
+#ifdef R3_NOTE_KEEPS_READING         /* falsifier (run_mind_conflicts_misread.sh) */
+    UB v_lost = r3_fq[fi].yhat[bind];
+#else
+    UB v_lost = r3_fq[fi].val[bind];     /* 1-8: the record */
+#endif
+    mc_add(r3_fq[fi].key[bind], v_lost, lost_src, lost_by, lost_stamp,
            r3_fq[fi].state, r3_fq[fi].rounds_done, seq, prov,
            v_now, now_src, now_by, now_stamp, 0xFF);
 }
@@ -3506,7 +3511,11 @@ static void mc_incoming_lost(INT fi, INT bind, UB v_in, U1 org, UW s_in,
     mc_push_pkt.fact_seq    = s_cur;
     mc_push_pkt.origin_node = o_cur;
     mc_push_pkt.key         = r3_fq[fi].key[bind];
+#ifdef R3_PUSH_SENDS_READING         /* falsifier (run_mind_conflicts_misread.sh) */
+    mc_push_pkt.val         = r3_fq[fi].yhat[bind];
+#else
     mc_push_pkt.val         = r3_fq[fi].val[bind];   /* 1-8: the record, as the pull answer */
+#endif
     mc_push_pkt.src         = ARK_PROV_SRC_SHELL;
     mc_push_pkt.wire_ver    = MT_WIRE_VER_VOCAB;
     const U1 *pv = rp ? rp->prov_head : (lp ? lp : zero_prov);
@@ -4495,7 +4504,11 @@ static UB mhi_src_here(UB src, U1 by)
 static INT mhi_holds(UB k, UB v)
 {
     INT bind, fi = m_find_key((INT)k, &bind);
+#ifdef R3_HIST_HOLDS_READING         /* falsifier (run_mind_conflicts_misread.sh) */
+    return fi >= 0 && r3_fq[fi].yhat[bind] == v;
+#else
     return fi >= 0 && r3_fq[fi].val[bind] == v;     /* 1-8: the record */
+#endif
 }
 
 static void mhi_tick(void)
