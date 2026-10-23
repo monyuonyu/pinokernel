@@ -2866,6 +2866,42 @@ int st_quant_class_obj(const st_model *src, const st_model *q,
     return rc;
 }
 
+/* stage 5 (research/brain-quant-alloc.md): test-first stubs, not built yet */
+int st_quant_gptq_bits(const st_model *src, st_model *dst, int bits,
+                       int bits_embed, int bits_attn, int bits_out,
+                       const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
+{
+    (void)src; (void)dst; (void)bits; (void)bits_embed; (void)bits_attn;
+    (void)bits_out; (void)calib; (void)ncalib; (void)seq; (void)bytes_q;
+    return ST_E_ARG;
+}
+
+int st_quant_fisher(const st_model *src, const uint8_t *calib, int ncalib,
+                    int seq, double *F)
+{
+    (void)src; (void)calib; (void)ncalib; (void)seq; (void)F;
+    return ST_E_ARG;
+}
+
+double st_quant_omega(const st_model *src, const double *F, int bits,
+                      int bits_embed, int bits_attn, int bits_out)
+{
+    (void)src; (void)F; (void)bits; (void)bits_embed; (void)bits_attn; (void)bits_out;
+    return -1.0;
+}
+
+int st_quant_alloc_pick(const double *omega, int n)
+{
+    (void)omega; (void)n;
+    return -1;
+}
+
+double st_quant_copy_kl(st_model *a, st_model *b, const uint8_t *win, int nwin, int seq)
+{
+    (void)a; (void)b; (void)win; (void)nwin; (void)seq;
+    return -1.0;
+}
+
 /* ================================================================== */
 /* one-bit delta, stage 1 (st_delta_sign — see student.h)              */
 /* ================================================================== */

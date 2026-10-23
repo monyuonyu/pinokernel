@@ -1,0 +1,298 @@
+/*
+ * student_qalloc_test.c — [st-qalloc] (R-1 stage 5; design:
+ * docs/architecture/30-module/research/brain-quant-alloc.md §3, gates fixed
+ * 2026-10-24 before any E3O3 / A3 / AUTO / gate run).
+ *
+ * The student is trained as student_qmix_test trains it (8 rounds, lr 3e-3,
+ * seqlen 32, the fixture's train windows). Calibration (GPTQ H and the
+ * Fisher) on the EVEN train windows, the copy-drift gate on the ODD ones, B1
+ * held only reported. Arms, all 2-bit seq plus exactly 4096 B:
+ *   E4    st_quant_gptq_bits(2, embed 4, attn 2, out 2)   (stage 4's E4)
+ *   E3O3  st_quant_gptq_bits(2, embed 3, attn 2, out 3)
+ *   A3    st_quant_gptq_bits(2, embed 2, attn 3, out 2)
+ *   AUTO  the arm of the smallest st_quant_omega (Fisher of the even windows)
+ *
+ *   I0  bits(2,4,2,2) == mix(2,4,2) and bits(2,2,2,2) == gptq(2), byte-identical
+ *   P0  bytes_q of E4, E3O3, A3 == bytes_q(seq) + 4096, exactly
+ *   A0  AUTO built from the pick is byte-identical to the picked arm, and every
+ *       omega is > 0
+ *   P1  B1 bpb damage of AUTO <= min over E4, E3O3, A3 + 0.02
+ *   G4  every quantized value of every arm on its row's grid at its bits, and
+ *       the calibration shares no 16-byte run with the held text
+ *   K0  st_quant_copy_kl (own exp/log, no libm) agrees with this test's libm
+ *       KL on the gate windows within 1e-3 relative, for seq and E4
+ *   D1  gate (odd windows, KL <= ST_QGATE_KL): E4 accepted, seq refused, a
+ *       copy of the model itself KL 0 and accepted
+ * Values (the runner counts them over the seeds): "value P2 1|0" (the arm of
+ * the largest omega has a larger damage than AUTO; the gate is 6 of 8 seeds),
+ * "value D2 k/4" (held KL <= 0.05 agrees with the gate, for seq E4 E3O3 A3).
+ *
+ * Negative controls (run_st_qalloc.sh): -DST_QALLOC_INVERT P1 red;
+ * -DST_QUANT_BADSCALE D1 red (E4 refused); -DST_QALLOC_FLATFISHER values only.
+ *
+ *   student_qalloc_test <b1_held.txt> <seed>     exit 0 = ALL PASS
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <math.h>
+#include "../../arch/common/llm/student.h"
+#include "../../arch/common/llm/held_indep.h"
+#include "../../arch/common/llm/teacher_fixture.h"
+
+#define SEQ 32
+#define LN2 0.69314718055994530942
+#define NARM 3
+
+static const char *arm_name[NARM] = { "E4", "E3O3", "A3" };
+static const int arm_bits[NARM][3] = { { 4, 2, 2 }, { 3, 2, 3 }, { 2, 3, 2 } };  /* embed attn out */
+
+static uint8_t held[65536];
+static int hn;
+static int fails;
+static float *lg_a, *lg_b;
+
+static void item(int ok, const char *id, const char *what)
+{
+    printf("[st-qalloc] %s %s %s\n", ok ? "PASS" : "FAIL", id, what);
+    if (!ok) fails++;
+}
+
+static double bpb(st_model *m)
+{
+    double s = 0.0; int got = 0;
+    for (int w = 0; (w + 1) * SEQ <= hn; w++) {
+        int np = 0;
+        float l = st_eval_loss(m, held + w * SEQ, SEQ, &np);
+        if (np) { s += l; got++; }
+    }
+    return got ? s / got / LN2 : 0.0;
+}
+
+static void softmax(const float *l, double *p)
+{
+    double mx = l[0], s = 0.0;
+    for (int o = 1; o < ST_VOCAB; o++) if (l[o] > mx) mx = l[o];
+    for (int o = 0; o < ST_VOCAB; o++) { p[o] = exp((double)l[o] - mx); s += p[o]; }
+    for (int o = 0; o < ST_VOCAB; o++) p[o] /= s;
+}
+
+/* mean KL(a || b) per position over the windows of buf (libm, double) */
+static double kl_mean(st_model *a, st_model *b, const uint8_t *buf, int n)
+{
+    static double pa[ST_VOCAB], pb[ST_VOCAB];
+    double s = 0.0; long np = 0;
+    for (int w = 0; (w + 1) * SEQ <= n; w++) {
+        st_forward(a, buf + w * SEQ, SEQ, lg_a);
+        st_forward(b, buf + w * SEQ, SEQ, lg_b);
+        for (int t = 0; t < SEQ; t++) {
+            softmax(lg_a + (size_t)t * ST_VOCAB, pa);
+            softmax(lg_b + (size_t)t * ST_VOCAB, pb);
+            double k = 0.0;
+            for (int o = 0; o < ST_VOCAB; o++)
+                if (pa[o] > 0.0) k += pa[o] * (log(pa[o]) - log(pb[o] > 1e-300 ? pb[o] : 1e-300));
+            s += k; np++;
+        }
+    }
+    return np ? s / (double)np : 0.0;
+}
+
+/* G4: the rows of q are on src's per-row grid at bits */
+static long off_grid_mat(const st_model *src, const st_model *q, int off, int rows, int cols, int bits)
+{
+    int qmax = (1 << (bits - 1)) - 1;
+    long bad = 0;
+    for (int r = 0; r < rows; r++) {
+        const float *a = src->w + off + (size_t)r * cols, *b = q->w + off + (size_t)r * cols;
+        float amax = 0.0f;
+        for (int c = 0; c < cols; c++) { float v = a[c] < 0 ? -a[c] : a[c]; if (v > amax) amax = v; }
+        if (amax == 0.0f) { for (int c = 0; c < cols; c++) if (b[c] != 0.0f) bad++; continue; }
+        float s = amax / (float)qmax;
+        for (int c = 0; c < cols; c++) {
+            double k = (double)b[c] / (double)s;
+            double rk = floor(k + 0.5);
+            if (fabs(k - rk) > 1e-3 || rk > qmax || rk < -qmax - 1) bad++;
+        }
+    }
+    return bad;
+}
+
+static long off_grid(const st_model *src, const st_model *q, int bits, int be, int ba, int bo)
+{
+    const int D = src->d, DFF = src->dff, L = src->nlayer, E = src->nexpert;
+    long bad = off_grid_mat(src, q, src->o_embed, ST_VOCAB, D, be);
+    for (int l = 0; l < L; l++) {
+        bad += off_grid_mat(src, q, src->o_wq + l * D * D, D, D, ba);
+        bad += off_grid_mat(src, q, src->o_wk + l * D * D, D, D, ba);
+        bad += off_grid_mat(src, q, src->o_wv + l * D * D, D, D, ba);
+        bad += off_grid_mat(src, q, src->o_wo + l * D * D, D, D, ba);
+    }
+    for (int x = 0; x < L * E; x++) {
+        bad += off_grid_mat(src, q, src->o_w1 + x * DFF * D, DFF, D, bits);
+        bad += off_grid_mat(src, q, src->o_w3 + x * DFF * D, DFF, D, bits);
+        bad += off_grid_mat(src, q, src->o_w2 + x * D * DFF, D, DFF, bits);
+    }
+    bad += off_grid_mat(src, q, src->o_out, ST_VOCAB, D, bo);
+    return bad;
+}
+
+static int same_w(const st_model *a, const st_model *b)
+{
+    return a->n_params == b->n_params &&
+           memcmp(a->w, b->w, (size_t)a->n_params * sizeof(float)) == 0;
+}
+
+static void red_all(void)
+{
+    item(0, "I0", "bits(2,4,2,2) == mix(2,4,2), bits(2,2,2,2) == gptq(2)");
+    item(0, "P0", "bytes E4 == E3O3 == A3 == seq + 4096");
+    item(0, "A0", "AUTO is the picked arm; every omega > 0");
+    item(0, "P1", "bpb damage AUTO <= min(E4, E3O3, A3) + 0.02");
+    item(0, "G4", "every arm on its grid; calib shares no 16-byte run with held");
+    item(0, "K0", "st_quant_copy_kl == libm KL within 1e-3 relative");
+    item(0, "D1", "gate: E4 accepted, seq refused, self KL 0 accepted");
+    printf("[st-qalloc] RED\n");
+}
+
+int main(int argc, char **argv)
+{
+    if (argc < 3) { fprintf(stderr, "usage: %s <b1_held.txt> <seed>\n", argv[0]); return 2; }
+    uint32_t seed = (uint32_t)strtoul(argv[2], NULL, 0);
+    FILE *f = fopen(argv[1], "rb");
+    if (!f) { perror(argv[1]); return 2; }
+    hn = (int)fread(held, 1, sizeof held, f);
+    fclose(f);
+
+    const uint8_t *fx = (const uint8_t *)TEACHER_FIXTURE;
+    int fxn = (int)sizeof(TEACHER_FIXTURE) - 1;
+    int fx_end = st_held_split(fxn, SEQ).train_end;
+    static uint8_t cal[65536], gate[65536];
+    int cn = 0, gn = 0;
+    for (int w = 0; (w + 1) * SEQ <= fx_end; w++) {
+        if (w % 2 == 0) { memcpy(cal + cn, fx + w * SEQ, SEQ); cn += SEQ; }
+        else            { memcpy(gate + gn, fx + w * SEQ, SEQ); gn += SEQ; }
+    }
+
+    lg_a = (float *)malloc((size_t)SEQ * ST_VOCAB * sizeof(float));
+    lg_b = (float *)malloc((size_t)SEQ * ST_VOCAB * sizeof(float));
+    if (!lg_a || !lg_b) return 2;
+
+    st_model m, mc, qs, qa[NARM], qx;
+    if (st_init_tier(&m, seed, ST_TIER_S) || st_init_tier(&mc, seed, ST_TIER_S) ||
+        st_init_tier(&qs, seed, ST_TIER_S) || st_init_tier(&qx, seed, ST_TIER_S) ||
+        st_init_tier(&qa[0], seed, ST_TIER_S) || st_init_tier(&qa[1], seed, ST_TIER_S) ||
+        st_init_tier(&qa[2], seed, ST_TIER_S)) { printf("[st-qalloc] FAIL init\n"); return 1; }
+    for (int r = 0; r < 8; r++)
+        for (int o = 0; o + SEQ <= fx_end; o += SEQ) ST_TRAIN_STEP(&m, fx + o, SEQ, lg_a, 3e-3f);
+    for (int i = 0; i < m.n_params; i++) mc.w[i] = m.w[i];
+    double b_fp = bpb(&m);
+    printf("[st-qalloc] seed %u: trained fixture 0..%d, calib even windows %d B, gate odd windows %d B; fp32 bpb %.4f\n",
+           seed, fx_end, cn, gn, b_fp);
+
+    size_t by_s = 0, by_a[NARM] = { 0 }, by_x = 0;
+    int rs = st_quant_gptq(&m, &qs, 2, cal, cn, SEQ, &by_s);
+    int ra[NARM];
+    for (int a = 0; a < NARM; a++)
+        ra[a] = st_quant_gptq_bits(&m, &qa[a], 2, arm_bits[a][0], arm_bits[a][1], arm_bits[a][2],
+                                   cal, cn, SEQ, &by_a[a]);
+    printf("[st-qalloc] rc seq %d E4 %d E3O3 %d A3 %d\n", rs, ra[0], ra[1], ra[2]);
+    if (rs || ra[0] != ST_OK || ra[1] != ST_OK || ra[2] != ST_OK) { red_all(); return 1; }
+
+    int okI = 1, ok0 = 1, okA = 1, ok1 = 1, okG4 = 1, okK = 1, okD = 1;
+
+    /* I0 */
+    {
+        size_t by_m = 0;
+        if (st_quant_gptq_mix(&m, &qx, 2, 4, 2, cal, cn, SEQ, &by_m) != ST_OK ||
+            !same_w(&qx, &qa[0]) || by_m != by_a[0]) okI = 0;
+        if (st_quant_gptq_bits(&m, &qx, 2, 2, 2, 2, cal, cn, SEQ, &by_x) != ST_OK ||
+            !same_w(&qx, &qs) || by_x != by_s) okI = 0;
+    }
+
+    /* P0 */
+    printf("[st-qalloc] bytes seq %zu", by_s);
+    for (int a = 0; a < NARM; a++) {
+        printf(" %s %zu (+%ld)", arm_name[a], by_a[a], (long)by_a[a] - (long)by_s);
+        if (by_a[a] != by_s + 4096) ok0 = 0;
+    }
+    printf("\n");
+
+    /* omega, pick, AUTO */
+    double *F = (double *)malloc((size_t)m.n_params * sizeof(double));
+    double om[NARM];
+    int pick = -1, worst = 0;
+    if (!F || st_quant_fisher(&m, cal, cn, SEQ, F) != ST_OK) okA = 0;
+    for (int a = 0; a < NARM; a++) {
+        om[a] = okA ? st_quant_omega(&m, F, 2, arm_bits[a][0], arm_bits[a][1], arm_bits[a][2]) : -1.0;
+        if (!(om[a] > 0.0)) okA = 0;
+        if (om[a] > om[worst]) worst = a;
+    }
+    if (okA) pick = st_quant_alloc_pick(om, NARM);
+    printf("[st-qalloc] omega E4 %.6g E3O3 %.6g A3 %.6g; pick %s; largest %s\n", om[0], om[1], om[2],
+           pick >= 0 && pick < NARM ? arm_name[pick] : "none", arm_name[worst]);
+    if (pick < 0 || pick >= NARM) okA = 0;
+    else if (st_quant_gptq_bits(&m, &qx, 2, arm_bits[pick][0], arm_bits[pick][1], arm_bits[pick][2],
+                                cal, cn, SEQ, NULL) != ST_OK || !same_w(&qx, &qa[pick])) okA = 0;
+
+    /* P1 */
+    double d_s = bpb(&qs) - b_fp, d_a[NARM], d_min = 1e30;
+    for (int a = 0; a < NARM; a++) { d_a[a] = bpb(&qa[a]) - b_fp; if (d_a[a] < d_min) d_min = d_a[a]; }
+    double d_auto = pick >= 0 && pick < NARM ? d_a[pick] : 1e30;
+    printf("[st-qalloc] bpb damage seq %.4f E4 %.4f E3O3 %.4f A3 %.4f; AUTO %.4f (min %.4f)\n",
+           d_s, d_a[0], d_a[1], d_a[2], d_auto, d_min);
+    if (!(d_auto <= d_min + 0.02)) ok1 = 0;
+    printf("[st-qalloc] value P2 %d (damage of the largest omega %s %.4f > AUTO %.4f)\n",
+           d_a[worst] > d_auto ? 1 : 0, arm_name[worst], d_a[worst], d_auto);
+
+    /* G4 */
+    long bad = off_grid(&m, &qs, 2, 2, 2, 2);
+    for (int a = 0; a < NARM; a++) bad += off_grid(&m, &qa[a], 2, arm_bits[a][0], arm_bits[a][1], arm_bits[a][2]);
+    int shared = -1;
+    {
+        st_held_report r;
+        int rc = st_held_check_seen(held, hn, hn, 0, 1, cal, cn, ST_HELD_K, &r);
+        shared = rc < 0 ? -1 : r.shared;
+    }
+    printf("[st-qalloc] off-grid %ld; calib vs B1 held: shared 16-byte runs %d\n", bad, shared);
+    if (bad != 0 || shared != 0) okG4 = 0;
+
+    /* K0, D1 */
+    double g_s = st_quant_copy_kl(&m, &qs, gate, gn, SEQ);
+    double g_a[NARM];
+    for (int a = 0; a < NARM; a++) g_a[a] = st_quant_copy_kl(&m, &qa[a], gate, gn, SEQ);
+    double g_self = st_quant_copy_kl(&m, &mc, gate, gn, SEQ);
+    double l_s = kl_mean(&m, &qs, gate, gn), l_e = kl_mean(&m, &qa[0], gate, gn);
+    printf("[st-qalloc] gate KL seq %.6f E4 %.6f E3O3 %.6f A3 %.6f self %.6f; libm seq %.6f E4 %.6f\n",
+           g_s, g_a[0], g_a[1], g_a[2], g_self, l_s, l_e);
+    if (!(fabs(g_s - l_s) <= 1e-3 * l_s) || !(fabs(g_a[0] - l_e) <= 1e-3 * l_e)) okK = 0;
+    if (!(g_a[0] >= 0.0 && g_a[0] <= ST_QGATE_KL) || !(g_s > ST_QGATE_KL) ||
+        !(g_self == 0.0)) okD = 0;
+
+    /* D2 (value) */
+    {
+        st_model *qq[NARM + 1] = { &qs, &qa[0], &qa[1], &qa[2] };
+        double gg[NARM + 1] = { g_s, g_a[0], g_a[1], g_a[2] };
+        int agree = 0;
+        printf("[st-qalloc] held KL");
+        for (int a = 0; a < NARM + 1; a++) {
+            double h = kl_mean(&m, qq[a], held, hn);
+            printf(" %s %.6f", a == 0 ? "seq" : arm_name[a - 1], h);
+            if ((h <= ST_QGATE_KL) == (gg[a] >= 0.0 && gg[a] <= ST_QGATE_KL)) agree++;
+        }
+        printf("\n[st-qalloc] value D2 %d/4\n", agree);
+    }
+
+    item(okI, "I0", "bits(2,4,2,2) == mix(2,4,2), bits(2,2,2,2) == gptq(2)");
+    item(ok0, "P0", "bytes E4 == E3O3 == A3 == seq + 4096");
+    item(okA, "A0", "AUTO is the picked arm; every omega > 0");
+    item(ok1, "P1", "bpb damage AUTO <= min(E4, E3O3, A3) + 0.02");
+    item(okG4, "G4", "every arm on its grid; calib shares no 16-byte run with held");
+    item(okK, "K0", "st_quant_copy_kl == libm KL within 1e-3 relative");
+    item(okD, "D1", "gate: E4 accepted, seq refused, self KL 0 accepted");
+    free(F);
+    st_free(&m); st_free(&mc); st_free(&qs); st_free(&qx);
+    for (int a = 0; a < NARM; a++) st_free(&qa[a]);
+    printf("[st-qalloc] %s\n", fails ? "RED" : "ALL PASS");
+    return fails ? 1 : 0;
+}
