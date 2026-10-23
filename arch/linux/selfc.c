@@ -945,11 +945,22 @@ static void selfc_run_germ(const char *name)
     tm_printf((const UB *)"[selfc] this build has no libtcc — cannot "
               "germinate units. install libtcc-dev and rebuild.\n");
 }
-/* signing the unit manifest needs no compiler — but the demo `save` path
- * writes a bare-name ref the unit/<name> convention does not read, so on a
- * no-libtcc node the manifest publish is a no-op (honest: such a node has no
- * germination path of its own; a compiler-equipped peer that adopts its key
- * would re-sign on its own save). Kept a stub to keep the save verb building. */
+/* the demo `save` writes the unit/<name> ref on every build (so a no-libtcc
+ * node's save still replicates to a compiler-equipped peer under the name
+ * that peer's `selfc run` reads). Same body as the libtcc-side helper. */
+static INT selfc_unit_ref(const char *name, char *out, INT max)
+{
+    INT i = 0;
+    const char *pfx = "unit/";
+    for (INT k = 0; pfx[k] && i < max - 1; k++) out[i++] = pfx[k];
+    for (INT k = 0; name[k] && i < max - 1; k++) out[i++] = name[k];
+    out[i] = '\0';
+    return i;
+}
+/* signing the unit manifest needs no compiler, but on a no-libtcc node the
+ * manifest publish stays a no-op (honest: such a node has no germination
+ * path of its own; a compiler-equipped peer that adopts its key would
+ * re-sign on its own save). Kept a stub to keep the save verb building. */
 static U4   selfc_head_seq(const char *name) { (void)name; return 0; }
 static void selfc_sign_unit(const char *name, U4 seq) { (void)name; (void)seq; }
 static void selfc_test(void)
