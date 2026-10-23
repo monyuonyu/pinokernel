@@ -1127,6 +1127,21 @@ jobs:
           timeout 120 tests/host/run_ed25519_ubsan.sh nc | tee ed25519_ubsan_nc.log
           grep -aF '[ed25519-ubsan] NC RED as expected' ed25519_ubsan_nc.log
 
+      # ROADMAP 1-8 v4, the conflict half: with sky misread on every node
+      # (-DR3_TEST_MISREAD_KEY=0) the push-back, the lost value in the history
+      # and mind/hist's "do I hold the winner" must use the record. Three
+      # nodes + a mind/hist observer. nc-note / nc-hist put one site back to
+      # the reading (audit-61's E3 / E2, which run_mind_conflicts.sh missed);
+      # nc-push (E1) is measured outside CI. Three builds, ~8 min.
+      - name: conflicts carry the record under a misread (ROADMAP 1-8 v4)
+        run: |
+          timeout 400 tests/host/run_mind_conflicts_misread.sh | tee mind_conf_mr.log
+          grep -aF '[mind-conf-mr] ALL PASS' mind_conf_mr.log
+          timeout 400 tests/host/run_mind_conflicts_misread.sh nc-note | tee mind_conf_mr_note.log
+          grep -aF '[mind-conf-mr] NC RED as expected' mind_conf_mr_note.log
+          timeout 400 tests/host/run_mind_conflicts_misread.sh nc-hist | tee mind_conf_mr_hist.log
+          grep -aF '[mind-conf-mr] NC RED as expected' mind_conf_mr_hist.log
+
       # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
       # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
       # PKERNEL_MIND_HAVE=0 (HAVE_OFF=1) on have-fire/have-snow/have-hint. ~2 min.

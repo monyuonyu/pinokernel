@@ -142,7 +142,11 @@ sleep 3
 chk rule-C-refused "$QCL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(from node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" from node 1, stamp 2'
 if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$QCL"; then res rule-C-kept-green FAIL; else res rule-C-kept-green PASS; fi
 chk rule-A-took-green "$QAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"'
-chk rule-A-recorded   "$QAL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), stamp 1, .*superseded by "green" from node 1, stamp 2'
+# A's own record (with its seq): C's refused record heard as mind/hist reads
+# "taught here (node 0), stamp 1, refused on arrival" on A and must not count
+if grep -aE '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), stamp 1, seq [0-9]+, .*superseded by "green" from node 1, stamp 2' "$QAL" \
+        | grep -avq 'heard as history'; then
+    res rule-A-recorded PASS; else res rule-A-recorded FAIL; fi
 
 # ---- bump arm (1-3b, the Lamport step) --------------------------------------
 # The rule arm's green wins because B taught twice; it stays green with the
