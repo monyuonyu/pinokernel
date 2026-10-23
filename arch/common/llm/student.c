@@ -2635,7 +2635,7 @@ static double gq_obj_mat(const float *W0, const float *Wq, int R, int C, const d
 /* mode 0: GPTQ every matrix but embed into dst; mode 1: the objective of q.
  * stage >= 0 (mode 0): only the matrices of that stage (GQ_STAGE). */
 static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const st_model *q,
-                            const st_gq_h *h, int qmax, int stage)
+                            const st_gq_h *h, int qmax, int qmax_out, int stage)
 {
     ST_DIMS(src);
     int nmax = D > DFF ? D : DFF;
@@ -2669,6 +2669,7 @@ static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const 
         GQ_ONE(GQ_STAGE(L, l, 2), src->o_w3 + x * DFF * D, DFF, D, hf);
         GQ_ONE(GQ_STAGE(L, l, 3), src->o_w2 + x * D * DFF, D, DFF, hh);
     }
+    qmax = qmax_out;                      /* stage 4: out may have its own bits */
     GQ_ONE(GQ_STAGE(L, 0, -1), src->o_out, V, D, h->hout);
 #undef GQ_ONE
     free(U); free(T);
@@ -2678,7 +2679,7 @@ static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const 
 static double gq_walk(int mode, const st_model *src, st_model *dst, const st_model *q,
                       const st_gq_h *h, int qmax)
 {
-    return gq_walk_stage(mode, src, dst, q, h, qmax, -1);
+    return gq_walk_stage(mode, src, dst, q, h, qmax, qmax, -1);
 }
 
 /* a scratch model holding src's weights (st_forward writes the cache, and src
@@ -2696,15 +2697,48 @@ static int gq_scratch(const st_model *src, st_model *tmp)
     return ST_OK;
 }
 
-int st_quant_gptq(const st_model *src, st_model *dst, int bits,
+/* packed bytes of one [R][C] ST_QG_ROW matrix at bits (0 = fp32, no scales);
+ * the st_quant_mat count */
+static size_t gq_mat_bytes(int R, int C, int bits)
+{
+    size_t total = (size_t)R * (size_t)C;
+    if (bits == 0) return total * sizeof(float);
+    return (total * (size_t)bits + 7u) / 8u + (size_t)R * sizeof(float);
+}
+
+/* embed of dst from src at bits (0 = fp32 verbatim), RTN on the row grid */
+static void gq_embed(const st_model *src, st_model *dst, int bits)
+{
+    const int VD = V * src->d;
+    if (bits == 0) {
+        for (int i = 0; i < VD; i++) dst->w[src->o_embed + i] = src->w[src->o_embed + i];
+        return;
+    }
+    (void)st_quant_mat(src, dst, src->o_embed, V, src->d, bits, ST_QG_ROW);
+}
+
+/* st_quant_gptq with embed at be and out at bo (stage 4; be == bo == bits is
+ * stage 3 itself, the same operations in the same order) */
+static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int bo,
                   const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
 {
     if (!calib || seq < 1 || seq > ST_MAXSEQ || ncalib < seq) return ST_E_ARG;
+    if ((bo != 8 && bo != 4 && bo != 2) || (be != 8 && be != 4 && be != 2 && be != 0))
+        return ST_E_ARG;
     /* the RTN copy first: arg checks, alive mask, Adam zeroed, embed on the
      * grid and the packed size (the grid and the scales are the same) */
-    int rc = st_quant_fake(src, dst, bits, ST_QG_ROW, bytes_q);
+    size_t bq = 0;
+    int rc = st_quant_fake(src, dst, bits, ST_QG_ROW, &bq);
     if (rc != ST_OK) return rc;
-    int qmax = (1 << (bits - 1)) - 1;
+    if (be != bits) {
+        bq = bq - gq_mat_bytes(V, src->d, bits) + gq_mat_bytes(V, src->d, be);
+#if !defined(ST_QMIX_EMBH2)
+        gq_embed(src, dst, be);          /* H is collected through this embed */
+#endif
+    }
+    if (bo != bits) bq = bq - gq_mat_bytes(V, src->d, bits) + gq_mat_bytes(V, src->d, bo);
+    if (bytes_q) *bytes_q = bq;
+    int qmax = (1 << (bits - 1)) - 1, qmax_out = (1 << (bo - 1)) - 1;
     st_model tmp;
 #if defined(ST_GPTQ_NOSEQ)
     /* stage 2: every H from src's fp32 forward */
@@ -2713,9 +2747,8 @@ int st_quant_gptq(const st_model *src, st_model *dst, int bits,
     st_gq_h h = { 0 };
     rc = gq_collect(&tmp, calib, ncalib, seq, &h);
     st_free(&tmp);
-    if (rc == ST_OK && gq_walk(0, src, dst, NULL, &h, qmax) < 0.0) rc = ST_E_OOM;
+    if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, qmax_out, -1) < 0.0) rc = ST_E_OOM;
     gq_free(&h);
-    return rc;
 #else
     /* stage 3: embed stays RTN (it is a lookup, and it shapes every later X);
      * every other matrix back to fp32, then stage by stage: H from the forward
@@ -2730,11 +2763,33 @@ int st_quant_gptq(const st_model *src, st_model *dst, int bits,
         st_gq_h h = { 0 };
         rc = gq_collect(&tmp, calib, ncalib, seq, &h);
         st_free(&tmp);
-        if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, st) < 0.0) rc = ST_E_OOM;
+        if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, qmax_out, st) < 0.0) rc = ST_E_OOM;
         gq_free(&h);
     }
-    return rc;
 #endif
+#if defined(ST_QMIX_EMBH2)
+    if (rc == ST_OK && be != bits) gq_embed(src, dst, be);  /* control: H saw bits */
+#endif
+    return rc;
+}
+
+int st_quant_gptq(const st_model *src, st_model *dst, int bits,
+                  const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
+{
+    return gq_mix(src, dst, bits, bits, bits, calib, ncalib, seq, bytes_q);
+}
+
+int st_quant_gptq_mix(const st_model *src, st_model *dst, int bits,
+                      int bits_embed, int bits_out,
+                      const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
+{
+#if defined(ST_QMIX_SWAP)
+    { int t = bits_embed; bits_embed = bits_out; bits_out = t; }   /* control */
+#endif
+#if defined(ST_QMIX_EMB8)
+    if (bits_embed != bits && bits_embed != 0) bits_embed = 8;      /* control */
+#endif
+    return gq_mix(src, dst, bits, bits_embed, bits_out, calib, ncalib, seq, bytes_q);
 }
 
 double st_quant_layer_obj(const st_model *src, const st_model *q,

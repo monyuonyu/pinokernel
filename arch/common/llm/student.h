@@ -417,6 +417,16 @@ int    st_quant_gptq(const st_model *src, st_model *dst, int bits,
                      const uint8_t *calib, int ncalib, int seq, size_t *bytes_q);
 double st_quant_layer_obj(const st_model *src, const st_model *q,
                           const uint8_t *calib, int ncalib, int seq);
+/* st_quant_gptq_mix (stage 4, research/brain-quant-embed.md): st_quant_gptq
+ * with embed at bits_embed (RTN, ST_QG_ROW; 0 = kept fp32) and out at bits_out
+ * (GPTQ), every other matrix at bits; H is collected through the embed as it
+ * is held. bits, bits_out in {8,4,2}, bits_embed in {8,4,2,0}. With all three
+ * equal it is byte-identical to st_quant_gptq. Controls (cert only):
+ * -DST_QMIX_SWAP (embed and out bits swapped), -DST_QMIX_EMB8 (embed 8 bit),
+ * -DST_QMIX_EMBH2 (H collected through a 2-bit embed).                       */
+int    st_quant_gptq_mix(const st_model *src, st_model *dst, int bits,
+                         int bits_embed, int bits_out,
+                         const uint8_t *calib, int ncalib, int seq, size_t *bytes_q);
 /* st_quant_class_obj (stage 3, research/brain-quant-gptq-seq.md §2): the same
  * objective per matrix class, but computed straight from the input vectors of
  * src's fp32 forward of calib (sum_t ||(W - Wq) x_t||^2, no H table; separate
