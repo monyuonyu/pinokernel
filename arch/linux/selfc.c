@@ -1018,14 +1018,19 @@ void selfc_cmd(const UB *line, INT n)
         char nm[PFS_NAME_MAX + 1];
         INT  nl = selfc_token(&p, end, nm, sizeof nm);
         if (nl == 0) { selfc_usage(); return; }
-        INT r = pfs_dag_save((const UB *)nm, (UW)nl,
+        /* the unit source lives at p-fs ref "unit/<name>" (§1.1) — the ref
+         * selfc_head_seq / selfc_unit_id / selfc run read. Saving at "<name>"
+         * left save -> run disconnected even on this node (D5-e, 2026-10-24). */
+        char uref[PFS_NAME_MAX + 1];
+        INT  ul = selfc_unit_ref(nm, uref, sizeof uref);
+        INT r = pfs_dag_save((const UB *)uref, (UW)ul,
                              selfc_demo_src, (UW)s_len(selfc_demo_src));
         if (r == PFS_OK) {
             selfc_note_local(nm);          /* locally authored -> runnable (§3) */
             tm_printf((const UB *)"[selfc] demo source (%d bytes of C) "
                       "saved as p-fs object '%s' — locally authored, "
                       "runnable; it now replicates like any block\n",
-                      s_len(selfc_demo_src), (const UB *)nm);
+                      s_len(selfc_demo_src), (const UB *)uref);
             /* signing.md §4.2: publish a signed manifest so an ADOPTING peer
              * can germinate this unit remotely (fleet evolution). */
             selfc_sign_unit(nm, selfc_head_seq(nm));
