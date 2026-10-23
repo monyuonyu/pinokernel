@@ -30,3 +30,7 @@
 ## 4. 入れる場所
 
 試験だけ（student_distill_merge_test.c の LR・B_LR と前提の検査、run_st_distill_sel.sh の種と NC）。student.c は変えない＝crown は動かない。
+
+## 5. 結果（28e35e6a）
+
+**赤**: 前提は 5 種とも緑、S2 は 5/5 緑（第4段の種 2・3 の赤は親の発散だった）、S1 の [d5c-s1-gain] は種 0xC0FFEE・2 で FAIL（VAL は init、TEST は pick が良い）。init が 10 場面すべてで選ばれ、SEL の NC 3 つは効かなくなった。PARENT_LR_OLD は赤。表は [brain-merge-stable-log.md](brain-merge-stable-log.md)。

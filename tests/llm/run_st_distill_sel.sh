@@ -56,7 +56,7 @@ gates() {   # $1 = log: the start=sel gate lines and the sel-val lines
 
 for s in $SEEDS; do
     echo "=== plain seed $s ==="
-    grep -E '^  \[(T-real|sel) ' "$WORK/plain-$s.log"
+    grep -E '^  \[(T-real|sel|parents) ' "$WORK/plain-$s.log"
     gates "$WORK/plain-$s.log"
     n=$(gates "$WORK/plain-$s.log" | grep -c .)
     nf=$(gates "$WORK/plain-$s.log" | grep -c '^  FAIL')
