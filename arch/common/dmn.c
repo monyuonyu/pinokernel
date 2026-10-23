@@ -32,6 +32,7 @@
                         * the #ifdef at each call site below; bare metal
                         * compiles neither the check nor a call, so this
                         * include changes nothing there). */
+#include "swarm_stop.h" /* 0-14 S2 stage 2d: the sleep obeys the stop (hosted) */
 #endif
 #include "kernel.h"
 
@@ -269,6 +270,26 @@ INT dmn_pause_test(void)
     dmn_puts(fail ? "[dmn-pause] FAIL\r\n" : "[dmn-pause] PASS\r\n");
     return fail;
 }
+
+/* 0-14 S2 stage 2d (swarm-stop.md "2d"): a stopped node does not learn in
+ * its sleep either. Unlike hibernation (a cost pause, ga_step kept), the
+ * stop is the owner saying "no more learning", so ga_step is gated too.
+ * The node keeps ticking and printing its digest; pending facts stay
+ * pending and are distilled after the resume. */
+static INT dmn_stopped(void)
+{
+#ifdef SWARM_STOP_NO_SLEEP_OBEY
+    /* falsifier (tests/host/run_stop_sleep.sh nc): Z2 must go red */
+    return 0;
+#else
+    return swarm_stop_is_stopped();
+#endif
+}
+
+static INT dmn_paused(void)
+{
+    return dmn_paused_for_hibernation() || dmn_stopped();
+}
 #endif /* _TK_HOSTED_LIBC_ */
 
 static void dmn_idle_work(void)
@@ -276,6 +297,9 @@ static void dmn_idle_work(void)
     dmn_stats.idle_runs++;
 
     /* Phase 14: GA による重み自己改善 (GA_INTERVAL アイドルに 1 回) */
+#ifdef _TK_HOSTED_LIBC_
+    if (!dmn_stopped())                   /* 0-14 S2 stage 2d */
+#endif
     if (dmn_stats.idle_runs % GA_INTERVAL == 1)
         ga_step();
 
@@ -286,7 +310,7 @@ static void dmn_idle_work(void)
      * `dmn test` run or, later, the live conversational fast layer). */
 #ifdef _TK_HOSTED_LIBC_
     /* survival-loop L2 (§6-L2): skip this heavier track while HIBERNATING. */
-    if (!dmn_paused_for_hibernation())
+    if (!dmn_paused())                    /* + 0-14 S2 stage 2d: stopped */
 #endif
     if (dmn_stats.idle_runs % GA_INTERVAL == 1 && lm_engrams_pending()) {
         if (lm_consolidate_idle_round()) {
@@ -304,7 +328,7 @@ static void dmn_idle_work(void)
      * non-interference is structural (disjoint weight buffers). */
 #ifdef _TK_HOSTED_LIBC_
     /* survival-loop L2 (§6-L2): skip this heavier track while HIBERNATING. */
-    if (!dmn_paused_for_hibernation())
+    if (!dmn_paused())                    /* + 0-14 S2 stage 2d: stopped */
 #endif
     if (r3_facts_pending()) {
         if (r3_consolidate_idle_round()) {
@@ -349,7 +373,7 @@ static void dmn_idle_work(void)
 #ifdef _TK_HOSTED_LIBC_
     /* survival-loop L2 (§6-L2): skip this heaviest track (5-11s/call per
      * gap-ledger) while HIBERNATING. */
-    if (!dmn_paused_for_hibernation())
+    if (!dmn_paused())                    /* + 0-14 S2 stage 2d: stopped */
 #endif
     if (dmn_stats.idle_runs % ST_DMN_INTERVAL == 1 && student_dmn_consolidate()) {
         galaxy_emit(EV_CONSOLIDATE, drpc_my_node, GALAXY_NODE_NONE, 2, 0);  /* S3: the baby's weights settle a little (galaxy.md) */
