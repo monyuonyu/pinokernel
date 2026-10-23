@@ -1236,6 +1236,18 @@ jobs:
           # into CI until now.
           timeout 30 sh -c "printf 'net\nbody test\nexit\n' | ./p-kernel" | tee self_access.log
           grep -aF '[self-access-r1-test] ALL PASS' self_access.log
+      # 2026-10-24 (D5-e): `selfc save <name>` wrote the bare ref while `selfc
+      # run` / the signed manifest read unit/<name>, so save -> run never
+      # connected (since selfc-ring3 v1). The unit test is one node; the two
+      # samples carry the code over the relay (adopt -> run, and the genome
+      # manifest -> sprout on an empty plate). They need libtcc (above); the
+      # unit test SKIPs without it, so its ALL PASS line is grepped. ~3 min.
+      - name: selfc save -> run, and the code over gossip (selfc_propagate, 14_genome sprout)
+        run: |
+          timeout 200 bash tests/host/run_selfc_save_run.sh | tee selfc_save_run.log
+          grep -aF '[selfc-save-run] ALL PASS' selfc_save_run.log
+          timeout 300 bash samples/11_distributed/run_selfc_propagate.sh < /dev/null
+          timeout 300 bash samples/14_genome/sprout.sh < /dev/null
       # ROADMAP 0-9: malformed packets into the raft / spawn / pmesh / kloader
       # receive functions are dropped and counted (arch/common/rx_bounds_test.c).
       # Its own invocation: the cert leaves junk raft entries behind.

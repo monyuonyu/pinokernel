@@ -58,8 +58,9 @@ Run on a node that has something to pass on:
 
 - `dtr/weights` is **mandatory** — publish refuses without it ("a genome
   without a brain describes nothing"). Train + `dtr save` first.
-- `genome.c` (C source saved by `selfc save genome.c`) is included **if
-  the ref exists**.
+- `unit/genome.c` (C source saved by `selfc save genome.c`; the bare name
+  before 2026-10-24, when save and run disagreed) is included **if the ref
+  exists**. Bare metal has no selfc and keeps the old name.
 - `dtr/engrams` is included **if the ref exists** — wave 9-① is building
   that object in parallel; genome.c probes for it and never depends on it.
 

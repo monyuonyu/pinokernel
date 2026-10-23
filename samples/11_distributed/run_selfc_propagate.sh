@@ -49,8 +49,10 @@ echo "[demo] starting relay on :$PKERNEL_RELAY_PORT"
 "$ROOT/relay/relay" -p "$PKERNEL_RELAY_PORT" -v >/tmp/selfc_relay.log 2>&1 & PIDS+=($!)
 sleep 1
 
+# node 2 accepts the unit by name first: since signing.md §4.2 a gossiped
+# unit germinates only if adopted (or signed by an adopted key)
 echo "[demo] starting node 2 (will compile node 1's code inside itself)"
-{ sleep 24; echo "selfc run genome.c"; sleep 8; echo "selfc ls"; sleep 2; \
+{ sleep 22; echo "selfc adopt genome.c"; sleep 2; echo "selfc run genome.c"; sleep 8; echo "selfc ls"; sleep 2; \
   echo "exit"; } | \
   PKERNEL_NODE_ID=2 PKERNEL_AUTONET=1 "$BOOT/p-kernel" >/tmp/selfc_node2.log 2>&1 & PIDS+=($!)
 sleep 2

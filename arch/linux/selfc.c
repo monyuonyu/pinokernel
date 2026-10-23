@@ -945,11 +945,22 @@ static void selfc_run_germ(const char *name)
     tm_printf((const UB *)"[selfc] this build has no libtcc — cannot "
               "germinate units. install libtcc-dev and rebuild.\n");
 }
-/* signing the unit manifest needs no compiler — but the demo `save` path
- * writes a bare-name ref the unit/<name> convention does not read, so on a
- * no-libtcc node the manifest publish is a no-op (honest: such a node has no
- * germination path of its own; a compiler-equipped peer that adopts its key
- * would re-sign on its own save). Kept a stub to keep the save verb building. */
+/* the demo `save` writes the unit/<name> ref on every build (so a no-libtcc
+ * node's save still replicates to a compiler-equipped peer under the name
+ * that peer's `selfc run` reads). Same body as the libtcc-side helper. */
+static INT selfc_unit_ref(const char *name, char *out, INT max)
+{
+    INT i = 0;
+    const char *pfx = "unit/";
+    for (INT k = 0; pfx[k] && i < max - 1; k++) out[i++] = pfx[k];
+    for (INT k = 0; name[k] && i < max - 1; k++) out[i++] = name[k];
+    out[i] = '\0';
+    return i;
+}
+/* signing the unit manifest needs no compiler, but on a no-libtcc node the
+ * manifest publish stays a no-op (honest: such a node has no germination
+ * path of its own; a compiler-equipped peer that adopts its key would
+ * re-sign on its own save). Kept a stub to keep the save verb building. */
 static U4   selfc_head_seq(const char *name) { (void)name; return 0; }
 static void selfc_sign_unit(const char *name, U4 seq) { (void)name; (void)seq; }
 static void selfc_test(void)
@@ -1018,14 +1029,19 @@ void selfc_cmd(const UB *line, INT n)
         char nm[PFS_NAME_MAX + 1];
         INT  nl = selfc_token(&p, end, nm, sizeof nm);
         if (nl == 0) { selfc_usage(); return; }
-        INT r = pfs_dag_save((const UB *)nm, (UW)nl,
+        /* the unit source lives at p-fs ref "unit/<name>" (§1.1) — the ref
+         * selfc_head_seq / selfc_unit_id / selfc run read. Saving at "<name>"
+         * left save -> run disconnected even on this node (D5-e, 2026-10-24). */
+        char uref[PFS_NAME_MAX + 1];
+        INT  ul = selfc_unit_ref(nm, uref, sizeof uref);
+        INT r = pfs_dag_save((const UB *)uref, (UW)ul,
                              selfc_demo_src, (UW)s_len(selfc_demo_src));
         if (r == PFS_OK) {
             selfc_note_local(nm);          /* locally authored -> runnable (§3) */
             tm_printf((const UB *)"[selfc] demo source (%d bytes of C) "
                       "saved as p-fs object '%s' — locally authored, "
                       "runnable; it now replicates like any block\n",
-                      s_len(selfc_demo_src), (const UB *)nm);
+                      s_len(selfc_demo_src), (const UB *)uref);
             /* signing.md §4.2: publish a signed manifest so an ADOPTING peer
              * can germinate this unit remotely (fleet evolution). */
             selfc_sign_unit(nm, selfc_head_seq(nm));

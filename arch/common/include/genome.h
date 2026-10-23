@@ -6,7 +6,7 @@
  *
  *  Every organ this needs already exists; genome.c only ORCHESTRATES:
  *    weights  = p-fs versioned object "dtr/weights"  (dtr save / load)
- *    code     = p-fs versioned object "genome.c"     (selfc save / run)
+ *    code     = p-fs versioned object "unit/genome.c" (selfc save / run)
  *    engrams  = p-fs versioned object "dtr/engrams"  (optional, wave 9-①)
  *    transport= p-fs P1 block gossip + P2 ref gossip (region-automatic)
  *
@@ -50,8 +50,16 @@
 /* the named refs a manifest points at (today's conventions) */
 #define GENOME_WEIGHTS_REF      "dtr/weights"
 #define GENOME_WEIGHTS_REF_LEN  11
+/* code: `selfc save genome.c` writes the unit ref "unit/genome.c" (selfc.c,
+ * the ref `selfc run` reads). selfc is hosted only; bare metal never saves
+ * code, so it keeps the old name and its .text stays as it was (crown). */
+#ifdef _TK_HOSTED_LIBC_
+#define GENOME_CODE_REF         "unit/genome.c"
+#define GENOME_CODE_REF_LEN     13
+#else
 #define GENOME_CODE_REF         "genome.c"
 #define GENOME_CODE_REF_LEN     8
+#endif
 #define GENOME_ENGRAMS_REF      "dtr/engrams"
 #define GENOME_ENGRAMS_REF_LEN  11
 
