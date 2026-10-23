@@ -99,7 +99,8 @@ wait_for "$BL" 'remote teach arrived: "fire"' 120
 wait_for "$BL" 'remote teach arrived: "snow"' 60
 chk have-fire  "$BL" 'remote teach arrived: "fire"->"warm"'
 chk have-snow  "$BL" 'remote teach arrived: "snow"->"white"'
-chk have-hint  "$BL" '^\[mind\] mind/have from node 0: key [0-9]+ \("(fire|snow)"\) never held here -> want \(level 0, pull\)'
+# received off the net (kdds_sub), so it can land after a "p-kernel> " prompt
+chk have-hint  "$BL" '^(p-kernel> )*\[mind\] mind/have from node 0: key [0-9]+ \("(fire|snow)"\) never held here -> want \(level 0, pull\)'
 if grep -aqE 'curiosity answered' "$BL"; then res have-not-precious FAIL; else res have-not-precious PASS; fi
 if grep -aqE 'key 4 \("blood"\) never held here|remote teach arrived: "blood"' "$BL"; then
     res have-no-cert FAIL; else res have-no-cert PASS; fi
