@@ -6,7 +6,7 @@
 #                          dtr save           -> weights become the p-fs
 #                                                versioned object "dtr/weights"
 #                          selfc save genome.c-> the demo C source becomes the
-#                                                p-fs object "genome.c"
+#                                                p-fs object "unit/genome.c"
 #                          genome publish cell-> a fixed-width MANIFEST naming
 #                                                {weights, code} is saved as
 #                                                the named ref "genome/manifest"
@@ -15,7 +15,7 @@
 #                          auto-germinates: waits for "genome/manifest" to
 #                          gossip in (p-fs P1 blocks + P2 refs over the
 #                          relay), restores the weights through the dtr load
-#                          core, compiles "genome.c" INSIDE its own kernel
+#                          core, compiles "unit/genome.c" INSIDE its own kernel
 #                          (libtcc/selfc), and reports:
 #                              [genome] sprouted: a full cell grew from the
 #                                                 swarm's DNA
@@ -81,7 +81,7 @@ echo "[demo] starting node 1 — the full cell (train -> save -> code -> publish
   sleep 4
   echo "dtr save"               # the brain -> p-fs "dtr/weights"
   sleep 2
-  echo "selfc save genome.c"    # the code  -> p-fs "genome.c"
+  echo "selfc save genome.c"    # the code  -> p-fs "unit/genome.c"
   sleep 2
   echo "genome publish cell"    # the DNA index -> p-fs "genome/manifest"
   sleep 42                      # let gossip + germination on node 2 finish
