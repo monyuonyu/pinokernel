@@ -240,7 +240,10 @@ jobs:
     # 45 -> 60 (2026-10-20): 37.7 min in CI 39318805560 and 40.5 min in
     # 39327490314 (with [stop-console]/[stop-galaxy]); the record-pull step
     # adds ~3 min more.
-    timeout-minutes: 60
+    # 60 -> 75 (2026-10-23): 46.4 min in CI 39953421360; audit-68 merged the
+    # ed25519 UBSan step (~35 s) and the conflicts-misread step (three
+    # builds and runs, ~8 min), i.e. ~55 min expected.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
