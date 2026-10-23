@@ -93,22 +93,53 @@ static float *g_logits;
 static uint8_t GENBUF[NGEN_MAX][SEQLEN];
 static const uint8_t *GENW[NGEN_MAX];
 
-static void train_list(st_model *m, const uint8_t *const *w, int n, int shift,
-                       int rounds)
-{
-    for (int r = 0; r < rounds; r++)
-        for (int j = 0; j < n; j++) {
-            const uint8_t *b = w[(j * shift + 3) % n];
-            st_zero_grad(m); st_forward(m, b, SEQLEN, g_logits);
-            st_backward(m, b, SEQLEN); st_adam_step(m, LR);
-        }
-}
-
 static float loss_on(st_model *m, const uint8_t *const *w, int n)
 {
     double t = 0.0;
     for (int i = 0; i < n; i++) { int np = 0; t += st_eval_loss(m, w[i], SEQLEN, &np); }
     return n ? (float)(t / n) : 0.0f;
+}
+
+static char g_msg[256];
+static const char *G(const char *gate, const char *sn)
+{
+    snprintf(g_msg, sizeof g_msg, "%s start=%s", gate, sn);
+    return g_msg;
+}
+
+/* own-data loss of a parent, per round (stage 5, [d5c-parents-ok]) */
+typedef struct { float min, last; } own_curve;
+
+static void train_list(st_model *m, const uint8_t *const *w, int n, int shift,
+                       int rounds, own_curve *oc)
+{
+    if (oc) { oc->min = 1e30f; oc->last = 0.0f; }
+    for (int r = 0; r < rounds; r++) {
+        for (int j = 0; j < n; j++) {
+            const uint8_t *b = w[(j * shift + 3) % n];
+            st_zero_grad(m); st_forward(m, b, SEQLEN, g_logits);
+            st_backward(m, b, SEQLEN); st_adam_step(m, LR);
+        }
+        if (oc) {
+            oc->last = loss_on(m, w, n);
+            if (oc->last < oc->min) oc->min = oc->last;
+        }
+    }
+}
+
+/* brain-merge-stable.md §2: a parent that ends more than 0.3 above its own
+ * per-round minimum, or above 1.0, diverged or did not learn - the merge is
+ * then not tested. Prints both parents, one gate line per scenario. */
+static void parents_ok(const char *sc, const char *sn, const own_curve *a,
+                       const own_curve *b)
+{
+    printf("  [parents %s] own-data loss A min=%.4f last=%.4f | B min=%.4f last=%.4f\n",
+           sc, (double)a->min, (double)a->last, (double)b->min, (double)b->last);
+    int ok = a->last <= a->min + 0.3f && a->last <= 1.0f &&
+             b->last <= b->min + 0.3f && b->last <= 1.0f;
+    char m[128];
+    snprintf(m, sizeof m, "[d5c-parents-ok] %s: both parents end <= own min + 0.3 and <= 1.0", sc);
+    CHECK(ok, G(m, sn));
 }
 
 static void clone(st_model *dst, const st_model *src)
@@ -177,13 +208,6 @@ static void report(const char *arm, const char *sc, int rc,
            (double)st->val_before, (double)st->val_after);
 }
 
-static char g_msg[256];
-static const char *G(const char *gate, const char *sn)
-{
-    snprintf(g_msg, sizeof g_msg, "%s start=%s", gate, sn);
-    return g_msg;
-}
-
 /* stage 4: the sel child against both single-start children */
 static void sel_check(const char *sc, st_model *C, st_model *A, st_model *B,
                       const st_model *I, st_model *S, const uint8_t *const *x,
@@ -222,12 +246,14 @@ static void run_arm(const char *arm, int gen, int start)
     st_init_tier(&S, 1, ST_TIER_S);
     /* plain reference (stage 3b): hard labels from I, same steps and LR */
     clone(&P, &I);
-    train_list(&P, ALLW, TW, 1, ROUNDS);
+    train_list(&P, ALLW, TW, 1, ROUNDS, NULL);
+    own_curve oa, ob;
 
     /* ---- S1 ---- */
     clone(&A, &I); clone(&B, &I);
-    train_list(&A, ALLW, TW, 1, ROUNDS);
-    train_list(&B, ALLW, TW, 7, ROUNDS);
+    train_list(&A, ALLW, TW, 1, ROUNDS, &oa);
+    train_list(&B, ALLW, TW, 7, ROUNDS, &ob);
+    parents_ok("S1", sn, &oa, &ob);
     if (gen) { nx = make_gen(&A, &B, 2 * TW); x = GENW; }
     else     { nx = TW; x = ALLW; }
 #ifdef ST_DISTILL_RAND_XFER
@@ -261,8 +287,9 @@ static void run_arm(const char *arm, int gen, int start)
 
     /* ---- S2 ---- */
     clone(&A, &I); clone(&B, &I);
-    train_list(&A, TRA, NA, 1, ROUNDS * 2);
-    train_list(&B, TRB, NB, 1, ROUNDS * 2);
+    train_list(&A, TRA, NA, 1, ROUNDS * 2, &oa);
+    train_list(&B, TRB, NB, 1, ROUNDS * 2, &ob);
+    parents_ok("S2", sn, &oa, &ob);
     if (gen) { nx = make_gen(&A, &B, 2 * TW); x = GENW; }
     else     { nx = TW; x = ALLW; }
 #ifdef ST_DISTILL_RAND_XFER

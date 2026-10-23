@@ -8,14 +8,15 @@
 # Builds student_distill_merge_test.c plain and once per negative control,
 # runs only the start=sel arm (D5C_ONLY_SEL=1) on each seed, and judges
 # LINES, not exit codes:
-#   plain       every gate line with start=sel, and [d5c-sel-val], PASS on
-#               every seed
+#   plain       every gate line with start=sel ([d5c-parents-ok] included,
+#               stage 5, brain-merge-stable.md §3), and [d5c-sel-val],
+#               PASS on every seed
 #   SEL_INVERT  some [d5c-s1-gain] or [d5c-s2-both] start=sel line FAIL
 #   SEL_PICK    some [d5c-s1-gain] start=sel line FAIL   (S1 needs init)
 #   SEL_INIT    some [d5c-s2-both] start=sel line FAIL   (S2 needs pick)
 #   (an NC that is red on any seed bites; per-seed lines are printed)
 #
-#   ./run_st_distill_sel.sh                 # seeds 0xC0FFEE 2 3
+#   ./run_st_distill_sel.sh                 # seeds 0xC0FFEE 2 3 4 5
 #   D5C_SEEDS="0xC0FFEE" ./run_st_distill_sel.sh
 # ---------------------------------------------------------------------------
 set -u
@@ -28,7 +29,7 @@ trap 'rm -rf "$WORK"' EXIT
 
 SRC_TEST="$HERE/student_distill_merge_test.c"
 SRC_STU="$ROOT/arch/common/llm/student.c"
-SEEDS="${D5C_SEEDS:-0xC0FFEE 2 3}"
+SEEDS="${D5C_SEEDS:-0xC0FFEE 2 3 4 5}"
 VARS="plain SEL_INVERT SEL_PICK SEL_INIT"
 
 rc_all=0
