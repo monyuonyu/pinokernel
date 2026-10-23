@@ -3620,7 +3620,11 @@ jobs:
     # list, PEP-668 pip behavior) before it can redden master.
     name: "consent-card DOM cert (headless Chromium, first-run #ark→#intromount move) [advisory]"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 15 -> 30 (2026-10-24): the install step (pip + playwright --with-deps,
+    # which runs apt on the azure mirror) took 31 s in CI 39974335515, 11 min
+    # in 39953421360, and hit 15 min (cancelled = a new red for promote) in
+    # 39994098268; the cert itself takes seconds
+    timeout-minutes: 30
     continue-on-error: true  # until 2026-11-30: consent-card DOM cert advisory (headless Chromium). ROADMAP 0-13
     steps:
       - uses: actions/checkout@v4
