@@ -14,6 +14,10 @@
 #          start=init) must be FAIL in the NC build, and PASS in the plain
 #          build (else the NC cannot be told apart)
 #
+#   Since stage 5 the parents learn at 3e-3 (brain-merge-stable.md §2); the
+#   stage-3 records were at 0.02 (CC="cc -DST_DISTILL_PARENT_LR_OLD";
+#   [d5c-parents-ok] is then red, by design).
+#
 #   ./run_st_distill.sh
 #   ST_DISTILL_NCS="NOOP" ./run_st_distill.sh   # a no-op "NC": must FAIL
 # ---------------------------------------------------------------------------

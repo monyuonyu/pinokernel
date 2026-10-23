@@ -14,6 +14,8 @@
 #   SEL_INVERT  some [d5c-s1-gain] or [d5c-s2-both] start=sel line FAIL
 #   SEL_PICK    some [d5c-s1-gain] start=sel line FAIL   (S1 needs init)
 #   SEL_INIT    some [d5c-s2-both] start=sel line FAIL   (S2 needs pick)
+#   PARENT_LR_OLD  some [d5c-parents-ok] start=sel line FAIL (parents at the
+#               stage 3/4 LR 0.02 diverge; brain-merge-stable.md §3)
 #   (an NC that is red on any seed bites; per-seed lines are printed)
 #
 #   ./run_st_distill_sel.sh                 # seeds 0xC0FFEE 2 3 4 5
@@ -30,7 +32,7 @@ trap 'rm -rf "$WORK"' EXIT
 SRC_TEST="$HERE/student_distill_merge_test.c"
 SRC_STU="$ROOT/arch/common/llm/student.c"
 SEEDS="${D5C_SEEDS:-0xC0FFEE 2 3 4 5}"
-VARS="plain SEL_INVERT SEL_PICK SEL_INIT"
+VARS="plain SEL_INVERT SEL_PICK SEL_INIT PARENT_LR_OLD"
 
 rc_all=0
 for v in $VARS; do
@@ -83,6 +85,7 @@ echo ""
 nc SEL_INVERT '\[d5c-s1-gain\]|\[d5c-s2-both\]'
 nc SEL_PICK   '\[d5c-s1-gain\]'
 nc SEL_INIT   '\[d5c-s2-both\]'
+nc PARENT_LR_OLD '\[d5c-parents-ok\]'
 
 if [ "$rc_all" -eq 0 ]; then echo "[st-distill-sel] PASS"; else echo "[st-distill-sel] FAIL"; fi
 exit "$rc_all"

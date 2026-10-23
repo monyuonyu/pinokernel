@@ -5,7 +5,9 @@
  *  distillation code was written).
  *
  *  Same babies and windows as student_merge_test.c (corpus, SEQLEN 24,
- *  ROUNDS 40, LR 0.02, train / VAL / TEST windows).
+ *  ROUNDS 40, train / VAL / TEST windows). Parents' LR 3e-3 since stage 5
+ *  (0.02 before; -DST_DISTILL_PARENT_LR_OLD), precondition
+ *  [d5c-parents-ok] in every arm (brain-merge-stable.md §2-3).
  *
  *    S1  same data, different order (seed 0xC0FFEE, order 1 vs 7)
  *    S2  disjoint data: A trains on the first half of the train windows,
@@ -66,7 +68,15 @@ static int g_pass = 0, g_fail = 0;
 
 #define SEQLEN  24
 #define ROUNDS  40
+/* stage 5 (brain-merge-stable.md §2): the parents learn at the resident
+ * brain's rate, ST_DMN_LR in student_shell.c; at 0.02 (stages 3-4) 11 of 32
+ * probe parents diverged. -DST_DISTILL_PARENT_LR_OLD = the stage 3/4 rate
+ * (the negative control, and how to reproduce brain-merge-select-log.md). */
+#ifdef ST_DISTILL_PARENT_LR_OLD
 #define LR      0.02f
+#else
+#define LR      3e-3f
+#endif
 #define GAIN    0.03f     /* nats, brain-merge-distill.md §3 */
 #define D_STEPS 400       /* distillation steps (fixed, d5c3-plan.md) */
 #define D_LR    1e-3f     /* Adam, FedDF §4.1 */
@@ -427,6 +437,9 @@ int main(void)
     printf("(NEGATIVE CONTROL build: -DST_DISTILL_SEL_PICK — expect RED on s1-gain start=sel)\n");
 #elif defined(ST_DISTILL_SEL_INIT)
     printf("(NEGATIVE CONTROL build: -DST_DISTILL_SEL_INIT — expect RED on s2-both start=sel)\n");
+#endif
+#ifdef ST_DISTILL_PARENT_LR_OLD
+    printf("(NEGATIVE CONTROL build: -DST_DISTILL_PARENT_LR_OLD — parents at 0.02, expect RED on parents-ok on some seed)\n");
 #endif
 #ifdef ST_DISTILL_ONE_TEACHER
     printf("(NEGATIVE CONTROL build: -DST_DISTILL_ONE_TEACHER — expect RED on s2-both start=init)\n");
