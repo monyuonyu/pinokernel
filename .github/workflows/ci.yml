@@ -3337,11 +3337,13 @@ jobs:
     #                            own falsifier arms (flat / resp=GLOBAL)
     # Negative controls (local): swim.c without the broadcast beacon send turns
     # mesh_discovery RED 2/2; net_relay.c ha_tick never moving to the next
-    # relay turns relay_failover RED 2/2 (phase 2); -DRESOLVE_NO_GUARD stays GREEN on x86_64 (glibc
+    # relay turns relay_failover RED 2/2 (phase 2); region_recompute not
+    # checking ALIVE turns coord_crash RED 2/2 (stale node0, B lost);
+    # -DRESOLVE_NO_GUARD stays GREEN on x86_64 (glibc
     # getaddrinfo does not fault in-task here; it did on native aarch64), so on
-    # this runner resolve_crash only shows "no crash"; the others are not yet
-    # broken from outside (tcp_live / supernode_fwd / 4node_regions carry
-    # in-script falsifier arms).
+    # this runner resolve_crash only shows "no crash"; tcp_live / supernode_fwd /
+    # 4node_regions are not yet broken from outside (they carry in-script
+    # falsifier arms).
     # Not wired (same survey): 6 demos with no assertion, Nnode_scale (5
     # assertions FAIL), selfc_propagate and selfc_isolation (FAIL), ss6_live_
     # fallback (OPEN, placement-dependent), survival_bench and swarm_demo (300 s
