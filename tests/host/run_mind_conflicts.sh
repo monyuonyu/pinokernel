@@ -60,9 +60,9 @@ chk() {  # <name> <file> <ERE>
 L="$WORK/local.log"; mkdir -p "$WORK/dl"
 printf 'mind teach sky blue\nmind teach sky green\nmind conflicts\nmind ask sky\nexit\n' \
     | timeout 180 env PKERNEL_NODE_ID=1 PKERNEL_PFS_DIR="$WORK/dl" "$BOOT/p-kernel" > "$L" 2>&1
-chk local-recorded "$L" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here, stamp 1, seq [0-9]+, (PENDING|RETAINED) [0-9]+/[0-9]+, prov kept\) superseded by "green" taught here, stamp 2 at'
-chk local-list     "$L" '^\[mind\] conflict key [0-9]+ "sky": "blue" \(taught here, .*superseded by "green" taught here, stamp 2 at'
-chk local-count    "$L" '^\[mind\] conflicts: 1 kept, 0 older dropped'
+chk local-recorded "$L" '^(p-kernel> )*\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here, stamp 1, seq [0-9]+, (PENDING|RETAINED) [0-9]+/[0-9]+, prov kept\) superseded by "green" taught here, stamp 2 at'
+chk local-list     "$L" '^(p-kernel> )*\[mind\] conflict key [0-9]+ "sky": "blue" \(taught here, .*superseded by "green" taught here, stamp 2 at'
+chk local-count    "$L" '^(p-kernel> )*\[mind\] conflicts: 1 kept, 0 older dropped'
 chk local-ask      "$L" '^\[mind\]   conflict history: key [0-9]+ "sky": "blue"'
 
 # ---- remote arm -----------------------------------------------------------
@@ -88,8 +88,8 @@ wait_for "$A" 'remote REVISE key [0-9]+ "sky"' 150 || echo "[mind-conflicts] not
 printf 'mind conflicts\nmind ask sky\n' >&7
 printf 'mind conflicts\nmind ask sky\n' >&8
 wait_for "$A" 'ask "sky" ->' 60; wait_for "$B" 'ask "sky" ->' 60; sleep 2
-chk remote-B-recorded "$B" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(from node 0, stamp 1, seq [0-9]+, (PENDING|RETAINED) [0-9]+/[0-9]+, prov kept\) superseded by "green" taught here \(node 1\), stamp [0-9]+'
-chk remote-A-recorded "$A" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), .*prov kept\) superseded by "green" from node 1'
+chk remote-B-recorded "$B" '^(p-kernel> )*\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(from node 0, stamp 1, seq [0-9]+, (PENDING|RETAINED) [0-9]+/[0-9]+, prov kept\) superseded by "green" taught here \(node 1\), stamp [0-9]+'
+chk remote-A-recorded "$A" '^(p-kernel> )*\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), .*prov kept\) superseded by "green" from node 1'
 chk remote-A-ask      "$A" '^\[mind\]   conflict history: key [0-9]+ "sky": "blue"'
 chk remote-B-ask      "$B" '^\[mind\]   conflict history: key [0-9]+ "sky": "blue"'
 
@@ -139,12 +139,12 @@ wait_for "$QAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"' 90 || echo "[m
 sleep 5
 printf 'mind conflicts\n' >&5; printf 'mind conflicts\n' >&9
 sleep 3
-chk rule-C-refused "$QCL" '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(from node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" from node 1, stamp 2'
+chk rule-C-refused "$QCL" '^(p-kernel> )*\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(from node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" from node 1, stamp 2'
 if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$QCL"; then res rule-C-kept-green FAIL; else res rule-C-kept-green PASS; fi
 chk rule-A-took-green "$QAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"'
 # A's own record (with its seq): C's refused record heard as mind/hist reads
 # "taught here (node 0), stamp 1, refused on arrival" on A and must not count
-if grep -aE '^\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), stamp 1, seq [0-9]+, .*superseded by "green" from node 1, stamp 2' "$QAL" \
+if grep -aE '^(p-kernel> )*\[mind\] conflict recorded: key [0-9]+ "sky": "blue" \(taught here \(node 0\), stamp 1, seq [0-9]+, .*superseded by "green" from node 1, stamp 2' "$QAL" \
         | grep -avq 'heard as history'; then
     res rule-A-recorded PASS; else res rule-A-recorded FAIL; fi
 
@@ -198,7 +198,7 @@ wait_for "$SAL" 'ask "sky" ->' 60; wait_for "$SBL" 'ask "sky" ->' 60; sleep 2
 # alone could lift green past 4 and the arm would not test the step.
 if grep -aqE 'remote teach arrived: "(fire|snow)"' "$WORK/sb-before-green.log"; then
     res bump-precondition FAIL; else res bump-precondition PASS; fi
-chk bump-A-rule       "$SAL" '^\[mind\] conflict rule: incoming stamp ([5-9]|[1-9][0-9]+) node 1 beats held stamp 4 node 0'
+chk bump-A-rule       "$SAL" '^(p-kernel> )*\[mind\] conflict rule: incoming stamp ([5-9]|[1-9][0-9]+) node 1 beats held stamp 4 node 0'
 chk bump-A-took-green "$SAL" 'remote REVISE key [0-9]+ "sky": "blue"->"green"'
 if grep -aqE 'remote REVISE key [0-9]+ "sky": "green"->"blue"' "$SBL"; then
     res bump-B-kept-green FAIL; else res bump-B-kept-green PASS; fi

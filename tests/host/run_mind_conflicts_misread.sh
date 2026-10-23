@@ -22,7 +22,8 @@
 # Checks:
 #   mr-precond       : A misread sky (teacher_agree 0), else nothing is tested
 #   mr-C-refused     : C keeps blue as "refused on arrival", superseded by green
-#   mr-A-took-green  : A "remote REVISE ... "blue"->"green""     (push = record)
+#   mr-A-took-green  : A "remote REVISE ... "blue"->"green" from node 1 seq=2"
+#                      (B's stamp, via C)                         (push = record)
 #   mr-A-recorded    : A's own history record (with its seq, not one heard
 #                      from C): "blue" taught here superseded by green
 #                                                                 (lost = record)
@@ -126,16 +127,21 @@ wait_for "$QDL" 'heard as history from node' 90 || echo "[mind-conf-mr] note: D 
 sleep 3
 printf 'mind conflicts\n' >&5; printf 'mind conflicts\n' >&9; printf 'mind conflicts\n' >&8
 sleep 3
-chk mr-precond      "$QAL" '^\[mind\]   teacher_agree 0 '
-chk mr-C-refused    "$QCL" '^\[mind\] conflict recorded: key 0 "sky": "blue" \(from node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" from node 1, stamp 2'
-chk mr-A-took-green "$QAL" 'remote REVISE key 0 "sky": "blue"->"green"'
+# an event line can land right after a shell prompt ("p-kernel> [mind] ..."):
+# MR-TOOK's plain run 3 went red on mr-D-heard only for that
+chk mr-precond      "$QAL" '^(p-kernel> )*\[mind\]   teacher_agree 0 '
+chk mr-C-refused    "$QCL" '^(p-kernel> )*\[mind\] conflict recorded: key 0 "sky": "blue" \(from node 0, stamp 1, refused on arrival, prov kept\) superseded by "green" from node 1, stamp 2'
+# B's green (node 1, seq 2) as C pushed it back: D teaches green too (node 3,
+# stamp 3) and A would revise to that later even with the push-back broken
+# (audit-68: push echoing the loser v_in left a bare "blue"->"green" green)
+chk mr-A-took-green "$QAL" 'remote REVISE key 0 "sky": "blue"->"green" from node 1 seq=2 '
 # A's OWN record (it has a seq; C's refused record heard as mind/hist reads
 # "taught here (node 0), stamp 1, refused on arrival" on A and must not count:
 # with R3_NOTE_KEEPS_READING A's own line says "green" and only that one did)
-if grep -aE '^\[mind\] conflict recorded: key 0 "sky": "blue" \(taught here \(node 0\), stamp 1, seq [0-9]+, .*superseded by "green" from node 1, stamp 2' "$QAL" \
+if grep -aE '^(p-kernel> )*\[mind\] conflict recorded: key 0 "sky": "blue" \(taught here \(node 0\), stamp 1, seq [0-9]+, .*superseded by "green" from node 1, stamp 2' "$QAL" \
         | grep -avq 'heard as history'; then
     res mr-A-recorded PASS; else res mr-A-recorded FAIL; fi
-chk mr-D-heard      "$QDL" '^\[mind\] conflict recorded: key 0 "sky": "blue" .*superseded by "green" .*heard as history from node [0-9]+'
+chk mr-D-heard      "$QDL" '^(p-kernel> )*\[mind\] conflict recorded: key 0 "sky": "blue" .*superseded by "green" .*heard as history from node [0-9]+'
 grep -aE 'remote REVISE key 0|conflict recorded: key 0' "$QAL" "$QCL" "$QDL" | sed "s|$WORK/||; s/^/[mind-conf-mr]   /"
 echo "[mind-conf-mr] logs: $WORK"
 if [ "$MODE" != plain ]; then
