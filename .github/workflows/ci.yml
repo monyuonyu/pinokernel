@@ -1327,6 +1327,16 @@ jobs:
           timeout 300 tests/host/run_stop_net_teach.sh nc | tee stop_net_nc.log
           grep -aF '[stop-net] NC RED as expected' stop_net_nc.log
           make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 stage 2d: a stopped node does not distil taught facts in its
+      # DMN sleep (one node, timed input, ~85 s per arm); the nc arm builds
+      # -DSWARM_STOP_NO_SLEEP_OBEY.
+      - name: the DMN sleep obeying the stop ([stop-sleep], BLOCKING, 0-14 S2)
+        run: |
+          timeout 300 tests/host/run_stop_sleep.sh | tee stop_sleep.log
+          grep -aF '[stop-sleep] ALL PASS' stop_sleep.log
+          timeout 300 tests/host/run_stop_sleep.sh nc | tee stop_sleep_nc.log
+          grep -aF '[stop-sleep] NC RED as expected' stop_sleep_nc.log
+          make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"
