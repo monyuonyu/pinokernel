@@ -3392,7 +3392,10 @@ jobs:
       - name: Install mingw-w64 cross toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          # CI 39989603591: this step hit the 15-minute job timeout on a slow
+          # azure mirror (cancelled = a new red that blocks promote); same fallback
+          # as the aarch64 cross-gcc jobs
+          sudo tests/ci/apt_install.sh \
             gcc-mingw-w64-x86-64 make binutils
       - name: Build boot/windows/x86_64 (p-kernel.exe)
         run: make -C boot/windows/x86_64
