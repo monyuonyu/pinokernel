@@ -1117,6 +1117,16 @@ jobs:
           timeout 300 tests/host/run_mind_record_pull.sh nc | tee mind_record_pull_nc.log
           grep -aF '[mind-rec-pull] NC RED as expected' mind_record_pull_nc.log
 
+      # ED-SHL: ed25519.c runs clean under UBSan (RFC 8032 KATs + 300 round
+      # trips, signature digest pinned from before the change). Red with the
+      # two signed left shifts put back (the nc arm). ~35 s.
+      - name: ed25519 under UBSan (ED-SHL)
+        run: |
+          timeout 300 tests/host/run_ed25519_ubsan.sh | tee ed25519_ubsan.log
+          grep -aF '[ed25519-ubsan] ALL PASS' ed25519_ubsan.log
+          timeout 120 tests/host/run_ed25519_ubsan.sh nc | tee ed25519_ubsan_nc.log
+          grep -aF '[ed25519-ubsan] NC RED as expected' ed25519_ubsan_nc.log
+
       # ROADMAP 1-3c step 2: a newcomer learns a peer's EARLIER teaches before
       # anyone asks it (mind/have summary -> level-0 want -> pull). Red with
       # PKERNEL_MIND_HAVE=0 (HAVE_OFF=1) on have-fire/have-snow/have-hint. ~2 min.
