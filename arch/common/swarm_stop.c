@@ -26,7 +26,8 @@
  *  reads it at boot; a file whose CRC or shape is wrong starts the node
  *  stopped here (local, `stop resume` lifts it). Without PKERNEL_PFS_DIR the
  *  state lives in RAM only, as before. Falsifier: -DSWARM_STOP_NO_PERSIST
- *  ([stop-persist] R1).
+ *  ([stop-persist] R1); -DSWARM_STOP_NO_RESTORE_FWD (the restored node does
+ *  not re-drive the last command, [stop-live] L6).
  *
  *  [live] (swarm_stop_net_tick): a command accepted at the console or from
  *  the network is sent on, on the GLOBAL K-DDS topic "swarm/stop", and sent
@@ -231,7 +232,11 @@ void swarm_stop_restore(void (*out)(const char *))
     }
     ss_stopped  = ss_file[9] != 0;
     ss_local    = ss_file[10] != 0;
+#if defined(SWARM_STOP_NO_RESTORE_FWD)
+    ss_have_fwd = 0;                      /* falsifier: [stop-live] L6 (nofwd) */
+#else
     ss_have_fwd = ss_file[11] != 0;
+#endif
     ss_epoch    = ss_get32(ss_file + 12);
     for (i = 0; i < SWARM_STOP_CMD_LEN; i++) ss_fwd[i] = ss_file[20 + i];
     ss_nkeys = nk;
