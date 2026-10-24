@@ -1352,13 +1352,18 @@ jobs:
           make -C boot/linux_x86_64 >/dev/null
       # 0-14 S2 stage 2f: a stopped node sends nothing of its mind (its own
       # re-drive, answers to wants, wants, mind/have); two nodes over a relay,
-      # ~2.5 min per arm; the nc arm builds -DSWARM_STOP_NO_OUT_OBEY.
+      # ~1.5 min per arm; the nc arm builds -DSWARM_STOP_NO_OUT_OBEY, the
+      # answer and have arms ungate one mouth each (O2 / O5 red).
       - name: the outgoing mind obeying the stop ([stop-out], BLOCKING, 0-14 S2)
         run: |
           timeout 400 tests/host/run_stop_outgoing.sh | tee stop_out.log
           grep -aF '[stop-out] ALL PASS' stop_out.log
           timeout 400 tests/host/run_stop_outgoing.sh nc | tee stop_out_nc.log
           grep -aF '[stop-out] NC RED as expected' stop_out_nc.log
+          timeout 400 tests/host/run_stop_outgoing.sh answer | tee stop_out_answer.log
+          grep -aF '[stop-out] NC RED as expected (answer)' stop_out_answer.log
+          timeout 400 tests/host/run_stop_outgoing.sh have | tee stop_out_have.log
+          grep -aF '[stop-out] NC RED as expected (have)' stop_out_have.log
           make -C boot/linux_x86_64 >/dev/null
       # 0-14 S2 [live]: one signed command typed into one of three nodes stops
       # all three, a signer missing from their tables stops nobody, a signed
