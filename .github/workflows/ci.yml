@@ -1371,6 +1371,15 @@ jobs:
           timeout 600 tests/host/run_stop_live.sh nc | tee stop_live_nc.log
           grep -aF '[stop-live] NC RED as expected' stop_live_nc.log
           make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 persist: the stop, the epoch and the stop-key table come back
+      # after a restart (one node, one PKERNEL_PFS_DIR, five runs), a changed
+      # byte starts it stopped; the falsifier -DSWARM_STOP_NO_PERSIST runs
+      # inside the script. It rebuilds and cleans; the plain binary is rebuilt.
+      - name: the stop survives a restart ([stop-persist], BLOCKING, 0-14 S2)
+        run: |
+          timeout 900 tests/host/run_stop_persist.sh | tee stop_persist.log
+          grep -aF '[stop-persist] ALL PASS' stop_persist.log
+          make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"
