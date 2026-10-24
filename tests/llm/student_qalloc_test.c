@@ -35,6 +35,10 @@
  * instead; every item, P2 and the controls then refer to omega_el, and stage
  * 5's omega is printed as a value ("value omega_mat").
  *
+ * Stage 7 (research/brain-quant-alloc-eq.md, seeds 17-24): "value E" lines,
+ * paired bootstrap 95% intervals of held damage differences over the held
+ * windows (values only, never a pick); -DST_QALLOC_BOOT_ONE gives width 0.
+ *
  *   student_qalloc_test <b1_held.txt> <seed>     exit 0 = ALL PASS
  */
 #include <stdio.h>
@@ -72,15 +76,69 @@ static void item(int ok, const char *id, const char *what)
     if (!ok) fails++;
 }
 
-static double bpb(st_model *m)
+/* held bpb; lw (if not NULL) gets each counted window's loss in nats (stage 7) */
+static int nwin;
+static double bpb_w(st_model *m, double *lw)
 {
     double s = 0.0; int got = 0;
     for (int w = 0; (w + 1) * SEQ <= hn; w++) {
         int np = 0;
         float l = st_eval_loss(m, held + w * SEQ, SEQ, &np);
-        if (np) { s += l; got++; }
+        if (np) { s += l; if (lw) lw[got] = l; got++; }
     }
+    nwin = got;
     return got ? s / got / LN2 : 0.0;
+}
+
+static double bpb(st_model *m) { return bpb_w(m, NULL); }
+
+/*
+ * Stage 7 (research/brain-quant-alloc-eq.md §2): paired bootstrap of the
+ * held damage difference of two arms. The pairs are the held windows
+ * (d_w = (loss_a - loss_b) / ln 2, the fp32 loss cancels); BOOT_B resamples
+ * of nwin windows with replacement (xorshift64*, a fixed seed), and the
+ * percentile 95% interval (the 50th and the 1950th of the 2000 sorted means).
+ * Values only: never used to pick. Neighbouring windows are one text's
+ * continuation, not independent, so the interval is narrower than it should
+ * be. -DST_QALLOC_BOOT_ONE draws window 0 every time (width 0).
+ */
+#define BOOT_B 2000
+#define MAXWIN (65536 / SEQ)
+static uint64_t xs;
+static uint64_t xorshift64s(void)
+{
+    xs ^= xs >> 12; xs ^= xs << 25; xs ^= xs >> 27;
+    return xs * 0x2545F4914F6CDD1DULL;
+}
+
+static int cmp_d(const void *a, const void *b)
+{
+    double x = *(const double *)a, y = *(const double *)b;
+    return (x > y) - (x < y);
+}
+
+static void boot_ci(const double *la, const double *lb, int n, uint32_t seed,
+                    double *mean, double *lo, double *hi)
+{
+    static double d[MAXWIN], bm[BOOT_B];
+    double s = 0.0;
+    for (int i = 0; i < n; i++) { d[i] = (la[i] - lb[i]) / LN2; s += d[i]; }
+    *mean = n ? s / n : 0.0;
+    xs = 0x9E3779B97F4A7C15ULL ^ (uint64_t)seed;
+    for (int b = 0; b < BOOT_B; b++) {
+        double t = 0.0;
+        for (int i = 0; i < n; i++) {
+            int k = (int)(xorshift64s() % (uint64_t)n);
+#if defined(ST_QALLOC_BOOT_ONE)
+            k = 0;
+#endif
+            t += d[k];
+        }
+        bm[b] = n ? t / n : 0.0;
+    }
+    qsort(bm, BOOT_B, sizeof bm[0], cmp_d);
+    *lo = bm[BOOT_B / 40 - 1];
+    *hi = bm[BOOT_B - BOOT_B / 40 - 1];
 }
 
 static void softmax(const float *l, double *p)
@@ -261,14 +319,37 @@ int main(int argc, char **argv)
                                 cal, cn, SEQ, NULL) != ST_OK || !same_w(&qx, &qa[pick])) okA = 0;
 
     /* P1 */
+    static double lw[NARM][MAXWIN];
     double d_s = bpb(&qs) - b_fp, d_a[NARM], d_min = 1e30;
-    for (int a = 0; a < NARM; a++) { d_a[a] = bpb(&qa[a]) - b_fp; if (d_a[a] < d_min) d_min = d_a[a]; }
+    int kmin = 0;
+    for (int a = 0; a < NARM; a++) {
+        d_a[a] = bpb_w(&qa[a], lw[a]) - b_fp;
+        if (d_a[a] < d_min) { d_min = d_a[a]; kmin = a; }
+    }
     double d_auto = pick >= 0 && pick < NARM ? d_a[pick] : 1e30;
     printf("[st-qalloc] bpb damage seq %.4f E4 %.4f E3O3 %.4f A3 %.4f; AUTO %.4f (min %.4f)\n",
            d_s, d_a[0], d_a[1], d_a[2], d_auto, d_min);
     if (!(d_auto <= d_min + 0.02)) ok1 = 0;
     printf("[st-qalloc] value P2 %d (damage of the largest omega %s %.4f > AUTO %.4f)\n",
            d_a[worst] > d_auto ? 1 : 0, arm_name[worst], d_a[worst], d_auto);
+
+    /* E (values, stage 7): the picked arm against the held minimum, E4 against
+     * E3O3 (the two close arms), and A3 against the minimum (far apart: an
+     * interval that can exclude 0) */
+    {
+        double mu, lo, hi;
+        int p = pick >= 0 && pick < NARM ? pick : kmin;
+        boot_ci(lw[p], lw[kmin], nwin, seed, &mu, &lo, &hi);
+        printf("[st-qalloc] value E pick %s - min %s: mean %.4f ci95 [%.4f, %.4f] contains0 %d (%d windows, B %d)%s\n",
+               arm_name[p], arm_name[kmin], mu, lo, hi, lo <= 0.0 && hi >= 0.0 ? 1 : 0, nwin, BOOT_B,
+               p == kmin ? " same arm" : "");
+        boot_ci(lw[0], lw[1], nwin, seed, &mu, &lo, &hi);
+        printf("[st-qalloc] value E4-E3O3 mean %.4f ci95 [%.4f, %.4f] contains0 %d zero-width %d\n",
+               mu, lo, hi, lo <= 0.0 && hi >= 0.0 ? 1 : 0, hi - lo == 0.0 ? 1 : 0);
+        boot_ci(lw[2], lw[kmin], nwin, seed, &mu, &lo, &hi);
+        printf("[st-qalloc] value A3-min mean %.4f ci95 [%.4f, %.4f] contains0 %d\n",
+               mu, lo, hi, lo <= 0.0 && hi >= 0.0 ? 1 : 0);
+    }
 
     /* G4 */
     long bad = off_grid(&m, &qs, 2, 2, 2, 2);
