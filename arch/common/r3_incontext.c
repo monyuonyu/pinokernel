@@ -4753,10 +4753,19 @@ static UB mq_answer_sent = 0;
 /* the outgoing half of a mind_net_task tick: answer region wants, re-drive my
  * own teach, publish my wonders, my mind/have summary. 0-14 S2 stage 2f
  * (swarm-stop.md): a stopped node sends none of it (hosted only). Red with
- * -DSWARM_STOP_NO_OUT_OBEY ([stop-out] O2). */
+ * -DSWARM_STOP_NO_OUT_OBEY ([stop-out] O2); one mouth at a time with
+ * -DSWARM_STOP_ANSWER_UNGATED (O2) and -DSWARM_STOP_HAVE_UNGATED (O5). */
 #if defined(_TK_HOSTED_LIBC_) && !defined(SWARM_STOP_NO_OUT_OBEY)
+#if defined(SWARM_STOP_ANSWER_UNGATED)        /* falsifier: [stop-out] O2 (answer) */
+#define MT_OUT_TICK() do { mq_poll_wants(); if (!swarm_stop_is_stopped()) { \
+        M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK(); } } while (0)
+#elif defined(SWARM_STOP_HAVE_UNGATED)        /* falsifier: [stop-out] O5 (have) */
+#define MT_OUT_TICK() do { if (!swarm_stop_is_stopped()) { \
+        mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); } MH_TICK(); } while (0)
+#else
 #define MT_OUT_TICK() do { if (!swarm_stop_is_stopped()) { \
         mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK(); } } while (0)
+#endif
 #else
 #define MT_OUT_TICK() do { \
         mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK(); } while (0)
