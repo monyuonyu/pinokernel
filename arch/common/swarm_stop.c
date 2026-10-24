@@ -33,6 +33,7 @@
 #include "swarm_stop.h"
 #include "sign.h"
 #include "kdds.h"         /* [live]: the swarm-wide "swarm/stop" topic */
+#include "pk_nosw.h"      /* [live]: the console and mind_net_task share the state */
 
 static U1  ss_keys[SWARM_STOP_KEYS_MAX][ED25519_PUBLIC_KEY_LEN];
 static INT ss_nkeys   = 0;
@@ -429,8 +430,11 @@ void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *))
         return;
     }
     if (ss_is(w, l, "apply")) {
-        INT r = ss_in_bad ? SWARM_STOP_E_HEAD : swarm_stop_apply(ss_in, ss_inl);
+        INT r;
+        PK_NOSW_ENTER();                  /* [live]: vs swarm_stop_net_tick */
+        r = ss_in_bad ? SWARM_STOP_E_HEAD : swarm_stop_apply(ss_in, ss_inl);
         if (r == SWARM_STOP_OK) ss_forward(ss_in);          /* [live] */
+        PK_NOSW_LEAVE();
         ss_inl = 0; ss_in_bad = 0;
         out("[stop] apply rc "); ss_dec(r); out("\r\n");
         ss_status(); return;
@@ -467,10 +471,12 @@ void swarm_stop_net_tick(void (*out)(const char *))
     if (ss_sub >= 0) {
         r = kdds_sub(ss_sub, ss_rx, (W)sizeof ss_rx, 0);
         if (r > 0) {
+            PK_NOSW_ENTER();              /* vs the console stop apply */
             rc = swarm_stop_apply(ss_rx, (UW)r);
+            if (rc == SWARM_STOP_OK) ss_forward(ss_rx);
+            PK_NOSW_LEAVE();
             ss_out = out;
             if (rc == SWARM_STOP_OK) {
-                ss_forward(ss_rx);
                 out("[stop] network command accepted: ");
                 out(ss_rx[7] == SWARM_STOP_OP_STOP ? "stop" : "resume");
                 out("\r\n");
@@ -488,7 +494,9 @@ void swarm_stop_net_tick(void (*out)(const char *))
 #if !defined(SWARM_STOP_NO_FORWARD)
     if (ss_have_fwd && ss_pub >= 0 && ++ss_ticks >= SS_REDRIVE_TICKS) {
         ss_ticks = 0;
+        PK_NOSW_ENTER();                  /* ss_fwd may be rewritten by apply */
         (void)kdds_pub(ss_pub, ss_fwd, (W)SWARM_STOP_CMD_LEN);
+        PK_NOSW_LEAVE();
     }
 #endif
 }
