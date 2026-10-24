@@ -20,6 +20,12 @@
 #      "stopped 0 local 0 signed 0 epoch 0 keys 0"
 #   R7 run E (after D wrote a good file again): "stopped 0 local 0 signed 0
 #      epoch 0 keys 0" and a "[stop] restored" line
+#   R8 a write that fails (swarm-stop.st.tmp is a directory, so the open of
+#      the temp file fails, also for root): `stop now` prints one line
+#      starting "[stop] could not save swarm-stop.st" and the node is still
+#      stopped ("stopped 1 local 1 ..."); runs A-E (writes that work) and a
+#      run with PKERNEL_PFS_DIR empty (persistence off, not a failure) print
+#      no such line
 # The signed commands come from a test build (-DSWARM_STOP_TEST_SIGN).
 # Falsifier: -DSWARM_STOP_NO_PERSIST (nothing written, nothing read) must turn
 # R1 red.
@@ -89,6 +95,7 @@ if [ "${#PK}" = 64 ] && [ "${#CS}" = 216 ] && [ "${#CR}" = 216 ]; then res signe
 printf 'stop\nexit\n' > "$WORK/c.in"
 printf 'stop\nstop resume\nstop\nexit\n' > "$WORK/d.in"
 printf 'stop\nexit\n' > "$WORK/e.in"
+printf 'stop now\nexit\n' > "$WORK/f.in"
 
 scenario() {  # <prefix>: five runs on one dir
     local p="$1" D="$WORK/$1-dir"
@@ -101,6 +108,9 @@ scenario() {  # <prefix>: five runs on one dir
     fi
     run "$D" "$WORK/d.in" "$WORK/$p-d.log"
     run "$D" "$WORK/e.in" "$WORK/$p-e.log"
+    rm -rf "$WORK/$p-fdir"; mkdir -p "$WORK/$p-fdir/swarm-stop.st.tmp"
+    run "$WORK/$p-fdir" "$WORK/f.in" "$WORK/$p-f.log"
+    run "" "$WORK/f.in" "$WORK/$p-g.log"
 }
 
 check() {  # <prefix>
@@ -119,6 +129,12 @@ check() {  # <prefix>
       [ "$(st "$D" 3)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] && res "${p}R6" PASS || res "${p}R6" FAIL
     [ "$(st "$E" 1)" = "[stop] stopped 0 local 0 signed 0 epoch 0 keys 0" ] && grep -aq '^\[stop\] restored' "$E" &&
       res "${p}R7" PASS || res "${p}R7" FAIL
+    local F="$WORK/$1-f.log" G="$WORK/$1-g.log"
+    [ "$(grep -ac '^\[stop\] could not save swarm-stop.st' "$F")" = 1 ] &&
+      [ "$(st "$F" 1)" = "[stop] stopped 1 local 1 signed 0 epoch 0 keys 0" ] &&
+      ! cat "$A" "$B" "$C" "$D" "$E" "$G" | grep -aq '^\[stop\] could not save' &&
+      [ "$(st "$G" 1)" = "[stop] stopped 1 local 1 signed 0 epoch 0 keys 0" ] &&
+      res "${p}R8" PASS || res "${p}R8" FAIL
 }
 
 # ---- the plain build -----------------------------------------------------------
