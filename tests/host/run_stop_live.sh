@@ -18,13 +18,20 @@
 #      fourth node D (K1 in its table) starts: within 60 s of its key it logs
 #      "[stop] network command accepted" and is "stopped 1 local 0 signed 1
 #      epoch 7" - only the re-drive can reach a node that was not up yet
+#   L5 (audit-77: the write after a network command was outside every test)
+#      after L4, B is killed (-9) and started again on its own dir with no
+#      network: it logs "[stop] restored" and its first status is "stopped 1
+#      local 0 signed 1 epoch 7 keys 1" - the stop it took from the network
+#      survives a restart. Then B starts again on the network for L3
 #   L3 A applies a K1 resume (epoch 8): within 60 s B, C and D are "stopped 0"
 # Falsifiers: -DSWARM_STOP_NO_FORWARD (an accepted command is not sent on)
-# must turn L2 red; -DSWARM_STOP_NO_AUTH (no stop-table check) turns L1 red
-# (a local measurement, not in CI).
+# must turn L2 red; -DSWARM_STOP_NO_AUTH (no stop-table check) turns L1 red,
+# -DSWARM_STOP_NET_NO_PERSIST (a network command is not written) turns L5
+# red (both local measurements, not in CI).
 # Output: "[stop-live] <check> PASS|FAIL", then ALL PASS (exit 0) or RED (1).
 # Arg: "nc" builds -DSWARM_STOP_NO_FORWARD and expects L2 red; "noauth"
-# builds -DSWARM_STOP_NO_AUTH and expects L1 red; "late" builds
+# builds -DSWARM_STOP_NO_AUTH and expects L1 red; "netnp" builds
+# -DSWARM_STOP_NET_NO_PERSIST and expects L5 red; "late" builds
 # -DSWARM_STOP_SEND_ONCE (an accepted command is sent once, never again) and
 # expects L4 red with L2 green (exit 0 when so).
 # Rebuilds boot/linux* with EXTRA_CFLAGS and cleans it afterwards.
@@ -41,6 +48,7 @@ CF="-DSWARM_STOP_TEST_SIGN"
 [ "$MODE" = nc ] && CF="$CF -DSWARM_STOP_NO_FORWARD"
 [ "$MODE" = noauth ] && CF="$CF -DSWARM_STOP_NO_AUTH"
 [ "$MODE" = late ] && CF="$CF -DSWARM_STOP_SEND_ONCE"
+[ "$MODE" = netnp ] && CF="$CF -DSWARM_STOP_NET_NO_PERSIST"
 make -C "$BOOT" clean >/dev/null 2>&1
 make -C "$BOOT" EXTRA_CFLAGS="$CF" > /tmp/stop_live.build.log 2>&1 \
     || { echo "[stop-live] build FAIL"; tail -20 /tmp/stop_live.build.log; exit 1; }
@@ -142,6 +150,19 @@ if [ "$okd" = 1 ] && st "$D" | grep -q 'stopped 1 local 0 signed 1 epoch 7'; the
 else
     res L4-late-joiner-stops FAIL
 fi
+# L5: B's network-taken stop survives a restart (offline, its own dir)
+kill -9 "$PB" 2>/dev/null; wait "$PB" 2>/dev/null; PB=0
+printf 'stop\nexit\n' | timeout 60 env PKERNEL_NODE_ID=2 PKERNEL_PFS_DIR="$WORK/db" \
+    "$BOOT/p-kernel" > "$WORK/b2.log" 2>&1
+if grep -aq '^\[stop\] restored' "$WORK/b2.log" &&
+   [ "$(tr -d '\r' < "$WORK/b2.log" | grep -a '^\[stop\] stopped ' | head -1)" = "[stop] stopped 1 local 0 signed 1 epoch 7 keys 1" ]; then
+    res L5-net-stop-survives-restart PASS
+else
+    res L5-net-stop-survives-restart FAIL
+fi
+B="$WORK/b3.log"
+start 2 "$WORK/fb" "$B" "$WORK/db"; PB=$!
+wait_for "$B" 'mind_net_task up' 120 || echo "[stop-live] note: B did not come back up"
 # L3: K1 resume on A
 paste_cmd 7 "$C1R"
 wait_for "$B" 'epoch 8' 60 || true
@@ -168,6 +189,11 @@ case "$MODE" in
             *L2-one-command-stops-all*) echo "[stop-live] LATE FAIL: L2 went red too ($REDS)"; exit 1 ;;
             *L4-late-joiner-stops*) echo "[stop-live] LATE RED as expected:$REDS"; exit 0 ;;
             *) echo "[stop-live] LATE FAIL: the falsifier stayed green ($REDS)"; exit 1 ;;
+        esac ;;
+    netnp)
+        case "$REDS" in
+            *L5-net-stop-survives-restart*) echo "[stop-live] NETNP RED as expected:$REDS"; exit 0 ;;
+            *) echo "[stop-live] NETNP FAIL: stayed green ($REDS)"; exit 1 ;;
         esac ;;
     noauth)
         case "$REDS" in
