@@ -20,10 +20,20 @@
  *
  *  Limit: the stopped flag and the epoch live in RAM only. A restart clears
  *  the stop, and a command with an old epoch is accepted again after it.
+ *
+ *  [live] (swarm_stop_net_tick): a command accepted at the console or from
+ *  the network is sent on, on the GLOBAL K-DDS topic "swarm/stop", and sent
+ *  again every SS_REDRIVE_TICKS ticks (the slot is LATEST_ONLY and a peer may
+ *  join late). A receiver runs the same swarm_stop_apply, so a signer not in
+ *  ITS table stops nobody there, and the same command again is a replay
+ *  (refused silently): the re-drive cannot loop. Falsifier:
+ *  -DSWARM_STOP_NO_FORWARD ([stop-live] L2).
  */
 
 #include "swarm_stop.h"
 #include "sign.h"
+#include "kdds.h"         /* [live]: the swarm-wide "swarm/stop" topic */
+#include "pk_nosw.h"      /* [live]: the console and mind_net_task share the state */
 
 static U1  ss_keys[SWARM_STOP_KEYS_MAX][ED25519_PUBLIC_KEY_LEN];
 static INT ss_nkeys   = 0;
@@ -112,6 +122,24 @@ INT swarm_stop_apply(const U1 *cmd, UW len)
     ss_epoch   = epoch;
     ss_stopped = (cmd[7] == SWARM_STOP_OP_STOP);
     return SWARM_STOP_OK;
+}
+
+/* ---- [live]: carry an accepted command to the peers ---------------- */
+#define SWARM_STOP_TOPIC   "swarm/stop"
+#define SS_REDRIVE_TICKS   4              /* x the caller's tick (500 ms)   */
+static W   ss_pub = -1, ss_sub = -1;
+static U1  ss_fwd[SWARM_STOP_CMD_LEN];    /* the last accepted command      */
+static INT ss_have_fwd = 0;
+static UW  ss_ticks = 0;
+static U1  ss_rx[192];
+static U4  ss_refused_epoch = 0xFFFFFFFFu; /* say a refusal once per epoch  */
+
+static void ss_forward(const U1 *cmd)
+{
+    UW i;
+    for (i = 0; i < SWARM_STOP_CMD_LEN; i++) ss_fwd[i] = cmd[i];
+    ss_have_fwd = 1;
+    ss_ticks = SS_REDRIVE_TICKS;          /* send at the next tick          */
 }
 
 /* ------------------------------------------------------------------ */
@@ -402,7 +430,11 @@ void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *))
         return;
     }
     if (ss_is(w, l, "apply")) {
-        INT r = ss_in_bad ? SWARM_STOP_E_HEAD : swarm_stop_apply(ss_in, ss_inl);
+        INT r;
+        PK_NOSW_ENTER();                  /* [live]: vs swarm_stop_net_tick */
+        r = ss_in_bad ? SWARM_STOP_E_HEAD : swarm_stop_apply(ss_in, ss_inl);
+        if (r == SWARM_STOP_OK) ss_forward(ss_in);          /* [live] */
+        PK_NOSW_LEAVE();
         ss_inl = 0; ss_in_bad = 0;
         out("[stop] apply rc "); ss_dec(r); out("\r\n");
         ss_status(); return;
@@ -421,4 +453,50 @@ void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *))
     }
 #endif
     out("usage: stop [status|now|resume|key <hex>|key clear|in <hex>|apply]\r\n");
+}
+
+/* [live]: one call per tick of a task that runs whether or not the node is
+ * stopped or hibernating (mind_net_task, before its own pause checks). Takes
+ * at most one command per tick from "swarm/stop" and applies it with the
+ * console's rule; sends the last accepted command on every
+ * SS_REDRIVE_TICKS ticks. */
+void swarm_stop_net_tick(void (*out)(const char *))
+{
+    W r;
+    INT rc;
+    if (ss_sub < 0)
+        ss_sub = kdds_open_poll_scoped(SWARM_STOP_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
+    if (ss_pub < 0)
+        ss_pub = kdds_open_poll_scoped(SWARM_STOP_TOPIC, KDDS_QOS_LATEST_ONLY, KDDS_SCOPE_GLOBAL);
+    if (ss_sub >= 0) {
+        r = kdds_sub(ss_sub, ss_rx, (W)sizeof ss_rx, 0);
+        if (r > 0) {
+            PK_NOSW_ENTER();              /* vs the console stop apply */
+            rc = swarm_stop_apply(ss_rx, (UW)r);
+            if (rc == SWARM_STOP_OK) ss_forward(ss_rx);
+            PK_NOSW_LEAVE();
+            ss_out = out;
+            if (rc == SWARM_STOP_OK) {
+                out("[stop] network command accepted: ");
+                out(ss_rx[7] == SWARM_STOP_OP_STOP ? "stop" : "resume");
+                out("\r\n");
+                ss_status();
+            } else if (rc != SWARM_STOP_E_REPLAY && r >= 12) {
+                U4 e = (U4)ss_rx[8] | ((U4)ss_rx[9] << 8) | ((U4)ss_rx[10] << 16) | ((U4)ss_rx[11] << 24);
+                if (e != ss_refused_epoch) {
+                    ss_refused_epoch = e;
+                    out("[stop] network command refused rc "); ss_dec(rc);
+                    out(" epoch "); ss_udec(e); out("\r\n");
+                }
+            }
+        }
+    }
+#if !defined(SWARM_STOP_NO_FORWARD)
+    if (ss_have_fwd && ss_pub >= 0 && ++ss_ticks >= SS_REDRIVE_TICKS) {
+        ss_ticks = 0;
+        PK_NOSW_ENTER();                  /* ss_fwd may be rewritten by apply */
+        (void)kdds_pub(ss_pub, ss_fwd, (W)SWARM_STOP_CMD_LEN);
+        PK_NOSW_LEAVE();
+    }
+#endif
 }
