@@ -1337,6 +1337,16 @@ jobs:
           timeout 300 tests/host/run_stop_sleep.sh nc | tee stop_sleep_nc.log
           grep -aF '[stop-sleep] NC RED as expected' stop_sleep_nc.log
           make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 stage 2e: a stopped node neither sends nor folds weights
+      # (Path W) and refuses `mind merge` (two nodes over a relay, ~2.5 min
+      # per arm); the nc arm builds -DSWARM_STOP_NO_PATHW_OBEY.
+      - name: Path W obeying the stop ([stop-pathw], BLOCKING, 0-14 S2)
+        run: |
+          timeout 400 tests/host/run_stop_pathw.sh | tee stop_pathw.log
+          grep -aF '[stop-pathw] ALL PASS' stop_pathw.log
+          timeout 400 tests/host/run_stop_pathw.sh nc | tee stop_pathw_nc.log
+          grep -aF '[stop-pathw] NC RED as expected' stop_pathw_nc.log
+          make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"

@@ -5733,6 +5733,12 @@ void mind_merge_task(INT stacd, void *exinf)
          * a long hibernation doesn't erase progress toward the next pulse --
          * it just doesn't advance while paused. */
         if (mind_paused_for_hibernation()) continue;
+#ifndef SWARM_STOP_NO_PATHW_OBEY
+        /* 0-14 S2 stage 2e (swarm-stop.md): a stopped node neither sends
+         * nor folds weights; since_pulse freezes as in hibernation. Red with
+         * -DSWARM_STOP_NO_PATHW_OBEY ([stop-pathw] W2). */
+        if (swarm_stop_is_stopped()) continue;
+#endif
 #endif
         if (drpc_my_node == 0xFF) continue;          /* solo: nothing to do  */
         /* FAST announce drain every tick: a shared LATEST_ONLY "mind/w" slot
@@ -5759,6 +5765,13 @@ void mind_merge_task(INT stacd, void *exinf)
  * Caller already holds the mind_cmd gate. */
 static void m_merge(void)
 {
+#if defined(_TK_HOSTED_LIBC_) && !defined(SWARM_STOP_NO_PATHW_OBEY)
+    /* 0-14 S2 stage 2e: the verb folds weights too ([stop-pathw] W3) */
+    if (swarm_stop_is_stopped()) {
+        r_puts("[stop] refused: mind merge (this node is stopped; see `stop`)\r\n");
+        return;
+    }
+#endif
     m_quiesce();
     m_boot();
     if (drpc_my_node == 0xFF) {
