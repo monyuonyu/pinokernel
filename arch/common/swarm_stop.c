@@ -18,8 +18,15 @@
  *  -DSWARM_STOP_NO_LENCHECK (T6b, T6c), -DSWARM_STOP_LEN_MIN (T6c: refuse
  *  only short commands), -DSWARM_STOP_NO_OPCHECK (T8).
  *
- *  Limit: the stopped flag and the epoch live in RAM only. A restart clears
- *  the stop, and a command with an old epoch is accepted again after it.
+ *  Persist (swarm-stop.md "persist"): with PKERNEL_PFS_DIR set, every change
+ *  made at the console or accepted from the network rewrites swarm-stop.st
+ *  there (pfs_dur_write: temp + rename + fsync; a local file, not a p-fs ref,
+ *  so no peer can write it and rule 5 holds): the signed and the local stop,
+ *  the epoch, the key table and the last accepted command. swarm_stop_restore
+ *  reads it at boot; a file whose CRC or shape is wrong starts the node
+ *  stopped here (local, `stop resume` lifts it). Without PKERNEL_PFS_DIR the
+ *  state lives in RAM only, as before. Falsifier: -DSWARM_STOP_NO_PERSIST
+ *  ([stop-persist] R1).
  *
  *  [live] (swarm_stop_net_tick): a command accepted at the console or from
  *  the network is sent on, on the GLOBAL K-DDS topic "swarm/stop", and sent
@@ -27,7 +34,8 @@
  *  join late). A receiver runs the same swarm_stop_apply, so a signer not in
  *  ITS table stops nobody there, and the same command again is a replay
  *  (refused silently): the re-drive cannot loop. Falsifier:
- *  -DSWARM_STOP_NO_FORWARD ([stop-live] L2).
+ *  -DSWARM_STOP_NO_FORWARD ([stop-live] L2); -DSWARM_STOP_SEND_ONCE (sent once,
+ *  never again: a node started later never hears it, [stop-live] L4).
  */
 
 #include "swarm_stop.h"
@@ -142,6 +150,96 @@ static void ss_forward(const U1 *cmd)
     ss_ticks = SS_REDRIVE_TICKS;          /* send at the next tick          */
 }
 
+/* ---- persist: swarm-stop.st under PKERNEL_PFS_DIR ------------------ */
+/* [0..3] "PKSS"  [4..7] crc32 of [8..end)  [8] version  [9] signed stop
+ * [10] local stop  [11] have the forward command  [12..15] epoch (LE)
+ * [16] key count  [17..19] 0  [20..20+CMD_LEN) the forward command
+ * then key count x 32 bytes of keys. Little-endian bytes, no packed struct. */
+#define SS_FILE      "swarm-stop.st"
+#define SS_FILE_VER  1
+#define SS_HDR_LEN   (20 + SWARM_STOP_CMD_LEN)
+#define SS_FILE_MAX  (SS_HDR_LEN + SWARM_STOP_KEYS_MAX * ED25519_PUBLIC_KEY_LEN)
+static U1  ss_file[SS_FILE_MAX];
+static INT ss_quiet = 0;                  /* the self-test: do not write    */
+
+#if defined(_TK_HOSTED_LIBC_) && !defined(SWARM_STOP_NO_PERSIST)
+extern int pfs_dur_write(const char *fname, const void *data, unsigned len);
+extern int pfs_dur_read(const char *fname, void *buf, unsigned maxlen);
+
+static U4 ss_crc32(const U1 *p, UW n)
+{
+    U4 c = 0xFFFFFFFFu;
+    UW i; INT k;
+    for (i = 0; i < n; i++) {
+        c ^= p[i];
+        for (k = 0; k < 8; k++) c = (c >> 1) ^ (0xEDB88320u & (U4)-(INT)(c & 1u));
+    }
+    return ~c;
+}
+
+static void ss_put32(U1 *b, U4 v)
+{
+    b[0] = (U1)v; b[1] = (U1)(v >> 8); b[2] = (U1)(v >> 16); b[3] = (U1)(v >> 24);
+}
+
+static U4 ss_get32(const U1 *b)
+{
+    return (U4)b[0] | ((U4)b[1] << 8) | ((U4)b[2] << 16) | ((U4)b[3] << 24);
+}
+
+/* called with the state settled (inside the caller's PK_NOSW region when
+ * the network task can race it, so the image and the file are one state) */
+static void ss_persist(void)
+{
+    UW n = SS_HDR_LEN + (UW)ss_nkeys * ED25519_PUBLIC_KEY_LEN, i;
+    INT k;
+    if (ss_quiet) return;
+    for (i = 0; i < SS_FILE_MAX; i++) ss_file[i] = 0;
+    ss_file[0] = 'P'; ss_file[1] = 'K'; ss_file[2] = 'S'; ss_file[3] = 'S';
+    ss_file[8]  = SS_FILE_VER;
+    ss_file[9]  = (U1)(ss_stopped ? 1 : 0);
+    ss_file[10] = (U1)(ss_local ? 1 : 0);
+    ss_file[11] = (U1)(ss_have_fwd ? 1 : 0);
+    ss_put32(ss_file + 12, ss_epoch);
+    ss_file[16] = (U1)ss_nkeys;
+    for (i = 0; i < SWARM_STOP_CMD_LEN; i++) ss_file[20 + i] = ss_fwd[i];
+    for (k = 0; k < ss_nkeys; k++)
+        for (i = 0; i < ED25519_PUBLIC_KEY_LEN; i++)
+            ss_file[SS_HDR_LEN + (UW)k * ED25519_PUBLIC_KEY_LEN + i] = ss_keys[k][i];
+    ss_put32(ss_file + 4, ss_crc32(ss_file + 8, n - 8));
+    (void)pfs_dur_write(SS_FILE, ss_file, (unsigned)n);
+}
+
+void swarm_stop_restore(void (*out)(const char *))
+{
+    int got = pfs_dur_read(SS_FILE, ss_file, (unsigned)SS_FILE_MAX);
+    UW i; INT k, nk;
+    if (got < 0) return;                  /* no file (or no PKERNEL_PFS_DIR) */
+    nk = got >= SS_HDR_LEN ? (INT)ss_file[16] : -1;
+    if (got < SS_HDR_LEN || ss_file[0] != 'P' || ss_file[1] != 'K' || ss_file[2] != 'S' ||
+        ss_file[3] != 'S' || ss_file[8] != SS_FILE_VER || nk > SWARM_STOP_KEYS_MAX ||
+        (UW)got != SS_HDR_LEN + (UW)nk * ED25519_PUBLIC_KEY_LEN ||
+        ss_get32(ss_file + 4) != ss_crc32(ss_file + 8, (UW)got - 8)) {
+        ss_local = 1;                     /* fail-closed: stopped here       */
+        out("[stop] state file " SS_FILE " unreadable: stopped here (stop resume to go on)\r\n");
+        return;
+    }
+    ss_stopped  = ss_file[9] != 0;
+    ss_local    = ss_file[10] != 0;
+    ss_have_fwd = ss_file[11] != 0;
+    ss_epoch    = ss_get32(ss_file + 12);
+    for (i = 0; i < SWARM_STOP_CMD_LEN; i++) ss_fwd[i] = ss_file[20 + i];
+    ss_nkeys = nk;
+    for (k = 0; k < nk; k++)
+        for (i = 0; i < ED25519_PUBLIC_KEY_LEN; i++)
+            ss_keys[k][i] = ss_file[SS_HDR_LEN + (UW)k * ED25519_PUBLIC_KEY_LEN + i];
+    out("[stop] restored from " SS_FILE "\r\n");
+}
+#else
+static void ss_persist(void) { (void)ss_quiet; (void)ss_file; }
+void swarm_stop_restore(void (*out)(const char *)) { (void)out; }
+#endif
+
 /* ------------------------------------------------------------------ */
 /* [swarm-stop] self-test — expectations fixed in swarm-stop.md        */
 /* ------------------------------------------------------------------ */
@@ -184,6 +282,7 @@ INT swarm_stop_selftest(void (*out)(const char *))
         for (j = 0; j < ED25519_PUBLIC_KEY_LEN; j++) keys_save[i][j] = ss_keys[i][j];
 
     ss_out = out; ss_pass = ss_fail = 0;
+    ss_quiet = 1;                       /* the checks move the state: no writes */
     ss_local = 0;                       /* the checks read the signed stop */
     ss_kp(0x5a, apk, ask);             /* the stop authority          */
     ss_kp(0x77, epk, esk);              /* someone not in the table    */
@@ -293,6 +392,7 @@ INT swarm_stop_selftest(void (*out)(const char *))
     swarm_stop_key_clear();
     for (i = 0; i < keys_were; i++) swarm_stop_key_add(keys_save[i]);
     ss_stopped = stopped_was; ss_epoch = epoch_was; ss_local = local_was;
+    ss_quiet = 0;
 
     out("[swarm-stop] "); ss_dec(ss_pass); out(" PASS / "); ss_dec(ss_fail); out(" FAIL\r\n");
     return ss_fail == 0 ? 0 : -1;
@@ -405,20 +505,31 @@ void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *))
     ss_out = out;
     l = ss_word(&a, &n, &w);
     if (l == 0 || ss_is(w, l, "status")) { ss_status(); return; }
-    if (ss_is(w, l, "now"))    { ss_local = 1; ss_status(); return; }
+    if (ss_is(w, l, "now")) {
+        PK_NOSW_ENTER(); ss_local = 1; ss_persist(); PK_NOSW_LEAVE();
+        ss_status(); return;
+    }
     if (ss_is(w, l, "resume")) {           /* the console's stop only */
-        ss_local = 0;
+        PK_NOSW_ENTER(); ss_local = 0; ss_persist(); PK_NOSW_LEAVE();
         if (ss_stopped) out("[stop] a signed stop stays until a signed resume\r\n");
         ss_status(); return;
     }
     if (ss_is(w, l, "key")) {
         U1 pk[ED25519_PUBLIC_KEY_LEN];
+        INT k;
         const UB *h; UW hl = ss_word(&a, &n, &h);
-        if (ss_is(h, hl, "clear")) { swarm_stop_key_clear(); ss_status(); return; }
+        if (ss_is(h, hl, "clear")) {
+            PK_NOSW_ENTER(); swarm_stop_key_clear(); ss_persist(); PK_NOSW_LEAVE();
+            ss_status(); return;
+        }
         if (hl != 2 * ED25519_PUBLIC_KEY_LEN || ss_unhex(h, hl, pk, sizeof pk) != ED25519_PUBLIC_KEY_LEN) {
             out("usage: stop key <64 hex digits>|clear\r\n"); return;
         }
-        if (!swarm_stop_key_add(pk)) out("[stop] the stop table is full\r\n");
+        PK_NOSW_ENTER();
+        k = swarm_stop_key_add(pk);
+        if (k) ss_persist();
+        PK_NOSW_LEAVE();
+        if (!k) out("[stop] the stop table is full\r\n");
         ss_status(); return;
     }
     if (ss_is(w, l, "in")) {               /* a command, a piece at a time */
@@ -433,7 +544,7 @@ void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *))
         INT r;
         PK_NOSW_ENTER();                  /* [live]: vs swarm_stop_net_tick */
         r = ss_in_bad ? SWARM_STOP_E_HEAD : swarm_stop_apply(ss_in, ss_inl);
-        if (r == SWARM_STOP_OK) ss_forward(ss_in);          /* [live] */
+        if (r == SWARM_STOP_OK) { ss_forward(ss_in); ss_persist(); }   /* [live], persist */
         PK_NOSW_LEAVE();
         ss_inl = 0; ss_in_bad = 0;
         out("[stop] apply rc "); ss_dec(r); out("\r\n");
@@ -473,7 +584,7 @@ void swarm_stop_net_tick(void (*out)(const char *))
         if (r > 0) {
             PK_NOSW_ENTER();              /* vs the console stop apply */
             rc = swarm_stop_apply(ss_rx, (UW)r);
-            if (rc == SWARM_STOP_OK) ss_forward(ss_rx);
+            if (rc == SWARM_STOP_OK) { ss_forward(ss_rx); ss_persist(); }
             PK_NOSW_LEAVE();
             ss_out = out;
             if (rc == SWARM_STOP_OK) {
@@ -496,6 +607,9 @@ void swarm_stop_net_tick(void (*out)(const char *))
         ss_ticks = 0;
         PK_NOSW_ENTER();                  /* ss_fwd may be rewritten by apply */
         (void)kdds_pub(ss_pub, ss_fwd, (W)SWARM_STOP_CMD_LEN);
+#if defined(SWARM_STOP_SEND_ONCE)
+        ss_have_fwd = 0;                  /* falsifier: [stop-live] L4 (late) */
+#endif
         PK_NOSW_LEAVE();
     }
 #endif

@@ -19,7 +19,8 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 CC="${CC:-cc}"
-CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off -Werror=vla"
+# ST_QALLOC_DEF: extra defines for every variant (run_st_qalloc_el.sh, stage 6)
+CFLAGS="-std=c11 -O1 -Wall -Wextra -ffp-contract=off -Werror=vla ${ST_QALLOC_DEF:-}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 SRC="$HERE/student_qalloc_test.c $ROOT/arch/common/llm/held_indep.c $ROOT/arch/common/llm/student.c"

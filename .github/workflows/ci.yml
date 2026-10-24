@@ -1352,24 +1352,41 @@ jobs:
           make -C boot/linux_x86_64 >/dev/null
       # 0-14 S2 stage 2f: a stopped node sends nothing of its mind (its own
       # re-drive, answers to wants, wants, mind/have); two nodes over a relay,
-      # ~2.5 min per arm; the nc arm builds -DSWARM_STOP_NO_OUT_OBEY.
+      # ~1.5 min per arm; the nc arm builds -DSWARM_STOP_NO_OUT_OBEY, the
+      # answer and have arms ungate one mouth each (O2 / O5 red).
       - name: the outgoing mind obeying the stop ([stop-out], BLOCKING, 0-14 S2)
         run: |
           timeout 400 tests/host/run_stop_outgoing.sh | tee stop_out.log
           grep -aF '[stop-out] ALL PASS' stop_out.log
           timeout 400 tests/host/run_stop_outgoing.sh nc | tee stop_out_nc.log
           grep -aF '[stop-out] NC RED as expected' stop_out_nc.log
+          timeout 400 tests/host/run_stop_outgoing.sh answer | tee stop_out_answer.log
+          grep -aF '[stop-out] NC RED as expected (answer)' stop_out_answer.log
+          timeout 400 tests/host/run_stop_outgoing.sh have | tee stop_out_have.log
+          grep -aF '[stop-out] NC RED as expected (have)' stop_out_have.log
           make -C boot/linux_x86_64 >/dev/null
       # 0-14 S2 [live]: one signed command typed into one of three nodes stops
       # all three, a signer missing from their tables stops nobody, a signed
-      # resume resumes all (~4 min per arm); the nc arm builds
-      # -DSWARM_STOP_NO_FORWARD.
+      # resume resumes all, a fourth node started late is stopped by the
+      # re-drive (~5 min per arm); the nc arm builds -DSWARM_STOP_NO_FORWARD,
+      # the late arm -DSWARM_STOP_SEND_ONCE (L4 red, L2 green).
       - name: one signed command stops the swarm ([stop-live], BLOCKING, 0-14 S2)
         run: |
           timeout 600 tests/host/run_stop_live.sh | tee stop_live.log
           grep -aF '[stop-live] ALL PASS' stop_live.log
           timeout 600 tests/host/run_stop_live.sh nc | tee stop_live_nc.log
           grep -aF '[stop-live] NC RED as expected' stop_live_nc.log
+          timeout 600 tests/host/run_stop_live.sh late | tee stop_live_late.log
+          grep -aF '[stop-live] LATE RED as expected' stop_live_late.log
+          make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 persist: the stop, the epoch and the stop-key table come back
+      # after a restart (one node, one PKERNEL_PFS_DIR, five runs), a changed
+      # byte starts it stopped; the falsifier -DSWARM_STOP_NO_PERSIST runs
+      # inside the script. It rebuilds and cleans; the plain binary is rebuilt.
+      - name: the stop survives a restart ([stop-persist], BLOCKING, 0-14 S2)
+        run: |
+          timeout 900 tests/host/run_stop_persist.sh | tee stop_persist.log
+          grep -aF '[stop-persist] ALL PASS' stop_persist.log
           make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:

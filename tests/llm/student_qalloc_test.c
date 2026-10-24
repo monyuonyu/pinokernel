@@ -30,6 +30,11 @@
  * Negative controls (run_st_qalloc.sh): -DST_QALLOC_INVERT P1 red;
  * -DST_QUANT_BADSCALE D1 red (E4 refused); -DST_QALLOC_FLATFISHER values only.
  *
+ * Stage 6 (research/brain-quant-alloc-el.md, run_st_qalloc_el.sh, seeds 9-16):
+ * -DST_QALLOC_EL picks by st_quant_omega_el (sum_i F_i (RTN(W)_i - W_i)^2)
+ * instead; every item, P2 and the controls then refer to omega_el, and stage
+ * 5's omega is printed as a value ("value omega_mat").
+ *
  *   student_qalloc_test <b1_held.txt> <seed>     exit 0 = ALL PASS
  */
 #include <stdio.h>
@@ -44,6 +49,14 @@
 #define SEQ 32
 #define LN2 0.69314718055994530942
 #define NARM 3
+
+#if defined(ST_QALLOC_EL)
+#define OMEGA st_quant_omega_el
+#define OMEGA_NAME "omega_el"
+#else
+#define OMEGA st_quant_omega
+#define OMEGA_NAME "omega"
+#endif
 
 static const char *arm_name[NARM] = { "E4", "E3O3", "A3" };
 static const int arm_bits[NARM][3] = { { 4, 2, 2 }, { 3, 2, 3 }, { 2, 3, 2 } };  /* embed attn out */
@@ -224,13 +237,25 @@ int main(int argc, char **argv)
     int pick = -1, worst = 0;
     if (!F || st_quant_fisher(&m, cal, cn, SEQ, F) != ST_OK) okA = 0;
     for (int a = 0; a < NARM; a++) {
-        om[a] = okA ? st_quant_omega(&m, F, 2, arm_bits[a][0], arm_bits[a][1], arm_bits[a][2]) : -1.0;
+        om[a] = okA ? OMEGA(&m, F, 2, arm_bits[a][0], arm_bits[a][1], arm_bits[a][2]) : -1.0;
         if (!(om[a] > 0.0)) okA = 0;
         if (om[a] > om[worst]) worst = a;
     }
     if (okA) pick = st_quant_alloc_pick(om, NARM);
-    printf("[st-qalloc] omega E4 %.6g E3O3 %.6g A3 %.6g; pick %s; largest %s\n", om[0], om[1], om[2],
+    printf("[st-qalloc] " OMEGA_NAME " E4 %.6g E3O3 %.6g A3 %.6g; pick %s; largest %s\n", om[0], om[1], om[2],
            pick >= 0 && pick < NARM ? arm_name[pick] : "none", arm_name[worst]);
+#if defined(ST_QALLOC_EL)
+    {
+        double o5[NARM];
+        int k5 = 0;
+        for (int a = 0; a < NARM; a++) {
+            o5[a] = okA ? st_quant_omega(&m, F, 2, arm_bits[a][0], arm_bits[a][1], arm_bits[a][2]) : -1.0;
+            if (o5[a] < o5[k5]) k5 = a;
+        }
+        printf("[st-qalloc] value omega_mat E4 %.6g E3O3 %.6g A3 %.6g; smallest %s\n",
+               o5[0], o5[1], o5[2], arm_name[k5]);
+    }
+#endif
     if (pick < 0 || pick >= NARM) okA = 0;
     else if (st_quant_gptq_bits(&m, &qx, 2, arm_bits[pick][0], arm_bits[pick][1], arm_bits[pick][2],
                                 cal, cn, SEQ, NULL) != ST_OK || !same_w(&qx, &qa[pick])) okA = 0;

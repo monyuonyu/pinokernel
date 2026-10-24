@@ -2914,12 +2914,15 @@ int st_quant_fisher(const st_model *src, const uint8_t *calib, int ncalib,
     return ST_OK;
 }
 
-/* one [R][C] matrix at off: mean(F over it) * ||RTN_b(W) - W||^2, row grid */
-static double qa_omega_mat(const st_model *src, const double *F, int off, int R, int C, int bits)
+/* one [R][C] matrix at off, row grid: el == 0 is stage 5's
+ * mean(F over it) * ||RTN_b(W) - W||^2; el == 1 is stage 6's
+ * sum_i F_i (RTN_b(W)_i - W_i)^2 */
+static double qa_omega_mat(const st_model *src, const double *F, int off, int R, int C,
+                           int bits, int el)
 {
     const float *W = src->w + off;
     int qmax = (1 << (bits - 1)) - 1;
-    double fs = 0.0, e2 = 0.0;
+    double fs = 0.0, e2 = 0.0, fe = 0.0;
     for (int r = 0; r < R; r++) {
         const float *Wr = W + (size_t)r * C;
         float s = st_quant_scale(Wr, C, qmax);
@@ -2929,35 +2932,49 @@ static double qa_omega_mat(const st_model *src, const double *F, int off, int R,
             e2 += d * d;
 #if !defined(ST_QALLOC_FLATFISHER)
             fs += F[off + (size_t)r * C + c];
+            if (el) fe += F[off + (size_t)r * C + c] * d * d;
 #endif
         }
     }
 #if defined(ST_QALLOC_FLATFISHER)
     (void)F; fs = (double)R * (double)C;       /* control: every F = 1 */
+    fe = e2;
 #endif
-    return fs / ((double)R * (double)C) * e2;
+    return el ? fe : fs / ((double)R * (double)C) * e2;
+}
+
+static double qa_omega(const st_model *src, const double *F, int bits,
+                       int bits_embed, int bits_attn, int bits_out, int el)
+{
+    if (!src || !F || !gq_bits_ok(bits) || !gq_bits_ok(bits_embed) ||
+        !gq_bits_ok(bits_attn) || !gq_bits_ok(bits_out)) return -1.0;
+    ST_DIMS(src);
+    double om = qa_omega_mat(src, F, src->o_embed, V, D, bits_embed, el);
+    for (int l = 0; l < L; l++) {
+        om += qa_omega_mat(src, F, src->o_wq + l * D * D, D, D, bits_attn, el);
+        om += qa_omega_mat(src, F, src->o_wk + l * D * D, D, D, bits_attn, el);
+        om += qa_omega_mat(src, F, src->o_wv + l * D * D, D, D, bits_attn, el);
+        om += qa_omega_mat(src, F, src->o_wo + l * D * D, D, D, bits_attn, el);
+    }
+    for (int x = 0; x < L * E; x++) {
+        om += qa_omega_mat(src, F, src->o_w1 + x * DFF * D, DFF, D, bits, el);
+        om += qa_omega_mat(src, F, src->o_w3 + x * DFF * D, DFF, D, bits, el);
+        om += qa_omega_mat(src, F, src->o_w2 + x * D * DFF, D, DFF, bits, el);
+    }
+    om += qa_omega_mat(src, F, src->o_out, V, D, bits_out, el);
+    return om;
 }
 
 double st_quant_omega(const st_model *src, const double *F, int bits,
                       int bits_embed, int bits_attn, int bits_out)
 {
-    if (!src || !F || !gq_bits_ok(bits) || !gq_bits_ok(bits_embed) ||
-        !gq_bits_ok(bits_attn) || !gq_bits_ok(bits_out)) return -1.0;
-    ST_DIMS(src);
-    double om = qa_omega_mat(src, F, src->o_embed, V, D, bits_embed);
-    for (int l = 0; l < L; l++) {
-        om += qa_omega_mat(src, F, src->o_wq + l * D * D, D, D, bits_attn);
-        om += qa_omega_mat(src, F, src->o_wk + l * D * D, D, D, bits_attn);
-        om += qa_omega_mat(src, F, src->o_wv + l * D * D, D, D, bits_attn);
-        om += qa_omega_mat(src, F, src->o_wo + l * D * D, D, D, bits_attn);
-    }
-    for (int x = 0; x < L * E; x++) {
-        om += qa_omega_mat(src, F, src->o_w1 + x * DFF * D, DFF, D, bits);
-        om += qa_omega_mat(src, F, src->o_w3 + x * DFF * D, DFF, D, bits);
-        om += qa_omega_mat(src, F, src->o_w2 + x * D * DFF, D, DFF, bits);
-    }
-    om += qa_omega_mat(src, F, src->o_out, V, D, bits_out);
-    return om;
+    return qa_omega(src, F, bits, bits_embed, bits_attn, bits_out, 0);
+}
+
+double st_quant_omega_el(const st_model *src, const double *F, int bits,
+                         int bits_embed, int bits_attn, int bits_out)
+{
+    return qa_omega(src, F, bits, bits_embed, bits_attn, bits_out, 1);
 }
 
 int st_quant_alloc_pick(const double *omega, int n)

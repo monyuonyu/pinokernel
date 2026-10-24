@@ -470,6 +470,11 @@ int    st_quant_fisher(const st_model *src, const uint8_t *calib, int ncalib,
 double st_quant_omega(const st_model *src, const double *F, int bits,
                       int bits_embed, int bits_attn, int bits_out);
 int    st_quant_alloc_pick(const double *omega, int n);
+/* stage 6 (research/brain-quant-alloc-el.md): sum over every quantized element
+ * of F_i * (RTN_b(W)_i - W_i)^2, the same matrices and bits as st_quant_omega
+ * (element-wise instead of the matrix's mean F). -1 on bad arguments. */
+double st_quant_omega_el(const st_model *src, const double *F, int bits,
+                         int bits_embed, int bits_attn, int bits_out);
 double st_quant_copy_kl(st_model *a, st_model *b, const uint8_t *win, int nwin,
                         int seq);
 

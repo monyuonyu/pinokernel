@@ -48,6 +48,8 @@ void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *));
 /* [live]: take a command from "swarm/stop", send the last accepted one on;
  * one call per tick (mind_net_task) */
 void swarm_stop_net_tick(void (*out)(const char *));
+/* persist: read PKERNEL_PFS_DIR/swarm-stop.st at boot (a bad file: stopped here) */
+void swarm_stop_restore(void (*out)(const char *));
 INT  swarm_stop_refuses_mind(const UB *a, UW n);   /* stopped and `mind teach` */
 
 #endif

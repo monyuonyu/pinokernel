@@ -15,10 +15,21 @@
 #   O3 after B's `stop resume`, A receives "remote teach arrived:
 #      "sky"->"blue"" within 90 s (the stop held the fact back, it did not
 #      drop it)
+#   O4 (audit-75: the test saw the re-drive mouth only) right after O1 A runs
+#      `mind ask sky` and publishes a want ("published mind/want") inside the
+#      window: a stopped B that answered it would teach A (O2)
+#   O5 inside the window A logs no "mind/have from node" line (B is its only
+#      peer; the log numbers nodes from 0, so B is "node 1") (a stopped B
+#      publishes no have summary). B is taught a second fact (ink fresh) that A
+#      never asks about: A hints only keys it does not already want, so the ask
+#      of O4 alone would hide a have summary about sky (first measurement)
 # Falsifier: -DSWARM_STOP_NO_OUT_OBEY (the outgoing tick does not look at the
-# stop) must turn O2 red.
+# stop) must turn O2 red. One mouth at a time: -DSWARM_STOP_ANSWER_UNGATED
+# (B answers wants while stopped) must turn O2 red, -DSWARM_STOP_HAVE_UNGATED
+# (B publishes mind/have while stopped) must turn O5 red.
 # Output: "[stop-out] <check> PASS|FAIL", then ALL PASS (exit 0) or RED (1).
-# Arg: "nc" builds the falsifier and expects O2 red (exit 0 when so).
+# Arg: "nc" builds the falsifier and expects O2 red (exit 0 when so);
+# "answer" and "have" build the one-mouth falsifiers and expect O2 / O5 red.
 # Rebuilds boot/linux* with EXTRA_CFLAGS and cleans it afterwards.
 # Env: SOU_PORT (default 7495).
 set -u
@@ -31,6 +42,8 @@ esac
 MODE="${1:-plain}"
 CF=""
 [ "$MODE" = nc ] && CF="-DSWARM_STOP_NO_OUT_OBEY"
+[ "$MODE" = answer ] && CF="-DSWARM_STOP_ANSWER_UNGATED"
+[ "$MODE" = have ] && CF="-DSWARM_STOP_HAVE_UNGATED"
 make -C "$BOOT" clean >/dev/null 2>&1
 make -C "$BOOT" EXTRA_CFLAGS="$CF" > /tmp/stop_out.build.log 2>&1 \
     || { echo "[stop-out] build FAIL"; tail -20 /tmp/stop_out.build.log; exit 1; }
@@ -67,12 +80,16 @@ PB=$!; exec 8<>"$WORK/fb"
 wait_for "$B" 'mind_net_task up' 90 || echo "[stop-out] note: B mind_net_task not seen"
 printf 'mind teach sky blue\n' >&8
 wait_for "$B" 'published mind/teach' 60 || echo "[stop-out] note: B sky not published"
+n=0; printf 'mind teach ink fresh\n' >&8
+while [ "$(grep -ac 'published mind/teach' "$B")" -lt 2 ] && [ "$n" -lt 120 ]; do sleep 0.5; n=$((n + 1)); done
+[ "$n" -lt 120 ] || echo "[stop-out] note: B ink not published"
 printf 'stop now\n' >&8
 if wait_for "$B" 'stopped 1 local 1' 30; then res O0-stopped PASS; else res O0-stopped FAIL; fi
 env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/da" PKERNEL_RELAY="127.0.0.1:$PORT" \
     "$BOOT/p-kernel" < "$WORK/fa" > "$A" 2>&1 &
 PA=$!; exec 7<>"$WORK/fa"
 if wait_for "$A" 'mind_net_task up' 90; then res O1-a-up PASS; else res O1-a-up FAIL; fi
+printf 'mind ask sky\n' >&7
 sleep 40
 printf 'mind provenance\n' >&7
 sleep 3
@@ -81,13 +98,19 @@ if grep -aqE 'remote teach arrived: "sky"' "$A" || grep -aqE '^\[mind\]   "sky" 
 else
     res O2-nothing-out PASS
 fi
+if grep -aq 'published mind/want' "$A"; then res O4-a-wants-sky PASS; else res O4-a-wants-sky FAIL; fi
+if grep -aq 'mind/have from node' "$A"; then res O5-no-have-out FAIL; else res O5-no-have-out PASS; fi
 printf 'stop resume\n' >&8
 if wait_for "$A" 'remote teach arrived: "sky"->"blue"' 90; then res O3-after-resume PASS; else res O3-after-resume FAIL; fi
 cp "$A" /tmp/stop_out.A.log 2>/dev/null; cp "$B" /tmp/stop_out.B.log 2>/dev/null
-if [ "$MODE" = nc ]; then
+want=""
+[ "$MODE" = nc ] && want=O2-nothing-out
+[ "$MODE" = answer ] && want=O2-nothing-out
+[ "$MODE" = have ] && want=O5-no-have-out
+if [ -n "$want" ]; then
     case "$REDS" in
-        *O2-nothing-out*) echo "[stop-out] NC RED as expected:$REDS"; exit 0 ;;
-        *) echo "[stop-out] NC FAIL: the falsifier stayed green ($REDS)"; exit 1 ;;
+        *"$want"*) echo "[stop-out] NC RED as expected ($MODE):$REDS"; exit 0 ;;
+        *) echo "[stop-out] NC FAIL ($MODE): the falsifier stayed green ($REDS)"; exit 1 ;;
     esac
 fi
 if [ -z "$REDS" ]; then echo "[stop-out] ALL PASS"; exit 0; fi
