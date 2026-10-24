@@ -24,7 +24,7 @@
 #      never asks about: A hints only keys it does not already want, so the ask
 #      of O4 alone would hide a have summary about sky (first measurement)
 #   O6 (audit-77: a B that did not gate its want stayed green) right after O1
-#      the stopped B runs `mind ask cat` (a key nobody holds); inside the
+#      the stopped B runs `mind ask snow` (a key word nobody was taught); inside the
 #      window B logs no "published mind/want" and A no "mind/want from node"
 #   O7 after B's `stop resume`, B logs "published mind/want" within 60 s (the
 #      ask was held back, not lost; O6 could see it)
@@ -99,7 +99,7 @@ env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/da" PKERNEL_RELAY
 PA=$!; exec 7<>"$WORK/fa"
 if wait_for "$A" 'mind_net_task up' 90; then res O1-a-up PASS; else res O1-a-up FAIL; fi
 printf 'mind ask sky\n' >&7
-printf 'mind ask cat\n' >&8
+printf 'mind ask snow\n' >&8
 sleep 40
 printf 'mind provenance\n' >&7
 sleep 3
