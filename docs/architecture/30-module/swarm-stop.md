@@ -36,6 +36,17 @@ ROADMAP 0-14 S2・全体の決まり 9。「故障では死なないが、人は
 2g. **再起動のあとも残す（2026-10-24、feat/stop-persist、hosted だけ）**: `PKERNEL_PFS_DIR` があれば、コンソールでの変更と網から受け入れた命令のたびに `swarm-stop.st` を書き直す（pfs_dur_write＝一時ファイル＋rename＋fsync。**pfs の ref にはしない**: ref は仲間とゴシップされ、新しい seq で上書きされる＝仲間が鍵の表を書き換えられてしまい決まり 5 が破れる）。中身は署名つきの止まり・手元の止まり・epoch・**鍵の表**・最後に受け入れた命令（再起動のあとも流し直す）。鍵の表を残さないと、再起動のあとは表が空＝署名つきの再開も拒まれ、誰も再開できない。起動時に pfs_dag_restore の後で読む。CRC か形が合わないファイルは「手元の止まり」で起動する（fail-closed、`stop resume` で抜けられる）。書くのは止まりを決める PK_NOSW の区間の中（2 つのタスクが同じ一時ファイルに書かない。人の操作のたびに数 ms）。自己検査は書かない。試験 `tests/host/run_stop_persist.sh` の R0〜R7（1 ノード・同じ dir で 5 回起こす。作る前に固定）、陰性コントロール `-DSWARM_STOP_NO_PERSIST` で R1 赤。限界: PKERNEL_PFS_DIR が無ければ RAM だけ（前と同じ）。読めないファイル（権限など）は「無い」と同じに見える。ファイルを消せば止まりは解ける（端末の持ち主はできる＝止められるのは正直なノードだけ、と同じ）。監査-77 の注: 網から受け入れた命令のあとの書き込みと、再起動後の流し直しの命令の復元は、外しても R0〜R7 が緑＝1 ノードのコンソールの試験の外（**→ 監査-78: 網から受けた止まりの書き込みは [live] の L5 で試験の中に入った。陰性コントロール `-DSWARM_STOP_NET_NO_PERSIST` で L5 だけ赤、CI の外。流し直しの命令の復元は今も試験の外**）。pfs_dur_write の失敗は黙る（古いファイルが残り、再起動で古い状態に戻りうる）。**→ 2026-10-24 feat/stop-save-note: 失敗したら次の状態の行の前に `[stop] could not save swarm-stop.st (the file on disk keeps the previous state)` を 1 行出す（RAM の状態は変えない、PKERNEL_PFS_DIR が無いのは失敗としない）。試験 R8（一時ファイルの名前をディレクトリにして書けなくする＝root でも失敗する）**
 3. ベアメタルへ（crown が動く。判断待ちへ）
 
+## ベアへ（R-STOPBARE の下ごしらえ、2026-10-24、コードの読みだけ・測っていない）
+
+hosted で止まりに従わせた口（2a〜2g・[live]）は全部 `_TK_HOSTED_LIBC_` の中。ベアには swarm_stop.c が入っていない（boot/x86・boot/aarch64 の Makefile）。ベアに**ある口・無い口**:
+- **無い**: mind_net_task・mind_merge_task（作るのは arch/linux の usermain だけ）＝2b・2c・2e・2f・[live] の送り出しの口、galaxy、`mind teach`（arch/x86/shell.c に無い）
+- **ある（ベア x86）**: DMN の眠りの仕事（dmn.c の ga_step・engram の再生・r3 の蒸留＝`dmn_init` は arch/x86/usermain.c）、シェルの `pub` と syscall の kdds_pub（利用者のプログラムの送り出し、心ではない）、KLOAD（0-14 S3 でコンソールの門つき）
+- **ベア AArch64**: DMN もシェルの教えも無い。KLOAD だけ（門つき）
+- 命令の受け口: ベアには mind_net_task が無いので、[live] の受け口は既存のベアのタスク（DMN の拍など）に足すことになる
+- 永続: ベア x86 には K-DDS の話題をディスクに書く persist.c がある。ただし話題は仲間と共有されうる＝決まり 5（表はコンソールだけ）に触れないかを先に確かめる。無理なら RAM だけ、と限界に書く
+
+段の案（各段で .text の差分を測り、監査 PASS を条件に re-bless）: ① swarm_stop.c をベアに入れ、x86 のシェルに `stop` と DMN の 3 つの仕事の門（[stop-sleep] と同じ項目を QEMU で）② [live] の受け口 ③ 永続（置き場が決まれば）
+
 ## 限界（先に書く）
 
 - 鍵を人がどう配るか（端末ごとにコンソールで足すのか、参加のときに渡すのか）は決めていない。S1（同意制）と一緒に決める
