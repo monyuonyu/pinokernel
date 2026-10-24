@@ -80,7 +80,14 @@ static int g_pass = 0, g_fail = 0;
 #define GAIN    0.03f     /* nats, brain-merge-distill.md §3 */
 #define D_STEPS 400       /* distillation steps (fixed, d5c3-plan.md) */
 #define D_LR    1e-3f     /* Adam, FedDF §4.1 */
-#define B_LR    LR        /* stage 3b: the parents' LR; steps ROUNDS * TW */
+/* stage 3b: the init arm's LR, steps ROUNDS * TW. Stage 6
+ * (brain-merge-blr.md §2): its own constant, -DD5C_B_LR=<v>; the default
+ * stays the parents' LR (= stage 5's output) */
+#ifdef D5C_B_LR
+#define B_LR    (D5C_B_LR)
+#else
+#define B_LR    LR
+#endif
 #define NGEN_MAX 128
 #define START_SEL 2       /* test-local: st_merge_distill_sel */
 
@@ -233,6 +240,16 @@ static void sel_check(const char *sc, st_model *C, st_model *A, st_model *B,
     int same = rc >= 0 && rp >= 0 && ri >= 0 &&
                memcmp(C->w, W->w, (size_t)C->n_params * sizeof(float)) == 0;
     int test_agrees = (ti < tp) == want;
+    /* stage 6: both arms' walks (brain-merge-blr.md §2). guard = VAL of the
+     * guarded pick, the fall-back of both arms; ancestor = VAL of I, where
+     * the init arm starts */
+    printf("  [walk %s pick] best_step=%d val guard %.4f -> %.4f fell_back=%d\n",
+           sc, ss.pick.best_step, (double)ss.pick.val_before,
+           (double)ss.pick.val_after, ss.pick.best_step == 0);
+    printf("  [walk %s init] best_step=%d val guard %.4f ancestor %.4f -> %.4f fell_back=%d\n",
+           sc, ss.init.best_step, (double)ss.init.val_before,
+           (double)loss_on((st_model *)I, VALW, VW), (double)ss.init.val_after,
+           ss.init.best_step == 0);
     printf("  [sel %s] VAL pick=%.4f init=%.4f -> chose %s | TEST pick=%.4f init=%.4f -> %s\n",
            sc, (double)ss.pick.val_after, (double)ss.init.val_after,
            ss.chose_init ? "init" : "pick", (double)tp, (double)ti,
@@ -431,6 +448,7 @@ int main(void)
     const char *eo = getenv("D5C_ONLY_SEL");
     int only_sel = eo && *eo == '1';
     printf("  seed 0x%llX%s\n", (unsigned long long)g_seed, only_sel ? " (only start=sel)" : "");
+    printf("  LR %g B_LR %g\n", (double)LR, (double)B_LR);
 #if defined(ST_DISTILL_SEL_INVERT)
     printf("(NEGATIVE CONTROL build: -DST_DISTILL_SEL_INVERT — expect RED on s1-gain or s2-both start=sel)\n");
 #elif defined(ST_DISTILL_SEL_PICK)
