@@ -14,13 +14,19 @@
 #      refused")
 #   L2 A applies a K1 stop (epoch 7): within 60 s B and C log "[stop] network
 #      command accepted" and their status is "stopped 1 local 0 signed 1"
-#   L3 A applies a K1 resume (epoch 8): within 60 s B and C are "stopped 0"
+#   L4 (audit-75: sending the command once kept L0-L3 green) after L2, a
+#      fourth node D (K1 in its table) starts: within 60 s of its key it logs
+#      "[stop] network command accepted" and is "stopped 1 local 0 signed 1
+#      epoch 7" - only the re-drive can reach a node that was not up yet
+#   L3 A applies a K1 resume (epoch 8): within 60 s B, C and D are "stopped 0"
 # Falsifiers: -DSWARM_STOP_NO_FORWARD (an accepted command is not sent on)
 # must turn L2 red; -DSWARM_STOP_NO_AUTH (no stop-table check) turns L1 red
 # (a local measurement, not in CI).
 # Output: "[stop-live] <check> PASS|FAIL", then ALL PASS (exit 0) or RED (1).
 # Arg: "nc" builds -DSWARM_STOP_NO_FORWARD and expects L2 red; "noauth"
-# builds -DSWARM_STOP_NO_AUTH and expects L1 red (exit 0 when so).
+# builds -DSWARM_STOP_NO_AUTH and expects L1 red; "late" builds
+# -DSWARM_STOP_SEND_ONCE (an accepted command is sent once, never again) and
+# expects L4 red with L2 green (exit 0 when so).
 # Rebuilds boot/linux* with EXTRA_CFLAGS and cleans it afterwards.
 # Env: SLV_PORT (default 7491).
 set -u
@@ -34,6 +40,7 @@ MODE="${1:-plain}"
 CF="-DSWARM_STOP_TEST_SIGN"
 [ "$MODE" = nc ] && CF="$CF -DSWARM_STOP_NO_FORWARD"
 [ "$MODE" = noauth ] && CF="$CF -DSWARM_STOP_NO_AUTH"
+[ "$MODE" = late ] && CF="$CF -DSWARM_STOP_SEND_ONCE"
 make -C "$BOOT" clean >/dev/null 2>&1
 make -C "$BOOT" EXTRA_CFLAGS="$CF" > /tmp/stop_live.build.log 2>&1 \
     || { echo "[stop-live] build FAIL"; tail -20 /tmp/stop_live.build.log; exit 1; }
@@ -42,11 +49,11 @@ export PKERNEL_RELAY_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456
 unset PKERNEL_RELAY_HOST PKERNEL_RELAY_PORT PKERNEL_LAN
 PORT="${SLV_PORT:-7491}"
 WORK="$(mktemp -d /tmp/slv.XXXXXX)"
-REDS=""; RELAY=0; PA=0; PB=0; PC=0
+REDS=""; RELAY=0; PA=0; PB=0; PC=0; PD=0
 res() { echo "[stop-live] $1 $2"; [ "$2" = FAIL ] && REDS="$REDS $1"; return 0; }
 cleanup() {
-    for p in "$PA" "$PB" "$PC" "$RELAY"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
-    exec 7>&- 8>&- 9>&- 2>/dev/null; wait 2>/dev/null
+    for p in "$PA" "$PB" "$PC" "$PD" "$RELAY"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
+    exec 6>&- 7>&- 8>&- 9>&- 2>/dev/null; wait 2>/dev/null
     make -C "$BOOT" clean >/dev/null 2>&1
     rm -rf "$WORK"
 }
@@ -81,7 +88,7 @@ paste_cmd() {  # <fd> <216 hex>
 RELAY=$!
 sleep 1
 A="$WORK/a.log"; B="$WORK/b.log"; C="$WORK/c.log"
-mkfifo "$WORK/fa" "$WORK/fb" "$WORK/fc"; mkdir -p "$WORK/da" "$WORK/db" "$WORK/dc"
+mkfifo "$WORK/fa" "$WORK/fb" "$WORK/fc" "$WORK/fd"; mkdir -p "$WORK/da" "$WORK/db" "$WORK/dc" "$WORK/dd"
 start() {  # <id> <fifo> <log> <dir>
     env PKERNEL_NODE_ID="$1" PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$4" PKERNEL_RELAY="127.0.0.1:$PORT" \
         "$BOOT/p-kernel" < "$2" > "$3" 2>&1 &
@@ -121,24 +128,46 @@ if [ "$okb" = 1 ] && [ "$okc" = 1 ] &&
 else
     res L2-one-command-stops-all FAIL
 fi
+# L4: a late joiner D gets the stop from the re-drive
+D="$WORK/d.log"
+start 4 "$WORK/fd" "$D" "$WORK/dd"; PD=$!; exec 6<>"$WORK/fd"
+okd=0
+if wait_for "$D" 'mind_net_task up' 120; then
+    printf 'stop key %s\n' "$K1" >&6
+    wait_for "$D" '\[stop\] network command accepted' 60 && okd=1
+fi
+printf 'stop\n' >&6; sleep 2
+if [ "$okd" = 1 ] && st "$D" | grep -q 'stopped 1 local 0 signed 1 epoch 7'; then
+    res L4-late-joiner-stops PASS
+else
+    res L4-late-joiner-stops FAIL
+fi
 # L3: K1 resume on A
 paste_cmd 7 "$C1R"
 wait_for "$B" 'epoch 8' 60 || true
 wait_for "$C" 'epoch 8' 60 || true
+wait_for "$D" 'epoch 8' 60 || true
 sleep 3
-printf 'stop\n' >&8; printf 'stop\n' >&9; sleep 2
-if st "$B" | grep -q 'stopped 0 local 0 signed 0 epoch 8' && st "$C" | grep -q 'stopped 0 local 0 signed 0 epoch 8'; then
+printf 'stop\n' >&8; printf 'stop\n' >&9; printf 'stop\n' >&6; sleep 2
+if st "$B" | grep -q 'stopped 0 local 0 signed 0 epoch 8' && st "$C" | grep -q 'stopped 0 local 0 signed 0 epoch 8' &&
+   st "$D" | grep -q 'stopped 0 local 0 signed 0 epoch 8'; then
     res L3-resume-all PASS
 else
     res L3-resume-all FAIL
 fi
-echo "[stop-live] last status A: $(st "$A") | B: $(st "$B") | C: $(st "$C")"
+echo "[stop-live] last status A: $(st "$A") | B: $(st "$B") | C: $(st "$C") | D: $(st "$D")"
 cp "$B" /tmp/stop_live.B.log 2>/dev/null
 case "$MODE" in
     nc)
         case "$REDS" in
             *L2-one-command-stops-all*) echo "[stop-live] NC RED as expected:$REDS"; exit 0 ;;
             *) echo "[stop-live] NC FAIL: the falsifier stayed green ($REDS)"; exit 1 ;;
+        esac ;;
+    late)
+        case "$REDS" in
+            *L2-one-command-stops-all*) echo "[stop-live] LATE FAIL: L2 went red too ($REDS)"; exit 1 ;;
+            *L4-late-joiner-stops*) echo "[stop-live] LATE RED as expected:$REDS"; exit 0 ;;
+            *) echo "[stop-live] LATE FAIL: the falsifier stayed green ($REDS)"; exit 1 ;;
         esac ;;
     noauth)
         case "$REDS" in
