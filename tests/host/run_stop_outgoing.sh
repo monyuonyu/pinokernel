@@ -23,13 +23,21 @@
 #      publishes no have summary). B is taught a second fact (ink fresh) that A
 #      never asks about: A hints only keys it does not already want, so the ask
 #      of O4 alone would hide a have summary about sky (first measurement)
+#   O6 (audit-77: a B that did not gate its want stayed green) right after O1
+#      the stopped B runs `mind ask cat` (a key nobody holds); inside the
+#      window B logs no "published mind/want" and A no "mind/want from node"
+#   O7 after B's `stop resume`, B logs "published mind/want" within 60 s (the
+#      ask was held back, not lost; O6 could see it)
 # Falsifier: -DSWARM_STOP_NO_OUT_OBEY (the outgoing tick does not look at the
 # stop) must turn O2 red. One mouth at a time: -DSWARM_STOP_ANSWER_UNGATED
 # (B answers wants while stopped) must turn O2 red, -DSWARM_STOP_HAVE_UNGATED
-# (B publishes mind/have while stopped) must turn O5 red.
+# (B publishes mind/have while stopped) must turn O5 red,
+# -DSWARM_STOP_WANT_UNGATED (B publishes its own wants while stopped) must
+# turn O6 red (a local measurement, not in CI).
 # Output: "[stop-out] <check> PASS|FAIL", then ALL PASS (exit 0) or RED (1).
 # Arg: "nc" builds the falsifier and expects O2 red (exit 0 when so);
-# "answer" and "have" build the one-mouth falsifiers and expect O2 / O5 red.
+# "answer", "have" and "want" build the one-mouth falsifiers and expect
+# O2 / O5 / O6 red.
 # Rebuilds boot/linux* with EXTRA_CFLAGS and cleans it afterwards.
 # Env: SOU_PORT (default 7495).
 set -u
@@ -44,6 +52,7 @@ CF=""
 [ "$MODE" = nc ] && CF="-DSWARM_STOP_NO_OUT_OBEY"
 [ "$MODE" = answer ] && CF="-DSWARM_STOP_ANSWER_UNGATED"
 [ "$MODE" = have ] && CF="-DSWARM_STOP_HAVE_UNGATED"
+[ "$MODE" = want ] && CF="-DSWARM_STOP_WANT_UNGATED"
 make -C "$BOOT" clean >/dev/null 2>&1
 make -C "$BOOT" EXTRA_CFLAGS="$CF" > /tmp/stop_out.build.log 2>&1 \
     || { echo "[stop-out] build FAIL"; tail -20 /tmp/stop_out.build.log; exit 1; }
@@ -90,6 +99,7 @@ env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/da" PKERNEL_RELAY
 PA=$!; exec 7<>"$WORK/fa"
 if wait_for "$A" 'mind_net_task up' 90; then res O1-a-up PASS; else res O1-a-up FAIL; fi
 printf 'mind ask sky\n' >&7
+printf 'mind ask cat\n' >&8
 sleep 40
 printf 'mind provenance\n' >&7
 sleep 3
@@ -100,13 +110,20 @@ else
 fi
 if grep -aq 'published mind/want' "$A"; then res O4-a-wants-sky PASS; else res O4-a-wants-sky FAIL; fi
 if grep -aq 'mind/have from node' "$A"; then res O5-no-have-out FAIL; else res O5-no-have-out PASS; fi
+if grep -aq 'published mind/want' "$B" || grep -aq 'mind/want from node' "$A"; then
+    res O6-no-want-out FAIL
+else
+    res O6-no-want-out PASS
+fi
 printf 'stop resume\n' >&8
 if wait_for "$A" 'remote teach arrived: "sky"->"blue"' 90; then res O3-after-resume PASS; else res O3-after-resume FAIL; fi
+if wait_for "$B" 'published mind/want' 60; then res O7-want-after-resume PASS; else res O7-want-after-resume FAIL; fi
 cp "$A" /tmp/stop_out.A.log 2>/dev/null; cp "$B" /tmp/stop_out.B.log 2>/dev/null
 want=""
 [ "$MODE" = nc ] && want=O2-nothing-out
 [ "$MODE" = answer ] && want=O2-nothing-out
 [ "$MODE" = have ] && want=O5-no-have-out
+[ "$MODE" = want ] && want=O6-no-want-out
 if [ -n "$want" ]; then
     case "$REDS" in
         *"$want"*) echo "[stop-out] NC RED as expected ($MODE):$REDS"; exit 0 ;;
