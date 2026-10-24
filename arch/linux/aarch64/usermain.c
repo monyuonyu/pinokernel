@@ -22,6 +22,7 @@ INT rx_bounds_run(void (*out)(const char *));      /* rx_bounds_test.c (0-9) */
 INT swarm_stop_selftest(void (*out)(const char *)); /* swarm_stop.c (0-14 S2) */
 void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *)); /* S2 stage 2a */
 INT swarm_stop_refuses_mind(const UB *a, UW n);     /* S2 stage 2a */
+void swarm_stop_restore(void (*out)(const char *)); /* S2 persist */
 #include <tmonitor.h>
 #include "arch_reboot.h"
 #include "rtl8139.h"
@@ -825,6 +826,9 @@ EXPORT INT usermain(void)
      * comes back on reboot. No-op (memory-only) when the env is unset. */
     pfs_durable_restore(print);
     pfs_dag_restore();
+    /* 0-14 S2 persist: the stop, its epoch and the stop-key table come back
+     * before any task that obeys the stop starts. No-op without PKERNEL_PFS_DIR. */
+    swarm_stop_restore(print);
     /* persistence SLICE 2 (docs/architecture/30-module/persistence.md): the LEARNED
      * mind survives the reboot. If a durable weights blob exists AND its
      * header matches THIS build (version + R_NP + vocab content-id), load
