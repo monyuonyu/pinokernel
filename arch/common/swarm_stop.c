@@ -34,7 +34,8 @@
  *  join late). A receiver runs the same swarm_stop_apply, so a signer not in
  *  ITS table stops nobody there, and the same command again is a replay
  *  (refused silently): the re-drive cannot loop. Falsifier:
- *  -DSWARM_STOP_NO_FORWARD ([stop-live] L2).
+ *  -DSWARM_STOP_NO_FORWARD ([stop-live] L2); -DSWARM_STOP_SEND_ONCE (sent once,
+ *  never again: a node started later never hears it, [stop-live] L4).
  */
 
 #include "swarm_stop.h"
@@ -606,6 +607,9 @@ void swarm_stop_net_tick(void (*out)(const char *))
         ss_ticks = 0;
         PK_NOSW_ENTER();                  /* ss_fwd may be rewritten by apply */
         (void)kdds_pub(ss_pub, ss_fwd, (W)SWARM_STOP_CMD_LEN);
+#if defined(SWARM_STOP_SEND_ONCE)
+        ss_have_fwd = 0;                  /* falsifier: [stop-live] L4 (late) */
+#endif
         PK_NOSW_LEAVE();
     }
 #endif

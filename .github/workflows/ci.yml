@@ -1362,14 +1362,17 @@ jobs:
           make -C boot/linux_x86_64 >/dev/null
       # 0-14 S2 [live]: one signed command typed into one of three nodes stops
       # all three, a signer missing from their tables stops nobody, a signed
-      # resume resumes all (~4 min per arm); the nc arm builds
-      # -DSWARM_STOP_NO_FORWARD.
+      # resume resumes all, a fourth node started late is stopped by the
+      # re-drive (~5 min per arm); the nc arm builds -DSWARM_STOP_NO_FORWARD,
+      # the late arm -DSWARM_STOP_SEND_ONCE (L4 red, L2 green).
       - name: one signed command stops the swarm ([stop-live], BLOCKING, 0-14 S2)
         run: |
           timeout 600 tests/host/run_stop_live.sh | tee stop_live.log
           grep -aF '[stop-live] ALL PASS' stop_live.log
           timeout 600 tests/host/run_stop_live.sh nc | tee stop_live_nc.log
           grep -aF '[stop-live] NC RED as expected' stop_live_nc.log
+          timeout 600 tests/host/run_stop_live.sh late | tee stop_live_late.log
+          grep -aF '[stop-live] LATE RED as expected' stop_live_late.log
           make -C boot/linux_x86_64 >/dev/null
       # 0-14 S2 persist: the stop, the epoch and the stop-key table come back
       # after a restart (one node, one PKERNEL_PFS_DIR, five runs), a changed
