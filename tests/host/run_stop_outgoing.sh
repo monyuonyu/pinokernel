@@ -18,7 +18,8 @@
 #   O4 (audit-75: the test saw the re-drive mouth only) right after O1 A runs
 #      `mind ask sky` and publishes a want ("published mind/want") inside the
 #      window: a stopped B that answered it would teach A (O2)
-#   O5 inside the window A logs no "mind/have from node 2" (a stopped B
+#   O5 inside the window A logs no "mind/have from node" line (B is its only
+#      peer; the log numbers nodes from 0, so B is "node 1") (a stopped B
 #      publishes no have summary). B is taught a second fact (ink fresh) that A
 #      never asks about: A hints only keys it does not already want, so the ask
 #      of O4 alone would hide a have summary about sky (first measurement)
@@ -98,7 +99,7 @@ else
     res O2-nothing-out PASS
 fi
 if grep -aq 'published mind/want' "$A"; then res O4-a-wants-sky PASS; else res O4-a-wants-sky FAIL; fi
-if grep -aq 'mind/have from node 2' "$A"; then res O5-no-have-out FAIL; else res O5-no-have-out PASS; fi
+if grep -aq 'mind/have from node' "$A"; then res O5-no-have-out FAIL; else res O5-no-have-out PASS; fi
 printf 'stop resume\n' >&8
 if wait_for "$A" 'remote teach arrived: "sky"->"blue"' 90; then res O3-after-resume PASS; else res O3-after-resume FAIL; fi
 cp "$A" /tmp/stop_out.A.log 2>/dev/null; cp "$B" /tmp/stop_out.B.log 2>/dev/null
