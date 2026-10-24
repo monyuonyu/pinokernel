@@ -584,7 +584,12 @@ void swarm_stop_net_tick(void (*out)(const char *))
         if (r > 0) {
             PK_NOSW_ENTER();              /* vs the console stop apply */
             rc = swarm_stop_apply(ss_rx, (UW)r);
-            if (rc == SWARM_STOP_OK) { ss_forward(ss_rx); ss_persist(); }
+            if (rc == SWARM_STOP_OK) {
+                ss_forward(ss_rx);
+#ifndef SWARM_STOP_NET_NO_PERSIST   /* test-only falsifier, run_stop_live.sh L5 */
+                ss_persist();
+#endif
+            }
             PK_NOSW_LEAVE();
             ss_out = out;
             if (rc == SWARM_STOP_OK) {
