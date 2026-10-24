@@ -1347,6 +1347,16 @@ jobs:
           timeout 400 tests/host/run_stop_pathw.sh nc | tee stop_pathw_nc.log
           grep -aF '[stop-pathw] NC RED as expected' stop_pathw_nc.log
           make -C boot/linux_x86_64 >/dev/null
+      # 0-14 S2 stage 2f: a stopped node sends nothing of its mind (its own
+      # re-drive, answers to wants, wants, mind/have); two nodes over a relay,
+      # ~2.5 min per arm; the nc arm builds -DSWARM_STOP_NO_OUT_OBEY.
+      - name: the outgoing mind obeying the stop ([stop-out], BLOCKING, 0-14 S2)
+        run: |
+          timeout 400 tests/host/run_stop_outgoing.sh | tee stop_out.log
+          grep -aF '[stop-out] ALL PASS' stop_out.log
+          timeout 400 tests/host/run_stop_outgoing.sh nc | tee stop_out_nc.log
+          grep -aF '[stop-out] NC RED as expected' stop_out_nc.log
+          make -C boot/linux_x86_64 >/dev/null
 
   ump-aarch64-cross:
     name: "UMP aarch64 (x86_64 上でクロスビルド)"

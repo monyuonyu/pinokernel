@@ -4750,6 +4750,18 @@ static UB mq_answer_sent = 0;
 #define M_REDRIVE_OWN() m_republish_last()
 #endif
 
+/* the outgoing half of a mind_net_task tick: answer region wants, re-drive my
+ * own teach, publish my wonders, my mind/have summary. 0-14 S2 stage 2f
+ * (swarm-stop.md): a stopped node sends none of it (hosted only). Red with
+ * -DSWARM_STOP_NO_OUT_OBEY ([stop-out] O2). */
+#if defined(_TK_HOSTED_LIBC_) && !defined(SWARM_STOP_NO_OUT_OBEY)
+#define MT_OUT_TICK() do { if (!swarm_stop_is_stopped()) { \
+        mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK(); } } while (0)
+#else
+#define MT_OUT_TICK() do { \
+        mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK(); } while (0)
+#endif
+
 static void mq_poll_wants(void)
 {
     if (mq_want_sub_h() < 0) return;
@@ -5029,7 +5041,7 @@ void mind_net_task(INT stacd, void *exinf)
             }
             if (deaf) {
                 deaf--;
-                mq_poll_wants(); M_REDRIVE_OWN(); mq_publish_wants(); MH_TICK();
+                MT_OUT_TICK();      /* answer wants, re-drive, wonders, mind/have */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -5055,10 +5067,7 @@ void mind_net_task(INT stacd, void *exinf)
                     r_puts(" — packet DROPPED (version-partitioned region, IX.7)\r\n");
                     r_puts("[lang-wire-verdrop] PASS\r\n");
                 }
-                mq_poll_wants();            /* LM-15: answer region wants       */
-                M_REDRIVE_OWN();     /* 1-2b */
-                mq_publish_wants();         /* LM-15: publish my own wonders    */
-                MH_TICK();                  /* 1-3c: mind/have                  */
+                MT_OUT_TICK();       /* LM-15 answer/wonders, 1-2b, 1-3c (2f) */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -5077,10 +5086,7 @@ void mind_net_task(INT stacd, void *exinf)
                            " mis-bind), reinitializing nothing, staying clean\r\n");
                     r_puts("[lang-vocab-refuse] PASS\r\n");
                 }
-                mq_poll_wants();            /* LM-15: answer region wants       */
-                M_REDRIVE_OWN();     /* 1-2b */
-                mq_publish_wants();         /* LM-15: publish my own wonders    */
-                MH_TICK();                  /* 1-3c: mind/have                  */
+                MT_OUT_TICK();       /* LM-15 answer/wonders, 1-2b, 1-3c (2f) */
                 tk_dly_tsk(MT_POLL_MS);
                 continue;
             }
@@ -5241,10 +5247,10 @@ void mind_net_task(INT stacd, void *exinf)
         /* re-drive my own last local teach so a peer whose region RTT only
          * became measurable after my first publish still receives it
          * (best-effort, idempotent at the receiver — VIII.3). */
-        mq_poll_wants();       /* LM-15: answer region wants I can serve       */
-        M_REDRIVE_OWN();     /* 1-2b */
-        mq_publish_wants();    /* LM-15: publish my own unanswered wonders     */
-        MH_TICK();             /* 1-3c: my HAVE summary + wants from theirs    */
+        /* LM-15: answer region wants I can serve; 1-2b my re-drive; LM-15 my
+         * unanswered wonders; 1-3c my HAVE summary + wants from theirs.
+         * Not while stopped (0-14 S2 stage 2f). */
+        MT_OUT_TICK();
         tk_dly_tsk(MT_POLL_MS);
     }
 }
