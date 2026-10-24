@@ -243,7 +243,10 @@ jobs:
     # 60 -> 75 (2026-10-23): 46.4 min in CI 39953421360; audit-68 merged the
     # ed25519 UBSan step (~35 s) and the conflicts-misread step (three
     # builds and runs, ~8 min), i.e. ~55 min expected.
-    timeout-minutes: 75
+    # 75 -> 90 (2026-10-24): 45.6 min in CI 40029874567; since then the selfc
+    # step (~3 min), [stop-sleep] (~3 min), [stop-pathw] (~6 min) and
+    # [stop-out] (~5 min), i.e. ~63 min expected.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - name: Install toolchain
