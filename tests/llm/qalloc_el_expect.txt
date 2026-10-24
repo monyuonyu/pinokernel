@@ -1,0 +1,16 @@
+[st-qalloc] omega_el E4 0.0161767 E3O3 0.00410812 A3 0.0169897; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.1445 E4 0.0195 E3O3 0.0058 A3 0.1571; AUTO 0.0058 (min 0.0058)
+[st-qalloc] omega_el E4 0.0204085 E3O3 0.00439256 A3 0.0208036; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.1676 E4 0.0223 E3O3 0.0351 A3 0.1538; AUTO 0.0351 (min 0.0223)
+[st-qalloc] omega_el E4 0.0212435 E3O3 0.00544408 A3 0.0221794; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.2759 E4 0.0218 E3O3 0.0428 A3 0.2799; AUTO 0.0428 (min 0.0218)
+[st-qalloc] omega_el E4 0.0160078 E3O3 0.00416796 A3 0.0165401; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.1482 E4 0.0243 E3O3 0.0075 A3 0.1817; AUTO 0.0075 (min 0.0075)
+[st-qalloc] omega_el E4 0.0147148 E3O3 0.00378537 A3 0.0152621; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.1016 E4 0.0088 E3O3 0.0091 A3 0.1054; AUTO 0.0091 (min 0.0088)
+[st-qalloc] omega_el E4 0.0175989 E3O3 0.00406358 A3 0.0184607; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.3009 E4 0.0262 E3O3 0.0335 A3 0.2584; AUTO 0.0335 (min 0.0262)
+[st-qalloc] omega_el E4 0.0165998 E3O3 0.00376108 A3 0.0175161; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.2061 E4 -0.0019 E3O3 0.0098 A3 0.1894; AUTO 0.0098 (min -0.0019)
+[st-qalloc] omega_el E4 0.0162546 E3O3 0.00424225 A3 0.0166167; pick E3O3; largest A3
+[st-qalloc] bpb damage seq 0.1205 E4 0.0323 E3O3 0.0085 A3 0.1049; AUTO 0.0085 (min 0.0085)
