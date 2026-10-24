@@ -19,7 +19,9 @@
 #      `mind ask sky` and publishes a want ("published mind/want") inside the
 #      window: a stopped B that answered it would teach A (O2)
 #   O5 inside the window A logs no "mind/have from node 2" (a stopped B
-#      publishes no have summary)
+#      publishes no have summary). B is taught a second fact (ink fresh) that A
+#      never asks about: A hints only keys it does not already want, so the ask
+#      of O4 alone would hide a have summary about sky (first measurement)
 # Falsifier: -DSWARM_STOP_NO_OUT_OBEY (the outgoing tick does not look at the
 # stop) must turn O2 red. One mouth at a time: -DSWARM_STOP_ANSWER_UNGATED
 # (B answers wants while stopped) must turn O2 red, -DSWARM_STOP_HAVE_UNGATED
@@ -77,6 +79,9 @@ PB=$!; exec 8<>"$WORK/fb"
 wait_for "$B" 'mind_net_task up' 90 || echo "[stop-out] note: B mind_net_task not seen"
 printf 'mind teach sky blue\n' >&8
 wait_for "$B" 'published mind/teach' 60 || echo "[stop-out] note: B sky not published"
+n=0; printf 'mind teach ink fresh\n' >&8
+while [ "$(grep -ac 'published mind/teach' "$B")" -lt 2 ] && [ "$n" -lt 120 ]; do sleep 0.5; n=$((n + 1)); done
+[ "$n" -lt 120 ] || echo "[stop-out] note: B ink not published"
 printf 'stop now\n' >&8
 if wait_for "$B" 'stopped 1 local 1' 30; then res O0-stopped PASS; else res O0-stopped FAIL; fi
 env PKERNEL_NODE_ID=1 PKERNEL_AUTONET=1 PKERNEL_PFS_DIR="$WORK/da" PKERNEL_RELAY="127.0.0.1:$PORT" \
