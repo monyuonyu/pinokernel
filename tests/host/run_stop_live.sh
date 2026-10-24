@@ -30,6 +30,7 @@
 #      table) starts: within 60 s of its key E logs "[stop] network command
 #      accepted" and is "stopped 0 local 0 signed 0 epoch 8" - B is the only
 #      node up, so only the command B restored from swarm-stop.st can reach E
+#      (skipped in the "nc" and "late" modes)
 # Falsifiers: -DSWARM_STOP_NO_FORWARD (an accepted command is not sent on)
 # must turn L2 red; -DSWARM_STOP_NO_AUTH (no stop-table check) turns L1 red,
 # -DSWARM_STOP_NET_NO_PERSIST (a network command is not written) turns L5
@@ -187,7 +188,11 @@ else
 fi
 echo "[stop-live] last status A: $(st "$A") | B: $(st "$B") | C: $(st "$C") | D: $(st "$D")"
 cp "$B" /tmp/stop_live.B.log 2>/dev/null
-# L6: B alone, restarted, re-drives the command it restored to a new node E
+# L6: B alone, restarted, re-drives the command it restored to a new node E.
+# Not in "nc" and "late": their falsifiers already stop the re-drive, their
+# verdict reads L2/L4 only, and L6 would add a 60 s wait to a CI step whose
+# nc run is near its 600 s timeout (audit-79: 457 s -> 531 s on this box).
+if [ "$MODE" != nc ] && [ "$MODE" != late ]; then
 for p in "$PA" "$PC" "$PD" "$PB"; do [ "$p" != 0 ] && kill -9 "$p" 2>/dev/null; done
 wait "$PA" "$PC" "$PD" "$PB" 2>/dev/null; PA=0; PC=0; PD=0; PB=0
 B="$WORK/b4.log"
@@ -208,6 +213,7 @@ else
     res L6-restored-node-redrives FAIL
 fi
 echo "[stop-live] L6 status B: $(st "$B") | E: $(st "${E:-/dev/null}")"
+fi
 case "$MODE" in
     nc)
         case "$REDS" in
