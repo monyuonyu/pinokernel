@@ -5028,6 +5028,7 @@ void mind_net_task(INT stacd, void *exinf)
          * ALIVE + wakeable, ready to resume the instant the state reverses),
          * just don't drain/learn/republish. mind_paused_for_hibernation()
          * (below) is the single point [mind-pause] tests against. */
+        swarm_stop_net_tick(r_puts);   /* 0-14 S2 [live]: before every pause */
         if (mind_paused_for_hibernation()) { tk_dly_tsk(MT_POLL_MS); continue; }
 #ifdef MQ_FAULT_DEAF_TICKS
         /* test builds only (run_mind_have.sh DEAF=1): after this node's first

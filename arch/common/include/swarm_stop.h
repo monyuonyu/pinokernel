@@ -45,6 +45,9 @@ INT  swarm_stop_selftest(void (*out)(const char *));             /* [swarm-stop]
  * signed stop is lifted only by a signed resume. swarm_stop_is_stopped() is
  * 1 while either holds. -DSWARM_STOP_TEST_SIGN adds `stop sign` (tests). */
 void swarm_stop_cmd(const UB *a, UW n, void (*out)(const char *));
+/* [live]: take a command from "swarm/stop", send the last accepted one on;
+ * one call per tick (mind_net_task) */
+void swarm_stop_net_tick(void (*out)(const char *));
 INT  swarm_stop_refuses_mind(const UB *a, UW n);   /* stopped and `mind teach` */
 
 #endif
