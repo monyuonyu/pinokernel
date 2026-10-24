@@ -2635,9 +2635,10 @@ static double gq_obj_mat(const float *W0, const float *Wq, int R, int C, const d
 /* mode 0: GPTQ every matrix but embed into dst; mode 1: the objective of q.
  * stage >= 0 (mode 0): only the matrices of that stage (GQ_STAGE). */
 static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const st_model *q,
-                            const st_gq_h *h, int qmax, int qmax_out, int stage)
+                            const st_gq_h *h, int qmax, int qmax_att, int qmax_out, int stage)
 {
     ST_DIMS(src);
+    const int qmax_ffn = qmax;
     int nmax = D > DFF ? D : DFF;
     size_t dd = (size_t)D * D, ff = (size_t)DFF * DFF;
     double *U = (double *)malloc((size_t)nmax * nmax * sizeof(double));
@@ -2651,6 +2652,7 @@ static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const 
                 gq_mat(src, dst, (off), (R), (C), (H), qmax, U, T);               \
         } else if (H) tot += gq_obj_mat(src->w + (off), q->w + (off), (R), (C), (H), U); \
     } while (0)
+    qmax = qmax_att;                      /* stage 5: attention may have its own bits */
     for (int l = 0; l < L; l++) {
         const double *ha = h->ha + (size_t)l * dd, *ho = h->ho + (size_t)l * dd;
 #if defined(ST_GPTQ_WRONG_H)
@@ -2661,6 +2663,7 @@ static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const 
         GQ_ONE(GQ_STAGE(L, l, 0), src->o_wv + l * D * D, D, D, ha);
         GQ_ONE(GQ_STAGE(L, l, 1), src->o_wo + l * D * D, D, D, ho);
     }
+    qmax = qmax_ffn;
     for (int x = 0; x < L * E; x++) {
         int l = x / E;
         const double *hf = h->cnt[x] ? h->hf + (size_t)x * dd : NULL;
@@ -2679,7 +2682,7 @@ static double gq_walk_stage(int mode, const st_model *src, st_model *dst, const 
 static double gq_walk(int mode, const st_model *src, st_model *dst, const st_model *q,
                       const st_gq_h *h, int qmax)
 {
-    return gq_walk_stage(mode, src, dst, q, h, qmax, qmax, -1);
+    return gq_walk_stage(mode, src, dst, q, h, qmax, qmax, qmax, -1);
 }
 
 /* a scratch model holding src's weights (st_forward writes the cache, and src
@@ -2717,13 +2720,16 @@ static void gq_embed(const st_model *src, st_model *dst, int bits)
     (void)st_quant_mat(src, dst, src->o_embed, V, src->d, bits, ST_QG_ROW);
 }
 
-/* st_quant_gptq with embed at be and out at bo (stage 4; be == bo == bits is
+/* st_quant_gptq with embed at be, the attention matrices at ba and out at bo
+ * (stage 4; stage 5 adds ba and the 3-bit grid; be == ba == bo == bits is
  * stage 3 itself, the same operations in the same order) */
-static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int bo,
+static int gq_bits_ok(int b) { return b == 8 || b == 4 || b == 3 || b == 2; }
+
+static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int ba, int bo,
                   const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
 {
     if (!calib || seq < 1 || seq > ST_MAXSEQ || ncalib < seq) return ST_E_ARG;
-    if ((bo != 8 && bo != 4 && bo != 2) || (be != 8 && be != 4 && be != 2 && be != 0))
+    if (!gq_bits_ok(bo) || !gq_bits_ok(ba) || (!gq_bits_ok(be) && be != 0))
         return ST_E_ARG;
     /* the RTN copy first: arg checks, alive mask, Adam zeroed, embed on the
      * grid and the packed size (the grid and the scales are the same) */
@@ -2737,8 +2743,12 @@ static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int bo,
 #endif
     }
     if (bo != bits) bq = bq - gq_mat_bytes(V, src->d, bits) + gq_mat_bytes(V, src->d, bo);
+    if (ba != bits)
+        bq = bq + (size_t)(4 * src->nlayer) *
+                  (gq_mat_bytes(src->d, src->d, ba) - gq_mat_bytes(src->d, src->d, bits));
     if (bytes_q) *bytes_q = bq;
     int qmax = (1 << (bits - 1)) - 1, qmax_out = (1 << (bo - 1)) - 1;
+    int qmax_att = (1 << (ba - 1)) - 1;
     st_model tmp;
 #if defined(ST_GPTQ_NOSEQ)
     /* stage 2: every H from src's fp32 forward */
@@ -2747,7 +2757,7 @@ static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int bo,
     st_gq_h h = { 0 };
     rc = gq_collect(&tmp, calib, ncalib, seq, &h);
     st_free(&tmp);
-    if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, qmax_out, -1) < 0.0) rc = ST_E_OOM;
+    if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, qmax_att, qmax_out, -1) < 0.0) rc = ST_E_OOM;
     gq_free(&h);
 #else
     /* stage 3: embed stays RTN (it is a lookup, and it shapes every later X);
@@ -2763,7 +2773,7 @@ static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int bo,
         st_gq_h h = { 0 };
         rc = gq_collect(&tmp, calib, ncalib, seq, &h);
         st_free(&tmp);
-        if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, qmax_out, st) < 0.0) rc = ST_E_OOM;
+        if (rc == ST_OK && gq_walk_stage(0, src, dst, NULL, &h, qmax, qmax_att, qmax_out, st) < 0.0) rc = ST_E_OOM;
         gq_free(&h);
     }
 #endif
@@ -2776,7 +2786,7 @@ static int gq_mix(const st_model *src, st_model *dst, int bits, int be, int bo,
 int st_quant_gptq(const st_model *src, st_model *dst, int bits,
                   const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
 {
-    return gq_mix(src, dst, bits, bits, bits, calib, ncalib, seq, bytes_q);
+    return gq_mix(src, dst, bits, bits, bits, bits, calib, ncalib, seq, bytes_q);
 }
 
 int st_quant_gptq_mix(const st_model *src, st_model *dst, int bits,
@@ -2789,7 +2799,7 @@ int st_quant_gptq_mix(const st_model *src, st_model *dst, int bits,
 #if defined(ST_QMIX_EMB8)
     if (bits_embed != bits && bits_embed != 0) bits_embed = 8;      /* control */
 #endif
-    return gq_mix(src, dst, bits, bits_embed, bits_out, calib, ncalib, seq, bytes_q);
+    return gq_mix(src, dst, bits, bits_embed, bits, bits_out, calib, ncalib, seq, bytes_q);
 }
 
 double st_quant_layer_obj(const st_model *src, const st_model *q,
@@ -2864,6 +2874,137 @@ int st_quant_class_obj(const st_model *src, const st_model *q,
     free(logits);
     st_free(&tmp);
     return rc;
+}
+
+/* ---- stage 5 (research/brain-quant-alloc.md): the node places the bits ---- */
+
+int st_quant_gptq_bits(const st_model *src, st_model *dst, int bits,
+                       int bits_embed, int bits_attn, int bits_out,
+                       const uint8_t *calib, int ncalib, int seq, size_t *bytes_q)
+{
+    return gq_mix(src, dst, bits, bits_embed, bits_attn, bits_out, calib, ncalib, seq, bytes_q);
+}
+
+/* the empirical Fisher: F[i] = mean over the windows of g_i^2, g the gradient
+ * of that window's mean loss (st_backward on a scratch copy; src untouched) */
+int st_quant_fisher(const st_model *src, const uint8_t *calib, int ncalib,
+                    int seq, double *F)
+{
+    if (!src || !calib || !F || seq < 1 || seq > ST_MAXSEQ || ncalib < seq) return ST_E_ARG;
+    st_model tmp;
+    int rc = gq_scratch(src, &tmp);
+    if (rc != ST_OK) return rc;
+    float *logits = (float *)malloc((size_t)seq * V * sizeof(float));
+    if (!logits) { st_free(&tmp); return ST_E_OOM; }
+    for (int i = 0; i < src->n_params; i++) F[i] = 0.0;
+    int nw = 0;
+    for (int o = 0; o + seq <= ncalib && rc == ST_OK; o += seq) {
+        st_zero_grad(&tmp);
+        rc = st_forward(&tmp, calib + o, seq, logits);
+        if (rc != ST_OK) break;
+        st_backward(&tmp, calib + o, seq);
+        for (int i = 0; i < src->n_params; i++) F[i] += (double)tmp.g[i] * (double)tmp.g[i];
+        nw++;
+    }
+    free(logits);
+    st_free(&tmp);
+    if (rc != ST_OK) return rc;
+    if (nw == 0) return ST_E_ARG;
+    for (int i = 0; i < src->n_params; i++) F[i] /= (double)nw;
+    return ST_OK;
+}
+
+/* one [R][C] matrix at off: mean(F over it) * ||RTN_b(W) - W||^2, row grid */
+static double qa_omega_mat(const st_model *src, const double *F, int off, int R, int C, int bits)
+{
+    const float *W = src->w + off;
+    int qmax = (1 << (bits - 1)) - 1;
+    double fs = 0.0, e2 = 0.0;
+    for (int r = 0; r < R; r++) {
+        const float *Wr = W + (size_t)r * C;
+        float s = st_quant_scale(Wr, C, qmax);
+        for (int c = 0; c < C; c++) {
+            double q = s == 0.0f ? 0.0 : (double)st_quant_one(Wr[c], s, qmax);
+            double d = (double)Wr[c] - q;
+            e2 += d * d;
+#if !defined(ST_QALLOC_FLATFISHER)
+            fs += F[off + (size_t)r * C + c];
+#endif
+        }
+    }
+#if defined(ST_QALLOC_FLATFISHER)
+    (void)F; fs = (double)R * (double)C;       /* control: every F = 1 */
+#endif
+    return fs / ((double)R * (double)C) * e2;
+}
+
+double st_quant_omega(const st_model *src, const double *F, int bits,
+                      int bits_embed, int bits_attn, int bits_out)
+{
+    if (!src || !F || !gq_bits_ok(bits) || !gq_bits_ok(bits_embed) ||
+        !gq_bits_ok(bits_attn) || !gq_bits_ok(bits_out)) return -1.0;
+    ST_DIMS(src);
+    double om = qa_omega_mat(src, F, src->o_embed, V, D, bits_embed);
+    for (int l = 0; l < L; l++) {
+        om += qa_omega_mat(src, F, src->o_wq + l * D * D, D, D, bits_attn);
+        om += qa_omega_mat(src, F, src->o_wk + l * D * D, D, D, bits_attn);
+        om += qa_omega_mat(src, F, src->o_wv + l * D * D, D, D, bits_attn);
+        om += qa_omega_mat(src, F, src->o_wo + l * D * D, D, D, bits_attn);
+    }
+    for (int x = 0; x < L * E; x++) {
+        om += qa_omega_mat(src, F, src->o_w1 + x * DFF * D, DFF, D, bits);
+        om += qa_omega_mat(src, F, src->o_w3 + x * DFF * D, DFF, D, bits);
+        om += qa_omega_mat(src, F, src->o_w2 + x * D * DFF, D, DFF, bits);
+    }
+    om += qa_omega_mat(src, F, src->o_out, V, D, bits_out);
+    return om;
+}
+
+int st_quant_alloc_pick(const double *omega, int n)
+{
+    if (!omega || n < 1) return -1;
+    int k = 0;
+    for (int i = 1; i < n; i++) {
+#if defined(ST_QALLOC_INVERT)
+        if (omega[i] > omega[k]) k = i;        /* control: the largest */
+#else
+        if (omega[i] < omega[k]) k = i;
+#endif
+    }
+    return k;
+}
+
+/* mean KL(a || b) per position over the windows of win, own exp/log in double
+ * around st_expf/st_logf (no libm); -1 on error */
+double st_quant_copy_kl(st_model *a, st_model *b, const uint8_t *win, int nwin, int seq)
+{
+    if (!a || !b || !win || seq < 1 || seq > ST_MAXSEQ || nwin < seq) return -1.0;
+    float *la = (float *)malloc((size_t)seq * V * sizeof(float));
+    float *lb = (float *)malloc((size_t)seq * V * sizeof(float));
+    if (!la || !lb) { free(la); free(lb); return -1.0; }
+    double s = 0.0; long np = 0;
+    for (int o = 0; o + seq <= nwin; o += seq) {
+        if (st_forward(a, win + o, seq, la) != ST_OK || st_forward(b, win + o, seq, lb) != ST_OK) {
+            free(la); free(lb); return -1.0;
+        }
+        for (int t = 0; t < seq; t++) {
+            const float *xa = la + (size_t)t * V, *xb = lb + (size_t)t * V;
+            float ma = xa[0], mb = xb[0];
+            for (int k = 1; k < V; k++) { if (xa[k] > ma) ma = xa[k]; if (xb[k] > mb) mb = xb[k]; }
+            double za = 0.0, zb = 0.0;
+            for (int k = 0; k < V; k++) { za += st_expf(xa[k] - ma); zb += st_expf(xb[k] - mb); }
+            /* KL = sum p_a (log p_a - log p_b), log p = (x - m) - log z */
+            double lza = st_logf((float)za), lzb = st_logf((float)zb), kl = 0.0;
+            for (int k = 0; k < V; k++) {
+                double pa = st_expf(xa[k] - ma) / za;
+                if (pa <= 0.0) continue;
+                kl += pa * (((double)(xa[k] - ma) - lza) - ((double)(xb[k] - mb) - lzb));
+            }
+            s += kl; np++;
+        }
+    }
+    free(la); free(lb);
+    return np ? s / (double)np : -1.0;
 }
 
 /* ================================================================== */

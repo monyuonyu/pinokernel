@@ -445,6 +445,34 @@ int    st_quant_class_obj(const st_model *src, const st_model *q,
                           const uint8_t *calib, int ncalib, int seq,
                           double out[ST_QC_N]);
 
+/* ---- stage 5 (research/brain-quant-alloc.md): the node places the bits ----
+ * st_quant_gptq_bits: st_quant_gptq_mix with the 4 attention matrices
+ * (wq wk wv wo) at bits_attn as well; bits_embed, bits_attn, bits_out may be 3
+ * (the same row grid, qmax 3). bits in {8,4,2}, bits_attn/bits_out in
+ * {8,4,3,2}, bits_embed in {8,4,3,2,0}. With bits_attn == bits it is
+ * byte-identical to st_quant_gptq_mix.
+ * st_quant_fisher: F[i] = mean over the windows of calib of g_i^2 (the
+ * gradient of one window's loss; the empirical Fisher, standing in for
+ * HAWQ-V2's Hutchinson trace, arXiv:1911.03852 eq. 2.11). F: n_params doubles.
+ * st_quant_omega: sum over the matrices of mean(F over the matrix) *
+ * ||RTN_b(W) - W||^2 (row grid, b the matrix's bits in the placement).
+ * st_quant_alloc_pick: the index of the smallest omega of n.
+ * st_quant_copy_kl: mean KL(a || b) per position over the windows of win
+ * (nats); the copy-drift gate accepts b for a when it is <= ST_QGATE_KL.
+ * Controls (cert only): -DST_QALLOC_INVERT (pick the largest omega),
+ * -DST_QALLOC_FLATFISHER (every F = 1).                                       */
+#define ST_QGATE_KL 0.05
+int    st_quant_gptq_bits(const st_model *src, st_model *dst, int bits,
+                          int bits_embed, int bits_attn, int bits_out,
+                          const uint8_t *calib, int ncalib, int seq, size_t *bytes_q);
+int    st_quant_fisher(const st_model *src, const uint8_t *calib, int ncalib,
+                       int seq, double *F);
+double st_quant_omega(const st_model *src, const double *F, int bits,
+                      int bits_embed, int bits_attn, int bits_out);
+int    st_quant_alloc_pick(const double *omega, int n);
+double st_quant_copy_kl(st_model *a, st_model *b, const uint8_t *win, int nwin,
+                        int seq);
+
 /* ---- one-bit delta, stage 1 (research/delta-quant.md, ROADMAP 1-6) ----
  * st_delta_sign: rebuild `ft` from `base` + a 1-bit delta (BitDelta,
  * arXiv 2402.10193 eq. 1, alpha at its L2-optimal start, no alpha training):
