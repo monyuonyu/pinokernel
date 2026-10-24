@@ -83,7 +83,7 @@ tr -d '\r' < "$B" > "$WORK/b.txt"
 L="$WORK/b.txt"
 ln() { grep -an '\[stop\] stopped [01] ' "$L" | sed -n "${1}p" | cut -d: -f1; }
 S=$(ln 1); WA=$(ln 2); WB=$(ln 3); C=$(ln 4)
-cnt() { awk -v a="$1" -v b="$2" -v re="$3" 'NR > a && NR < b && $0 ~ re' "$L" | grep -c .; }
+cnt() { awk -v a="$1" -v b="$2" 'NR > a && NR < b' "$L" | grep -cE "$3"; }
 PW='\[onemind\] (published rw|FOLD|fold:)'
 echo "[stop-pathw] status lines at $S $WA $WB $C; Path W lines before the stop $(cnt 0 "${S:-0}" "$PW"), in the window $(cnt "${WA:-0}" "${WB:-0}" "$PW"), after the resume $(cnt "${C:-0}" 999999 '\[onemind\] published rw')"
 [ -n "$S" ] && sed -n "${S}p" "$L" | grep -q 'stopped 1 local 1' && res W1-stopped PASS || res W1-stopped FAIL
