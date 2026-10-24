@@ -2960,6 +2960,13 @@ double st_quant_omega(const st_model *src, const double *F, int bits,
     return om;
 }
 
+double st_quant_omega_el(const st_model *src, const double *F, int bits,
+                         int bits_embed, int bits_attn, int bits_out)
+{
+    (void)src; (void)F; (void)bits; (void)bits_embed; (void)bits_attn; (void)bits_out;
+    return -1.0;                          /* stage 6 test first: not yet */
+}
+
 int st_quant_alloc_pick(const double *omega, int n)
 {
     if (!omega || n < 1) return -1;
