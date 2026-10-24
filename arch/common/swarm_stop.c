@@ -161,10 +161,12 @@ static void ss_forward(const U1 *cmd)
 #define SS_FILE_MAX  (SS_HDR_LEN + SWARM_STOP_KEYS_MAX * ED25519_PUBLIC_KEY_LEN)
 static U1  ss_file[SS_FILE_MAX];
 static INT ss_quiet = 0;                  /* the self-test: do not write    */
+static INT ss_save_bad = 0;               /* the last write failed: say so  */
 
 #if defined(_TK_HOSTED_LIBC_) && !defined(SWARM_STOP_NO_PERSIST)
 extern int pfs_dur_write(const char *fname, const void *data, unsigned len);
 extern int pfs_dur_read(const char *fname, void *buf, unsigned maxlen);
+extern int pfs_dur_active(void);
 
 static U4 ss_crc32(const U1 *p, UW n)
 {
@@ -207,7 +209,10 @@ static void ss_persist(void)
         for (i = 0; i < ED25519_PUBLIC_KEY_LEN; i++)
             ss_file[SS_HDR_LEN + (UW)k * ED25519_PUBLIC_KEY_LEN + i] = ss_keys[k][i];
     ss_put32(ss_file + 4, ss_crc32(ss_file + 8, n - 8));
-    (void)pfs_dur_write(SS_FILE, ss_file, (unsigned)n);
+    /* no PKERNEL_PFS_DIR is "not kept", not a failure; a failed write leaves
+     * the previous file (temp + rename), so the next status line says so */
+    if (pfs_dur_write(SS_FILE, ss_file, (unsigned)n) != 0 && pfs_dur_active())
+        ss_save_bad = 1;
 }
 
 void swarm_stop_restore(void (*out)(const char *))
@@ -236,7 +241,7 @@ void swarm_stop_restore(void (*out)(const char *))
     out("[stop] restored from " SS_FILE "\r\n");
 }
 #else
-static void ss_persist(void) { (void)ss_quiet; (void)ss_file; }
+static void ss_persist(void) { (void)ss_quiet; (void)ss_file; (void)ss_save_bad; }
 void swarm_stop_restore(void (*out)(const char *)) { (void)out; }
 #endif
 
@@ -447,6 +452,11 @@ static void ss_udec(U4 v)
 
 static void ss_status(void)
 {
+    /* every ss_persist is followed by a status line (console and network) */
+    if (ss_save_bad) {
+        ss_save_bad = 0;
+        ss_out("[stop] could not save " SS_FILE " (the file on disk keeps the previous state)\r\n");
+    }
     ss_out("[stop] stopped "); ss_dec(swarm_stop_is_stopped());
     ss_out(" local "); ss_dec(ss_local);
     ss_out(" signed "); ss_dec(ss_stopped);
